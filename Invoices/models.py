@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 from csvimport.models import CSVImport
 from decimal import Decimal
 from django.db.models import Sum
+
 class currencies(models.Model):
 	name=models.CharField(verbose_name=_(u"Nom"), max_length=20, help_text=_(u"Nom del tipus de moneda"))
 
@@ -345,21 +346,9 @@ class movement (models.Model):
 	class Meta:
 		abstract=True
 class sales_movement( movement ):
-	sales_invoice=models.ForeignKey( 
-		sales_invoice, 
-		null=False, 
-		blank=False, 
-		verbose_name= _(u"Factura Emesa")
-	)
 	planned_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data prevista. Exemple dd/mm/aaaa"))
 	execution_date=models.DateField(verbose_name=_(u"Data de realització"), null=True, blank=True, help_text=_(u"La data en que es realitza. Exemple dd/mm/aaaa"))
 class purchases_movement( movement ):
-	purchases_invoice=models.ForeignKey( 
-		purchases_invoice, 
-		null=False, 
-		blank=False, 
-		verbose_name= _(u"Factura Despesa")
-	)
 	petition_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data de petició. Exemple dd/mm/aaaa"))
 	acceptation_date=models.DateField(verbose_name=_(u"Data de realització"), help_text=_(u"La data en que s'accepta. Exemple dd/mm/aaaa"))
 	execution_date=models.DateField(verbose_name=_(u"Data de realització"), help_text=_(u"La data en que es realitza. Exemple dd/mm/aaaa"))

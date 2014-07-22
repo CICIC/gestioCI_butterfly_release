@@ -471,7 +471,7 @@ class sales_line_inline(admin.TabularInline):
 	extra = 1
 
 from Invoices.forms import sales_invoice_form
-class sales_invoice_admin (ModelAdmin):
+class sales_invoice_user (ModelAdmin):
 	form = sales_invoice_form
 	model = sales_invoice
 	date_hierarchy = "date"
@@ -486,7 +486,7 @@ class sales_invoice_admin (ModelAdmin):
 	inlines = [sales_line_inline]
 
 	def get_form(self, request, obj=None, **kwargs):
-		ModelForm = super(sales_invoice_admin, self).get_form(request, obj, **kwargs)
+		ModelForm = super(sales_invoice_user, self).get_form(request, obj, **kwargs)
 		class ModelFormMetaClass(ModelForm):
 			def __new__(cls, *args, **kwargs):
 				kwargs['request'] = request
@@ -505,26 +505,21 @@ class sales_invoice_admin (ModelAdmin):
  
 	def save_model(self, request, obj, form, change):
 		obj.type = 0
-		if getattr(obj, 'cooper', None) is None:
-			try:
+		if getattr(obj, 'cooper ', None) is None:
+			if request.user.is_superuser:
+				obj.cooper = form.cleaned_data['cooper']
+			else:
 				obj.cooper = cooper.objects.get(user = request.user)
-			except:
-				obj.cooper = None
 		obj.save()
-		#New or Edit
-		if obj:
-			pk = obj.pk
-		else:
-			pk=0
 
 	def queryset(self, request):
 		if request.user.is_superuser:
 			return sales_invoice.objects.all()
-		return sales_invoice.objects.filter(cooper=coopers.object.get(user=request.user))
+		return sales_invoice.objects.filter(cooper=cooper.objects.get(user=request.user))
 
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
-		response = super(sales_invoice_admin, self).changelist_view(request, extra_context)
+		response = super(sales_invoice_user, self).changelist_view(request, extra_context)
 		try:
 			qs_queryset = response.context_data["cl"].query_set
 		except:
@@ -540,15 +535,23 @@ class sales_invoice_admin (ModelAdmin):
 
 		#Filter by period
 		from Invoices.bots import PeriodManager
-		return PeriodManager.filterbydefault(request, self, sales_invoice_admin, extra_context)
+		return PeriodManager.filterbydefault(request, self, sales_invoice_user, extra_context)
 		def get_form(self, request, obj=None, **kwargs):
-			ModelForm = super(sales_invoice_admin, self).get_form(request, obj, **kwargs)
+			ModelForm = super(sales_invoice_user, self).get_form(request, obj, **kwargs)
 			class ModelFormMetaClass(ModelForm):
 				def __new__(cls, *args, **kwargs):
 					kwargs['request'] = request
 					return ModelForm(*args, **kwargs)
 			return ModelFormMetaClass
-user_admin_site.register(sales_invoice, sales_invoice_admin)
+user_admin_site.register(sales_invoice, sales_invoice_user)
+class sales_invoice_admin(sales_invoice_user):
+	fields = ['cooper', 'period', 'num', 'client', 'date', 'who_manage', 'status', 'dateTransfer']
+	list_display = ('cooper', 'period', 'number', 'num', 'client', 'date', 'value', 'invoicedVAT', 'assignedVAT', 'total', 'who_manage', 'status', 'dateTransfer')
+	list_display_links = ( 'number', )
+	list_editable = ('cooper', 'period', 'num', 'client', 'date', 'who_manage', 'status', 'dateTransfer')
+	list_export = ('cooper','period', 'number', 'clientName', 'clientCif', 'date', 'value', 'invoicedVAT', 'assignedVAT', 'total', 'who_manage', 'status', 'dateTransfer')
+	list_filter = ('cooper','period',)
+admin.site.register(sales_invoice, sales_invoice_admin)
 
 class purchases_line_inline(admin.TabularInline):
 	model = purchases_line
@@ -556,7 +559,7 @@ class purchases_line_inline(admin.TabularInline):
 	extra = 1
 
 from Invoices.forms import purchases_invoice_form
-class purchases_invoice_admin (ModelAdmin):
+class purchases_invoice_user (ModelAdmin):
 	form = purchases_invoice_form
 	model = purchases_invoice
 	date_hierarchy = "date"
@@ -581,7 +584,7 @@ class purchases_invoice_admin (ModelAdmin):
 	providerCif.short_description = _(u"provider (ID) ")
 
 	def get_form(self, request, obj=None, **kwargs):
-		ModelForm = super(purchases_invoice_admin, self).get_form(request, obj, **kwargs)
+		ModelForm = super(purchases_invoice_user, self).get_form(request, obj, **kwargs)
 		class ModelFormMetaClass(ModelForm):
 			def __new__(cls, *args, **kwargs):
 				kwargs['request'] = request
@@ -591,25 +594,20 @@ class purchases_invoice_admin (ModelAdmin):
 	def save_model(self, request, obj, form, change):
 		obj.type = 1
 		if getattr(obj, 'cooper ', None) is None:
-			try:
+			if request.user.is_superuser:
+				obj.cooper = form.cleaned_data['cooper']
+			else:
 				obj.cooper = cooper.objects.get(user = request.user)
-			except:
-				print "purchases invoice. asigno cooper vacío"
-				obj.cooper = None
 		obj.save()
-		#New or Edit
-		if obj:
-			pk = obj.pk
-		else:
-			pk=0
+
 	def queryset(self, request):
 		if request.user.is_superuser:
 			return purchases_invoice.objects.all()
-		return purchases_invoice.objects.filter(cooper=coopers.object.get(user=request.user))
+		return purchases_invoice.objects.filter(cooper=cooper.objects.get(user=request.user))
 
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
-		response = super(purchases_invoice_admin, self).changelist_view(request, extra_context)
+		response = super(purchases_invoice_user, self).changelist_view(request, extra_context)
 		try:
 			qs_queryset = response.context_data["cl"].query_set
 		except:
@@ -625,5 +623,12 @@ class purchases_invoice_admin (ModelAdmin):
 
 		#Filter by period
 		from Invoices.bots import PeriodManager
-		return PeriodManager.filterbydefault(request, self, purchases_invoice_admin, extra_context)
-user_admin_site.register(purchases_invoice, purchases_invoice_admin)
+		return PeriodManager.filterbydefault(request, self, purchases_invoice_user, extra_context)
+user_admin_site.register(purchases_invoice, purchases_invoice_user)
+class purchases_invoice_admin (purchases_invoice_user):
+	fields = ['cooper','period', 'num', 'provider', 'date', 'who_manage', 'status', 'dateTransfer']
+	list_display = ('cooper','period', 'number', 'num', 'provider', 'date', 'value', 'expencedVAT', 'IRPFRetention', 'total', 'who_manage', 'status', 'dateTransfer')
+	list_editable = ('cooper', 'period', 'num', 'provider', 'date', 'who_manage', 'status', 'dateTransfer')
+	list_export = ('cooper','period', 'num', 'providerName', 'providerCif', 'date', 'value', 'expencedVAT', 'IRPFRetention', 'total', 'who_manage', 'status', 'dateTransfer')
+	list_filter = ('cooper','period',)
+admin.site.register(purchases_invoice, purchases_invoice_admin)

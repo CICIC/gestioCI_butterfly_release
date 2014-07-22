@@ -24,6 +24,7 @@ class CardIDValidator():
 		if CIF != "":
 			myValidator = ESIdentityCardNumberField()
 			myValidator.clean(CIF)
+
 class client_form(forms.ModelForm):
 	def clean_CIF(self):
 		cleaned_data = self.cleaned_data
@@ -33,25 +34,22 @@ class client_form(forms.ModelForm):
 		cleaned_data = self.cleaned_data
 		CIF = cleaned_data.get('CIF')
 		oID = cleaned_data.get('otherCIF')
-
 		validator = CardIDValidator()
 		validator.validate( CIF, oID)
-
 		if self.instance.pk:
 			pk =self.instance.pk
 		else:
 			pk=0
-			
 		if client.objects.filter( name=cleaned_data.get('name')).exclude(pk=pk).count() > 0:
 			raise forms.ValidationError(_(u"Ja existeix un Proveïdor amb aquest Nom Fiscal"))
 		if CIF and client.objects.filter( CIF=CIF).exclude(pk=pk).count() > 0:
 			raise forms.ValidationError(_(u"Ja existeix un client amb aquest identificador"))
 		if oID and client.objects.filter( otherCIF=oID).exclude(pk=pk).count() > 0:
 			raise forms.ValidationError(_(u"Ja existeix un client amb aquest identificador"))
-
 		return cleaned_data
 	class Meta:
 		model = client
+
 class provider_form(forms.ModelForm):
 	def clean_CIF(self):
 		cleaned_data = self.cleaned_data
