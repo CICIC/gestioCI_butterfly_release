@@ -100,15 +100,16 @@ DATABASES = {
 '''
 #django-csvimport
 CSVIMPORT_MODELS = ["Invoices.periodTaxes", 
-		"Invoices.SalesInvoices",
-		"Invoices.PurchaseInvoices",
-		"Invoices.PeriodClose",
-		"Invoices.Client",
-		"Invoices.Provider",
+		"Invoices.sales_invoice",
+		"Invoices.purchase_invoice",
+		"Invoices.period_close",
+		"Invoices.client",
+		"Invoices.provider",
 		"Invoices.period",
-		"Invoices.PaymentEntities",
-		"Invoices.Coop",
-		"Invoices.RefundEntities"]
+		"Invoices.coop",
+		"Invoices.period_tax",
+		"Invoices.vats",]
+
 
 #django-cron
 CRON_CLASSES = [
