@@ -37,6 +37,8 @@
 					<tr class="model-{{ model.object_name|lower }}">
 						<th scope="row"><a href="{{ app.app_url }}{{ model.object_name|lower }}">{{ model.name }}</a></th>
 					</tr>
+			{% elif model.perms.skip %}
+					<!-- do nothing-->
 			{% elif model.perms.historial %}
 					<tr class="model-{{ model.object_name|lower }}">
 						<th scope="row"><a href="{{ app.app_url }}{{ model.object_name|lower }}">{{ model.name }}</a></th>
