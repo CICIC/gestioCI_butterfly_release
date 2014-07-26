@@ -47,7 +47,10 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 					try:
 						headers.append(getattr(getattr(modeladmin.model, field), 'short_description').encode('utf-8'))
 					except:
-						headers.append(getattr(getattr(modeladmin, field), 'short_description').encode('utf-8'))
+						try:
+							headers.append(getattr(getattr(modeladmin, field), 'short_description').encode('utf-8'))
+						except:
+							headers.append(field)
 			writer.writerow(headers)
 
 		for obj in queryset:
