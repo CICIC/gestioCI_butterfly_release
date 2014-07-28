@@ -90,7 +90,6 @@ class invoice_form(forms.ModelForm):
 			self.instance.cooper  = current_cooper 
 
 	def clean_num(self):
-		print "cleanin num"
 		pk=0
 		if self.instance.pk:
 			pk =self.instance.pk
@@ -106,8 +105,6 @@ class invoice_form(forms.ModelForm):
 		if period is None:
 			if hasattr(self.instance, 'period'):
 				period = self.instance.period 
-
-		print period
 		query = self.model.objects.filter(cooper=cooper, 
 										period=period, 
 										num=num)
@@ -168,7 +165,6 @@ class purchases_invoice_form(invoice_form):
 		return self.cleaned_data.get('who_manage')
 
 	def clean_expiring_date(self):
-		print "cleaning date"
 		if self.cleaned_data.get('who_manage') == manage_CHOICE_COOPER:
 			return None
 		if  self.cleaned_data.get('expiring_date') is None:
@@ -223,22 +219,14 @@ class period_close_form(forms.ModelForm):
 	def __init__(self, *args, **kwargs):
 		super(period_close_form, self).__init__(*args, **kwargs)
 		if self.is_new:
-			print "cooper: period_close -> brand new! Let's take some default values:"
-			print "cooper is..."
 			current_cooper = bot_cooper(self.request.user).cooper(self.request)
-			print current_cooper
-			print "period is..."
 			current_period = bot_period(self.request.user).period( True, self.request )
-			print current_period
+
 			if current_cooper and current_period:
-				print "may I initialice period?"
 				bot_period_close( current_period, current_cooper, self.instance, True).load_period_close_form(self, self.current_fields + ('cooper', ))
-				print "end**************************************************************"
 			else:
-				print "Sorry, some compulsory default value not found. Abort!!!!"
+				pass
 		else:
-			print "cooper: period_close -> update! Let's load values:"
-			print "may I load period?"
 			bot_period_close( self.obj.period, self.obj.cooper, self.obj).load_period_close_form(self, self.current_fields, False)
 
 	def clean_closed(self):

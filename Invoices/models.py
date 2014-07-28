@@ -358,14 +358,10 @@ class movement (models.Model):
 		help_text=_(u"Indica el tipus de moneda del moviment")
 	)
 	def status(self):
-		print "checking" + str(self.execution_date)
 		if self.execution_date is None:
-			print "pending"
 			return status_CHOICE_PENDING
 		else:
-			print "done"
 			return status_CHOICE_DONE
-
 	status.short_description = _(u"Estat")
 
 	def __unicode__(self):
