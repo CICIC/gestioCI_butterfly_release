@@ -40,7 +40,8 @@ class bot_cooper( object ):
 		except:
 			if request:
 				from django.contrib import messages
-				messages.error(request, 'El teu usuari ha sigut creat però el teu perfil de soci encara no està creat.')
+				if not request.user.is_superuser:
+					messages.error(request, 'El teu usuari ha sigut creat però el teu perfil de soci encara no està creat.')
 				return cooper.objects.filter(id=-1)
 	def clients(self):
 		try:
@@ -244,8 +245,8 @@ class bot_filters(object):
 class bot_currency(object):
 	def __init__(self, currency):
 		self.currency = currency
-	def get_change(self):
-		return ("%s raó de canvi:") % "Pendiente { moneda: [0000] moneda: [0000] moneda: [0000]}"
+	def get_change(self, value):
+		return (u"%s raó de canvi: Pendiente { moneda: [%s] moneda: [%s] moneda: [%s]}") % (value, value, value, value)
 
 from Invoices.models import period_payment, sales_movement, status_CHOICE_PENDING, manage_CHOICE_COOPER
 from datetime import date

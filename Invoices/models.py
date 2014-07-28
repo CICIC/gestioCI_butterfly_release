@@ -110,10 +110,10 @@ class cooper_proxy_companies(cooper):
 		proxy = True
 
 class cooper_proxy_balance(cooper):
-	
+
 	class Meta:
 		verbose_name= _(u'L - Balanç projecte')
-		verbose_name_plural= _(u'L - Balanç projecte')
+		verbose_name_plural= _(u'L - Balanç projectes')
 		proxy = True
 
 
@@ -180,11 +180,12 @@ class invoice(models.Model):
 				else:
 					status = status_CHOICE_PENDING
 			else:
-				status = status_CHOICE_WAITING
+				status = status_CHOICE_PENDING
 		else:
 			status = status_CHOICE_DONE  
 		return status
 	status.short_description = _(u"Estat")
+
 	class Meta:
 		abstract=True
 
@@ -214,13 +215,11 @@ class sales_invoice(invoice):
 		return value
 	assigned_vat.short_description=_(u"IVA Assignat (€)")
 	def total(self):
-		value=0
+		value = Decimal("0.00")
 		for line in sales_line.objects.filter(sales_invoice=self.pk):
-			value += line.total()
+			value += line.total() 
 		return value
-	total.decimal=True
 	total.short_description=_(u'Total Factura (€)')
-
 	def __unicode__(self):
 		return self.number()
 	def __getitem__(self, value):
@@ -261,15 +260,12 @@ class purchases_invoice(invoice):
 			value += line.irpf()
 		return value
 	irpf.short_description=_(u"IRPF (€)")
-
 	def total(self):
-		value=0
+		value = Decimal("0.00")
 		for line in purchases_line.objects.filter(purchases_invoice=self.pk):
 			value += line.total()
 		return value
-	total.decimal=True
 	total.short_description=_(u'Total Factura (€)')
-
 	def __unicode__(self):
 		return  unicode(self.num) 
 
@@ -347,15 +343,7 @@ class purchases_line (models.Model):
 class movement (models.Model):
 	cooper=models.ForeignKey(cooper, null=False, blank=False, verbose_name=_(u"nº COOP"))
 	concept=models.CharField(verbose_name=_(u"Concept"), max_length=200)
-	movement_status_CHOICES=(
-		(status_CHOICE_PENDING, _(u'Pendent')),
-		(status_CHOICE_DONE, _(u'Efectuat')),
-	)
-	status=models.IntegerField(
-		verbose_name=_("Estat"), 
-		help_text=_(u"Indica l'estat del moviment"), 
-		choices=movement_status_CHOICES, default=status_CHOICE_PENDING
-	)
+	execution_date=models.DateField(verbose_name=_(u"Data de realització"), null=True, blank=True, help_text=_(u"La data en que es realitza. Exemple dd/mm/aaaa"))
 	value=models.DecimalField(
 		verbose_name=_(u'Import u.m.'), 
 		help_text=_(u"Import en unitats monetàries"), 
@@ -369,13 +357,25 @@ class movement (models.Model):
 		verbose_name=_("Moneda"), 
 		help_text=_(u"Indica el tipus de moneda del moviment")
 	)
+	def status(self):
+		print "checking" + str(self.execution_date)
+		if self.execution_date is None:
+			print "pending"
+			return status_CHOICE_PENDING
+		else:
+			print "done"
+			return status_CHOICE_DONE
 
+	status.short_description = _(u"Estat")
+
+	def __unicode__(self):
+		from Invoices.bots import bot_currency
+		return bot_currency(self.currency).get_change(self.value)
 	class Meta:
 		abstract=True
 
 class sales_movement( movement ):
 	planned_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data prevista. Exemple dd/mm/aaaa"))
-	execution_date=models.DateField(verbose_name=_(u"Data de realització"), null=True, blank=True, help_text=_(u"La data en que es realitza. Exemple dd/mm/aaaa"))
 	who_manage= models.IntegerField(
 		verbose_name=_(u"Forma de pagament"), 
 		help_text=_(u"Si selecciona la opció 'desde la cooperativa' haurà d'ampliar informació."), 
@@ -387,8 +387,7 @@ class sales_movement( movement ):
 		verbose_name_plural=_(u'Abonaments')
 class purchases_movement( movement ):
 	petition_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data de petició. Exemple dd/mm/aaaa"))
-	acceptation_date=models.DateField(verbose_name=_(u"Data de realització"), help_text=_(u"La data en que s'accepta. Exemple dd/mm/aaaa"))
-	execution_date=models.DateField(verbose_name=_(u"Data d'execució'"), help_text=_(u"La data en que es realitza. Exemple dd/mm/aaaa"))
+	acceptation_date=models.DateField(verbose_name=_(u"Data d'acceptament"), help_text=_(u"La data en que s'accepta. Exemple dd/mm/aaaa"), null=True, blank=True)
 	class Meta:
 		verbose_name=_(u'Reintegrament')
 		verbose_name_plural=_(u'Reintegraments')
@@ -487,7 +486,7 @@ class period_payment(models.Model):
 	currency = models.ForeignKey(currencies, verbose_name=_(u"Moneda"), help_text=_(u"Selecciona la moneda"))
 	def __unicode__(self):
 		from Invoices.bots import bot_currency
-		return bot_currency(self.currency).get_change()
+		return bot_currency(self.currency).get_change(self.value)
 	class Meta:
 		verbose_name= _(u'Pagament')
 		verbose_name_plural= _(u'Pagaments')

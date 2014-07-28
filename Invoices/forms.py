@@ -60,7 +60,9 @@ class provider_form(company_form):
 
 from Invoices.models import manage_CHOICE_COOPER, manage_CHOICE_COOP, status_CHOICE_NONE, status_CHOICE_PENDING, status_CHOICE_DONE, status_CHOICE_WAITING
 
+from Invoices.models import invoice
 class invoice_form(forms.ModelForm):
+	model = invoice
 	statuses=(
 		(status_CHOICE_NONE, _(u'---------------------')),
 		(status_CHOICE_WAITING, _(u'Esperant data de venciment')),
@@ -72,7 +74,8 @@ class invoice_form(forms.ModelForm):
 
 	def __init__(self, *args, **kwargs):
 		super(invoice_form, self).__init__(*args, **kwargs)
-
+		if not hasattr(self,"request"):
+			return
 		current_period = bot_period(self.request.user).period( True, self.request )
 		if current_period and not hasattr(self.instance, 'period'):
 			self.initial['period'] = current_period
@@ -122,10 +125,12 @@ class invoice_form(forms.ModelForm):
 		cleaned_data = self.cleaned_data
 		date = cleaned_data.get('date')
 		period = cleaned_data.get('period')
-		if not period:
-			period = self.period
-		if date > period.date_close:
-			raise forms.ValidationError(_(u"La data ha de ser menor que el dia final del periode"))
+		if period is None:
+			if hasattr(self, "period"):
+				period = self.period
+		if period is not None:
+			if date > period.date_close:
+				raise forms.ValidationError(_(u"La data ha de ser menor que el dia final del periode"))
 		return date
 
 	def clean_transfer_date(self):
@@ -133,10 +138,26 @@ class invoice_form(forms.ModelForm):
 			return None
 		return self.cleaned_data.get("transfer_date")
 
+
 class sales_invoice_form(invoice_form):
 	model = sales_invoice
 	class Meta:
 		localized_fields = ('value', 'invoiced_vat', 'assigned_vat', 'total')
+
+class sales_invoice_form_balance(sales_invoice_form):
+	total = forms.DecimalField(label=_(u'Total Factura (€)'), localize=True, required=False)
+	def __init__(self, *args, **kwargs):
+		super(sales_invoice_form, self).__init__(*args, **kwargs)
+		if hasattr(self.instance, 'total'):
+			self.initial['total'] = self.instance.total
+		else:
+			self.initial['total'] = 0
+		
+		if hasattr(self.instance, 'status'):
+			self.initial['status'] = self.instance.status
+		else:
+			self.initial['status'] = None
+
 
 class purchases_invoice_form(invoice_form):
 	model = purchases_invoice
@@ -153,6 +174,35 @@ class purchases_invoice_form(invoice_form):
 		if  self.cleaned_data.get('expiring_date') is None:
 				raise forms.ValidationError(_(u"Has d'introduïr una data de venciment"))
 		return self.cleaned_data.get('expiring_date')
+
+class purchases_invoice_form_balance(purchases_invoice_form):
+	total = forms.DecimalField(label=_(u'Total Factura (€)'), localize=True, required=False)
+	def __init__(self, *args, **kwargs):
+		super(purchases_invoice_form, self).__init__(*args, **kwargs)
+		if hasattr(self.instance, 'total'):
+			self.initial['total'] = self.instance.total
+		else:
+			self.initial['total'] = 0
+
+		if hasattr(self.instance, 'status'):
+			self.initial['status'] = self.instance.status
+		else:
+			self.initial['status'] = None
+
+	
+class movement_form_balance(forms.ModelForm):
+	statuses=(
+		(status_CHOICE_PENDING, _(u'Pendent')),
+		(status_CHOICE_DONE, _(u'Executat')),
+	)
+	status = forms.CharField(label=_(u"Estat"), max_length=30,
+			widget=forms.Select(choices=statuses), required=False)
+	def __init__(self, *args, **kwargs):
+		super(movement_form_balance, self).__init__(*args, **kwargs)
+		if hasattr(self.instance, 'status'):
+			self.initial['status'] = self.instance.status
+		else:
+			self.initial['status'] = None
 
 from Invoices.models import period_close
 class period_close_form(forms.ModelForm):

@@ -569,7 +569,7 @@ class purchases_invoice_user (invoice_admin):
 user_admin_site.register(purchases_invoice, purchases_invoice_user)
 
 class purchases_invoice_admin (purchases_invoice_user):
-	fields = ['cooper','period', 'num', 'provider', 'date', 'who_manage', 'status', 'transfer_date']
+	fields = ['cooper'] + purchases_invoice_user.fields
 	list_display = ('cooper',) + purchases_invoice_user.list_display
 	list_editable = ('cooper',) + purchases_invoice_user.list_editable
 	list_export = ('cooper',) + purchases_invoice_user.list_export
@@ -789,28 +789,43 @@ class period_close_admin (period_close_user):
 
 admin.site.register(period_close, period_close_admin)
 
-
-class sales_invoice_inline(admin.TabularInline):
-	model = sales_invoice
-	fields = ['client', 'date', 'status', 'transfer_date']
-	extra = 1
+class balance_line_inline(admin.TabularInline):
+	model = invoice
+	fields = ['status', 'date', 'transfer_date',]
+	extra = 0
+	def status(self, obj):
+		return obj.status()
 	def total(self, obj):
 		return obj.total()
+	def queryset(self, request):
+		return self.model.objects.filter(who_manage=manage_CHOICE_COOP)
 
-class purchases_invoice_inline(admin.TabularInline):
+
+from Invoices.forms import sales_invoice_form_balance 
+class sales_invoice_inline_balance(balance_line_inline):
+	model = sales_invoice
+	form = sales_invoice_form_balance
+	fields = ['client', 'total'] + balance_line_inline.fields
+
+
+from Invoices.forms import purchases_invoice_form_balance 
+class purchases_invoice_inline_balance(balance_line_inline):
 	model = purchases_invoice
-	fields = ['provider', 'date', 'status', 'transfer_date']
-	extra = 1
+	form = purchases_invoice_form_balance
+	fields = ['provider', 'total', 'status', 'expiring_date', 'transfer_date']
 
+from Invoices.forms import movement_form_balance
 class sales_movement_inline(admin.TabularInline):
+	form = movement_form_balance
 	model = sales_movement
-	fields = ['concept', 'value', 'who_manage', 'planned_date', 'execution_date', 'currency']
-	extra = 1
+	fields = ['value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
+	extra = 0
 
 class purchases_movement_inline(admin.TabularInline):
 	model = purchases_movement
-	fields = [ 'concept', 'value', 'petition_date', 'acceptation_date', 'execution_date', 'status', 'currency']
-	extra = 1
+	form = movement_form_balance
+	fields = [ 'value', 'concept', 'petition_date', 'acceptation_date', 'execution_date', 'status', 'currency']
+	extra = 0
 class period_admin(ModelAdmin):
 	fields = ['label', 'first_day', 'date_open', 'date_close']
 	list_display = ('label', 'first_day', 'date_open', 'date_close')
@@ -847,44 +862,21 @@ class cooper_admin(ModelAdmin):
 	def first_period(self, obj):
 		qs = period.objects.filter(date_close__gt = (obj.user.date_joined  ) , first_day__lte = obj.user.date_joined  + timedelta(days=9) )
 		if qs.count() > 0:
-			return qs[0].period()
+			return qs[0]
 		return None
 	first_period.short_description = _(u"Primer període")
 admin.site.register(cooper, cooper_admin)
 
 from Invoices.forms import cooper_admin_form
-class cooper_admin_balance(ModelAdmin):
-	form = cooper_admin_form
+class cooper_admin_balance(cooper_admin):
 	model = 'cooper_proxy_balance'
 	list_per_page = 600
-	fields = ['user', 'coop_number']
-	list_display = ('firstname', 'lastname', 'coopnumber', 'email', 'balance')
-	search_fields = ['coop_number', 'user__username', 'user__first_name']
+	fields = ['coop_number']
+	list_display = ('firstname', 'lastname', 'coopnumber', 'email', 'balance', 'first_period', 'date_joined')
+	list_display_links = ('coopnumber', )
 	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
-	def date_joined(self,obj):
-		return obj.user.date_joined
-	date_joined.short_description = _(u"Data d'alta")
-	date_joined.admin_order_field = 'user__date_joined'
-	def firstname(self,obj):
-		return obj.user.first_name
-	firstname.admin_order_field = 'user__first_name'
-	firstname.short_description = _(u"Nom")
-	def lastname(self,obj):
-		return obj.user.last_name
-	lastname.admin_order_field = 'user__last_name'
-	lastname.short_description = _(u"Cognom")
-	def coopnumber(self,obj):
-		return "%04d" % obj.coop_number
-	coopnumber.short_description = _(u"nº COOP")
-	coopnumber.admin_order_field = 'coop_number'
-	def first_period(self, obj):
-		qs = period.objects.filter(date_close__gt = (obj.user.date_joined  ) , first_day__lte = obj.user.date_joined  + timedelta(days=9) )
-		if qs.count() > 0:
-			return qs[0].period()
-		return None
-	first_period.short_description = _(u"Primer període")
-	inlines = [sales_invoice_inline, purchases_invoice_inline, sales_movement_inline, purchases_movement_inline]
+	inlines = [sales_invoice_inline_balance, purchases_invoice_inline_balance, sales_movement_inline, purchases_movement_inline]
 	def has_add_permission(self, request, obj=None):
 		return False
 	def get_actions(self, request):
@@ -892,7 +884,7 @@ class cooper_admin_balance(ModelAdmin):
 		del actions['delete_selected']
 		return actions
 
-	def has_delete_permission(self, request):
+	def has_delete_permission(self, request, obj=None):
 		return False
 
 	def balance(self, obj):
@@ -903,7 +895,7 @@ admin.site.register(cooper_proxy_balance, cooper_admin_balance)
 
 
 class period_close_admin_transactions (period_close_admin):
-	inlines = [sales_invoice_inline, purchases_invoice_inline, sales_movement_inline, purchases_movement_inline]
+	inlines = [sales_invoice_inline_balance, purchases_invoice_inline_balance, sales_movement_inline, purchases_movement_inline]
 admin.site.register(period_close_proxy_transactions, period_close_admin_transactions)
 
 
