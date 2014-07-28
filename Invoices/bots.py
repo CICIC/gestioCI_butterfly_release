@@ -68,27 +68,33 @@ class bot_period( object ):
 			return qs_opened_periods[0]
 		if notify and Error is not None :
 			from django.contrib import messages
-			if not request.user.is_superuser:
-				messages.error(request, Error)
+			if request:
+				if not request.user.is_superuser:
+					messages.error(request, Error)
 		return None
 	@staticmethod
 	def get_opened_periods(user):
 		#Get current user cooper record
 		from Invoices.models import cooper, period
-		obj_cooper = cooper.objects.filter(user=user)
-		if obj_cooper.count()>0:
-			#Get extradays
-			nExtraDays = obj_cooper[0].extra_days if obj_cooper else 0
-			#Return queryset
-			from Invoices.models import period
-			qs_Period =  period.objects.filter( 
+
+		nExtraDays = 0
+		if user.is_superuser:
+			obj_cooper = None
+		else:
+			obj_cooper = cooper.objects.filter(user=user)
+			if obj_cooper.count()>0:
+				nExtraDays = obj_cooper[0].extra_days if obj_cooper else 0
+
+		#Return queryset
+		from Invoices.models import period
+		qs_Period =  period.objects.filter( 
 				first_day__lte=datetime.now(), 
 				date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
 				)
-			if qs_Period.count() > 1:
-				return period.objects.filter(pk=qs_Period[0].pk) 
-			else:
-				return qs_Period
+		if qs_Period.count() > 1:
+			return period.objects.filter(pk=qs_Period[0].pk) 
+		else:
+			return qs_Period
 		return period.objects.filter(pk=-1) 
 
 class bot_assigned_vat(object):
