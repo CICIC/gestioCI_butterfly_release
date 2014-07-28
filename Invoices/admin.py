@@ -784,6 +784,19 @@ user_admin_site.register(period_close, period_close_user)
 
 class period_close_admin (period_close_user):
 	list_display = ('cooper', ) + period_close_user.list_display
+	def edit_link(self, obj):
+		if obj is None:
+			can_edit = False
+		else:
+			can_edit =self.exists_opened_period( obj.cooper.user ) and self.exists_closed_period( obj.cooper.user ) and not self.exists_closed_period_done ( obj.cooper.user )
+		if can_edit:
+			return u'<a href="/admin/%s/%s/%s">%s</a>' % (
+				 obj._meta.app_label, obj._meta.module_name, obj.id, obj.period)
+		else:
+			return obj.period
+	edit_link.allow_tags = True
+	edit_link.short_description = _(u"Període")
+
 	def queryset(self, request):
 		return period_close.objects.all()
 
