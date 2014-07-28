@@ -839,6 +839,7 @@ class sales_movement_inline(admin.TabularInline):
 	form = movement_form_balance
 	model = sales_movement
 	fields = ['value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
+	list_filter = ('status', 'currency')
 	extra = 0
 
 class purchases_movement_inline(admin.TabularInline):
@@ -846,7 +847,7 @@ class purchases_movement_inline(admin.TabularInline):
 	form = movement_form_balance
 	fields = [ 'value', 'concept', 'petition_date', 'acceptation_date', 'execution_date', 'status', 'currency']
 	extra = 0
-	
+
 class period_admin(ModelAdmin):
 	fields = ['label', 'first_day', 'date_open', 'date_close']
 	list_display = ('label', 'first_day', 'date_open', 'date_close')
@@ -933,6 +934,33 @@ class cooper_user_balance(cooper_admin):
 user_admin_site.register(cooper_proxy_balance, cooper_user_balance)
 
 admin.site.register(cooper_proxy_transactions, cooper_user_balance)
+
+class sales_movements_admin(ModelAdmin):
+	form = movement_form_balance
+	model = sales_movement
+	fields = ['cooper', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
+	list_display = ('cooper', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency')
+	list_filter = ('cooper', 'currency',)
+	extra = 0
+	def status(self, obj):
+		return movement_STATUSES[obj.status()][1]
+	def total(self, obj):
+		return obj.total()
+admin.site.register(sales_movement, sales_movements_admin)
+
+from Invoices.models import movement_STATUSES
+class purchases_movements_admin(ModelAdmin):
+	form = movement_form_balance
+	model = purchases_movement
+	fields = ['cooper', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency']
+	list_display = ('cooper', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency')
+	list_filter = ('currency',)
+	extra = 0
+	def status(self, obj):
+		return movement_STATUSES[obj.status()][1]
+	def total(self, obj):
+		return obj.total()
+admin.site.register(purchases_movement, purchases_movements_admin)
 
 
 

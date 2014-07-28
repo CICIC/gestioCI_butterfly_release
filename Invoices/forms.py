@@ -185,14 +185,14 @@ class purchases_invoice_form_balance(purchases_invoice_form):
 		else:
 			self.initial['status'] = None
 
-	
+from Invoices.models import movement_STATUSES
 class movement_form_balance(forms.ModelForm):
 	statuses=(
 		(status_CHOICE_PENDING, _(u'Pendent')),
 		(status_CHOICE_DONE, _(u'Executat')),
 	)
 	status = forms.CharField(label=_(u"Estat"), max_length=30,
-			widget=forms.Select(choices=statuses), required=False)
+			widget=forms.Select(choices=movement_STATUSES), required=False)
 	def __init__(self, *args, **kwargs):
 		super(movement_form_balance, self).__init__(*args, **kwargs)
 		if hasattr(self.instance, 'status'):

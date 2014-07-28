@@ -149,6 +149,10 @@ who_manage_CHOICES=(
 vat_type_OFICIAL = 0
 vat_type_ASSIGNED = 1
 
+movement_STATUSES=(
+		(status_CHOICE_PENDING, _(u'Pendent')),
+		(status_CHOICE_DONE, _(u'Executat')),
+	)
 class invoice(models.Model):
 	period= models.ForeignKey(period, verbose_name=_(u'Trimestre'))
 	cooper= models.ForeignKey(cooper, verbose_name=_(u"nº COOP"))
@@ -379,14 +383,14 @@ class sales_movement( movement ):
 		default=manage_CHOICE_COOPER
 	)
 	class Meta:
-		verbose_name=_(u'Abonament')
-		verbose_name_plural=_(u'Abonaments')
+		verbose_name=_(u'L - Abonament')
+		verbose_name_plural=_(u'L - Abonaments')
 class purchases_movement( movement ):
 	petition_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data de petició. Exemple dd/mm/aaaa"))
 	acceptation_date=models.DateField(verbose_name=_(u"Data d'acceptament"), help_text=_(u"La data en que s'accepta. Exemple dd/mm/aaaa"), null=True, blank=True)
 	class Meta:
-		verbose_name=_(u'Reintegrament')
-		verbose_name_plural=_(u'Reintegraments')
+		verbose_name=_(u'M - Reintegrament')
+		verbose_name_plural=_(u'M - Reintegraments')
 
 
 class period_close(models.Model):
