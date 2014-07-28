@@ -485,7 +485,9 @@ class period_payment(models.Model):
 	period_close = models.ForeignKey(period_close, verbose_name=_(u'Trimestre'))
 	value = models.DecimalField(verbose_name=_(u"Import"), decimal_places=2, max_digits=10)
 	currency = models.ForeignKey(currencies, verbose_name=_(u"Moneda"), help_text=_(u"Selecciona la moneda"))
-
+	def __unicode__(self):
+		from Invoices.bots import bot_currency
+		return bot_currency(self.currency).get_change()
 	class Meta:
 		verbose_name= _(u'Pagament')
 		verbose_name_plural= _(u'Pagaments')

@@ -241,6 +241,11 @@ class bot_filters(object):
 				return HttpResponseRedirect( request.path + "?" + request.GET.urlencode() )
 		return super(entity,instance).changelist_view(request, extra_context=extra_context)
 
+class bot_currency(object):
+	def __init__(self, currency):
+		self.currency = currency
+	def get_change(self):
+		return ("%s raó de canvi:") % "Pendiente { moneda: [0000] moneda: [0000] moneda: [0000]}"
 
 from Invoices.models import period_payment, sales_movement, status_CHOICE_PENDING, manage_CHOICE_COOPER
 from datetime import date
@@ -259,7 +264,7 @@ class bot_period_payment(object):
 							planned_date = date.today()
 							)
 			new_sales_movement.save()
-
+	
 '''
 class bot_period_closer( object ):
 	def __init__( self, user, period ):
