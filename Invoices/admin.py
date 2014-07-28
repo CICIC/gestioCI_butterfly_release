@@ -886,7 +886,7 @@ class cooper_admin(ModelAdmin):
 		if qs.count() > 0:
 			return qs[0]
 		return None
-	first_period.short_description = _(u"Primer període")
+	first_period.short_description = _(u"Període inicial")
 admin.site.register(cooper, cooper_admin)
 
 from Invoices.forms import cooper_admin_form
@@ -894,7 +894,7 @@ class cooper_admin_balance(cooper_admin):
 	model = 'cooper_proxy_balance'
 	list_per_page = 600
 	fields = ['coop_number']
-	list_display = ('firstname', 'lastname', 'coopnumber', 'email', 'balance', 'first_period', 'date_joined')
+	list_display = ('firstname', 'lastname', 'coopnumber', 'email', 'balance', 'balance_euro', 'balance_eco', 'balance_btc', 'first_period', 'date_joined')
 	list_display_links = ('coopnumber', )
 	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
@@ -909,11 +909,29 @@ class cooper_admin_balance(cooper_admin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
+	def balance_euro(self, obj):
+		current_period = bot_period(obj.user).period()
+		bot = bot_balance(current_period, obj)
+		return bot.total_previous(currencies.objects.get(name="EURO")) + bot.total(currencies.objects.get(name="EURO"))
+	balance_euro.short_description = _(u"Balanç EURO")
+
+	def balance_btc(self, obj):
+		current_period = bot_period(obj.user).period()
+		bot = bot_balance(current_period, obj)
+		return bot.total_previous(currencies.objects.get(name="BTC")) + bot.total(currencies.objects.get(name="BTC"))
+	balance_btc.short_description = _(u"Balanç BTC")
+
+	def balance_eco(self, obj):
+		current_period = bot_period(obj.user).period()
+		bot = bot_balance(current_period, obj)
+		return bot.total_previous(currencies.objects.get(name="ECO")) + bot.total(currencies.objects.get(name="ECO"))
+	balance_eco.short_description = _(u"Balanç ECOS")
 	def balance(self, obj):
-		return 0
+		current_period = bot_period(obj.user).period()
+		bot = bot_balance(current_period, obj)
+		return bot.total_previous() + bot.total()
+	balance.short_description = _(u"Balanç saldo")
 admin.site.register(cooper_proxy_balance, cooper_admin_balance)
-
-
 
 
 class period_close_admin_transactions (period_close_admin):

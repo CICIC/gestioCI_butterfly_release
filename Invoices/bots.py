@@ -271,7 +271,49 @@ class bot_period_payment(object):
 							planned_date = date.today()
 							)
 			new_sales_movement.save()
-	
+from django.db.models import Sum
+from Invoices.models import sales_invoice, purchases_invoice,  sales_movement, purchases_movement
+
+DEFAULT_CURRENCY = "EURO"
+class bot_balance(object):
+	def __init__(self, period, cooper):
+		self.period = period
+		self.cooper = cooper
+
+	def total(self, currency = None ):
+		sales_invoice_total = 0
+		purchases_invoice_total = 0
+
+		if currency is None:
+			sales_invoice_total = bot_sales_invoice(
+					sales_invoice.objects.filter(cooper=self.cooper.pk, period=self.period)
+					).sales_total
+			purchases_invoice_total = bot_purchases_invoice(purchases_invoice.objects.filter(cooper=self.cooper.pk, period=self.period)).purchases_total
+
+			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+		else:
+			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day, currency = currency).aggregate(Sum('value'))["value__sum"]
+			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day, currency = currency).aggregate(Sum('value'))["value__sum"]
+			if sales_movement_total is None:
+				sales_movement_total = 0
+			if purchase_movement_total  is None:
+				purchase_movement_total  = 0
+		return sales_invoice_total - purchases_invoice_total + sales_movement_total - purchase_movement_total
+	def total_previous(self, currency = None):
+		sales_invoice_total = bot_sales_invoice(
+			sales_invoice.objects.filter(cooper=self.cooper.pk).exclude(period=self.period)
+				).sales_total
+		purchases_invoice_total = bot_purchases_invoice(
+			purchases_invoice.objects.filter(cooper=self.cooper.pk).exclude(period=self.period)
+			).purchases_total
+		sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__lte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+		if sales_movement_total is None:
+			return 0
+		purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__lte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+		if purchase_movement_total is None:
+			purchase_movement_total = 0
+		return sales_invoice_total + purchases_invoice_total + sales_movement_total
 '''
 class bot_period_closer( object ):
 	def __init__( self, user, period ):
