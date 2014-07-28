@@ -203,6 +203,8 @@ class movement_form_balance(forms.ModelForm):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
+	class Meta:
+		localized_fields = ["value",]
 
 from Invoices.models import period_close
 class period_close_form(forms.ModelForm):
