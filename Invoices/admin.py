@@ -810,16 +810,24 @@ class balance_line_inline(admin.TabularInline):
 		return obj.status()
 	def total(self, obj):
 		return obj.total()
-	def queryset(self, request):
-		return self.model.objects.filter(who_manage=manage_CHOICE_COOP)
+	def get_queryset(self, request):
+		current_period = bot_period(request.user).period()
+		if current_period:
+			return self.model.objects.filter(
+					who_manage=manage_CHOICE_COOP).exclude(
+					date__lte=current_period.first_day,
+					transfer_date__isnull=True)
+		else:
+			return self.model.objects.filter(who_manage=manage_CHOICE_COOP)
 
+	def has_add_permission(self, request, obj=None):
+		return False
 
 from Invoices.forms import sales_invoice_form_balance 
 class sales_invoice_inline_balance(balance_line_inline):
 	model = sales_invoice
 	form = sales_invoice_form_balance
 	fields = ['client', 'total'] + balance_line_inline.fields
-
 
 from Invoices.forms import purchases_invoice_form_balance 
 class purchases_invoice_inline_balance(balance_line_inline):
@@ -839,6 +847,7 @@ class purchases_movement_inline(admin.TabularInline):
 	form = movement_form_balance
 	fields = [ 'value', 'concept', 'petition_date', 'acceptation_date', 'execution_date', 'status', 'currency']
 	extra = 0
+	
 class period_admin(ModelAdmin):
 	fields = ['label', 'first_day', 'date_open', 'date_close']
 	list_display = ('label', 'first_day', 'date_open', 'date_close')
