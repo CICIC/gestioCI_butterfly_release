@@ -819,7 +819,6 @@ class balance_line_inline(admin.TabularInline):
 					transfer_date__isnull=True)
 		else:
 			return self.model.objects.filter(who_manage=manage_CHOICE_COOP)
-
 	def has_add_permission(self, request, obj=None):
 		return False
 
@@ -890,7 +889,7 @@ class cooper_admin(ModelAdmin):
 admin.site.register(cooper, cooper_admin)
 
 from Invoices.forms import cooper_admin_form
-class cooper_admin_balance(cooper_admin):
+class cooper_user_balance(cooper_admin):
 	model = 'cooper_proxy_balance'
 	list_per_page = 600
 	fields = ['coop_number']
@@ -902,7 +901,7 @@ class cooper_admin_balance(cooper_admin):
 	def has_add_permission(self, request, obj=None):
 		return False
 	def get_actions(self, request):
-		actions = super(cooper_admin_balance, self).get_actions(request)
+		actions = super(cooper_user_balance, self).get_actions(request)
 		del actions['delete_selected']
 		return actions
 
@@ -931,12 +930,11 @@ class cooper_admin_balance(cooper_admin):
 		bot = bot_balance(current_period, obj)
 		return bot.total_previous() + bot.total()
 	balance.short_description = _(u"Balanç saldo")
-admin.site.register(cooper_proxy_balance, cooper_admin_balance)
+user_admin_site.register(cooper_proxy_balance, cooper_user_balance)
+
+admin.site.register(cooper_proxy_transactions, cooper_user_balance)
 
 
-class period_close_admin_transactions (period_close_admin):
-	inlines = [sales_invoice_inline_balance, purchases_invoice_inline_balance, sales_movement_inline, purchases_movement_inline]
-admin.site.register(period_close_proxy_transactions, period_close_admin_transactions)
 
 
 class cooper_companies_user(ModelAdmin):

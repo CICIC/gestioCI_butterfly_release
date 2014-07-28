@@ -469,7 +469,7 @@ class period_close(models.Model):
 		verbose_name_plural= _(u'03 - Resultats')
 		unique_together = ('cooper', 'period')
 
-class period_close_proxy_transactions(period_close):
+class cooper_proxy_transactions(cooper):
 	class Meta:
 		verbose_name= _(u'K - Transaccions')
 		verbose_name_plural= _(u'K - Transaccions')
