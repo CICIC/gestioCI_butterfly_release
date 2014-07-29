@@ -288,9 +288,8 @@ class bot_balance(object):
 		if currency is None:
 			sales_invoice_total = bot_sales_invoice(
 					sales_invoice.objects.filter(cooper=self.cooper.pk, period=self.period)
-					).sales_total
-			purchases_invoice_total = bot_purchases_invoice(purchases_invoice.objects.filter(cooper=self.cooper.pk, period=self.period)).purchases_total
-
+					).sales_base
+			purchases_invoice_total = bot_purchases_invoice(purchases_invoice.objects.filter(cooper=self.cooper.pk, period=self.period)).purchases_base
 			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
 			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
 		else:
@@ -304,16 +303,16 @@ class bot_balance(object):
 	def total_previous(self, currency = None):
 		sales_invoice_total = bot_sales_invoice(
 			sales_invoice.objects.filter(cooper=self.cooper.pk).exclude(period=self.period)
-				).sales_total
+				).sales_base
 		purchases_invoice_total = bot_purchases_invoice(
 			purchases_invoice.objects.filter(cooper=self.cooper.pk).exclude(period=self.period)
-			).purchases_total
+			).purchases_base
 		sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__lte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
-		if sales_movement_total is None:
-			return 0
 		purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__lte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
-		if purchase_movement_total is None:
-			purchase_movement_total = 0
+		sales_movement_total = bot_object.get_value_or_zero(sales_movement_total)
+		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)
+		purchases_invoice_total = bot_object.get_value_or_zero(purchases_invoice_total)
+		purchase_movement_total = bot_object.get_value_or_zero(purchase_movement_total)
 		return sales_invoice_total + purchases_invoice_total + sales_movement_total
 '''
 class bot_period_closer( object ):
