@@ -139,7 +139,6 @@ class bot_object(object):
 	def __init__(self, field, obj):
 		self.field = field
 		self.obj = obj
-
 	def value(self):
 		field = self.field
 		obj = self.obj
@@ -156,6 +155,9 @@ class bot_object(object):
 				except:
 					value = "Sin Valor"
 		return value
+	@staticmethod
+	def get_value_or_zero(value):
+		return 0 if value is None else value
 
 class bot_period_close( object ):
 	def __init__(self, period, cooper, obj = None, recalculate=True):
@@ -294,10 +296,10 @@ class bot_balance(object):
 		else:
 			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day, currency = currency).aggregate(Sum('value'))["value__sum"]
 			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day, currency = currency).aggregate(Sum('value'))["value__sum"]
-			if sales_movement_total is None:
-				sales_movement_total = 0
-			if purchase_movement_total  is None:
-				purchase_movement_total  = 0
+		sales_movement_total = bot_object.get_value_or_zero(sales_movement_total)
+		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)
+		purchases_invoice_total = bot_object.get_value_or_zero(purchases_invoice_total)
+		purchase_movement_total = bot_object.get_value_or_zero(purchase_movement_total)
 		return sales_invoice_total - purchases_invoice_total + sales_movement_total - purchase_movement_total
 	def total_previous(self, currency = None):
 		sales_invoice_total = bot_sales_invoice(
