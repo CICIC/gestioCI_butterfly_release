@@ -695,6 +695,7 @@ class period_close_user(admin.ModelAdmin):
 			c.advanced_tax = 0
 			c.save()
 
+		form.save_m2m()
 		if obj.closed:
 			from Invoices.bots import bot_period_payment
 			bot_period_payment(obj).create_sales_movements_for_period()
