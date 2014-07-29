@@ -41,17 +41,16 @@ def print_period_close(request, period_close_id):
 	return generar_pdf(html)
 
 
-'''
+
 import ho.pisa as pisa
 import cStringIO as StringIO
 import cgi
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.http import HttpResponse
-'''
 
 def generar_pdf(html):
-	return HttpResponse(html)
+	#return HttpResponse(html)
 	# Función para generar el archivo PDF y devolverlo mediante HttpResponse
 	result = StringIO.StringIO()
 	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")), result)
