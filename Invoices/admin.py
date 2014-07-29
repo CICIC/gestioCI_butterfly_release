@@ -1,4 +1,4 @@
-		#encoding=utf-8
+#encoding=utf-8
 '''
  1) COMMON IMPORTS
  2) TOOLS
@@ -241,8 +241,6 @@ class tax_admin(ModelAdmin):
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
 admin.site.register(tax, tax_admin)
 
-
-
 class EmailNotificationAdmin(ModelAdmin):
 	class Media:
 			js = (
@@ -400,7 +398,6 @@ class tax_user(ModelAdmin):
 	def get_model_perms(self, request): 
 		return {'view': True}
 user_admin_site.register(tax, tax_user)
-
 
 class invoice_admin(ModelAdmin):
 	list_filter = ('period',)
@@ -630,7 +627,7 @@ class period_close_user(admin.ModelAdmin):
 	change_list_template = 'admin/Invoices/period_close/change_list.html'
 	model = period_close
 	inlines = [period_payment_inline]
-	list_display = ('edit_link', 'sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total',
+	list_display = ('edit_link', 'print_link', 'sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total',
 		'purchases_base', 'purchases_vat', 'purchases_irpf', 'purchases_total',
 		'oficial_vat_total', 'assigned_vat_total', 'vat_type',
 		'savings_with_assigned_vat', 'savings_with_assigned_vat_donation',
@@ -711,7 +708,7 @@ class period_close_user(admin.ModelAdmin):
 		if obj is None:
 			can_edit = False
 		else:
-			can_edit =self.exists_opened_period( obj.cooper.user ) and self.exists_closed_period( obj.cooper.user ) and not self.exists_closed_period_done ( obj.cooper.user )
+			can_edit =self.exists_opened_period( obj.cooper.user ) and self.exists_closed_period( obj.cooper.user ) and not self.exists_closed_period_done ( obj )
 		if can_edit:
 			return u'<a href="/cooper/%s/%s/%s">%s</a>' % (
 				 obj._meta.app_label, obj._meta.module_name, obj.id, obj.period)
@@ -719,6 +716,20 @@ class period_close_user(admin.ModelAdmin):
 			return obj.period
 	edit_link.allow_tags = True
 	edit_link.short_description = _(u"Període")
+
+	def print_link(self, obj):
+		
+		if obj is None:
+			can_print = False
+		else:
+			print self.exists_closed_period_done ( obj )
+			can_print = self.exists_closed_period_done ( obj )
+		if can_print:
+			return u'<a href="/invoices/print/%s">%s</a>' % ( obj.id, obj.period)
+		else:
+			return (u"-")
+	print_link.allow_tags = True
+	print_link.short_description = _(u"PDF")
 
 	def exists_opened_period(self, user):
 		return bot_period(user).period(False) is not None
@@ -730,20 +741,8 @@ class period_close_user(admin.ModelAdmin):
 			return period_close.objects.filter(period=current_period, cooper=current_cooper).count()>0
 		return False
 
-	def exists_closed_period_done(self, user):
-		if user.is_superuser:
-			 return True
-		return False
-		current_period = bot_period(user).period(False)
-		current_cooper = bot_cooper(user).cooper(False)
-		if current_period:
-			try:
-				pc = bot_period_close(current_period, current_cooper).period_close
-				if pc:
-					return pc.closed
-			except:
-				return False
-		return False
+	def exists_closed_period_done(self, pc):
+		return period_close.objects.get(pk=pc.id).closed
 
 	def has_add_permission(self, request):
 		if request.user.is_superuser:
@@ -751,10 +750,12 @@ class period_close_user(admin.ModelAdmin):
 		return self.exists_opened_period( request.user ) and not self.exists_closed_period( request.user )
 
 	def has_change_permission(self, request, obj=None):
+		if request.user.is_superuser:
+			return True
 		if obj is None:
 			return True
 		else:
-			return self.exists_opened_period( obj.cooper.user ) and self.exists_closed_period( obj.cooper.user ) and not self.exists_closed_period_done ( obj.cooper.user )
+			return self.exists_opened_period( obj.cooper.user ) and self.exists_closed_period( obj.cooper.user ) and not self.exists_closed_period_done ( obj )
 
 	def get_actions(self, request):
 		actions = super(period_close_user, self).get_actions(request)
@@ -765,7 +766,7 @@ class period_close_user(admin.ModelAdmin):
 	def get_model_perms(self, request): 
 		return {'historial':True, 
 			'canAdd': self.exists_opened_period( request.user ) and not self.exists_closed_period( request.user ),
-			'canEdit': self.exists_opened_period( request.user ) and self.exists_closed_period( request.user ) and not self.exists_closed_period_done ( request.user )}
+			'canEdit': self.exists_opened_period( request.user ) }
 	
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super(period_close_user, self).get_form(request, obj, **kwargs)
@@ -788,7 +789,7 @@ class period_close_admin (period_close_user):
 		if obj is None:
 			can_edit = False
 		else:
-			can_edit =self.exists_opened_period( obj.cooper.user ) and self.exists_closed_period( obj.cooper.user ) and not self.exists_closed_period_done ( obj.cooper.user )
+			can_edit = True
 		if can_edit:
 			return u'<a href="/admin/%s/%s/%s">%s</a>' % (
 				 obj._meta.app_label, obj._meta.module_name, obj.id, obj.period)
@@ -961,9 +962,6 @@ class purchases_movements_admin(ModelAdmin):
 	def total(self, obj):
 		return obj.total()
 admin.site.register(purchases_movement, purchases_movements_admin)
-
-
-
 
 class cooper_companies_user(ModelAdmin):
 	model = 'cooper_proxy_companies'

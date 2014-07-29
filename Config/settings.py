@@ -23,6 +23,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 5 Templates
 6 Localization
 7 EMail
+8 @login_required decorator
 '''
 
 
@@ -58,6 +59,7 @@ INSTALLED_APPS = (
     'django_cron', 	# This controls scheduled EmailNotifications https://pypi.python.org/pypi/django-cron
     'csvimport', 	# This provides import CSV to Model https://pypi.python.org/pypi/django-csvimport
     'localflavor', 	# This provide NIF/NIE/CIF form field
+
 )
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -190,5 +192,10 @@ EMAIL_PORT = 25
 EMAIL_USE_TLS = False
 #EMAIL_USE_SSL = False
 
+'''
+8 @login_required decorator
+'''
+LOGIN_REDIRECT_URL='/cooper'
+LOGIN_URL='/cooper'
 
 

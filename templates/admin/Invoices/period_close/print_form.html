@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+{% block title %} {% trans "CIC | Gesti&oacute; econ&ograve;mica - Resultats" %} {% endblock %}
+
+{% block branding %}
+	<h1 id="site-name"><a href="{% url 'admin:index' %}">{% trans "CIC | Gesti&oacute; econ&ograve;mica - Resultats" %}</a></h1>
+{% endblock %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% load admin_static  %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'PeriodClose.css' %}" />
+{% endblock %}
+
+{% block content %}<div id="content-main">
+{% block field_sets %}
+{% for item in adminform.fieldsets %}
+	{% for fieldset in item %}
+		<fieldset class="module aligned">
+			{% if fieldset.name %}<h2>{{ fieldset.name }}</h2>
+			{% else %} 
+					<div class="form-row">
+					{% for line in fieldset.fields %}
+							 {% for field_string in line %}
+								{% for field in adminform %}
+									{% if field_string == field.name %}
+										<div class="field-box{% if field.name %} field-{{ field.name }}{% endif %}">
+										{{ field.label_tag }} {{ field }}
+										</div>
+									{% endif %}
+								{% endfor %}
+							{% endfor %}
+					{% endfor %}
+					</div>
+			{% endif %}
+			{% if fieldset.description %}
+				<div class="description">{{ fieldset.description|safe }}</div>
+			{% endif %}
+		</fieldset>
+    {% endfor %}
+{% endfor %}
+{% endblock %}
+</div>
+{% endblock %}
