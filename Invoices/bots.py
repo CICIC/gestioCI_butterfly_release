@@ -127,8 +127,6 @@ class bot_assigned_vat(object):
 
 class bot_period_tax(object):
 	def __init__(self, base):
-		print "corresponde base: "
-		print base
 		from Invoices.models import tax
 		try:
 			tax = tax.objects.filter(min_base__lte=base, max_base__gte=base)[0].value
@@ -205,12 +203,11 @@ class bot_period_close( object ):
 		return pc
 
 	def load_period_close_form(self, form, fields, initial = True ):
-
 		for field in fields:
 			if str(field) =="period":
 				value = self.period 
 			elif str(field) == "cooper":
-				value = self.cooper
+				value = self.cooper.id
 			else:
 				value = bot_object( field, self.period_close ).value()
 
