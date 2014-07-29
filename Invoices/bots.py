@@ -164,7 +164,6 @@ class bot_period_close( object ):
 		if cooper and period:
 			self.period_close = self.load_period_close( obj, recalculate )
 	def load_period_close(self, obj=None, recalculate = False):
-
 		from Invoices.models import period_close
 		if obj is None:
 			pc = period_close(self.period, self.cooper)
@@ -216,18 +215,21 @@ class bot_period_close( object ):
 			else:
 				form.base_fields[field].initial = value
 
-	def set_period_close_form_readonly(self, *form_array):
-		form_array['sales_base'].widget.attrs['readonly'] = True
-		form_array['sales_invoiced_vat'].widget.attrs['readonly'] = True
-		form_array['sales_assigned_vat'].widget.attrs['readonly'] = True
-		form_array['sales_total'].widget.attrs['readonly'] = True
-		form_array['purchases_base'].widget.attrs['readonly'] = True
-		form_array['purchases_vat'].widget.attrs['readonly'] = True
-		form_array['purchases_irpf'].widget.attrs['readonly'] = True
-		form_array['purchases_total'].widget.attrs['readonly'] = True
-		form_array['oficial_vat_total'].widget.attrs['readonly'] = True
-		form_array['assigned_vat_total'].widget.attrs['readonly'] = True
-		form_array['period_tax'].widget.attrs['readonly'] = True
+	def set_period_close_form_readonly(self, form_array):
+		form_array.base_fields['sales_base'].widget.attrs['readonly'] = True
+		form_array.base_fields['sales_invoiced_vat'].widget.attrs['readonly'] = True
+		form_array.base_fields['sales_assigned_vat'].widget.attrs['readonly'] = True
+		form_array.base_fields['sales_total'].widget.attrs['readonly'] = True
+		form_array.base_fields['purchases_base'].widget.attrs['readonly'] = True
+		form_array.base_fields['purchases_vat'].widget.attrs['readonly'] = True
+		form_array.base_fields['purchases_irpf'].widget.attrs['readonly'] = True
+		form_array.base_fields['purchases_total'].widget.attrs['readonly'] = True
+		form_array.base_fields['oficial_vat_total'].widget.attrs['readonly'] = True
+		form_array.base_fields['assigned_vat_total'].widget.attrs['readonly'] = True
+		form_array.base_fields['period_tax'].widget.attrs['readonly'] = True
+		form_array.base_fields['advanced_tax'].widget.attrs['readonly'] = True
+		form_array.base_fields['total'].widget.attrs['readonly'] = True
+		form_array.base_fields['total_to_pay'].widget.attrs['readonly'] = True
  
 class bot_filters(object):
 	@staticmethod

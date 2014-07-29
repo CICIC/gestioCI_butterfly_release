@@ -220,20 +220,18 @@ class period_close_form(forms.ModelForm):
 		super(period_close_form, self).__init__(*args, **kwargs)
 		self.current_fields = self.current_fields + ('cooper', 'total_to_pay' )
 		if self.is_new:
-			if self.initial["period"] is None: #protect against multiple call, if we are loaded don't load again
 				current_cooper = bot_cooper(self.request.user).cooper(self.request)
 				current_period = bot_period(self.request.user).period( True, self.request )
 
 				if current_cooper and current_period:
-					bot_period_close( current_period, current_cooper, self.instance, True).load_period_close_form(self,self.current_fields  )
+					bot = bot_period_close( current_period, current_cooper, self.instance, True)
+					bot.load_period_close_form(self,self.current_fields  )
 				else:
 					pass
 		else:
 			if self.base_fields["period"].initial is None: #protect against multiple call, if we are loaded don't load again
-				bot_period_close( self.obj.period, self.obj.cooper, self.obj).load_period_close_form(self, self.current_fields, False)
-
-	def clean_closed(self):
-		has_to_close_period = self.cleaned_data.get("closed")
+				bot = bot_period_close( self.obj.period, self.obj.cooper, self.obj)
+				bot.load_period_close_form(self, self.current_fields, False)
 
 	class Meta:
 		model = period_close

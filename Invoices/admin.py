@@ -688,19 +688,14 @@ class period_close_user(admin.ModelAdmin):
 
 	def save_model(self, request, obj, form, change):
 
-		for field in form.initial:
-			obj.field = bot_object( field, form.base_fields ).value()
-
-		obj.closed = form.base_fields["closed"]
 		obj.save()
 
-		#Reset advanced_tax
 		if obj.closed and obj.advanced_tax > 0:
-			c = cooper.objects.get(user=request.user)
+			c = cooper.objects.get(pk=obj.cooper.id)
 			c.advanced_tax = 0
 			c.save()
 
-		if change and obj.closed:
+		if obj.closed:
 			from Invoices.bots import bot_period_payment
 			bot_period_payment(obj).create_sales_movements_for_period()
 
@@ -722,7 +717,6 @@ class period_close_user(admin.ModelAdmin):
 		if obj is None:
 			can_print = False
 		else:
-			print self.exists_closed_period_done ( obj )
 			can_print = self.exists_closed_period_done ( obj )
 		if can_print:
 			return u'<a href="/invoices/print/%s">%s</a>' % ( obj.id, obj.period)
@@ -775,6 +769,8 @@ class period_close_user(admin.ModelAdmin):
 		if obj:
 			ModelForm.obj = obj
 		ModelForm.current_fields = self.list_export
+		if obj is not None:
+			bot_period_close( obj.period, obj.cooper, obj).set_period_close_form_readonly(ModelForm)
 		return ModelForm
 	class Media:
 			js = (
