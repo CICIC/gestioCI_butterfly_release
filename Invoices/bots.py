@@ -218,6 +218,8 @@ class bot_period_close( object ):
 				form.base_fields[field].initial = value
 
 	def set_period_close_form_readonly(self, form_array):
+		form_array.base_fields['period'].widget.attrs['disabled'] = True
+		form_array.base_fields['cooper'].widget.attrs['disabled'] = True
 		form_array.base_fields['sales_base'].widget.attrs['readonly'] = True
 		form_array.base_fields['sales_invoiced_vat'].widget.attrs['readonly'] = True
 		form_array.base_fields['sales_assigned_vat'].widget.attrs['readonly'] = True
@@ -272,6 +274,7 @@ class bot_period_payment(object):
 							planned_date = date.today()
 							)
 			new_sales_movement.save()
+
 from django.db.models import Sum
 from Invoices.models import sales_invoice, purchases_invoice,  sales_movement, purchases_movement
 
