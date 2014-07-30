@@ -402,7 +402,6 @@ user_admin_site.register(tax, tax_user)
 class invoice_admin(ModelAdmin):
 	list_filter = ('period',)
 	model = invoice
-
 	def status(self, obj):
 		return obj.status()
 	status.short_description = _(u"Estat")
@@ -470,7 +469,6 @@ from Invoices.forms import sales_invoice_form
 class sales_invoice_user (invoice_admin):
 	form = sales_invoice_form
 	model = sales_invoice
-
 	change_list_template = 'admin/Invoices/salesInvoices/change_list.html'
 	fields = ['client',] + ['period', 'num', 'date'] + ['who_manage', 'status', 'transfer_date']
 	list_display =  ('client',) + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
@@ -516,6 +514,7 @@ class sales_invoice_admin(sales_invoice_user):
 	list_editable = ('cooper',) + sales_invoice_user.list_editable 
 	list_export = ('cooper',) + sales_invoice_user.list_export 
 	list_filter = ('cooper','period', 'transfer_date')
+	list_per_page = 1000
 admin.site.register(sales_invoice, sales_invoice_admin)
 
 class purchases_line_inline(admin.TabularInline):
@@ -534,7 +533,7 @@ class purchases_invoice_user (invoice_admin):
 	inlines = [purchases_line_inline]
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
 	list_display_links = ( 'number', )
-
+	list_per_page = 1000
 	def providerName(self, obj):
 		return obj.provider.name
 	providerName.short_description = _(u"provider")
@@ -769,6 +768,7 @@ class period_close_user(admin.ModelAdmin):
 			ModelForm.cooper = obj.cooper
 			bot_period_close( obj.period, obj.cooper, obj).set_period_close_form_readonly(ModelForm)
 		return ModelForm
+
 	class Media:
 			js = (
 				'period_close.js',   # app static folder
@@ -778,6 +778,7 @@ user_admin_site.register(period_close, period_close_user)
 
 class period_close_admin (period_close_user):
 	list_display = ('cooper', ) + period_close_user.list_display
+	list_per_page = 1000
 	def edit_link(self, obj):
 		if obj is None:
 			can_edit = False
