@@ -1,35 +1,36 @@
+#encoding=utf-8
 import csv
 from django.http import HttpResponse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_unicode
-def export_as_csv_action(description="Export selected objects as CSV file", fields=None, exclude=None, header=True, force_fields=None):
-	"""
-	This function returns an export csv action
-	'fields' and 'exclude' work like in django ModelForm
-	'header' is whether or not to output the column names as the first row
-	if 'force_field' is True, you can give as a list of string whatever django admin can read in display_list
-	else it will check if the fields are in the model and reduce the list
-	"""
-	def export_as_csv(modeladmin, request, queryset):
+
+class bot_exporter(object):
+	def __init__(self, description="Export selected objects as CSV file", fields=None, exclude=None, header=True, force_fields=None):
+		self.fields = fields
+		self.exclude = exclude
+		self.header = header
+		self.force_fields = force_fields
+
+	def export_as_csv(self, modeladmin, request, queryset):
 		"""
 		Generic csv export admin action.
 		based on http://djangosnippets.org/snippets/2020/
 		extended for being able to give list_display as fields and work with admin-defined functions
 		"""
 		opts = modeladmin.model._meta
-		if not force_fields:
+		if not self.force_fields:
 			field_names = set([field for field in opts.fields])
-			if fields:
+			if self.fields:
 				fieldset = set(fields)
 				field_names = field_names & fieldset
-		elif fields:
-			field_names = fields
+		elif self.fields:
+			field_names = self.fields
 		else:
 			raise("option force_fields can only be used in parallel with option fields")
 
-		if exclude:
-			excludeset = set(exclude)
+		if self.exclude:
+			excludeset = set(self.exclude)
 			field_names = field_names - excludeset
 
 		response = HttpResponse(mimetype='text/csv')
@@ -37,7 +38,7 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 
 		writer = csv.writer(response)
 
-		if header:
+		if self.header:
 			headers = []
 			for field in field_names:
 				
@@ -57,7 +58,6 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 			row = []
 			for field in field_names:
 				try:
-					valor = modeladmin.model._meta.get_field(field).verbose_name
 					row.append(unicode(getattr(obj,field)).encode('utf-8'))
 				except:
 					try:
@@ -66,8 +66,30 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 						row.append(unicode(getattr(modeladmin, field)(obj)).encode('utf-8'))
 			writer.writerow(row)
 		return response
+
+def export_as_csv_action(description="Export selected objects as CSV file", fields=None, exclude=None, header=True, force_fields=None):
+	"""
+	This function returns an export csv action
+	'fields' and 'exclude' work like in django ModelForm
+	'header' is whether or not to output the column names as the first row
+	if 'force_field' is True, you can give as a list of string whatever django admin can read in display_list
+	else it will check if the fields are in the model and reduce the list
+	"""
+	def export_as_csv(modeladmin, request, queryset):
+		return bot_exporter(description, fields, exclude, header, force_fields).export_as_csv(modeladmin, request, queryset)
+
 	export_as_csv.short_description = description
 	return export_as_csv
 
-
-# example usage:
+def export_all_as_csv_action(description="Export selected objects as CSV file", fields=None, exclude=None, header=True, force_fields=None):
+	def export_all_as_csv(modeladmin, request, queryset):
+		if request.GET.has_key('period__id__exact'):
+			queryset = modeladmin.model.objects.filter(period=request.GET['period__id__exact'])
+			print "pasa"
+			return bot_exporter(description, fields, exclude, header, force_fields).export_as_csv(modeladmin, request, queryset)
+		else:
+			from django.contrib import messages
+			messages.error(request, _(u"Selecciona un període al filtre avanç d'exportar"))
+			return None
+	export_all_as_csv.short_description = description
+	return export_all_as_csv

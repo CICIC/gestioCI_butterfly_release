@@ -97,7 +97,7 @@ from django.contrib.admin import ModelAdmin
 from Invoices.models import *
 
 # Export csv plugin
-from Invoices.action import export_as_csv_action
+from Invoices.action import export_as_csv_action, export_all_as_csv_action
 
 #Use this by registrating of ModelAdmin in admin.site to specific cooper csv import
 from django import forms
@@ -357,7 +357,6 @@ class CSVImportAdmin(ModelAdmin):
 			obj.import_user = str(request.user)
 			obj.import_date = datetime.now()
 			obj.save()
-			
 
 	def filename_defaults(self, filename):
 		""" Override this method to supply filename based data """
@@ -514,7 +513,7 @@ class sales_invoice_admin(sales_invoice_user):
 	list_editable = ('cooper',) + sales_invoice_user.list_editable 
 	list_export = ('cooper',) + sales_invoice_user.list_export 
 	list_filter = ('cooper','period', 'transfer_date')
-	list_per_page = 1000
+	actions = sales_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 admin.site.register(sales_invoice, sales_invoice_admin)
 
 class purchases_line_inline(admin.TabularInline):
@@ -572,6 +571,7 @@ class purchases_invoice_admin (purchases_invoice_user):
 	list_editable = ('cooper',) + purchases_invoice_user.list_editable
 	list_export = ('cooper',) + purchases_invoice_user.list_export
 	list_filter = ('cooper','period',)
+	actions = purchases_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 admin.site.register(purchases_invoice, purchases_invoice_admin)
 
 class company_admin(ModelAdmin):
@@ -644,7 +644,7 @@ class period_close_user(admin.ModelAdmin):
 		(_('Totals'), {'fields': ('total', 'total_to_pay')}),
 		(_('Tancar'), {'fields': ('closed',)}),
 	)
-
+	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
 
 	def savings_with_assigned_vat(self, obj):
 		return obj.savings_with_assigned_vat()
@@ -773,12 +773,13 @@ class period_close_user(admin.ModelAdmin):
 			js = (
 				'period_close.js',   # app static folder
 			)
-	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
 user_admin_site.register(period_close, period_close_user)
 
 class period_close_admin (period_close_user):
 	list_display = ('cooper', ) + period_close_user.list_display
+	list_export = ('cooper',) + period_close_user.list_export
 	list_per_page = 1000
+	actions = period_close_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 	def edit_link(self, obj):
 		if obj is None:
 			can_edit = False
@@ -859,7 +860,8 @@ class cooper_admin(ModelAdmin):
 	list_display_links = ('user','coopnumber')
 	search_fields = ['coop_number', 'user__username', 'user__first_name']
 	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
-	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
+	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),] 
+
 	def date_joined(self,obj):
 		return obj.user.date_joined
 	date_joined.short_description = _(u"Data d'alta")
