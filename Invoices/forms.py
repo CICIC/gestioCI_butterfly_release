@@ -233,6 +233,15 @@ class period_close_form(forms.ModelForm):
 				bot = bot_period_close( self.obj.period, self.obj.cooper, self.obj)
 				bot.load_period_close_form(self, self.current_fields, False)
 
+	def get_period_display(self):
+		return self.obj.period.__unicode__()
+	def get_cooper_display(self):
+		return self.obj.cooper.__unicode__()
+	def get_vat_type_display(self):
+		from Invoices.models import vat_TYPES
+		return vat_TYPES[self.base_fields["vat_type"].initial][1]
+
+
 	class Meta:
 		model = period_close
 		from Invoices.models import period_close_base_fields

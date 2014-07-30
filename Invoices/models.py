@@ -400,6 +400,10 @@ period_close_base_fields = ('sales_base', 'sales_invoiced_vat', 'sales_assigned_
 	'period_tax', 'advanced_tax',
 	'donation', 
 	'total', 'total_to_pay', 'closed')
+vat_TYPES = (
+		(vat_type_OFICIAL, _(u'Pagament IVA oficial')),
+		(vat_type_ASSIGNED, _(u"Pagament IVA segons l'IVA assignat"))
+	)
 class period_close(models.Model):
 	period = models.ForeignKey(period, null=True, blank=True, verbose_name=_(u'Trimestre'))
 	cooper = models.ForeignKey(cooper, null=True, blank=True, verbose_name=_(u"nº COOP"))
@@ -416,11 +420,8 @@ class period_close(models.Model):
 	purchases_irpf = models.DecimalField(verbose_name=_(u"Retenció IRPF (€)"), decimal_places=2, max_digits=10, blank=True)
 	purchases_total = models.DecimalField(verbose_name=_(u"Total Despeses (€)"), decimal_places=2, max_digits=10, blank=True)
 	#vat
-	vat_types = (
-		(vat_type_OFICIAL, _(u'Pagament IVA oficial')),
-		(vat_type_ASSIGNED, _(u"Pagament IVA segons l'IVA assignat"))
-	)
-	vat_type = models.IntegerField(verbose_name=_(u"Tipus d'IVA"), choices=vat_types, default=1)
+
+	vat_type = models.IntegerField(verbose_name=_(u"Tipus d'IVA"), choices=vat_TYPES, default=1)
 
 	#savings_with_assigned_vat
 	def savings_with_assigned_vat(self):

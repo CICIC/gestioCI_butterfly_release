@@ -27,7 +27,6 @@ def print_period_close(request, period_close_id):
 		({'name': _('Total impostos')}, {'fields': (('total_vat', 'total_irpf'),)}),
 		({'name': _('Quota Trimestral')}, {'fields': (('period_tax', 'advanced_tax' ),)}),
 		({'name': _('Totals')}, {'fields': (('total', 'total_to_pay'),)}),
-		({'name': _('Tancar')}, {'fields': (('closed',),)}),
 	)
 	period_close_form.current_fields = ('period',  'sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total',
 		'purchases_base', 'purchases_vat', 'purchases_irpf', 'purchases_total',
@@ -36,7 +35,7 @@ def print_period_close(request, period_close_id):
 		'total_vat', 'total_irpf',
 		'period_tax', 'advanced_tax',
 		'donation', 
-		'total', 'closed')
+		'total')
 	html = render_to_string( 'admin/Invoices/period_close/print_form.html', {'adminform': period_close_form})
 	return generar_pdf(html)
 

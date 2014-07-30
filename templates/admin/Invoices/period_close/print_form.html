@@ -29,7 +29,16 @@
 								{% for field in adminform %}
 									{% if field_string == field.name %}
 										<div class="field-box{% if field.name %} field-{{ field.name }}{% endif %}">
-										{{ field.label_tag }} {{ field }}
+										{% if field_string == "period" %}
+											{{ field.label_tag }} {{ adminform.get_period_display }}
+										{% elif  field_string = "cooper" %}
+											{{ field.label_tag }} {{ adminform.get_cooper_display }}
+										{% elif field_string = "vat_type"  %}
+											{{ field.label_tag }} {{ adminform.get_vat_type_display }}
+											
+										{% else %}
+											{{ field.label_tag }} {{ field.value }}
+										{% endif %}
 										</div>
 									{% endif %}
 								{% endfor %}
