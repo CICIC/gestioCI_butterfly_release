@@ -134,7 +134,6 @@ class bot_period_tax(object):
 			tax = -1
 		self.tax = tax
 
-
 class bot_object(object):
 	def __init__(self, field, obj):
 		self.field = field
@@ -144,7 +143,6 @@ class bot_object(object):
 		obj = self.obj
 		value = None
 		try:
-			obj = self.obj
 			value = getattr(obj,field)
 		except:
 			try:
@@ -234,7 +232,7 @@ class bot_period_close( object ):
 		form_array.base_fields['advanced_tax'].widget.attrs['readonly'] = True
 		form_array.base_fields['total'].widget.attrs['readonly'] = True
 		form_array.base_fields['total_to_pay'].widget.attrs['readonly'] = True
- 
+
 class bot_filters(object):
 	@staticmethod
 	def filterbydefault(request, instance, entity, extra_context):
