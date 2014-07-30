@@ -28,14 +28,8 @@ def print_period_close(request, period_close_id):
 		({'name': _('Quota Trimestral')}, {'fields': (('period_tax', 'advanced_tax' ),)}),
 		({'name': _('Totals')}, {'fields': (('total', 'total_to_pay'),)}),
 	)
-	period_close_form.current_fields = ('period',  'sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total',
-		'purchases_base', 'purchases_vat', 'purchases_irpf', 'purchases_total',
-		'oficial_vat_total', 'assigned_vat_total', 'vat_type',
-		'savings_with_assigned_vat', 'savings_with_assigned_vat_donation',
-		'total_vat', 'total_irpf',
-		'period_tax', 'advanced_tax',
-		'donation', 
-		'total')
+	from Invoices.models import period_close_base_fields
+	period_close_form.current_fields = period_close_base_fields
 	html = render_to_string( 'admin/Invoices/period_close/print_form.html', {'adminform': period_close_form})
 	return render_pdf(html)
 
