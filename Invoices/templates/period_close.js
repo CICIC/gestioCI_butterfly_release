@@ -12,23 +12,13 @@
 	}
 
 	function c(yourNumber) {
-		if ( yourNumber == undefined  ) {
-			return 0
-		} else {
-			if (yourNumber.replace(",","") == yourNumber){
-				return yourNumber
-			}
-
-			yourNumber = yourNumber.replace(".", "");
-			yourNumber = yourNumber.replace(",", ".");
-			return parseFloat ( yourNumber );
-		}
+		return parseFloat(yourNumber.replace(",",".")).toFixed(2);
 	}
-	
+
 	function calculateVAT() {
-		if ( $('#id_vat_type').val()  == 0 ) {
+		if ( $('#id_vat_type').val()  == 1 ) {
 			//Cooper individual VAT
-			var savings =  $('#id_sales_invoiced_vat').val()  -  $('#id_sales_assigned_vat').val(); 
+			var savings =  (parseFloat(c( $('#id_sales_invoiced_vat').val() )  -  c( $('#id_sales_assigned_vat').val() )).toFixed(2)).replace(".",","); 
 			if ( savings < 0 ){
 				savings = 0;
 			}
@@ -39,8 +29,7 @@
 			var totalvat = $('#id_assigned_vat_total').val();
 		}
 
-		$('#id_savings_with_assigned_vat').val( ReplaceNumberWithCommas ( savings )  );
-		$('#id_savings_with_assigned_vat').val( c($('#id_savings_with_assigned_vat').val() ) );
+		$('#id_savings_with_assigned_vat').val( savings );
 		$('#id_total_vat').val( totalvat );
 		$('#id_total_irpf').val( $('#id_purchases_irpf').val( ) );
 		validateDONATION( false );
@@ -57,17 +46,20 @@
 
 
 	function calculateTOTALS() {
-		value =  $('#id_period_tax').val()  - $('#id_advanced_tax').val()  + parseFloat( $('#id_donation').val() ) + parseFloat( $('#id_savings_with_assigned_vat_donation').val() );
-		$('#id_total').val( value.toFixed(2) );
-		value = parseFloat( $('#id_total_irpf').val() ) + parseFloat( $('#id_total').val() ) + parseFloat( $('#id_total_vat').val() );
-		$('#id_total_to_pay').val( parseFloat(value).toFixed(2) );
+		total_tax =  c ($('#id_period_tax').val())  - c( $('#id_advanced_tax').val() ) 
+		total_donation = parseFloat(c($('#id_donation').val())) + parseFloat(c( $('#id_savings_with_assigned_vat_donation').val()) );
+		
+		value = total_tax + parseFloat(total_donation);
+		$('#id_total').val( parseFloat(value).toFixed(2).replace(".",",") );
+		total_sub = parseFloat(value) +  parseFloat(c( $('#id_total_irpf').val()))  +  parseFloat(c($('#id_total_vat').val())) ;
+		$('#id_total_to_pay').val( parseFloat(total_sub).toFixed(2).replace(".",",") ) ;
 
 
 	}
 
 	$(document).ready(function () {
 		//SAVINGS
-		$('#id_savings_with_assigned_vat').prop("readonly", true);
+		$('.add-another').hide();
 
 		//SUBTOTALS
 		$('#id_total_vat').prop("readonly", true);
