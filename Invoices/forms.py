@@ -10,7 +10,6 @@ from django.db.models import F
 
 from Invoices.bots import *
 from models import cooper, sales_invoice, purchases_invoice, client, provider, period, tax
-
 class cooper_admin_form(forms.ModelForm):
 	model = cooper
 	class Meta:
@@ -57,9 +56,7 @@ class client_form(company_form):
 class provider_form(company_form):
 	model = provider
 
-
 from Invoices.models import manage_CHOICE_COOPER, manage_CHOICE_COOP, status_CHOICE_NONE, status_CHOICE_PENDING, status_CHOICE_DONE, status_CHOICE_WAITING
-
 from Invoices.models import invoice
 class invoice_form(forms.ModelForm):
 	model = invoice
@@ -135,26 +132,10 @@ class invoice_form(forms.ModelForm):
 			return None
 		return self.cleaned_data.get("transfer_date")
 
-
 class sales_invoice_form(invoice_form):
 	model = sales_invoice
 	class Meta:
 		localized_fields = ('value', 'invoiced_vat', 'assigned_vat', 'total')
-
-class sales_invoice_form_balance(sales_invoice_form):
-	total = forms.DecimalField(label=_(u'Total Factura (€)'), localize=True, required=False)
-	def __init__(self, *args, **kwargs):
-		super(sales_invoice_form, self).__init__(*args, **kwargs)
-		if hasattr(self.instance, 'total'):
-			self.initial['total'] = self.instance.total
-		else:
-			self.initial['total'] = 0
-		
-		if hasattr(self.instance, 'status'):
-			self.initial['status'] = self.instance.status
-		else:
-			self.initial['status'] = None
-
 
 class purchases_invoice_form(invoice_form):
 	model = purchases_invoice
@@ -163,15 +144,18 @@ class purchases_invoice_form(invoice_form):
 			if not self.cleaned_data.get('provider').iban:
 				raise forms.ValidationError(_(u"El proveedor no té assignat un IBAN vàlid."))
 		return self.cleaned_data.get('who_manage')
-
 	def clean_expiring_date(self):
+		print "cleanin"
 		if self.cleaned_data.get('who_manage') == manage_CHOICE_COOPER:
 			return None
+		print self.cleaned_data.get('expiring_date')
 		if  self.cleaned_data.get('expiring_date') is None:
 				raise forms.ValidationError(_(u"Has d'introduïr una data de venciment"))
 		return self.cleaned_data.get('expiring_date')
+	class Meta:
+		localized_fields = ('value', 'vat', 'irpf', 'total')
 
-class purchases_invoice_form_balance(purchases_invoice_form):
+class invoice_form_balance(purchases_invoice_form):
 	total = forms.DecimalField(label=_(u'Total Factura (€)'), localize=True, required=False)
 	def __init__(self, *args, **kwargs):
 		super(purchases_invoice_form, self).__init__(*args, **kwargs)
@@ -184,13 +168,10 @@ class purchases_invoice_form_balance(purchases_invoice_form):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
+		self.base_fields['status'].widget.attrs['disabled'] = True
 
 from Invoices.models import movement_STATUSES
 class movement_form_balance(forms.ModelForm):
-	statuses=(
-		(status_CHOICE_PENDING, _(u'Pendent')),
-		(status_CHOICE_DONE, _(u'Executat')),
-	)
 	status = forms.CharField(label=_(u"Estat"), max_length=30,
 			widget=forms.Select(choices=movement_STATUSES), required=False)
 	def __init__(self, *args, **kwargs):
@@ -199,7 +180,9 @@ class movement_form_balance(forms.ModelForm):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
+		self.base_fields['status'].widget.attrs['disabled'] = True
 	class Meta:
+		exclude = ['status',]
 		localized_fields = ["value",]
 
 from Invoices.models import period_close

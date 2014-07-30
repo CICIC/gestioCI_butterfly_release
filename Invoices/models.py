@@ -87,8 +87,8 @@ class cooper(models.Model):
 	assigned_vat=models.IntegerField(verbose_name=_(u"IVA Assignat"), help_text=_(u"Aquest és el valor % d'IVA assignat fruit de l'avaluació social."), max_length=2, validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
 	extra_days=models.IntegerField(verbose_name=_(u"Dies extra"), help_text=_(u"Dies extra que pot editar el trimestre en curs."), max_length=2, default=0)
 	advanced_tax=models.DecimalField(verbose_name=_(u'Quota avançada (€)'), help_text=_(u"Quota que s'aplicarà el primer trimestre"), decimal_places=2, max_digits=10, default=0)
-	clients = models.ManyToManyField(client)
-	providers = models.ManyToManyField(provider)
+	clients = models.ManyToManyField(client, verbose_name=_(u"Clients"))
+	providers = models.ManyToManyField(provider, verbose_name=_(u"Proveïdors"))
 
 	def email( self ):
 		return self.user.email
@@ -346,18 +346,21 @@ class purchases_line (models.Model):
 
 class movement (models.Model):
 	cooper=models.ForeignKey(cooper, null=False, blank=False, verbose_name=_(u"nº COOP"))
-	concept=models.CharField(verbose_name=_(u"Concept"), max_length=200)
+	concept=models.CharField(verbose_name=_(u"Concept"), max_length=200, null=False, 
+		blank=False,)
 	execution_date=models.DateField(verbose_name=_(u"Data de realització"), null=True, blank=True, help_text=_(u"La data en que es realitza. Exemple dd/mm/aaaa"))
 	value=models.DecimalField(
 		verbose_name=_(u'Import u.m.'), 
 		help_text=_(u"Import en unitats monetàries"), 
 		decimal_places=2, 
-		max_digits=10
+		max_digits=10,
+		null=False, 
+		blank=False,
 	)
 	currency=models.ForeignKey(
 		currencies, 
-		null=True, 
-		blank=True, 
+		null=False, 
+		blank=False, 
 		verbose_name=_("Moneda"), 
 		help_text=_(u"Indica el tipus de moneda del moviment")
 	)

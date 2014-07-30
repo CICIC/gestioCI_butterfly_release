@@ -12,6 +12,9 @@
 	}
 
 	function c(yourNumber) {
+		if (yourNumber == undefined){
+			return 0
+		}
 		return parseFloat(yourNumber.replace(",",".")).toFixed(2);
 	}
 

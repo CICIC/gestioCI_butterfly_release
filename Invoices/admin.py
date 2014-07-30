@@ -55,7 +55,7 @@ class First_Period_Filter (SimpleListFilter):
 	def queryset(self, request, queryset):
 		if self.value():
 			qs_period = period.objects.get( id = self.value() )
-			qs = queryset.filter ( user__date_joined__lt = qs_period.date_close )
+			qs = queryset.filter ( cooper__user__date_joined__gt = qs_period.first_day, cooper__user__date_joined__lt = qs_period.date_close )
 			return qs
 
 		return queryset
@@ -67,22 +67,22 @@ class Closing_Filter (SimpleListFilter):
 
 	def lookups(self, request, model_admin):
 		return (
-			('1', _('Coopers that have period_closed and has closed')),
-			('2', _('Coopers that have period_closed')),
-			('3', _('Coopers that have not period_closed')),
+			('1', _('Socis que han tancat')),
+			('2', _('Socis que han creat el registre pero no han tancat')),
+			('3', _('Socis que no han creat el registre')),
 		)
 
 	def queryset(self, request, queryset):
 		if request.GET.has_key('first_period'):
 			id_period = request.GET['first_period']
 			if self.value() == '1':
-				qs = queryset.filter( user__cooper__period_close__period_id = id_period, user__cooper__period_close__closed = True )
+				qs = queryset.filter( cooper__period_close__period_id = id_period, cooper__period_close__closed = True )
 				return qs
 			if self.value() == '2':
-				qs = queryset.filter( user__cooper__period_close__period_id = id_period, user__cooper__period_close__closed = False )
+				qs = queryset.filter( cooper__period_close__period_id = id_period, cooper__period_close__closed = False )
 				return qs
 			if self.value() == '3':
-				qs = queryset.exclude( user__cooper__period_close__period_id = id_period )
+				qs = queryset.exclude( cooper__period_close__period_id = id_period )
 				return qs
 
 '''
@@ -406,6 +406,7 @@ class invoice_admin(ModelAdmin):
 	def status(self, obj):
 		return obj.status()
 	status.short_description = _(u"Estat")
+
 	def queryset(self, request):
 		if request.user.is_superuser:
 			return self.model.objects.all()
@@ -416,6 +417,7 @@ class invoice_admin(ModelAdmin):
 		ModelForm = super(invoice_admin, self).get_form(request, obj, **kwargs)
 		ModelForm.request = request 
 		return ModelForm
+
 	def get_changelist_form(self, request, **kwargs):
 		current_form = self.form
 		current_form.request = request
@@ -527,7 +529,7 @@ class purchases_invoice_user (invoice_admin):
 	change_list_template = 'admin/Invoices/salesInvoices/change_list.html'
 	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage', 'status', 'expiring_date', 'transfer_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
-	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'transfer_date')
+	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date', 'transfer_date')
 	list_export = ( 'providerName', 'providerCif') + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	inlines = [purchases_line_inline]
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
@@ -602,7 +604,7 @@ class provider_admin(company_admin):
 	list_display = company_admin.list_display + ('iban', )
 	search_fields = company_admin.search_fields + ['iban', ]
 	model = provider
-	
+
 class provider_user(provider_admin):
 	def save_model(self, request, obj, form, change):
 		obj.save()
@@ -631,7 +633,6 @@ class period_close_user(admin.ModelAdmin):
 	inlines = [period_payment_inline]
 	list_display = ('edit_link', 'print_link') + period_close_base_fields
 	list_export = period_close_base_fields
-	list_filter = ('period', 'cooper__coop_number')
 	fieldsets = (
 		(_(u'Període'), {'fields': ('period', 'cooper') }),
 		(_('Emeses'), {'fields': (('sales_base', 'sales_invoiced_vat'), ('sales_total', 'sales_assigned_vat'))}),
@@ -789,7 +790,8 @@ class period_close_admin (period_close_user):
 			return obj.period
 	edit_link.allow_tags = True
 	edit_link.short_description = _(u"Període")
-
+	search_fields = ['coop_number', 'user__username', 'user__first_name']
+	list_filter = ('period',  First_Period_Filter, Closing_Filter )
 	def queryset(self, request):
 		return period_close.objects.all()
 
@@ -815,16 +817,15 @@ class balance_line_inline(admin.TabularInline):
 	def has_add_permission(self, request, obj=None):
 		return False
 
-from Invoices.forms import sales_invoice_form_balance 
+from Invoices.forms import invoice_form_balance 
 class sales_invoice_inline_balance(balance_line_inline):
 	model = sales_invoice
-	form = sales_invoice_form_balance
+	form = invoice_form_balance
 	fields = ['client', 'total'] + balance_line_inline.fields
 
-from Invoices.forms import purchases_invoice_form_balance 
 class purchases_invoice_inline_balance(balance_line_inline):
 	model = purchases_invoice
-	form = purchases_invoice_form_balance
+	form = invoice_form_balance
 	fields = ['provider', 'total', 'status', 'expiring_date', 'transfer_date']
 
 from Invoices.forms import movement_form_balance
@@ -883,13 +884,12 @@ class cooper_admin(ModelAdmin):
 admin.site.register(cooper, cooper_admin)
 
 from Invoices.forms import cooper_admin_form
-class cooper_user_balance(cooper_admin):
+class cooper_user_balance(ModelAdmin):
 	model = 'cooper_proxy_balance'
 	list_per_page = 600
 	fields = ['coop_number']
-	list_display = ('firstname', 'lastname', 'coopnumber', 'email', 'balance', 'balance_euro', 'balance_eco', 'balance_btc', 'first_period', 'date_joined')
-	list_display_links = ('coopnumber', )
-	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
+	list_display = ('coop_number', 'balance', 'balance_euro', 'balance_eco', 'balance_btc')
+	list_display_links = ('coop_number', )
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
 	inlines = [sales_invoice_inline_balance, purchases_invoice_inline_balance, sales_movement_inline, purchases_movement_inline]
 	def has_add_permission(self, request, obj=None):
@@ -926,33 +926,31 @@ class cooper_user_balance(cooper_admin):
 	balance.short_description = _(u"Balanç saldo")
 user_admin_site.register(cooper_proxy_balance, cooper_user_balance)
 
-admin.site.register(cooper_proxy_transactions, cooper_user_balance)
+class cooper_admin_balance( cooper_user_balance):
+	search_fields = ['coop_number', 'user__username', 'user__first_name']
+	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
+admin.site.register(cooper_proxy_transactions, cooper_admin_balance)
 
-class sales_movements_admin(ModelAdmin):
+from Invoices.models import movement_STATUSES
+class movements_admin(ModelAdmin):
 	form = movement_form_balance
+	list_filter = ('cooper', 'currency',)
+	list_editable = ('execution_date', 'currency')
+	def status(self, obj):
+		return movement_STATUSES[obj.status()][1]
+	status.short_description = (u"Estat")
+
+class sales_movements_admin(movements_admin):
 	model = sales_movement
 	fields = ['cooper', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
 	list_display = ('cooper', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency')
-	list_filter = ('cooper', 'currency',)
-	extra = 0
-	def status(self, obj):
-		return movement_STATUSES[obj.status()][1]
-	def total(self, obj):
-		return obj.total()
 admin.site.register(sales_movement, sales_movements_admin)
 
-from Invoices.models import movement_STATUSES
-class purchases_movements_admin(ModelAdmin):
-	form = movement_form_balance
+class purchases_movements_admin(movements_admin):
 	model = purchases_movement
 	fields = ['cooper', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency']
 	list_display = ('cooper', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency')
-	list_filter = ('currency',)
-	extra = 0
-	def status(self, obj):
-		return movement_STATUSES[obj.status()][1]
-	def total(self, obj):
-		return obj.total()
+
 admin.site.register(purchases_movement, purchases_movements_admin)
 
 class cooper_companies_user(ModelAdmin):
@@ -961,7 +959,7 @@ class cooper_companies_user(ModelAdmin):
 	filter_horizontal = ('clients', 'providers')
 	list_display = ('coop_number', 'cooper_clients', 'cooper_providers')
 	list_display_links = ('coop_number',)
-	inlines = []
+
 	def queryset(self, request):
 		return cooper.objects.filter(user=request.user)
 	def cooper_clients(self, obj):

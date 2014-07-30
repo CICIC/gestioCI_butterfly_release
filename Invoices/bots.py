@@ -296,8 +296,8 @@ class bot_balance(object):
 			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
 			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
 		else:
-			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day, currency = currency).aggregate(Sum('value'))["value__sum"]
-			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day, currency = currency).aggregate(Sum('value'))["value__sum"]
+			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day, currency = currency, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day, currency = currency,execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
 		sales_movement_total = bot_object.get_value_or_zero(sales_movement_total)
 		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)
 		purchases_invoice_total = bot_object.get_value_or_zero(purchases_invoice_total)
@@ -310,8 +310,8 @@ class bot_balance(object):
 		purchases_invoice_total = bot_purchases_invoice(
 			purchases_invoice.objects.filter(cooper=self.cooper.pk).exclude(period=self.period)
 			).purchases_base
-		sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__lte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
-		purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__lte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+		sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+		purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
 		sales_movement_total = bot_object.get_value_or_zero(sales_movement_total)
 		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)
 		purchases_invoice_total = bot_object.get_value_or_zero(purchases_invoice_total)
