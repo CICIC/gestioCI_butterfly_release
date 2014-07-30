@@ -392,7 +392,14 @@ class purchases_movement( movement ):
 		verbose_name=_(u'M - Reintegrament')
 		verbose_name_plural=_(u'M - Reintegraments')
 
-
+period_close_base_fields = ('sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total', 
+	'purchases_base', 'purchases_vat', 'purchases_irpf', 'purchases_total',
+	'oficial_vat_total', 'assigned_vat_total', 'vat_type',
+	'savings_with_assigned_vat', 'savings_with_assigned_vat_donation',
+	'total_vat', 'total_irpf',
+	'period_tax', 'advanced_tax',
+	'donation', 
+	'total', 'total_to_pay', 'closed')
 class period_close(models.Model):
 	period = models.ForeignKey(period, null=True, blank=True, verbose_name=_(u'Trimestre'))
 	cooper = models.ForeignKey(cooper, null=True, blank=True, verbose_name=_(u"nº COOP"))
