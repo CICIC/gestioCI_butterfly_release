@@ -621,29 +621,17 @@ class period_payment_inline(admin.TabularInline):
 	form = period_payment_inline_form
 
 from Invoices.forms import period_close_form
+
+from Invoices.models import period_close_base_fields
 class period_close_user(admin.ModelAdmin):
 	form = period_close_form
 	change_form_template = 'admin/Invoices/period_close/change_form.html'
 	change_list_template = 'admin/Invoices/period_close/change_list.html'
 	model = period_close
 	inlines = [period_payment_inline]
-	list_display = ('edit_link', 'print_link', 'sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total',
-		'purchases_base', 'purchases_vat', 'purchases_irpf', 'purchases_total',
-		'oficial_vat_total', 'assigned_vat_total', 'vat_type',
-		'savings_with_assigned_vat', 'savings_with_assigned_vat_donation',
-		'total_vat', 'total_irpf',
-		'period_tax', 'advanced_tax',
-		'donation', 
-		'total', 'total_to_pay', 'closed')
-	list_export = ('period',  'sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total',
-		'purchases_base', 'purchases_vat', 'purchases_irpf', 'purchases_total',
-		'oficial_vat_total', 'assigned_vat_total', 'vat_type',
-		'savings_with_assigned_vat', 'savings_with_assigned_vat_donation',
-		'total_vat', 'total_irpf',
-		'period_tax', 'advanced_tax',
-		'donation', 
-		'total', 'closed')
-
+	list_display = ('edit_link', 'print_link') + period_close_base_fields
+	list_export = period_close_base_fields
+	list_filter = ('period', 'cooper__coop_number')
 	fieldsets = (
 		(_(u'Període'), {'fields': ('period', 'cooper') }),
 		(_('Emeses'), {'fields': (('sales_base', 'sales_invoiced_vat'), ('sales_total', 'sales_assigned_vat'))}),
@@ -688,6 +676,10 @@ class period_close_user(admin.ModelAdmin):
 
 	def save_model(self, request, obj, form, change):
 
+		#As we disable cooper and periods controls, we loaded their values in get_form so reload
+		if obj.period is None:
+			obj.period = form.period
+			obj.cooper = form.cooper
 		obj.save()
 
 		if obj.closed and obj.advanced_tax > 0:
@@ -696,6 +688,7 @@ class period_close_user(admin.ModelAdmin):
 			c.save()
 
 		form.save_m2m()
+
 		if obj.closed:
 			from Invoices.bots import bot_period_payment
 			bot_period_payment(obj).create_sales_movements_for_period()
@@ -771,6 +764,8 @@ class period_close_user(admin.ModelAdmin):
 			ModelForm.obj = obj
 		ModelForm.current_fields = self.list_export
 		if obj is not None:
+			ModelForm.period = obj.period
+			ModelForm.cooper = obj.cooper
 			bot_period_close( obj.period, obj.cooper, obj).set_period_close_form_readonly(ModelForm)
 		return ModelForm
 	class Media:
