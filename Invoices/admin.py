@@ -524,7 +524,7 @@ from Invoices.forms import purchases_invoice_form
 class purchases_invoice_user (invoice_admin):
 	form = purchases_invoice_form
 	model = purchases_invoice
-	change_list_template = 'admin/Invoices/salesInvoices/change_list.html'
+	change_list_template = 'admin/Invoices/purchasesInvoices/change_list.html'
 	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage', 'status', 'expiring_date', 'transfer_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date', 'transfer_date')
@@ -627,7 +627,6 @@ from Invoices.models import period_close_base_fields
 class period_close_user(admin.ModelAdmin):
 	form = period_close_form
 	change_form_template = 'admin/Invoices/period_close/change_form.html'
-	change_list_template = 'admin/Invoices/period_close/change_list.html'
 	model = period_close
 	inlines = [period_payment_inline]
 	list_display = ('edit_link', 'print_link') + period_close_base_fields
