@@ -769,6 +769,8 @@ class period_close_user(admin.ModelAdmin):
 			bot_period_close( obj.period, obj.cooper, obj).set_period_close_form_readonly(ModelForm)
 		return ModelForm
 
+
+
 	class Media:
 			js = (
 				'period_close.js',   # app static folder
@@ -776,6 +778,7 @@ class period_close_user(admin.ModelAdmin):
 user_admin_site.register(period_close, period_close_user)
 
 class period_close_admin (period_close_user):
+	change_list_template = 'admin/Invoices/period_close/change_list_admin.html'
 	list_display = ('cooper', ) + period_close_user.list_display
 	list_export = ('cooper',) + period_close_user.list_export
 	list_per_page = 1000
@@ -796,7 +799,42 @@ class period_close_admin (period_close_user):
 	list_filter = ('period',  First_Period_Filter, Closing_Filter )
 	def queryset(self, request):
 		return period_close.objects.all()
+	def changelist_view(self, request, extra_context=None):
+		#Get totals
+		response = super(period_close_user, self).changelist_view(request, extra_context)
+		try:
+			qs_queryset = response.context_data["cl"].query_set
+		except:
+			qs_queryset = None
 
+		if qs_queryset and extra_context is None:
+			totals = {}
+			numeric_fields = ('sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total', 
+							'purchases_base', 'purchases_vat', 'purchases_irpf', 'purchases_total',
+							'oficial_vat_total', 'assigned_vat_total', 'savings_with_assigned_vat', 'savings_with_assigned_vat_donation',
+							'total_vat', 'total_irpf','period_tax', 'advanced_tax','donation', 'total', 'total_to_pay')
+			#init
+			for field in numeric_fields:
+					totals[field] = Decimal ( "0.00" )
+
+			for period_closed in qs_queryset:
+				#load values
+				for field in numeric_fields:
+					try:
+						#print command will rise exception, so don't remove!!!
+						print Decimal ( "%.2f" % bot_object( field, period_closed ).value() )
+						totals[field] = Decimal ( "%.2f" % bot_object( field, period_closed ).value() )
+					except:
+						totals[field] = bot_object( field, period_closed ).value()()
+
+			#send to template
+			extra_context = {}
+			for field in numeric_fields:
+				extra_context[field] = totals[field]
+
+		#Filter by period
+		from Invoices.bots import bot_filters
+		return bot_filters.filterbydefault(request, self, period_close_user, extra_context)
 admin.site.register(period_close, period_close_admin)
 
 class balance_line_inline(admin.TabularInline):
