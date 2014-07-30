@@ -37,7 +37,7 @@ def print_period_close(request, period_close_id):
 		'donation', 
 		'total')
 	html = render_to_string( 'admin/Invoices/period_close/print_form.html', {'adminform': period_close_form})
-	return generar_pdf(html)
+	return render_pdf(html)
 
 
 
@@ -48,12 +48,10 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 
-def generar_pdf(html):
-	#return HttpResponse(html)
-	# Función para generar el archivo PDF y devolverlo mediante HttpResponse
+def render_pdf(html):
 	result = StringIO.StringIO()
-	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")), result)
+	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result)
 	if not pdf.err:
 		return HttpResponse(result.getvalue(), mimetype='application/pdf')
-	return HttpResponse('Error al generar el PDF: %s' % cgi.escape(html))
+	return HttpResponse(_(u'Error al generar el PDF: %s') % cgi.escape(html))
 
