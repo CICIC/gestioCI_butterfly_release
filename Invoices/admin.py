@@ -414,9 +414,6 @@ class invoice_admin(ModelAdmin):
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super(invoice_admin, self).get_form(request, obj, **kwargs)
 		ModelForm.request = request 
-		
-		if request.user.is_superuser:
-			ModelForm.base_fields["status"].widget.attrs["disabled"] = True
 		return ModelForm
 
 	def get_changelist_form(self, request, **kwargs):
@@ -528,7 +525,7 @@ class purchases_invoice_user (invoice_admin):
 	form = purchases_invoice_form
 	model = purchases_invoice
 	change_list_template = 'admin/Invoices/purchasesInvoices/change_list.html'
-	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage',]
+	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage', 'expiring_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date')
 	list_export = ( 'providerName', 'providerCif') + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
@@ -569,7 +566,7 @@ class purchases_invoice_user (invoice_admin):
 user_admin_site.register(purchases_invoice, purchases_invoice_user)
 
 class purchases_invoice_admin (purchases_invoice_user):
-	fields = ['cooper'] + purchases_invoice_user.fields + ['status', 'expiring_date', 'transfer_date']
+	fields = ['cooper'] + purchases_invoice_user.fields + ['status', 'transfer_date']
 	list_display = ('cooper',) + purchases_invoice_user.list_display
 	list_editable = ('cooper',) + purchases_invoice_user.list_editable + ('transfer_date',)
 	list_export = ('cooper',) + purchases_invoice_user.list_export

@@ -1,15 +1,20 @@
 (function($) {
 	function init(){
 		if ( $('#id_who_manage').val() == 1 ) {
-			$('.field-status').show();
-			$('.field-transfer_date').show();
+			transfer = $('.field-transfer_date');
+			if ( transfer != undefined) {
+				transfer.show();
+			}
 			expiring = $('.field-expiring_date');
 			if ( expiring != undefined) {
 				expiring.show();
 			}
 		}else{
-			$('.field-status').hide();
-			$('.field-transfer_date').hide();
+			transfer = $('.field-transfer_date');
+			if ( transfer != undefined) {
+				transfer.hide();
+			}
+
 			expiring = $('.field-expiring_date');
 			if ( expiring != undefined) {
 				expiring.hide();

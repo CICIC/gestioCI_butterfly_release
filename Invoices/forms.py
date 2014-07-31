@@ -81,7 +81,7 @@ class invoice_form(forms.ModelForm):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
-
+		self.base_fields["status"].widget.attrs["disabled"] = True
 		current_cooper = bot_cooper(self.request.user).cooper(self.request)
 		if current_cooper and not hasattr(self.instance, 'cooper'):
 			self.instance.cooper  = current_cooper 
