@@ -414,6 +414,9 @@ class invoice_admin(ModelAdmin):
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super(invoice_admin, self).get_form(request, obj, **kwargs)
 		ModelForm.request = request 
+		
+		if request.user.is_superuser:
+			ModelForm.base_fields["status"].widget.attrs["disabled"] = True
 		return ModelForm
 
 	def get_changelist_form(self, request, **kwargs):
@@ -469,9 +472,9 @@ class sales_invoice_user (invoice_admin):
 	form = sales_invoice_form
 	model = sales_invoice
 	change_list_template = 'admin/Invoices/salesInvoices/change_list.html'
-	fields = ['client',] + ['period', 'num', 'date'] + ['who_manage', 'status', 'transfer_date']
+	fields = ['client',] + ['period', 'num', 'date'] + ['who_manage',]
 	list_display =  ('client',) + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
-	list_editable =  ('client',) + ('num', 'date') + ('who_manage', 'transfer_date')
+	list_editable =  ('client',) + ('num', 'date') + ('who_manage',)
 	list_export = ( 'clientName', 'clientCif') + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
 	inlines = [sales_line_inline]
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
@@ -507,10 +510,10 @@ class sales_invoice_user (invoice_admin):
 user_admin_site.register(sales_invoice, sales_invoice_user)
 
 class sales_invoice_admin(sales_invoice_user):
-	fields = ['cooper', ] + sales_invoice_user.fields 
-	list_display = ('cooper',) + sales_invoice_user.list_display
+	fields = ['cooper', ] + sales_invoice_user.fields + ['status', 'transfer_date']
+	list_display = ('cooper',) + sales_invoice_user.list_display  + ('status', 'transfer_date')
 	list_display_links = ( 'number', )
-	list_editable = ('cooper',) + sales_invoice_user.list_editable 
+	list_editable = ('cooper',) + sales_invoice_user.list_editable + ('transfer_date', )
 	list_export = ('cooper',) + sales_invoice_user.list_export 
 	list_filter = ('cooper','period', 'transfer_date')
 	actions = sales_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
@@ -525,9 +528,9 @@ class purchases_invoice_user (invoice_admin):
 	form = purchases_invoice_form
 	model = purchases_invoice
 	change_list_template = 'admin/Invoices/purchasesInvoices/change_list.html'
-	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage', 'status', 'expiring_date', 'transfer_date']
+	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage',]
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
-	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date', 'transfer_date')
+	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date')
 	list_export = ( 'providerName', 'providerCif') + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	inlines = [purchases_line_inline]
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
@@ -566,9 +569,9 @@ class purchases_invoice_user (invoice_admin):
 user_admin_site.register(purchases_invoice, purchases_invoice_user)
 
 class purchases_invoice_admin (purchases_invoice_user):
-	fields = ['cooper'] + purchases_invoice_user.fields
+	fields = ['cooper'] + purchases_invoice_user.fields + ['status', 'expiring_date', 'transfer_date']
 	list_display = ('cooper',) + purchases_invoice_user.list_display
-	list_editable = ('cooper',) + purchases_invoice_user.list_editable
+	list_editable = ('cooper',) + purchases_invoice_user.list_editable + ('transfer_date',)
 	list_export = ('cooper',) + purchases_invoice_user.list_export
 	list_filter = ('cooper','period',)
 	actions = purchases_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
