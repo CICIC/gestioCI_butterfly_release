@@ -1013,9 +1013,31 @@ class cooper_companies_user(ModelAdmin):
 		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
 	cooper_clients.allow_tags = True
 	cooper_clients.short_description = _(u"Els meus clients")
-
 	def cooper_providers(self, obj):
 		return "\n".join([ p.__unicode__() + "<br>" for p in obj.providers.all()])
 	cooper_providers.allow_tags = True
 	cooper_providers.short_description = _(u"Els meus proveïdors")
+	def get_model_perms(self, request): 
+		return {'direct_to_change_form':True, 
+			'change_form_url': bot_cooper( request.user ).cooper().id }
 user_admin_site.register(cooper_proxy_companies, cooper_companies_user)
+
+class cooper_companies_admin(cooper_companies_user):
+	model = 'cooper_proxy_companies'
+	fields = ['clients', 'providers']
+	filter_horizontal = ('clients', 'providers')
+	list_display = ('coop_number', 'cooper_clients', 'cooper_providers')
+	list_display_links = ('coop_number',)
+
+	def queryset(self, request):
+		return cooper.objects.filter(user=request.user)
+	def cooper_clients(self, obj):
+		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
+	cooper_clients.allow_tags = True
+	cooper_clients.short_description = _(u"Els meus clients")
+	def cooper_providers(self, obj):
+		return "\n".join([ p.__unicode__() + "<br>" for p in obj.providers.all()])
+	cooper_providers.allow_tags = True
+	cooper_providers.short_description = _(u"Els meus proveïdors")
+	def get_model_perms(self, request): 
+		return {'direct_to_change_form':False }
