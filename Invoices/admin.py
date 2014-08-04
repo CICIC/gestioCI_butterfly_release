@@ -838,7 +838,7 @@ admin.site.register(period_close, period_close_admin)
 
 class balance_line_inline(admin.TabularInline):
 	model = invoice
-	fields = ['status', 'date', 'transfer_date',]
+	fields = ['status', 'date', 'transfer_date']
 	extra = 0
 	def status(self, obj):
 		return obj.status()
@@ -853,6 +853,8 @@ class balance_line_inline(admin.TabularInline):
 					transfer_date__isnull=True)
 		else:
 			return self.model.objects.filter(who_manage=manage_CHOICE_COOP)
+	def has_delete_permission(self, request, obj=None):
+		return request.user.is_superuser
 	def has_add_permission(self, request, obj=None):
 		return False
 
@@ -861,11 +863,22 @@ class sales_invoice_inline_balance(balance_line_inline):
 	model = sales_invoice
 	form = invoice_form_balance
 	fields = ['client', 'total'] + balance_line_inline.fields
-
+	def get_readonly_fields(self, request, obj=None):
+		if request.user.is_superuser:
+			return ()
+		else:
+			return balance_line_inline.readonly_fields + ( 'client',) + ( 'date',  'total', 'transfer_date', )
 class purchases_invoice_inline_balance(balance_line_inline):
 	model = purchases_invoice
 	form = invoice_form_balance
 	fields = ['provider', 'total', 'status', 'expiring_date', 'transfer_date']
+	def get_readonly_fields(self, request, obj=None):
+		if request.user.is_superuser:
+			return ()
+		else:
+			#if self.instance.transfer_date is not None:
+			#	rfields = balance_line_inline.readonly_fields + ( 'expiring_date', )
+			return ( 'provider', ) + ( 'date',  'total', 'transfer_date', )
 
 from Invoices.forms import movement_form_balance
 class sales_movement_inline(admin.TabularInline):
@@ -874,12 +887,29 @@ class sales_movement_inline(admin.TabularInline):
 	fields = ['value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
 	list_filter = ('status', 'currency')
 	extra = 0
-
+	def has_delete_permission(self, request, obj=None):
+		return request.user.is_superuser
+	def get_readonly_fields(self, request, obj=None):
+		if request.user.is_superuser:
+			return self.readonly_fields
+		else:
+			#if self.instance.transfer_date is not None:
+			#	rfields = balance_line_inline.readonly_fields + ( 'expiring_date', )
+			return ( 'execution_date', )
 class purchases_movement_inline(admin.TabularInline):
 	model = purchases_movement
 	form = movement_form_balance
 	fields = [ 'value', 'concept', 'petition_date', 'acceptation_date', 'execution_date', 'status', 'currency']
 	extra = 0
+	def has_delete_permission(self, request, obj=None):
+		return request.user.is_superuser
+	def get_readonly_fields(self, request, obj=None):
+		if request.user.is_superuser:
+			return self.readonly_fields
+		else:
+			#if self.instance.transfer_date is not None:
+			#	rfields = balance_line_inline.readonly_fields + ( 'expiring_date', )
+			return ( 'acceptation_date', 'execution_date', )
 
 class period_admin(ModelAdmin):
 	fields = ['label', 'first_day', 'date_open', 'date_close']
@@ -929,6 +959,7 @@ class cooper_user_balance(ModelAdmin):
 	model = 'cooper_proxy_balance'
 	list_per_page = 600
 	fields = ['coop_number']
+	readonly_fields = ['coop_number']
 	list_display = ('coop_number', 'balance', 'balance_euro', 'balance_eco', 'balance_btc')
 	list_display_links = ('coop_number', )
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
@@ -967,16 +998,19 @@ class cooper_user_balance(ModelAdmin):
 	balance.short_description = _(u"Balanç saldo")
 
 	def get_model_perms(self, request): 
-		return {'direct_to_change_form':True, 
+		if request.user.is_superuser:
+			return {'historial':True, 
+				'canAdd': False,
+				'canEdit': True }
+		else:
+			return {'direct_to_change_form':True, 
 			'change_form_url': bot_cooper( request.user ).cooper().id }
 user_admin_site.register(cooper_proxy_balance, cooper_user_balance)
 
-class cooper_admin_balance( cooper_user_balance):
-	search_fields = ['coop_number', 'user__username', 'user__first_name']
-	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
-	def get_model_perms(self, request): 
-		return {'direct_to_change_form':False}
-admin.site.register(cooper_proxy_transactions, cooper_admin_balance)
+class cooper_admin_transaction( cooper_user_balance):
+	model = 'cooper_proxy_transactions'
+admin.site.register(cooper_proxy_transactions, cooper_admin_transaction)
+
 
 from Invoices.models import movement_STATUSES
 class movements_admin(ModelAdmin):
