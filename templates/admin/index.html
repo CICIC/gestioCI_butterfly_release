@@ -32,7 +32,12 @@
         </caption>
 
         {% for model in app.models %}
-			{% if model.perms.view %}
+			{% if model.perms.direct_to_change_form %}
+					<!-- WARNING, AD HOC, No access to change_list, direct to change_form model. -->
+					<tr class="model-{{ model.object_name|lower }}">
+						<th scope="row"><a href="{{ app.app_url }}{{ model.object_name|lower }}/{{ model.perms.change_form_url }}">{{ model.name }}</a></th>
+					</tr>
+			{% elif model.perms.view %}
 					<!-- WARNING, AD HOC, Read only model -->
 					<tr class="model-{{ model.object_name|lower }}">
 						<th scope="row"><a href="{{ app.app_url }}{{ model.object_name|lower }}">{{ model.name }}</a></th>

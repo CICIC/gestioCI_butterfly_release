@@ -754,7 +754,7 @@ class period_close_user(admin.ModelAdmin):
 		return {'historial':True, 
 			'canAdd': self.exists_opened_period( request.user ) and not self.exists_closed_period( request.user ),
 			'canEdit': self.exists_opened_period( request.user ) }
-	
+
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super(period_close_user, self).get_form(request, obj, **kwargs)
 		ModelForm.is_new = obj is None
@@ -924,6 +924,7 @@ class cooper_admin(ModelAdmin):
 admin.site.register(cooper, cooper_admin)
 
 from Invoices.forms import cooper_admin_form
+
 class cooper_user_balance(ModelAdmin):
 	model = 'cooper_proxy_balance'
 	list_per_page = 600
@@ -964,11 +965,17 @@ class cooper_user_balance(ModelAdmin):
 		bot = bot_balance(current_period, obj)
 		return bot.total_previous() + bot.total()
 	balance.short_description = _(u"Balanç saldo")
+
+	def get_model_perms(self, request): 
+		return {'direct_to_change_form':True, 
+			'change_form_url': bot_cooper( request.user ).cooper().id }
 user_admin_site.register(cooper_proxy_balance, cooper_user_balance)
 
 class cooper_admin_balance( cooper_user_balance):
 	search_fields = ['coop_number', 'user__username', 'user__first_name']
 	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
+	def get_model_perms(self, request): 
+		return {'direct_to_change_form':False}
 admin.site.register(cooper_proxy_transactions, cooper_admin_balance)
 
 from Invoices.models import movement_STATUSES
