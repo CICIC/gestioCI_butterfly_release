@@ -562,7 +562,7 @@ class CSVImport(models.Model):
 EMAIL NOTIFICATION SYSTEM
 '''
 class Email(models.Model):
-	efrom=models.EmailField(verbose_name=_(u"Remitent"), help_text="", max_length=75, default="gee@gestion.org")
+	efrom=models.EmailField(verbose_name=_(u"Remitent"), help_text="", max_length=75, default="gestioci@cooperativa.cat")
 	eto=models.CharField(verbose_name=_(u"Destinatari"), help_text="", max_length=75, default="camp reservat pel sistema")
 	subject=models.CharField(verbose_name=_(u"Assumpte"), max_length=200)
 	body=models.TextField(verbose_name=_(u'Cos'))
