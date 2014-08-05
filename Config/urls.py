@@ -37,7 +37,7 @@ url(r'^soci/', include(user_admin_site.urls)),
 #Our invoicing module
 url(r'^invoices/', include('Invoices.urls', namespace='Invoices')),
 #Our welcoming module
-
+url(r'^welcome/', include('Welcome.urls', namespace='Welcome')),
 #Default http index --> redirect to soci space
 url(r'^', include(user_admin_site.urls)),
 
