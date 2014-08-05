@@ -9,7 +9,6 @@
     width: 100%;
 }
 
-
 .change-list .hiddenfields { display:none; }
 
 .change-list .filtered table {
@@ -68,7 +67,7 @@
 
 #changelist table tbody td, #changelist table tbody th {
     border-left: 1px solid #ddd;
-    text-align:right;
+    /*text-align:right;*/
 }
 
 #changelist table tbody td:first-child, #changelist table tbody th:first-child {
