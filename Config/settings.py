@@ -45,6 +45,7 @@ WSGI_APPLICATION = 'Config.wsgi.application'
 2 Application definition
 '''
 INSTALLED_APPS = (
+    #'suit',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -53,12 +54,18 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 	#gestioCI APPS
     'Invoices', 	# This is gestioCI block1 Selfoccupated coopers APP
-	'Cooper', 		# This is gestioCI block1 Selfoccupated coopers APP
+	   'Cooper', 		# This is gestioCI block1 Selfoccupated coopers APP
+     'General',  # This is the general models APP including five main types of data
+     'Welcome',   # This is the membership maker APP
 	#common APPS
     'south', 		# This is command line BBDD helper
     'django_cron', 	# This controls scheduled EmailNotifications https://pypi.python.org/pypi/django-cron
     'csvimport', 	# This provides import CSV to Model https://pypi.python.org/pypi/django-csvimport
     'localflavor', 	# This provide NIF/NIE/CIF form field
+    'mptt', # This provide Tree management in a 'nested set' style
+    #'feincms',
+    #'feincms.module.page',
+    #'feincms.module.medialibrary'
 
 )
 MIDDLEWARE_CLASSES = (
@@ -109,7 +116,7 @@ CSVIMPORT_MODELS = ["Invoices.periodTaxes",
 		"Invoices.provider",
 		"Invoices.period",
 		"Invoices.coop",
-		"Invoices.period_tax",
+		"Invoices.tax",
 		"Invoices.vats",]
 
 
@@ -123,6 +130,35 @@ CRONJOBS = [
     ('*/1 * * * *', 'Config.cron')
 ]
 
+# Django Suit configuration example
+SUIT_CONFIG = {
+    # header
+    # 'ADMIN_NAME': 'Django Suit',
+    # 'HEADER_DATE_FORMAT': 'l, j. F Y',
+    # 'HEADER_TIME_FORMAT': 'H:i',
+
+    # forms
+    # 'SHOW_REQUIRED_ASTERISK': True,  # Default True
+    # 'CONFIRM_UNSAVED_CHANGES': True, # Default True
+
+    # menu
+    # 'SEARCH_URL': '/admin/auth/user/',
+    # 'MENU_ICONS': {
+    #    'sites': 'icon-leaf',
+    #    'auth': 'icon-lock',
+    # },
+    # 'MENU_OPEN_FIRST_CHILD': True, # Default True
+    # 'MENU_EXCLUDE': ('auth.group',),
+    # 'MENU': (
+    #     'sites',
+    #     {'app': 'auth', 'icon':'icon-lock', 'models': ('user', 'group')},
+    #     {'label': 'Settings', 'icon':'icon-cog', 'models': ('auth.user', 'auth.group')},
+    #     {'label': 'Support', 'icon':'icon-question-sign', 'url': '/support/'},
+    # ),
+
+    # misc
+    # 'LIST_PER_PAGE': 15
+}
 
 '''
 5 Templates
@@ -146,6 +182,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "templates"),
 		BASE_DIR + '/Invoices/templates/',
+		BASE_DIR + '/General/templates/',
+		BASE_DIR + '/Welcome/templates/',
 )
 
 
@@ -197,5 +235,6 @@ EMAIL_USE_TLS = False
 '''
 LOGIN_REDIRECT_URL='/cooper'
 LOGIN_URL='/cooper'
+
 
 
