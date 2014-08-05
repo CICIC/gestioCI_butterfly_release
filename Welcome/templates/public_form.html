@@ -1,8 +1,22 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
 
-<h1>{{ form.title }}</h1>
-{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-<form action="{% url 'Welcome:public_form' %}" method="post">
-{% csrf_token %}
-<label for="public_form">test</label><br />
-<input type="submit" value="Enviar" />
-</form>
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+{% endblock %}
+
+
+{% block content %}
+	<div id="content-main">
+		<h1>{{ form.title }}</h1>
+		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+		<form action="{% url 'Welcome:public_form' %}" method="post">
+		{% csrf_token %}
+			<label for="public_form">test</label><br />
+			<table>
+				{{form}}
+			</table>
+			<input type="submit" value="Enviar" />
+		</form>
+	</div>
+{% endblock %}
