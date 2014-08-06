@@ -604,7 +604,7 @@ class AccountCes(Record):
     verbose_name_plural= _(u'o- Comptes CES')
 
   def __unicode__(self):
-    return self.unit.name+': '+self.human.__unicode__()+' '+self.code+self.number+' '+self.name
+    return '('+self.unit.code+') '+self.human.__unicode__()+' '+self.code+self.number#+' '+self.name
 
 
 class AccountBank(Record):
@@ -622,7 +622,7 @@ class AccountBank(Record):
     verbose_name_plural= _(u'o- Comptes Bancaris')
 
   def __unicode__(self):
-    return '('+self.unit.name+') '+self.human.__unicode__()+' '+self.number+' ('+self.company.nickname+')'
+    return '('+self.unit.code+') '+self.human.__unicode__()+' '+self.number+' ('+self.company.nickname+')'
 
 
 class AccountCrypto(Record):
@@ -634,4 +634,4 @@ class AccountCrypto(Record):
     verbose_name = _(u"Compte Criptomoneda")
     verbose_name_plural = _(u"o- Comptes Criptomonedes")
   def __unicode__(self):
-    return self.unit.name+': '+self.human.__unicode__()+' '+self.number # +' '+self.name
+    return '('+self.unit.code+') '+self.human.__unicode__()+' '+self.number # +' '+self.name

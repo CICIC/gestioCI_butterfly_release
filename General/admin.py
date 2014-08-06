@@ -64,6 +64,95 @@ class M_addressInline(admin.TabularInline):
   )
 
 
+'''
+class accountForm(forms.ModelForm):
+  model = AccountCes
+
+  def clean_human(self):
+    if self.cleaned_data['human'] is None or self.cleaned_data['human'] == '':
+      print '>>> human is NONE'
+    else:
+      #self.initial['human'] = self.cleaned_data['human']
+      print '<<< human: '+self.cleaned_data['human'].__unicode__()
+      #print '<<< name: '+self.cleaned_data['name']
+      #self.clean_name()
+      return self.cleaned_data['human']
+
+  def clean_name(self):
+    out = self.cleaned_data['unit'].code+': '+self.cleaned_data['human'].__unicode__()+' '+self.cleaned_data['code']+self.cleaned_data['number']
+    if self.cleaned_data['name'] == '' or self.cleaned_data['name'] is None:
+      print '---- name is NONE, out:'+out
+      self.cleaned_data['name'] = out
+      return out
+    else:
+      print '---- name:'+self.cleaned_data['name']
+      return self.cleaned_data['name']
+
+
+  def __init__(self, *args, **kwargs):
+
+    super(accountForm, self).__init__(*args, **kwargs)
+
+    if hasattr(self.instance, 'human'):
+      self.initial['human'] = self.instance.human
+      print ':::: jelow: '+str(self.instance.human)
+      print ':::: name: '+str(self.instance.name)
+    else:
+      #self.initial['human'] = self.instance
+      #print ':::: sin human: '+str(self.initial['human'])
+      #self.clean_name()
+      print ':::: sin human: '
+      print ':::: name: '+str(self.instance.name)
+      #print ':::: cleaned:'+self.cleaned_data
+      #print ':::: '+str(self.instance)#.__unicode__()
+
+      #print ':::: jelow: '+self.instance.human
+'''
+
+
+class AccountCesAdmin(admin.ModelAdmin):
+  list_display = ['name', 'human', 'entity', 'code', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields':
+        ('human', 'record_type', 'entity', 'unit', 'code', 'number', 'name'),
+
+    }),
+  )
+  def save_model(self, request, obj, form, change):
+    print 'CES: '+obj.__unicode__()
+    obj.name = obj.__unicode__()
+    obj.save()
+
+class AccountBankAdmin(admin.ModelAdmin):
+  list_display = ['name', 'human', 'company', 'code', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields':
+        ('human', 'record_type', 'company', 'unit', 'code', 'number', 'name'),
+
+    }),
+  )
+  def save_model(self, request, obj, form, change):
+    print 'BANK: '+obj.__unicode__()
+    obj.name = obj.__unicode__()
+    obj.save()
+
+class AccountCryptoAdmin(admin.ModelAdmin):
+  list_display = ['name', 'human', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields': #('accountCes', 'relation')
+        ('human', 'record_type', 'unit', 'number', 'name'),
+
+    }),
+  )
+  def save_model(self, request, obj, form, change):
+    print 'CRYPTO: '+obj.__unicode__()
+    obj.name = obj.__unicode__()
+    obj.save()
+
+
 
 class H_addressInline(admin.StackedInline):
     model = rel_Human_Addresses
@@ -168,15 +257,13 @@ class H_accountCesInline(admin.StackedInline):
   fieldsets = (
     (' ', {
       'classes': ('collapse',),
-      'fields': (
-        ('record_type', 'entity', 'unit', 'code', 'number'),
+      'fields': (#('accountCes', 'relation')
+        ('record_type', 'entity', 'unit', 'code', 'number'),# 'name'),# 'human'),
       )
     }),
   )
-  def save_model(self, request, obj, form, change):
-    print 'JELOW' #obj.__unicode__
-    obj.name = obj.__unicode__()
-    obj.save()
+  #readonly_fields = ['human',]
+  #form = accountForm
 
 class H_accountBankInline(admin.StackedInline):
   model = AccountBank
@@ -332,6 +419,22 @@ class PersonAdmin(admin.ModelAdmin):
     H_recordInline,
   ]
 
+  def save_formset(self, request, form, formset, change):
+    def set_human_name(instance):
+      if not instance.human:
+        instance.human = request.human
+      if not instance.name:
+        instance.name = instance.__unicode__()
+      instance.save()
+
+    if formset.model == AccountCes or formset.model == AccountBank or formset.model == AccountCrypto:
+      instances = formset.save(commit=False)
+      map(set_human_name, instances)
+      formset.save_m2m()
+      return instances
+    else:
+      return formset.save()
+
 
 class CompanyAdmin(admin.ModelAdmin): # admin.ModelAdmin):
   #class Media:
@@ -385,28 +488,6 @@ class HumanAdmin(admin.ModelAdmin):
 '''
 
 
-class accountForm(forms.ModelForm):
-  model = AccountCes
-  def clean_name(self):
-    print 'HOLA'
-    #return self.unicode
-  def clean(self):
-    if self.instance.name == '' or self.instance.name is None:
-      #self.instance.name = self.instance.__unicode__()
-      self.cleaned_data['name'] = self.instance.__unicode__()
-      print 'Jola '+self.instance.name
-
-
-class AccountCesAdmin(admin.ModelAdmin):
-  list_display = ['name', 'entity', 'code', 'number', 'unit']
-
-  #form = accountForm
-  def save_model(self, request, obj, form, change):
-    print obj.__unicode__
-    obj.name = obj.__unicode__()
-    obj.save()
-
-
 # Register your models here.
 
 #admin.site.register(Tree)
@@ -445,8 +526,8 @@ admin.site.register(Asset)
 admin.site.register(Record)
 admin.site.register(Record_Type, MPTTModelAdmin)
 admin.site.register(AccountCes, AccountCesAdmin)
-admin.site.register(AccountBank)
-admin.site.register(AccountCrypto)
+admin.site.register(AccountBank, AccountBankAdmin)
+admin.site.register(AccountCrypto, AccountCryptoAdmin)
 
 
 #admin.site.register(Space)
