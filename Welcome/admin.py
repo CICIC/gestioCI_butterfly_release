@@ -11,6 +11,14 @@ from mptt.fields import TreeForeignKey, TreeManyToManyField
 from Welcome.models import *
 from General.models import Image
 
+
+class Public_MembershipAdmin(admin.ModelAdmin):
+  fieldsets = (
+    
+  )
+
+
+
 class MembershipAdmin(admin.ModelAdmin):
   list_display = ['name', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed']
 
@@ -26,6 +34,7 @@ class MembershipAdmin(admin.ModelAdmin):
     #  'fields': (('birth_date', 'death_date'),)
     #})
   )
+
 
 class SelfEmployedAdmin(admin.ModelAdmin):
   #list_display = ['name', 'membership__human', 'ic_CESnum', 'join_date', '_join_fee_payed']

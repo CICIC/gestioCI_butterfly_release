@@ -308,8 +308,40 @@ class H_assetInline(admin.StackedInline):
   ]
 
 
+class Public_ProjectAdmin(MPTTModelAdmin):
+  fieldsets = (
+    (None, {
+      'fields':(('name', 'nickname'),
+                ('website', 'socialweb'),
+                ('project_type', 'parent'),
+                ('email', 'email2', 'telephone'),
+                ('ecommerce'))#, 'accounts'))
+    }),
+    (_(u"Dates inici/fi"), {
+      'classes': ('collapse',),
+      'fields': (('birth_date', 'death_date'),)
+    })
+  )
+  inlines = [
+    H_addressInline,
+    H_jobInline,
 
-class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
+    H_accountCesInline,
+    H_accountBankInline,
+    H_accountCryptoInline,
+
+    H_personInline,
+    H_projectInline,
+    H_companyInline,
+
+    H_assetInline,
+    #H_regionInline,
+    H_materialInline,
+    H_nonmaterialInline,
+    #H_recordInline,
+  ]
+
+class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
   #class Media:
   #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
   #  css = {
@@ -329,7 +361,8 @@ class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
   #ref_persons.list = []
   #ref_persons.allow_tags = True
 
-  fieldsets = (
+  '''
+  fieldsets = Public_ProjectAdmin.fieldsets + (
     (None, {
       'fields':(('name', 'nickname'),
                 ('website', 'socialweb'),
@@ -356,29 +389,19 @@ class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
   )
   #filter_horizontal = ('ref_members',) # 'arts',) # 'addresses',)
   #filter_horizontal = ('accounts',) # 'arts',) # 'addresses',)
+  '''
 
-  inlines = [
-    H_addressInline,
-    H_jobInline,
-
-    H_accountCesInline,
-    H_accountBankInline,
-    H_accountCryptoInline,
-
-    H_personInline,
-    H_projectInline,
-    H_companyInline,
-
-    H_assetInline,
-    #H_regionInline,
-    H_materialInline,
-    H_nonmaterialInline,
+  inlines = Public_ProjectAdmin.inlines + [
     H_recordInline,
   ]
 
 
 
-class PersonAdmin(admin.ModelAdmin):
+class Public_PersonAdmin(admin.ModelAdmin):
+
+  pass
+
+class PersonAdmin(Public_PersonAdmin):
   #class Media:
   #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
   #  css = {
@@ -436,7 +459,12 @@ class PersonAdmin(admin.ModelAdmin):
       return formset.save()
 
 
-class CompanyAdmin(admin.ModelAdmin): # admin.ModelAdmin):
+
+class Public_CompanyAdmin(admin.ModelAdmin):
+
+  pass
+
+class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
   #class Media:
   #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
   #  css = {
@@ -497,7 +525,8 @@ admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creati
 #admin.site.register(Human, HumanAdmin)
 admin.site.register(Person, PersonAdmin)
 
-admin.site.register(Project, ProjectAdmin)
+#admin.site.register(Project, ProjectAdmin)
+admin.site.register(Project, Public_ProjectAdmin)  # public comentable
 admin.site.register(Project_Type, MPTTModelAdmin)
 
 admin.site.register(Company, CompanyAdmin)
