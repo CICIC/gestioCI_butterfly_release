@@ -956,7 +956,7 @@ admin.site.register(cooper, cooper_admin)
 from Invoices.forms import cooper_admin_form
 
 class cooper_user_balance(ModelAdmin):
-	model = 'cooper_proxy_balance'
+	model = cooper_proxy_balance
 	list_per_page = 600
 	fields = ['coop_number']
 	readonly_fields = ['coop_number']
@@ -996,6 +996,15 @@ class cooper_user_balance(ModelAdmin):
 		bot = bot_balance(current_period, obj)
 		return bot.total_previous() + bot.total()
 	balance.short_description = _(u"Balanç saldo")
+
+	def get_form(self, request, obj=None, **kwargs):
+		ModelForm = super(cooper_user_balance, self).get_form(request, obj, **kwargs)
+		ModelForm.request = request 
+		ModelForm.balance_euro = Decimal ( "%.2f" % self.balance_euro( obj ) )
+		ModelForm.balance_btc = Decimal ( "%.2f" % self.balance_btc( obj ) )
+		ModelForm.balance_eco = Decimal ( "%.2f" % self.balance_eco( obj ) )
+		ModelForm.balance = Decimal ( "%.2f" % self.balance( obj ) )
+		return ModelForm
 
 	def get_model_perms(self, request): 
 		if request.user.is_superuser:
