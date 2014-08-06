@@ -35,14 +35,17 @@ class bot_cooper( object ):
 	def __init__(self, user):
 		self.user = user
 	def cooper(self, request=None):
+		c = None
 		try:
-			return cooper.objects.get(user=self.user)
-		except:
+			c = cooper.objects.get(user=self.user)
+		except (KeyError, cooper.DoesNotExist):
 			if request:
 				from django.contrib import messages
 				if not request.user.is_superuser:
 					messages.error(request, 'El teu usuari ha sigut creat però el teu perfil de soci encara no està creat.')
 				return cooper.objects.filter(id=-1)
+		else:
+			return c
 	def clients(self):
 		try:
 			return self.cooper().clients.select_related()

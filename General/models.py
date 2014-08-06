@@ -100,7 +100,7 @@ class Human(Being):  # Create own ID's
   companies = models.ManyToManyField('Company', through='rel_Human_Companies', related_name='hum_companies', verbose_name=_(u"Empreses"), blank=True, null=True)
 
   #accountsCes = models.ManyToManyField('AccountCes', related_name='human', verbose_name=_(u"Comptes M.S."), blank=True, null=True, help_text=_(u"Comptes de Moneda Social de l'entitat (ICES/CES)"))
-
+  #comment = models.TextField(blank=True, null=True, verbose_name=_(u"Comentari entitat"))
   class Meta:
     verbose_name = _(u"Humà")
     verbose_name_plural = _(u"e- Humans")
