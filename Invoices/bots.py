@@ -314,7 +314,7 @@ class bot_balance(object):
 		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)
 		purchases_invoice_total = bot_object.get_value_or_zero(purchases_invoice_total)
 		purchase_movement_total = bot_object.get_value_or_zero(purchase_movement_total)
-		return sales_invoice_total + purchases_invoice_total + sales_movement_total
+		return sales_invoice_total - purchases_invoice_total + sales_movement_total - purchase_movement_total
 '''
 class bot_period_closer( object ):
 	def __init__( self, user, period ):

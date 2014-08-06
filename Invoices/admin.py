@@ -640,7 +640,7 @@ class period_close_user(admin.ModelAdmin):
 		(_('Aportacio a la CIC'), {'fields': ('donation',)}),
 		(_('Total impostos'), {'fields': (('total_vat', 'total_irpf'),)}),
 		(_('Quota Trimestral'), {'fields': ('period_tax', 'advanced_tax' )}),
-		(_('Totals'), {'fields': ('total', 'total_to_pay')}),
+		(_('Totals'), {'fields': ('total', 'total_to_pay', 'total_balance', 'total_acumulated')}),
 		(_('Tancar'), {'fields': ('closed',)}),
 	)
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]

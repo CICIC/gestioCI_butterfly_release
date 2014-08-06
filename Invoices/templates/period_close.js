@@ -21,10 +21,11 @@
 	function calculateVAT() {
 		if ( $('#id_vat_type').val()  == 1 ) {
 			//Cooper individual VAT
-			var savings =  (parseFloat(c( $('#id_sales_invoiced_vat').val() )  -  c( $('#id_sales_assigned_vat').val() )).toFixed(2)).replace(".",","); 
+			var savings =  c( $('#id_sales_invoiced_vat').val() ) - c( $('#id_sales_assigned_vat').val() ) ; 
 			if ( savings < 0 ){
 				savings = 0;
 			}
+			var savings = parseFloat(savings).toFixed(2).replace(".",","); 
 			var totalvat = $('#id_oficial_vat_total').val();
 		} else { 
 			//System VAT
@@ -41,6 +42,7 @@
 
 	function validateDONATION( showAlert ) {
 		if ( showAlert==undefined){ showAlert = true; }
+
 		if ( parseFloat( $('#id_savings_with_assigned_vat_donation').val() ) > parseFloat( $('#id_savings_with_assigned_vat').val() ) ) {
 				if ( showAlert ) { alert ( gettext("La donació ha de ser menor igual que l'estalvi" )); }
 				$('#id_savings_with_assigned_vat_donation').val( $('#id_savings_with_assigned_vat').val() );
@@ -56,6 +58,9 @@
 		$('#id_total').val( parseFloat(value).toFixed(2).replace(".",",") );
 		total_sub = parseFloat(value) +  parseFloat(c( $('#id_total_irpf').val()))  +  parseFloat(c($('#id_total_vat').val())) ;
 		$('#id_total_to_pay').val( parseFloat(total_sub).toFixed(2).replace(".",",") ) ;
+		total_to_pay = total_sub;
+		total_balance = parseFloat( $('#id_total_balance').val() ).toFixed(2); 
+		$('#id_total_acumulated').val( total_to_pay - total_balance );
 
 
 	}

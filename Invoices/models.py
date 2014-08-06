@@ -395,14 +395,14 @@ class purchases_movement( movement ):
 		verbose_name=_(u'M - Reintegrament')
 		verbose_name_plural=_(u'M - Reintegraments')
 
-period_close_base_fields = ('sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total', 
+period_close_base_fields = ('period', 'sales_base', 'sales_invoiced_vat', 'sales_assigned_vat', 'sales_total', 
 	'purchases_base', 'purchases_vat', 'purchases_irpf', 'purchases_total',
 	'oficial_vat_total', 'assigned_vat_total', 'vat_type',
 	'savings_with_assigned_vat', 'savings_with_assigned_vat_donation',
 	'total_vat', 'total_irpf',
 	'period_tax', 'advanced_tax',
 	'donation', 
-	'total', 'total_to_pay', 'closed')
+	'total', 'total_to_pay', 'total_balance', 'total_acumulated', 'closed')
 vat_TYPES = (
 		(vat_type_OFICIAL, _(u'Pagament IVA oficial')),
 		(vat_type_ASSIGNED, _(u"Pagament IVA segons l'IVA assignat"))
@@ -472,7 +472,21 @@ class period_close(models.Model):
 		return self.total_vat() + self.total_irpf() + self.total()
 	total_to_pay.decimal = True
 	total_to_pay.short_description = (u"TOTAL A ABONAR (€)")
-	#class
+
+	def total_balance(self):
+		total_previous = 0
+		if self.period is not None:
+			from Invoices.bots import bot_balance
+			total_previous = bot_balance( self.period, self.cooper ).total_previous()
+		return total_previous
+	total_balance.decimal = True
+	total_balance.short_description = (u"TOTAL SALDO (€)")
+
+	def total_acumulated(self):
+		return self.total_to_pay() - self.total_balance()
+	total_acumulated.decimal = True
+	total_acumulated.short_description = (u"TOTAL A ABONAR - SALDO (€)")
+  
 	def __getitem__(self, value):
 		return self.pk
 	

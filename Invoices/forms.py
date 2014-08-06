@@ -198,19 +198,21 @@ class period_close_form(forms.ModelForm):
 
 	total = forms.DecimalField(label=_(u"Total Quota i Aportacions (€)"), localize=True, required=False)
 	total_to_pay = forms.DecimalField(label=_(u"TOTAL A ABONAR (€)"),  localize=True, required=False)
+	total_balance = forms.DecimalField(label=_(u"TOTAL SALDO(€)"), localize=True, required=False)
+	total_acumulated = forms.DecimalField(label=_(u"TOTAL A ABONAR - SALDO(€)"), localize=True, required=False)
 
 	def __init__(self, *args, **kwargs):
 		super(period_close_form, self).__init__(*args, **kwargs)
 		self.current_fields = self.current_fields + ('cooper', 'total_to_pay' )
 		if self.is_new:
-				current_cooper = bot_cooper(self.request.user).cooper(self.request)
-				current_period = bot_period(self.request.user).period( True, self.request )
+			current_cooper = bot_cooper(self.request.user).cooper(self.request)
+			current_period = bot_period(self.request.user).period( True, self.request )
 
-				if current_cooper and current_period:
-					bot = bot_period_close( current_period, current_cooper, self.instance, True)
-					bot.load_period_close_form(self,self.current_fields  )
-				else:
-					pass
+			if current_cooper and current_period:
+				bot = bot_period_close( current_period, current_cooper, self.instance, True)
+				bot.load_period_close_form( self, self.current_fields )
+			else:
+				pass
 		else:
 			if self.base_fields["period"].initial is None: #protect against multiple call, if we are loaded don't load again
 				bot = bot_period_close( self.obj.period, self.obj.cooper, self.obj)
