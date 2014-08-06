@@ -1003,8 +1003,12 @@ class cooper_user_balance(ModelAdmin):
 				'canAdd': False,
 				'canEdit': True }
 		else:
-			return {'direct_to_change_form':True, 
-			'change_form_url': bot_cooper( request.user ).cooper().id }
+			cooper = bot_cooper( request.user ).cooper( request )
+			perms = {}
+			if cooper:
+				perms = {'direct_to_change_form':True, 
+						'change_form_url': cooper.id }
+			return perms
 user_admin_site.register(cooper_proxy_balance, cooper_user_balance)
 
 class cooper_admin_transaction( cooper_user_balance):
@@ -1052,8 +1056,12 @@ class cooper_companies_user(ModelAdmin):
 	cooper_providers.allow_tags = True
 	cooper_providers.short_description = _(u"Els meus proveïdors")
 	def get_model_perms(self, request): 
-		return {'direct_to_change_form':True, 
+		cooper = bot_cooper( request.user ).cooper( request )
+		perms = {}
+		if cooper:
+			perms = {'direct_to_change_form':True, 
 			'change_form_url': bot_cooper( request.user ).cooper().id }
+		return perms
 user_admin_site.register(cooper_proxy_companies, cooper_companies_user)
 
 class cooper_companies_admin(cooper_companies_user):
