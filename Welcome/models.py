@@ -14,15 +14,37 @@ from General.models import *
 
 # Create your models here.
 
-class iC_Record(Record):  # create own ID's
-  #record_type = TreeForeignKey()
+class iC_Record(Artwork):  # create own ID's
+  record_type = TreeForeignKey('iC_Record_Type', blank=True, null=True, verbose_name=_(u"Tipus de Registre CI"))
   class Meta:
-    verbose_name = _(u"Registre CI")
-    verbose_name_plural = _(u"Registres CI")
+    verbose_name= _(u'Registre CI')
+    verbose_name_plural= _(u'o- Registres CI')
+  def __unicode__(self):
+    if self.record_type is None or self.record_type == '':
+      return self.name
+    else:
+      return self.record_type.name+': '+self.name
 
-#class iC_Type(Type):
-#  class Meta:
-#    verbose_name = _(u"CI Tipus")
+
+class iC_Type(Concept):  # create own ID's
+  clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200,
+                          help_text=_(u"Model de django o classe python associada al Tipus CI"))
+  class Meta:
+    verbose_name = _(u"c- Tipus CI")
+
+  def __unicode__(self):
+    if self.clas is None or self.clas == '':
+      return self.name
+    else:
+      return self.name+' ('+self.clas+')'
+
+
+class iC_Record_Type(iC_Type):
+  ic_type = models.OneToOneField('iC_Type', primary_key=True, parent_link=True)
+  class Meta:
+    verbose_name= _(u'Tipus de Registre')
+    verbose_name_plural= _(u'c-> Tipus de Registres')
+
 
 
 
@@ -37,7 +59,7 @@ class iC_Membership(iC_Record):
   join_fee = models.ForeignKey('Fee', blank=True, null=True, verbose_name=_(u"Cuota d'alta"))
 
   ic_CESnum = models.CharField(max_length=8, blank=True, null=True, verbose_name=_(u"Numero al CES/iCES"))
-  comment = models.TextField(blank=True, verbose_name=_(u"Comentari"))
+  #comment = models.TextField(blank=True, verbose_name=_(u"Comentari"))
   labor_contract = models.OneToOneField('iC_Labor_Contract', blank=True, null=True, verbose_name=_(u"Contracte laboral?"))
 
   virtual_market = models.BooleanField(default=False, verbose_name=_(u"Mercat Virtual?"))
@@ -55,7 +77,14 @@ class iC_Membership(iC_Record):
   _join_fee_payed.boolean = True
   joinfee_payed = property(_join_fee_payed)
 
-#class iC_Membership_Type()
+'''
+class iC_Membership_Type(iC_Record_Type):
+  record_type = models.OneToOneField('iC_Record_Type', primary_key=True, parent_link=True)
+  class Meta:
+    verbose_name = _(u"Tipus de Soci")
+    verbose_name_plural = _(u"c-> Tipus de Socis")
+'''
+
 
 class iC_Self_Employed(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
@@ -63,16 +92,24 @@ class iC_Self_Employed(iC_Record):
 
   join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
   end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
+
   rel_fees = models.ManyToManyField('Fee', blank=True, null=True, verbose_name=_(u"Quotes relacionades"))
 
   organic = models.BooleanField(verbose_name=_(u"Productes ecològics/organics?"))
   #welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
 
-  req_id_cards = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
+  #req_id_cards = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
+  '''
   req_address_contract = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix contractes (lloguer, cessió, etc)?"))
   req_insurance = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix assegurances?"))
   req_licence = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix llicències?"))
   req_images = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix fotos?"))
+  '''
+  
+  rel_address_contracts = models.ManyToManyField('iC_Address_Contract', blank=True, null=True, verbose_name=_(u"Contractes d'Adreça vinculats"))
+  rel_insurances = models.ManyToManyField('iC_Insurance', blank=True, null=True, verbose_name=_(u"Assegurances vinculades"))
+  rel_licences = models.ManyToManyField('iC_Licence', blank=True, null=True, verbose_name=_(u"Llicències vinculades"))
+  rel_images = models.ManyToManyField('General.Image', blank=True, null=True, verbose_name=_(u"Imatges requerides"))
 
   rel_accountBank = models.ForeignKey('General.AccountBank', blank=True, null=True, verbose_name=_(u"Compte bancari CI associat"))
   #socialcoin_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió moneda social?"))
@@ -127,7 +164,7 @@ class iC_Stallholder(iC_Self_Employed):  # Firaire
 class Learn_Session(iC_Record):
   nonmaterial = models.ForeignKey('General.Nonmaterial', verbose_name=_(u"Formació (obra inmaterial)"))
   assistants = models.ManyToManyField('General.Human', related_name='assist_sessions', blank=True, null=True, verbose_name=_(u"Assistents"))
-  facilitator = models.ForeignKey('General.Person', related_name='facilitate_sessions', blank=True, null=True, verbose_name=_(u"Facilitador"))
+  facilitator = models.ForeignKey('General.Human', related_name='facilitate_sessions', blank=True, null=True, verbose_name=_(u"Facilitador"))
   datetime = models.DateTimeField(blank=True, null=True, verbose_name=_(u"Dia i Hora"))
   duration = models.TimeField(default='01:00', verbose_name=_(u"Duració"))
   address = models.ForeignKey('General.Address', blank=True, null=True, verbose_name=_(u"Adreça"))
@@ -144,7 +181,7 @@ class Project_Accompaniment(iC_Record):
   needs = models.TextField(blank=True, verbose_name=_(u"Necessitats"))
   petitioner = models.ForeignKey('General.Human', related_name='petitions', blank=True, null=True, verbose_name=_(u"Peticionari"))
   petition = models.TextField(blank=True, verbose_name=_(u"Comentari petició"))
-  facilitator = models.ForeignKey('General.Person', related_name='facilitate_projects', blank=True, null=True, verbose_name=_(u"Facilitador"))
+  facilitator = models.ForeignKey('General.Human', related_name='facilitate_projects', blank=True, null=True, verbose_name=_(u"Facilitador"))
 
   class Meta:
     verbose_name = _(u"Expedient Projecte Productiu")
@@ -155,16 +192,16 @@ class Fee(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
   human = models.ForeignKey('General.Human', related_name='out_fees', verbose_name=_(u"Ens pagador"))
   project = TreeForeignKey('General.Project', related_name='in_fees', verbose_name=_(u"Projecte receptor"))
-  amount = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_(u"Import"))
+  amount = models.DecimalField(default=0, max_digits=6, decimal_places=2, verbose_name=_(u"Import"))
   unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
+  membership = models.ForeignKey('iC_Membership', related_name='fees', blank=True, null=True, verbose_name=_(u"Registre de Soci"))
+
   issue_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'emisió"))
   deadline_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de venciment"))
   payment_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de pagament"))
-  membership = models.ForeignKey('iC_Membership', related_name='fees', blank=True, null=True, verbose_name=_(u"Registre de Soci"))
-  rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
+  payment_type = models.ForeignKey('Payment_Type', blank=True, null=True, verbose_name=_(u"Forma de pagament"))
 
-  #accountCes = models.ForeignKey('General.AccountCes', blank=True, null=True, verbose_name=_(u"Compte CES relacionat"))
-  payment_type = models.ForeignKey('Payment_Mode', blank=True, null=True, verbose_name=_(u"Forma de pagament"))
+  rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
 
   def __unicode__(self):
     return self.record_type.name+': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+'] > '+self.entity.nickname
@@ -182,26 +219,25 @@ class Fee(iC_Record):
   payed = property(_is_payed)
 
 
-
-class Payment_Mode(Relation):
-  relation = models.OneToOneField('General.Relation', primary_key=True, parent_link=True)
+class Payment_Type(iC_Type):
+  ic_type = models.OneToOneField('iC_Type', primary_key=True, parent_link=True)
   class Meta:
     verbose_name = _(u"Forma de pagament")
-    verbose_name_plural = _(u"Formes de pagament")
-
+    verbose_name_plural = _(u"c-> Formes de pagament")
 
 
 
 class iC_Document(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
   doc_type = models.ForeignKey('iC_Document_Type', blank=True, null=True, verbose_name=_(u"Tipus de document"))
-  comment = models.TextField(blank=True, verbose_name=_(u"Comentari"))
-  file = models.FileField(upload_to='docs', blank=True, null=True, verbose_name=_(u"Document escanejat"))
+  #description = models.TextField(blank=True, verbose_name=_(u"Comentari"))
+  file = models.FileField(upload_to='ic/docs', blank=True, null=True, verbose_name=_(u"Document escanejat"))
 
-class iC_Document_Type(Record_Type):
-  record_type = models.OneToOneField('General.Record_Type', primary_key=True, parent_link=True)
+class iC_Document_Type(iC_Record_Type):
+  record_type = models.OneToOneField('iC_Record_Type', primary_key=True, parent_link=True)
   class Meta:
     verbose_name = _(u"Tipus de Document CI")
+    verbose_name_plural = _(u"-> Tipus de Documents CI")
 
 
 

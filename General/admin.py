@@ -299,7 +299,7 @@ class H_assetInline(admin.StackedInline):
     (' ', {
       'classes': ('collapse',),
       'fields': (
-        ('name', 'material_type', 'description', 'reciprocity'),
+        ('name', 'material_type', 'comment', 'reciprocity'),
       )
     }),
   )
@@ -313,9 +313,9 @@ class Public_ProjectAdmin(MPTTModelAdmin):
     (None, {
       'fields':(('name', 'nickname'),
                 ('website', 'socialweb'),
-                ('project_type', 'parent'),
+                ('project_type', 'parent', 'ecommerce'),
                 ('email', 'email2', 'telephone'),
-                ('ecommerce'))#, 'accounts'))
+                ('comment'))#, 'accounts'))
     }),
     (_(u"Dates inici/fi"), {
       'classes': ('collapse',),
@@ -521,7 +521,7 @@ class HumanAdmin(admin.ModelAdmin):
 #admin.site.register(Tree)
 
 #admin.site.register(Being)
-admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
+#admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
 #admin.site.register(Human, HumanAdmin)
 admin.site.register(Person, PersonAdmin)
 
@@ -534,13 +534,13 @@ admin.site.register(Company_Type, MPTTModelAdmin)
 
 #admin.site.register(rel_Human_Humans)
 
-admin.site.register(Art, MPTTModelAdmin) # Comment this line after creating 'Relation' and 'Job' inside Arts.
+###admin.site.register(Art, MPTTModelAdmin) # Comment this line after creating 'Relation' and 'Job' inside Arts.
 admin.site.register(Relation, MPTTModelAdmin)
 admin.site.register(Job, MPTTModelAdmin)
 
 
 #admin.site.register(Artwork)
-admin.site.register(Artwork_Type, MPTTModelAdmin) # Comment this line after creating 'Unit', 'Record', 'Material' and 'Nonmaterial' inside Artwork_Types
+#admin.site.register(Artwork_Type, MPTTModelAdmin) # Comment this line after creating 'Unit', 'Record', 'Material' and 'Nonmaterial' inside Artwork_Types
 admin.site.register(Unit)
 admin.site.register(Unit_Type, MPTTModelAdmin)
 admin.site.register(UnitRatio)
@@ -560,12 +560,12 @@ admin.site.register(AccountCrypto, AccountCryptoAdmin)
 
 
 #admin.site.register(Space)
-admin.site.register(Space_Type, MPTTModelAdmin) # Comment this line after creating 'Address' and 'Region' inside Space_Types
+#admin.site.register(Space_Type, MPTTModelAdmin) # Comment this line after creating 'Address' and 'Region' inside Space_Types
 admin.site.register(Address)
 admin.site.register(Address_Type, MPTTModelAdmin)
 
 admin.site.register(Region, MPTTModelAdmin)
 admin.site.register(Region_Type, MPTTModelAdmin)
 
-admin.site.register(Concept, MPTTModelAdmin)
-admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
+#admin.site.register(Concept, MPTTModelAdmin)
+#admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree

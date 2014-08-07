@@ -14,7 +14,12 @@ from General.models import Image
 
 class Public_MembershipAdmin(admin.ModelAdmin):
   fieldsets = (
-    
+    (None, {
+      'fields':(('human', 'ic_CESnum'),
+                ('contribution', 'virtual_market', 'labor_contract'),
+                ('join_fee', 'join_date', 'end_date'),
+                ('expositors', 'description'))
+    }),
   )
 
 
@@ -27,7 +32,7 @@ class MembershipAdmin(admin.ModelAdmin):
       'fields':(('human', 'ic_project', 'name', 'ic_CESnum'),
                 ('contribution', 'virtual_market', 'labor_contract'),
                 ('join_fee', 'join_date', 'end_date'),
-                ('expositors', 'comment'))
+                ('expositors', 'description'))
     }),
     #(_(u"Dates naixement/mort"), {
     #  'classes': ('collapse',),
@@ -60,13 +65,14 @@ class SelfEmployedAdmin(admin.ModelAdmin):
 
 # Register your models here.
 
-admin.site.register(iC_Record) # es pot comentar
+admin.site.register(iC_Type) # can be commented after creating 'Membership', 'Document' and 'Payment' types
+admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Membership, MembershipAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 admin.site.register(iC_Stallholder)
 
 #admin.site.register(iC_Document)
-admin.site.register(iC_Document_Type)
+admin.site.register(iC_Document_Type, MPTTModelAdmin)
 admin.site.register(iC_Labor_Contract)
 admin.site.register(iC_Address_Contract)
 admin.site.register(iC_Insurance)
@@ -77,4 +83,4 @@ admin.site.register(Learn_Session)
 admin.site.register(Project_Accompaniment)
 admin.site.register(Image)
 
-admin.site.register(Payment_Mode, MPTTModelAdmin)
+admin.site.register(Payment_Type, MPTTModelAdmin)
