@@ -64,6 +64,95 @@ class M_addressInline(admin.TabularInline):
   )
 
 
+'''
+class accountForm(forms.ModelForm):
+  model = AccountCes
+
+  def clean_human(self):
+    if self.cleaned_data['human'] is None or self.cleaned_data['human'] == '':
+      print '>>> human is NONE'
+    else:
+      #self.initial['human'] = self.cleaned_data['human']
+      print '<<< human: '+self.cleaned_data['human'].__unicode__()
+      #print '<<< name: '+self.cleaned_data['name']
+      #self.clean_name()
+      return self.cleaned_data['human']
+
+  def clean_name(self):
+    out = self.cleaned_data['unit'].code+': '+self.cleaned_data['human'].__unicode__()+' '+self.cleaned_data['code']+self.cleaned_data['number']
+    if self.cleaned_data['name'] == '' or self.cleaned_data['name'] is None:
+      print '---- name is NONE, out:'+out
+      self.cleaned_data['name'] = out
+      return out
+    else:
+      print '---- name:'+self.cleaned_data['name']
+      return self.cleaned_data['name']
+
+
+  def __init__(self, *args, **kwargs):
+
+    super(accountForm, self).__init__(*args, **kwargs)
+
+    if hasattr(self.instance, 'human'):
+      self.initial['human'] = self.instance.human
+      print ':::: jelow: '+str(self.instance.human)
+      print ':::: name: '+str(self.instance.name)
+    else:
+      #self.initial['human'] = self.instance
+      #print ':::: sin human: '+str(self.initial['human'])
+      #self.clean_name()
+      print ':::: sin human: '
+      print ':::: name: '+str(self.instance.name)
+      #print ':::: cleaned:'+self.cleaned_data
+      #print ':::: '+str(self.instance)#.__unicode__()
+
+      #print ':::: jelow: '+self.instance.human
+'''
+
+
+class AccountCesAdmin(admin.ModelAdmin):
+  list_display = ['name', 'human', 'entity', 'code', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields':
+        ('human', 'record_type', 'entity', 'unit', 'code', 'number', 'name'),
+
+    }),
+  )
+  def save_model(self, request, obj, form, change):
+    print 'CES: '+obj.__unicode__()
+    obj.name = obj.__unicode__()
+    obj.save()
+
+class AccountBankAdmin(admin.ModelAdmin):
+  list_display = ['name', 'human', 'company', 'code', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields':
+        ('human', 'record_type', 'company', 'unit', 'code', 'number', 'name'),
+
+    }),
+  )
+  def save_model(self, request, obj, form, change):
+    print 'BANK: '+obj.__unicode__()
+    obj.name = obj.__unicode__()
+    obj.save()
+
+class AccountCryptoAdmin(admin.ModelAdmin):
+  list_display = ['name', 'human', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields': #('accountCes', 'relation')
+        ('human', 'record_type', 'unit', 'number', 'name'),
+
+    }),
+  )
+  def save_model(self, request, obj, form, change):
+    print 'CRYPTO: '+obj.__unicode__()
+    obj.name = obj.__unicode__()
+    obj.save()
+
+
 
 class H_addressInline(admin.StackedInline):
     model = rel_Human_Addresses
@@ -168,15 +257,13 @@ class H_accountCesInline(admin.StackedInline):
   fieldsets = (
     (' ', {
       'classes': ('collapse',),
-      'fields': (
-        ('record_type', 'entity', 'unit', 'code', 'number'),
+      'fields': (#('accountCes', 'relation')
+        ('record_type', 'entity', 'unit', 'code', 'number'),# 'name'),# 'human'),
       )
     }),
   )
-  def save_model(self, request, obj, form, change):
-    print 'JELOW' #obj.__unicode__
-    obj.name = obj.__unicode__()
-    obj.save()
+  #readonly_fields = ['human',]
+  #form = accountForm
 
 class H_accountBankInline(admin.StackedInline):
   model = AccountBank
@@ -212,7 +299,7 @@ class H_assetInline(admin.StackedInline):
     (' ', {
       'classes': ('collapse',),
       'fields': (
-        ('name', 'material_type', 'description', 'reciprocity'),
+        ('name', 'material_type', 'comment', 'reciprocity'),
       )
     }),
   )
@@ -221,8 +308,40 @@ class H_assetInline(admin.StackedInline):
   ]
 
 
+class Public_ProjectAdmin(MPTTModelAdmin):
+  fieldsets = (
+    (None, {
+      'fields':(('name', 'nickname'),
+                ('website', 'socialweb'),
+                ('project_type', 'parent', 'ecommerce'),
+                ('email', 'email2', 'telephone'),
+                ('comment'))#, 'accounts'))
+    }),
+    (_(u"Dates inici/fi"), {
+      'classes': ('collapse',),
+      'fields': (('birth_date', 'death_date'),)
+    })
+  )
+  inlines = [
+    H_addressInline,
+    H_jobInline,
 
-class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
+    H_accountCesInline,
+    H_accountBankInline,
+    H_accountCryptoInline,
+
+    H_personInline,
+    H_projectInline,
+    H_companyInline,
+
+    H_assetInline,
+    #H_regionInline,
+    H_materialInline,
+    H_nonmaterialInline,
+    #H_recordInline,
+  ]
+
+class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
   #class Media:
   #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
   #  css = {
@@ -242,7 +361,8 @@ class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
   #ref_persons.list = []
   #ref_persons.allow_tags = True
 
-  fieldsets = (
+  '''
+  fieldsets = Public_ProjectAdmin.fieldsets + (
     (None, {
       'fields':(('name', 'nickname'),
                 ('website', 'socialweb'),
@@ -269,29 +389,19 @@ class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
   )
   #filter_horizontal = ('ref_members',) # 'arts',) # 'addresses',)
   #filter_horizontal = ('accounts',) # 'arts',) # 'addresses',)
+  '''
 
-  inlines = [
-    H_addressInline,
-    H_jobInline,
-
-    H_accountCesInline,
-    H_accountBankInline,
-    H_accountCryptoInline,
-
-    H_personInline,
-    H_projectInline,
-    H_companyInline,
-
-    H_assetInline,
-    #H_regionInline,
-    H_materialInline,
-    H_nonmaterialInline,
+  inlines = Public_ProjectAdmin.inlines + [
     H_recordInline,
   ]
 
 
 
-class PersonAdmin(admin.ModelAdmin):
+class Public_PersonAdmin(admin.ModelAdmin):
+
+  pass
+
+class PersonAdmin(Public_PersonAdmin):
   #class Media:
   #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
   #  css = {
@@ -332,8 +442,29 @@ class PersonAdmin(admin.ModelAdmin):
     H_recordInline,
   ]
 
+  def save_formset(self, request, form, formset, change):
+    def set_human_name(instance):
+      if not instance.human:
+        instance.human = request.human
+      if not instance.name:
+        instance.name = instance.__unicode__()
+      instance.save()
 
-class CompanyAdmin(admin.ModelAdmin): # admin.ModelAdmin):
+    if formset.model == AccountCes or formset.model == AccountBank or formset.model == AccountCrypto:
+      instances = formset.save(commit=False)
+      map(set_human_name, instances)
+      formset.save_m2m()
+      return instances
+    else:
+      return formset.save()
+
+
+
+class Public_CompanyAdmin(admin.ModelAdmin):
+
+  pass
+
+class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
   #class Media:
   #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
   #  css = {
@@ -385,38 +516,17 @@ class HumanAdmin(admin.ModelAdmin):
 '''
 
 
-class accountForm(forms.ModelForm):
-  model = AccountCes
-  def clean_name(self):
-    print 'HOLA'
-    #return self.unicode
-  def clean(self):
-    if self.instance.name == '' or self.instance.name is None:
-      #self.instance.name = self.instance.__unicode__()
-      self.cleaned_data['name'] = self.instance.__unicode__()
-      print 'Jola '+self.instance.name
-
-
-class AccountCesAdmin(admin.ModelAdmin):
-  list_display = ['name', 'entity', 'code', 'number', 'unit']
-
-  #form = accountForm
-  def save_model(self, request, obj, form, change):
-    print obj.__unicode__
-    obj.name = obj.__unicode__()
-    obj.save()
-
-
 # Register your models here.
 
 #admin.site.register(Tree)
 
 #admin.site.register(Being)
-admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
+#admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
 #admin.site.register(Human, HumanAdmin)
 admin.site.register(Person, PersonAdmin)
 
-admin.site.register(Project, ProjectAdmin)
+#admin.site.register(Project, ProjectAdmin)
+admin.site.register(Project, Public_ProjectAdmin)  # public comentable
 admin.site.register(Project_Type, MPTTModelAdmin)
 
 admin.site.register(Company, CompanyAdmin)
@@ -424,13 +534,13 @@ admin.site.register(Company_Type, MPTTModelAdmin)
 
 #admin.site.register(rel_Human_Humans)
 
-admin.site.register(Art, MPTTModelAdmin) # Comment this line after creating 'Relation' and 'Job' inside Arts.
+###admin.site.register(Art, MPTTModelAdmin) # Comment this line after creating 'Relation' and 'Job' inside Arts.
 admin.site.register(Relation, MPTTModelAdmin)
 admin.site.register(Job, MPTTModelAdmin)
 
 
 #admin.site.register(Artwork)
-admin.site.register(Artwork_Type, MPTTModelAdmin) # Comment this line after creating 'Unit', 'Record', 'Material' and 'Nonmaterial' inside Artwork_Types
+#admin.site.register(Artwork_Type, MPTTModelAdmin) # Comment this line after creating 'Unit', 'Record', 'Material' and 'Nonmaterial' inside Artwork_Types
 admin.site.register(Unit)
 admin.site.register(Unit_Type, MPTTModelAdmin)
 admin.site.register(UnitRatio)
@@ -445,17 +555,17 @@ admin.site.register(Asset)
 admin.site.register(Record)
 admin.site.register(Record_Type, MPTTModelAdmin)
 admin.site.register(AccountCes, AccountCesAdmin)
-admin.site.register(AccountBank)
-admin.site.register(AccountCrypto)
+admin.site.register(AccountBank, AccountBankAdmin)
+admin.site.register(AccountCrypto, AccountCryptoAdmin)
 
 
 #admin.site.register(Space)
-admin.site.register(Space_Type, MPTTModelAdmin) # Comment this line after creating 'Address' and 'Region' inside Space_Types
+#admin.site.register(Space_Type, MPTTModelAdmin) # Comment this line after creating 'Address' and 'Region' inside Space_Types
 admin.site.register(Address)
 admin.site.register(Address_Type, MPTTModelAdmin)
 
 admin.site.register(Region, MPTTModelAdmin)
 admin.site.register(Region_Type, MPTTModelAdmin)
 
-admin.site.register(Concept, MPTTModelAdmin)
-admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
+#admin.site.register(Concept, MPTTModelAdmin)
+#admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
