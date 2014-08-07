@@ -12,6 +12,19 @@ from Welcome.models import *
 from General.models import Image
 
 
+class AkinMembershipAdmin(admin.ModelAdmin):
+  list_display = ['person', 'join_date', 'has_id_card']
+
+  fieldsets = (
+    (None, {
+      'fields':(('person', 'ic_project'),
+                ('join_date', 'end_date'),
+                ('description', 'name'))
+    }),
+  )
+
+
+
 class Public_MembershipAdmin(admin.ModelAdmin):
   fieldsets = (
     (None, {
@@ -68,6 +81,8 @@ class SelfEmployedAdmin(admin.ModelAdmin):
 admin.site.register(iC_Type, MPTTModelAdmin) # can be commented after creating 'Membership', 'Document' and 'Payment' types
 admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
+
+admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
 admin.site.register(iC_Membership, MembershipAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 admin.site.register(iC_Stallholder)

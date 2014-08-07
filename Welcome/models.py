@@ -47,6 +47,25 @@ class iC_Record_Type(iC_Type):
 
 
 
+class iC_Akin_Membership(iC_Record):
+  ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
+  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
+  ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
+  join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
+  end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
+  class Meta:
+    verbose_name = _(u"Alta de Soci Afí CI")
+    verbose_name_plural = _(u"Altes de Socis Afins CI")
+
+  def _has_id_card(self):
+    if self.person.id_card is None or self.person.id_card == '':
+      return False
+    else:
+      return True
+  _has_id_card.boolean = True
+  has_id_card = property(_has_id_card)
+  
+
 
 class iC_Membership(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
@@ -105,7 +124,7 @@ class iC_Self_Employed(iC_Record):
   req_licence = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix llicències?"))
   req_images = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix fotos?"))
   '''
-  
+
   rel_address_contracts = models.ManyToManyField('iC_Address_Contract', blank=True, null=True, verbose_name=_(u"Contractes d'Adreça vinculats"))
   rel_insurances = models.ManyToManyField('iC_Insurance', blank=True, null=True, verbose_name=_(u"Assegurances vinculades"))
   rel_licences = models.ManyToManyField('iC_Licence', blank=True, null=True, verbose_name=_(u"Llicències vinculades"))
