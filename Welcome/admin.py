@@ -65,8 +65,9 @@ class SelfEmployedAdmin(admin.ModelAdmin):
 
 # Register your models here.
 
-admin.site.register(iC_Type) # can be commented after creating 'Membership', 'Document' and 'Payment' types
+admin.site.register(iC_Type, MPTTModelAdmin) # can be commented after creating 'Membership', 'Document' and 'Payment' types
 admin.site.register(iC_Record) # can be commented
+admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
 admin.site.register(iC_Membership, MembershipAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 admin.site.register(iC_Stallholder)
