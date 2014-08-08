@@ -276,7 +276,7 @@ class rel_Human_Persons(models.Model):
     verbose_name = _(u"per")
     verbose_name_plural = _(u"Persones vinculades")
   def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
+    if self.relation is None or self.relation.gerund is None or self.relation.gerund == '':
       return self.person.__unicode__()
     else:
       return self.relation.gerund+' > '+self.person.__unicode__()
@@ -746,7 +746,7 @@ class AccountBank(Record):
     verbose_name_plural= _(u'o- Comptes Bancaris')
 
   def __unicode__(self):
-    return '('+self.unit.code+') '+self.human.__unicode__()+' '+self.number+' ('+self.company.nickname+')'
+    return '('+self.unit.code+') '+self.human.__unicode__()+' '+self.number+' - '+self.company.__unicode__()
 
 class AccountCrypto(Record):
   record = models.OneToOneField('Record', primary_key=True, parent_link=True)

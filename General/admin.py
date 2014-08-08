@@ -5,6 +5,9 @@ from django.forms.extras import widgets
 
 from django.utils.translation import ugettext as _
 
+from django.forms.models import BaseInlineFormSet
+from django.forms.formsets import formset_factory
+
 from mptt.admin import MPTTModelAdmin
 from mptt.fields import TreeForeignKey, TreeManyToManyField
 #from mptt.forms import MPTTAdminForm, TreeNodeChoiceField
@@ -250,6 +253,29 @@ class H_companyInline(admin.StackedInline):
       }),
     )
 
+'''
+class accountCesForm(forms.ModelForm):
+  model = AccountCes
+  fieldsets = (
+    (' ', {
+      'classes': ('collapse',),
+      'fields': (#('accountCes', 'relation')
+        ('record_type', 'entity'), ('unit', 'code', 'number'),# 'name'),# 'human'),
+      )
+    }),
+  )
+
+class accountCesInlineFormSet(BaseInlineFormSet):
+  def __init__(self, *args, **kwargs):
+    kwargs['initial'] = [
+      {'record_type': Record_Type.objects.get(clas='AccountCes')},
+    ]
+    super(accountCesInlineFormSet, self).__init__(*args, **kwargs)
+    #self.initial = [
+    #    {'record_type': Record_Type.objects.get(clas='AccountCes')}, #{'name': 'en-US'}, {'name': 'es-ES'}
+    #]
+    print self.initial
+'''
 class H_accountCesInline(admin.StackedInline):
   model = AccountCes
   extra = 0
@@ -258,11 +284,12 @@ class H_accountCesInline(admin.StackedInline):
     (' ', {
       'classes': ('collapse',),
       'fields': (#('accountCes', 'relation')
-        ('record_type', 'entity', 'unit', 'code', 'number'),# 'name'),# 'human'),
+        ('entity', 'unit'), ('code', 'number'),# 'name'),# 'human'),
       )
     }),
   )
-  #readonly_fields = ['human',]
+  #formset = accountCesInlineFormSet
+  #readonly_fields = ['record_type',]
   #form = accountForm
 
 class H_accountBankInline(admin.StackedInline):
@@ -273,7 +300,7 @@ class H_accountBankInline(admin.StackedInline):
     (' ', {
       'classes': ('collapse',),
       'fields': (
-        ('record_type', 'company', 'unit', 'code', 'number'),
+        ('company', 'unit'), ('code', 'number'),
       )
     }),
   )
@@ -286,7 +313,7 @@ class H_accountCryptoInline(admin.StackedInline):
     (' ', {
       'classes': ('collapse',),
       'fields': (
-        ('record_type', 'unit', 'number'),
+        ('unit', 'number'),
       )
     }),
   )
@@ -299,7 +326,7 @@ class H_assetInline(admin.StackedInline):
     (' ', {
       'classes': ('collapse',),
       'fields': (
-        ('name', 'material_type', 'comment', 'reciprocity'),
+        ('name', 'material_type', 'description', 'reciprocity'),
       )
     }),
   )
@@ -308,19 +335,64 @@ class H_assetInline(admin.StackedInline):
   ]
 
 
-class Public_ProjectAdmin(MPTTModelAdmin):
+
+class HumanAdmin(admin.ModelAdmin):
+  list_display = ['name', 'nickname', 'email']
+  search_fields = ('name','nickname','email',)
+  def save_formset(self, request, form, formset, change):
+    def set_human_name(instance):
+      if not instance.human:
+        instance.human = request.human
+      if not instance.name:
+        instance.name = instance.__unicode__()
+      instance.save()
+
+    def set_accountCes_recordtype(instance):
+      if not instance.record_type:
+        instance.record_type = Record_Type.objects.get(clas='AccountCes')
+      instance.save()
+    def set_accountBank_recordtype(instance):
+      if not instance.record_type:
+        instance.record_type = Record_Type.objects.get(clas='AccountBank')
+      instance.save()
+    def set_accountCrypto_recordtype(instance):
+      if not instance.record_type:
+        instance.record_type = Record_Type.objects.get(clas='AccountCrypto')
+      instance.save()
+
+    if formset.model == AccountCes or formset.model == AccountBank or formset.model == AccountCrypto:
+      instances = formset.save(commit=False)
+      map(set_human_name, instances)
+
+      if formset.model == AccountCes:
+        map(set_accountCes_recordtype, instances)
+      if formset.model == AccountBank:
+        map(set_accountBank_recordtype, instances)
+      if formset.model == AccountCrypto:
+        map(set_accountCrypto_recordtype, instances)
+
+      formset.save_m2m()
+      return instances
+    else:
+      return formset.save()
+
+
+class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
   fieldsets = (
     (None, {
       'fields':(('name', 'nickname'),
                 ('website', 'socialweb'),
                 ('project_type', 'parent', 'ecommerce'),
-                ('email', 'email2', 'telephone'),
-                ('comment'))#, 'accounts'))
+                ('email', 'email2', 'telephone'),)
     }),
     (_(u"Dates inici/fi"), {
       'classes': ('collapse',),
       'fields': (('birth_date', 'death_date'),)
-    })
+    }),
+    (_(u"Descripció"), {
+      'classes': ('collapse',),
+      'fields': (('description'),)
+    }),
   )
   inlines = [
     H_addressInline,
@@ -341,19 +413,12 @@ class Public_ProjectAdmin(MPTTModelAdmin):
     #H_recordInline,
   ]
 
+
 class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
-  #class Media:
-  #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
-  #  css = {
-  #    'all': ('css/mselect-to-mcheckbox.css',)
-  #  }
-  #list_select_related = True
-  #select_related = ['accountsCes']
-  #project_type = Being_Type.objects.all()
 
   list_display = ['name', 'nickname', 'project_type', '_is_collective']#, 'ref_persons']
   list_filter = ('project_type',)
-  search_fields = ('name', 'nickname', 'project_type')
+  search_fields = ('name', 'nickname', 'project_type', 'email')
 
   def ref_persons(self, obj):
     return obj.project._get_ref_persons
@@ -397,20 +462,7 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
 
 
-class Public_PersonAdmin(admin.ModelAdmin):
-
-  pass
-
-class PersonAdmin(Public_PersonAdmin):
-  #class Media:
-  #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
-  #  css = {
-  #    'all': ('css/mselect-to-mcheckbox.css',)
-  #  }
-
-  list_display = ['name', 'nickname', 'email']
-  search_fields = ('name', 'nickname', 'email')
-
+class Public_PersonAdmin(HumanAdmin):
   fieldsets = (
     (None, {
       'fields':(('name', 'surnames', 'id_card'),
@@ -421,7 +473,11 @@ class PersonAdmin(Public_PersonAdmin):
     (_(u"Dates naixement/mort"), {
       'classes': ('collapse',),
       'fields': (('birth_date', 'death_date'),)
-    })
+    }),
+    (_(u"Descripció"), {
+      'classes': ('collapse',),
+      'fields': (('description'),)
+    }),
   )
   #filter_horizontal = ('arts',)# 'projects',) # 'addresses',)
   inlines = [
@@ -439,30 +495,69 @@ class PersonAdmin(Public_PersonAdmin):
     H_regionInline,
     H_materialInline,
     H_nonmaterialInline,
+    #H_recordInline,
+  ]
+
+
+
+class PersonAdmin(Public_PersonAdmin):
+
+  list_display = ['name', 'surnames', 'nickname', 'email']
+  search_fields = ('name', 'surenames', 'nickname', 'email')
+
+  '''
+  fieldsets = (
+    (None, {
+      'fields':(('name', 'surnames', 'id_card'),
+                ('nickname', 'nickname2'),
+                ('email', 'email2'),
+                ('website', 'telephone'))
+    }),
+    (_(u"Dates naixement/mort"), {
+      'classes': ('collapse',),
+      'fields': (('birth_date', 'death_date'),)
+    }),
+    (_(u"Descripció"), {
+      'classes': ('collapse',),
+      'fields': (('description'),)
+    }),
+  )
+  #filter_horizontal = ('arts',)# 'projects',) # 'addresses',)
+  '''
+  inlines = Public_PersonAdmin.inlines + [
     H_recordInline,
   ]
 
-  def save_formset(self, request, form, formset, change):
-    def set_human_name(instance):
-      if not instance.human:
-        instance.human = request.human
-      if not instance.name:
-        instance.name = instance.__unicode__()
-      instance.save()
-
-    if formset.model == AccountCes or formset.model == AccountBank or formset.model == AccountCrypto:
-      instances = formset.save(commit=False)
-      map(set_human_name, instances)
-      formset.save_m2m()
-      return instances
-    else:
-      return formset.save()
 
 
+class Public_CompanyAdmin(HumanAdmin):
+  fieldsets = (
+    (None, {
+      'fields':(('name', 'nickname', 'company_type'),
+                ('legal_name', 'vat_number'),
+                ('email', 'telephone', 'website'))
+    }),
+    (_(u"Dates inici/fi"), {
+      'classes': ('collapse',),
+      'fields': (('birth_date', 'death_date'),)
+    })
+  )
+  #filter_horizontal = ('ref_members',) # 'jobs',) # 'addresses')
+  inlines = [
+    H_addressInline,
+    H_jobInline,
+    H_personInline,
 
-class Public_CompanyAdmin(admin.ModelAdmin):
+    H_accountCesInline,
+    H_accountBankInline,
+    H_accountCryptoInline,
 
-  pass
+    H_materialInline,
+    H_nonmaterialInline,
+    H_regionInline,
+    #H_recordInline,
+  ]
+
 
 class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
   #class Media:
@@ -475,6 +570,7 @@ class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
   list_filter = ('company_type',)
   search_fields = ('name', 'nickname', 'email', 'company_type')
 
+  '''
   fieldsets = (
     (None, {
       'fields':(('name', 'nickname', 'company_type'),
@@ -491,23 +587,11 @@ class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
     })
   )
   #filter_horizontal = ('ref_members',) # 'jobs',) # 'addresses')
-  inlines = [
-    H_addressInline,
-    H_jobInline,
-    H_personInline,
-
-    H_accountCesInline,
-    H_accountBankInline,
-    H_accountCryptoInline,
-
-    #H_projectInline,
-    #H_companyInline,
-
-    H_materialInline,
-    H_nonmaterialInline,
-    H_regionInline,
+  '''
+  inlines = Public_CompanyAdmin.inlines + [
     H_recordInline,
   ]
+
 
 '''
 class HumanAdmin(admin.ModelAdmin):
@@ -525,8 +609,8 @@ class HumanAdmin(admin.ModelAdmin):
 #admin.site.register(Human, HumanAdmin)
 admin.site.register(Person, PersonAdmin)
 
-#admin.site.register(Project, ProjectAdmin)
-admin.site.register(Project, Public_ProjectAdmin)  # public comentable
+admin.site.register(Project, ProjectAdmin)
+#admin.site.register(Project, Public_ProjectAdmin)  # public comentable
 admin.site.register(Project_Type, MPTTModelAdmin)
 
 admin.site.register(Company, CompanyAdmin)
