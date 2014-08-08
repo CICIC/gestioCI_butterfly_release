@@ -12,6 +12,8 @@ from mptt.admin import MPTTModelAdmin
 from mptt.fields import TreeForeignKey, TreeManyToManyField
 #from mptt.forms import MPTTAdminForm, TreeNodeChoiceField
 
+from django_mptt_admin.admin import DjangoMpttAdmin
+
 from General.models import *  # Tree, Human, Adress, Region, Concept, Type, Being_Type
 
 #class CustomMPTTModelAdmin(MPTTModelAdmin):
@@ -19,6 +21,22 @@ from General.models import *  # Tree, Human, Adress, Region, Concept, Type, Bein
     #fields = ['name']
 #    mptt_level_indent = 20
 #    mptt_indent_field = "name"
+
+from django.core.urlresolvers import reverse
+
+class InlineEditLinkMixin(object):
+    readonly_fields = ['edit_details']
+    edit_label = "Edit"
+    def edit_details(self, obj):
+        if obj.id:
+            opts = self.model._meta
+            return "<a href='%s' target='_blank'>%s</a>" % (reverse(
+                'admin:%s_%s_change' % (opts.app_label, opts.object_name.lower()),
+                args=[obj.id]
+            ), self.edit_label)
+        else:
+            return "(save to edit details)"
+    edit_details.allow_tags = True
 
 
 from itertools import chain
@@ -54,7 +72,7 @@ class M_recordInline(admin.StackedInline):
     }),
   )
 
-class M_addressInline(admin.TabularInline):
+class M_addressInline(admin.StackedInline):
   model = rel_Material_Addresses
   extra = 0
   fk_name = 'material'
@@ -157,9 +175,10 @@ class AccountCryptoAdmin(admin.ModelAdmin):
 
 
 
-class H_addressInline(admin.StackedInline):
+class H_addressInline(InlineEditLinkMixin, admin.StackedInline):
     model = rel_Human_Addresses
     extra = 0
+    raw_id_fields = ('address',)
     fieldsets = (
       (' ', {
         'classes': ('collapse',),
@@ -332,9 +351,9 @@ class H_assetInline(admin.StackedInline):
       )
     }),
   )
-  inlines = [
-    M_addressInline,
-  ]
+  #inlines = [  # TODO inlines into inlines didn't appear
+  #  M_addressInline,
+  #]
 
 
 
@@ -602,13 +621,14 @@ class HumanAdmin(admin.ModelAdmin):
 '''
 
 
+
 # Register your models here.
 
 #admin.site.register(Tree)
 
 #admin.site.register(Being)
 #admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
-#admin.site.register(Human, HumanAdmin)
+admin.site.register(Human, HumanAdmin)
 admin.site.register(Person, PersonAdmin)
 #admin.site.register(Person, Public_PersonAdmin)  # public comentable
 
@@ -623,7 +643,7 @@ admin.site.register(Company_Type, MPTTModelAdmin)
 #admin.site.register(rel_Human_Humans)
 
 ###admin.site.register(Art, MPTTModelAdmin) # Comment this line after creating 'Relation' and 'Job' inside Arts.
-admin.site.register(Relation, MPTTModelAdmin)
+admin.site.register(Relation, DjangoMpttAdmin)
 admin.site.register(Job, MPTTModelAdmin)
 
 
@@ -656,4 +676,4 @@ admin.site.register(Region, MPTTModelAdmin)
 admin.site.register(Region_Type, MPTTModelAdmin)
 
 #admin.site.register(Concept, MPTTModelAdmin)
-#admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
+#admin.site.register(Type, DjangoMpttAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
