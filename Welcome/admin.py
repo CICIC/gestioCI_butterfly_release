@@ -78,6 +78,7 @@ class MembershipAdmin(AutoRecordName):
         ('expositors', 'description'))
     }),
   )
+
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     if db_field.name == 'record_type':
       typ = iC_Record_Type.objects.get(clas='iC_Membership')

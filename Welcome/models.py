@@ -256,6 +256,7 @@ class Fee(iC_Record):
     else:
       return True
   _is_payed.boolean = True
+  _is_payed.short_description = _(u"Pagada?")
   payed = property(_is_payed)
 
 

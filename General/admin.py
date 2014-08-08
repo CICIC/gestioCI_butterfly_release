@@ -47,6 +47,13 @@ from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.html import escape, conditional_escape
 
+class AutoNameMixin(admin.ModelAdmin):
+  def save_model(self, request, obj, form, change):
+    instance = form.save(commit=False)
+    instance.name = instance.__unicode__()
+    instance.save()
+    form.save_m2m()
+    return instance
 
 class M_nonmaterialInline(admin.StackedInline):
   model = rel_Material_Nonmaterials
@@ -131,7 +138,7 @@ class accountForm(forms.ModelForm):
 '''
 
 
-class AccountCesAdmin(admin.ModelAdmin):
+class AccountCesAdmin(AutoNameMixin):
   list_display = ['name', 'human', 'entity', 'code', 'number', 'unit']
   fieldsets = (
     (' ', {
@@ -140,12 +147,12 @@ class AccountCesAdmin(admin.ModelAdmin):
 
     }),
   )
-  def save_model(self, request, obj, form, change):
-    print 'CES: '+obj.__unicode__()
-    obj.name = obj.__unicode__()
-    obj.save()
+  #def save_model(self, request, obj, form, change):
+  #  print 'CES: '+obj.__unicode__()
+  #  obj.name = obj.__unicode__()
+  #  obj.save()
 
-class AccountBankAdmin(admin.ModelAdmin):
+class AccountBankAdmin(AutoNameMixin):
   list_display = ['name', 'human', 'company', 'code', 'number', 'unit']
   fieldsets = (
     (' ', {
@@ -154,12 +161,12 @@ class AccountBankAdmin(admin.ModelAdmin):
 
     }),
   )
-  def save_model(self, request, obj, form, change):
-    print 'BANK: '+obj.__unicode__()
-    obj.name = obj.__unicode__()
-    obj.save()
+  #def save_model(self, request, obj, form, change):
+  #  print 'BANK: '+obj.__unicode__()
+  #  obj.name = obj.__unicode__()
+  #  obj.save()
 
-class AccountCryptoAdmin(admin.ModelAdmin):
+class AccountCryptoAdmin(AutoNameMixin):
   list_display = ['name', 'human', 'number', 'unit']
   fieldsets = (
     (' ', {
@@ -168,21 +175,22 @@ class AccountCryptoAdmin(admin.ModelAdmin):
 
     }),
   )
-  def save_model(self, request, obj, form, change):
-    print 'CRYPTO: '+obj.__unicode__()
-    obj.name = obj.__unicode__()
-    obj.save()
+  #def save_model(self, request, obj, form, change):
+  #  print 'CRYPTO: '+obj.__unicode__()
+  #  obj.name = obj.__unicode__()
+  #  obj.save()
 
 
 
-class H_addressInline(InlineEditLinkMixin, admin.StackedInline):
+class H_addressInline(admin.StackedInline, InlineEditLinkMixin):
     model = rel_Human_Addresses
     extra = 0
     raw_id_fields = ('address',)
+    readonly_fields = ('edit_details',)
     fieldsets = (
       (' ', {
         'classes': ('collapse',),
-        'fields': (('address','relation'),)
+        'fields': (('address', 'relation'),)
       }),
     )
 
@@ -357,7 +365,7 @@ class H_assetInline(admin.StackedInline):
 
 
 
-class HumanAdmin(admin.ModelAdmin):
+class HumanAdmin(AutoNameMixin):
   list_display = ['name', 'nickname', 'email']
   search_fields = ('name','nickname','email',)
   def save_formset(self, request, form, formset, change):
@@ -483,6 +491,7 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
 
 
+
 class Public_PersonAdmin(HumanAdmin):
   fieldsets = (
     (None, {
@@ -521,7 +530,6 @@ class Public_PersonAdmin(HumanAdmin):
   ]
 
 
-
 class PersonAdmin(Public_PersonAdmin):
 
   list_display = ['name', 'surnames', 'nickname', 'email']
@@ -549,6 +557,7 @@ class PersonAdmin(Public_PersonAdmin):
   inlines = Public_PersonAdmin.inlines + [
     H_recordInline,
   ]
+
 
 
 
