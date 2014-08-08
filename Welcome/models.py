@@ -64,28 +64,34 @@ class iC_Akin_Membership(iC_Record):
       return True
   _has_id_card.boolean = True
   has_id_card = property(_has_id_card)
-  
+
+  def __unicode__(self):
+    if self.record_type is None or self.record_type == '':
+      return self.ic_project.nickname+' > '+self.person.__unicode__()
+    else:
+      return self.record_type.name+': '+self.person.__unicode__()
 
 
 class iC_Membership(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
   human = models.ForeignKey('General.Human', verbose_name=_(u"Ens Soci"))
-  #membership_type = models.ForeignKey('iC_Membership_Type', blank=True, null=True, verbose_name=_(u"Tipus de Soci"))
   ic_project = TreeForeignKey('General.Project', related_name='memberships', verbose_name=_(u"Cooperativa Integral"))
   contribution = TreeForeignKey('General.Relation', blank=True, null=True, verbose_name=_(u"Tipus de contribució"))
   join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
   end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
-  join_fee = models.ForeignKey('Fee', blank=True, null=True, verbose_name=_(u"Cuota d'alta"))
+  join_fee = models.ForeignKey('Fee', verbose_name=_(u"Cuota d'alta"))
 
   ic_CESnum = models.CharField(max_length=8, blank=True, null=True, verbose_name=_(u"Numero al CES/iCES"))
-  #comment = models.TextField(blank=True, verbose_name=_(u"Comentari"))
   labor_contract = models.OneToOneField('iC_Labor_Contract', blank=True, null=True, verbose_name=_(u"Contracte laboral?"))
 
   virtual_market = models.BooleanField(default=False, verbose_name=_(u"Mercat Virtual?"))
   expositors = models.ManyToManyField('General.Address', blank=True, null=True, verbose_name=_(u"Expositors (adreçes)"))
 
   def __unicode__(self):
-    return self.ic_project.nickname+' > '+self.human.__unicode__()
+    if self.record_type is None or self.record_type == '':
+      return self.ic_project.nickname+' > '+self.human.__unicode__()
+    else:
+      return self.record_type.name+': '+self.human.__unicode__()
 
   class Meta:
     verbose_name = _(u"Alta de Soci CI")
@@ -160,6 +166,12 @@ class iC_Self_Employed(iC_Record):
   _has_assisted_socialcoin.boolean = True
   socialcoin_session = property(_has_assisted_socialcoin)
 
+  def __unicode__(self):
+    if self.record_type is None or self.record_type == '':
+      return self.membership.ic_project.nickname+' > '+self.membership.human.__unicode__()
+    else:
+      return self.record_type.name+': '+self.membership.human.__unicode__()
+
   class Meta:
     verbose_name = _(u"Soci Autoocupat")
     verbose_name_plural = _(u"Altes Socis Autoocupats")
@@ -223,7 +235,7 @@ class Fee(iC_Record):
   rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
 
   def __unicode__(self):
-    return self.record_type.name+': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+'] > '+self.entity.nickname
+    return self.record_type.name+': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+'] > '+self.project.nickname
 
   class Meta:
     verbose_name = _(u"Quota")

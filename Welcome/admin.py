@@ -1,31 +1,69 @@
 from django.contrib import admin
 
+from django import forms
 from django.forms.extras import widgets
 
 from django.utils.translation import ugettext as _
 
 from mptt.admin import MPTTModelAdmin
 from mptt.fields import TreeForeignKey, TreeManyToManyField
-#from mptt.forms import MPTTAdminForm, TreeNodeChoiceField
+from mptt.forms import MPTTAdminForm, TreeNodeChoiceField
 
 from Welcome.models import *
 from General.models import Image
 
 
-class AkinMembershipAdmin(admin.ModelAdmin):
-  list_display = ['person', 'join_date', 'has_id_card']
+class AutoRecordName(admin.ModelAdmin):
+  def save_model(self, request, obj, form, change):
+    instance = form.save(commit=False)
+    #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
+    instance.name = instance.__unicode__()
+    instance.save()
+    form.save_m2m()
+    return instance
 
+
+class Public_AkinMembershipAdmin(AutoRecordName):
+  raw_id_fields = ('person',)
   fieldsets = (
     (None, {
-      'fields':(('person', 'ic_project'),
-                ('join_date', 'end_date'),
-                ('description', 'name'))
+      'fields':(('person', 'join_date'),
+                ('description'))
     }),
   )
 
+class AkinMembershipAdmin(AutoRecordName):
+  list_display = ['name', 'person', 'join_date', '_has_id_card']
+  raw_id_fields = ('person',)
+  fieldsets = (
+    (None, {
+      'fields':(('record_type', 'ic_project'),
+                ('person', 'join_date', 'end_date'),
+                ('description', 'name'))
+    }),
+  )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'record_type':
+      kwargs['queryset'] = iC_Record_Type.objects.filter(clas='iC_Akin_Membership')
+    return super(AkinMembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class Public_MembershipAdmin(admin.ModelAdmin):
+'''
+class MembershipForm(forms.ModelForm):
+  #record_type = TreeNodeChoiceField(queryset=iC_Record_Type.objects.filter(clas='iC_Membership'))
+  model = iC_Membership
+  def __init__(self, *args, **kwargs):
+    super(MembershipForm, self).__init__(*args, **kwargs)
+    typ = iC_Record_Type.objects.get(clas='iC_Membership')
+    typs = typ.get_descendants(include_self=True)
+    #print typs
+    #self.fields['record_type'].queryset = typ
+    #self.fields['record_type'].choices = typs
+'''
+
+class Public_MembershipAdmin(AutoRecordName):
+  raw_id_fields = ('human',)
+
   fieldsets = (
     (None, {
       'fields':(('human', 'ic_CESnum'),
@@ -37,24 +75,36 @@ class Public_MembershipAdmin(admin.ModelAdmin):
 
 
 
-class MembershipAdmin(admin.ModelAdmin):
+class MembershipAdmin(AutoRecordName):
   list_display = ['name', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed']
-
+  raw_id_fields = ('human', 'expositors')
   fieldsets = (
     (None, {
-      'fields':(('human', 'ic_project', 'name', 'ic_CESnum'),
-                ('contribution', 'virtual_market', 'labor_contract'),
-                ('join_fee', 'join_date', 'end_date'),
-                ('expositors', 'description'))
+      'fields':(
+        ('record_type', 'name'),
+        ('human', 'ic_project', 'ic_CESnum'),
+        ('contribution', 'virtual_market', 'labor_contract'),
+        ('join_fee', 'join_date', 'end_date'),
+        ('expositors', 'description'))
     }),
-    #(_(u"Dates naixement/mort"), {
-    #  'classes': ('collapse',),
-    #  'fields': (('birth_date', 'death_date'),)
-    #})
   )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'record_type':
+      typ = iC_Record_Type.objects.get(clas='iC_Membership')
+      kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght)
+    return super(MembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+  def save_model(self, request, obj, form, change):
+    instance = form.save(commit=False)
+    if not hasattr(instance,'name') or instance.name is None or instance.name == '':
+      instance.name = instance.__unicode__()
+    instance.save()
+    form.save_m2m()
+    return instance
 
 
-class SelfEmployedAdmin(admin.ModelAdmin):
+
+class SelfEmployedAdmin(AutoRecordName):
   #list_display = ['name', 'membership__human', 'ic_CESnum', 'join_date', '_join_fee_payed']
 
   fieldsets = (#MembershipAdmin.fieldsets + (
@@ -75,6 +125,21 @@ class SelfEmployedAdmin(admin.ModelAdmin):
   )
   #list_display = ['name']
 
+class FeeAdmin(AutoRecordName):
+  list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
+  raw_id_fields = ('human', 'membership', 'rel_account')
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('record_type', 'project'),
+        ('human', 'membership'),
+        ('amount', 'unit', 'payment_type'),
+        ('issue_date', 'deadline_date', 'payment_date'),
+        ('rel_account', 'name')
+      )
+    }),
+  )
+
 
 # Register your models here.
 
@@ -94,7 +159,7 @@ admin.site.register(iC_Address_Contract)
 admin.site.register(iC_Insurance)
 admin.site.register(iC_Licence)
 
-admin.site.register(Fee)
+admin.site.register(Fee, FeeAdmin)
 admin.site.register(Learn_Session)
 admin.site.register(Project_Accompaniment)
 admin.site.register(Image)
