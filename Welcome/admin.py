@@ -57,7 +57,7 @@ class Public_MembershipAdmin(AutoRecordName):
     (None, {
       'fields':(('human', 'ic_CESnum'),
                 ('contribution', 'virtual_market')#, 'labor_contract'),
-                ('join_fee', 'join_date')#, 'end_date'),
+                ('join_fee', 'join_date'), #'end_date'),
                 ('expositors', 'description'))
     }),
   )
