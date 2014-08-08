@@ -56,7 +56,7 @@ class Public_MembershipAdmin(AutoRecordName):
   fieldsets = (
     (None, {
       'fields':(('human', 'ic_CESnum'),
-                ('contribution', 'virtual_market')#, 'labor_contract'),
+                ('contribution', 'virtual_market'), #'labor_contract'),
                 ('join_fee', 'join_date'), #'end_date'),
                 ('expositors', 'description'))
     }),
@@ -66,8 +66,8 @@ class Public_MembershipAdmin(AutoRecordName):
 
 class MembershipAdmin(AutoRecordName):
   list_display = ['name', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed']
-  raw_id_fields = ('human', 'expositors')
-  readonly_fields = ('_join_fee_payed')
+  raw_id_fields = ('human', 'expositors',)
+  readonly_fields = ('_join_fee_payed',)
   fieldsets = (
     (None, {
       'fields':(
