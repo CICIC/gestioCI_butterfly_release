@@ -253,6 +253,7 @@ class H_companyInline(admin.StackedInline):
       }),
     )
 
+
 '''
 class accountCesForm(forms.ModelForm):
   model = AccountCes
@@ -276,6 +277,7 @@ class accountCesInlineFormSet(BaseInlineFormSet):
     #]
     print self.initial
 '''
+
 class H_accountCesInline(admin.StackedInline):
   model = AccountCes
   extra = 0
@@ -608,12 +610,14 @@ class HumanAdmin(admin.ModelAdmin):
 #admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
 #admin.site.register(Human, HumanAdmin)
 admin.site.register(Person, PersonAdmin)
+#admin.site.register(Person, Public_PersonAdmin)  # public comentable
 
 admin.site.register(Project, ProjectAdmin)
 #admin.site.register(Project, Public_ProjectAdmin)  # public comentable
 admin.site.register(Project_Type, MPTTModelAdmin)
 
 admin.site.register(Company, CompanyAdmin)
+#admin.site.register(Company, Public_CompanyAdmin)   # public comentable
 admin.site.register(Company_Type, MPTTModelAdmin)
 
 #admin.site.register(rel_Human_Humans)
