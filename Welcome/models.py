@@ -49,6 +49,7 @@ class iC_Record_Type(iC_Type):
 
 class iC_Akin_Membership(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
+  #record_type = TreeForeignKey('iC_Record_Type', limit_choices_to={'clas':'iC_Akin_Membership'})
   person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
   ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
   join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
@@ -63,6 +64,7 @@ class iC_Akin_Membership(iC_Record):
     else:
       return True
   _has_id_card.boolean = True
+  _has_id_card.short_description = _(u"Dni/Nie?")
   has_id_card = property(_has_id_card)
 
   def __unicode__(self):
@@ -70,6 +72,12 @@ class iC_Akin_Membership(iC_Record):
       return self.ic_project.nickname+' > '+self.person.__unicode__()
     else:
       return self.record_type.name+': '+self.person.__unicode__()
+  def __init__(self, *args, **kwargs):
+    super(iC_Akin_Membership, self).__init__(*args, **kwargs)
+    self.record_type = iC_Record_Type.objects.get(clas='iC_Akin_Membership')  # there's only one ic_record_type for this kind of member
+    #if self.ic_project is None or self.ic_project == '':
+      #print Project.objects.filter(nickname='CIC').first()
+      #self.ic_project = Project.objects.filter(nickname='CIC').first()
 
 
 class iC_Membership(iC_Record):
@@ -100,6 +108,7 @@ class iC_Membership(iC_Record):
   def _join_fee_payed(self):
     return self.join_fee.payed
   _join_fee_payed.boolean = True
+  _join_fee_payed.short_description = _(u"Quota d'Alta Pagada?")
   joinfee_payed = property(_join_fee_payed)
 
 '''
@@ -268,7 +277,7 @@ class iC_Document_Type(iC_Record_Type):
   record_type = models.OneToOneField('iC_Record_Type', primary_key=True, parent_link=True)
   class Meta:
     verbose_name = _(u"Tipus de Document CI")
-    verbose_name_plural = _(u"-> Tipus de Documents CI")
+    verbose_name_plural = _(u"c-> Tipus de Documents CI")
 
 
 

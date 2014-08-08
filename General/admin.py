@@ -512,6 +512,7 @@ class Public_PersonAdmin(HumanAdmin):
     #H_personInline,
     H_projectInline,
     H_companyInline,
+    H_assetInline,
 
     H_regionInline,
     H_materialInline,
