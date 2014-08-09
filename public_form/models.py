@@ -87,19 +87,19 @@ class RegistrationProfile(models.Model):
 	ACTIVATED = u"ALREADY_ACTIVATED"
 
 	user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
-	activation_key = models.CharField(_('activation key'), max_length=40)
+	activation_key = models.CharField( verbose_name=_("Clau"), max_length=40)
 
 	from General.models import Person
-	person = models.ForeignKey(Person, unique=True, verbose_name=_('person'))
+	person = models.ForeignKey(Person, unique=True, verbose_name=_('Persona'))
 
 	from Welcome.models import iC_Record_Type
-	record_type = models.ForeignKey(iC_Record_Type, unique=False, verbose_name=_('Tipus Alta'))
+	record_type = models.ForeignKey(iC_Record_Type, unique=False, verbose_name=_('Tipus alta'))
 
 	objects = RegistrationManager()
 
 	class Meta:
-		verbose_name = _('Alta Membre: Persona pendent activació')
-		verbose_name_plural = _('Alta Membre: Persona pendent activació')
+		verbose_name = _(u'Alta Membre: procés activació')
+		verbose_name_plural = _(u'Alta Membre: procés activació')
 
 	def __unicode__(self):
 		return u"Registration information for %s" % self.user
