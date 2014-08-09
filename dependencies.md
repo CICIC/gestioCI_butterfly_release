@@ -10,4 +10,6 @@ easy_install pisa ( ReportLab Toolkit, HTML5lib, pyPdf y PIL )
 
 pip install django-mptt
 
+pip install django-mptt-admin
+
 pip install suit?

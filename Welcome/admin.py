@@ -18,6 +18,8 @@ class AutoRecordName(admin.ModelAdmin):
     instance = form.save(commit=False)
     #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
     instance.name = instance.__unicode__()
+    if not hasattr(instance,'ic_project') or instance.ic_project is None:
+      instance.ic_project = Project.objects.get(pk=3)
     instance.save()
     form.save_m2m()
     return instance
@@ -25,50 +27,37 @@ class AutoRecordName(admin.ModelAdmin):
 
 class Public_AkinMembershipAdmin(AutoRecordName):
   raw_id_fields = ('person',)
+  readonly_fields = ('_has_id_card',)
   fieldsets = (
     (None, {
       'fields':(('person', 'join_date'),
-                ('description'))
+                ('description', '_has_id_card'))
     }),
   )
+
 
 class AkinMembershipAdmin(AutoRecordName):
   list_display = ['name', 'person', 'join_date', '_has_id_card']
   raw_id_fields = ('person',)
+  readonly_fields = ('record_type', 'name', '_has_id_card',)
   fieldsets = (
     (None, {
-      'fields':(('record_type', 'ic_project'),
+      'fields':(('record_type', 'ic_project', '_has_id_card'),
                 ('person', 'join_date', 'end_date'),
                 ('description', 'name'))
     }),
   )
-  def formfield_for_foreignkey(self, db_field, request, **kwargs):
-    if db_field.name == 'record_type':
-      kwargs['queryset'] = iC_Record_Type.objects.filter(clas='iC_Akin_Membership')
-    return super(AkinMembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-'''
-class MembershipForm(forms.ModelForm):
-  #record_type = TreeNodeChoiceField(queryset=iC_Record_Type.objects.filter(clas='iC_Membership'))
-  model = iC_Membership
-  def __init__(self, *args, **kwargs):
-    super(MembershipForm, self).__init__(*args, **kwargs)
-    typ = iC_Record_Type.objects.get(clas='iC_Membership')
-    typs = typ.get_descendants(include_self=True)
-    #print typs
-    #self.fields['record_type'].queryset = typ
-    #self.fields['record_type'].choices = typs
-'''
 
 class Public_MembershipAdmin(AutoRecordName):
   raw_id_fields = ('human',)
-
+  readonly_fields = ('ic_CESnum', 'join_fee', 'join_date', 'human')
   fieldsets = (
     (None, {
       'fields':(('human', 'ic_CESnum'),
-                ('contribution', 'virtual_market', 'labor_contract'),
-                ('join_fee', 'join_date', 'end_date'),
+                ('contribution', 'virtual_market'), #'labor_contract'),
+                ('join_fee', 'join_date'), #'end_date'),
                 ('expositors', 'description'))
     }),
   )
@@ -77,35 +66,30 @@ class Public_MembershipAdmin(AutoRecordName):
 
 class MembershipAdmin(AutoRecordName):
   list_display = ['name', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed']
-  raw_id_fields = ('human', 'expositors')
+  raw_id_fields = ('human', 'expositors',)
+  readonly_fields = ('_join_fee_payed',)
   fieldsets = (
     (None, {
       'fields':(
         ('record_type', 'name'),
         ('human', 'ic_project', 'ic_CESnum'),
         ('contribution', 'virtual_market', 'labor_contract'),
-        ('join_fee', 'join_date', 'end_date'),
+        ('join_fee', 'join_date', 'end_date', '_join_fee_payed'),
         ('expositors', 'description'))
     }),
   )
+
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     if db_field.name == 'record_type':
       typ = iC_Record_Type.objects.get(clas='iC_Membership')
       kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght)
     return super(MembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
-  def save_model(self, request, obj, form, change):
-    instance = form.save(commit=False)
-    if not hasattr(instance,'name') or instance.name is None or instance.name == '':
-      instance.name = instance.__unicode__()
-    instance.save()
-    form.save_m2m()
-    return instance
 
 
 
 class SelfEmployedAdmin(AutoRecordName):
-  #list_display = ['name', 'membership__human', 'ic_CESnum', 'join_date', '_join_fee_payed']
+  #list_display = ['name', 'membership', 'join_date', '_join_fee_payed']
 
   fieldsets = (#MembershipAdmin.fieldsets + (
     (_(u"fase 1: Autoocupat"), {
@@ -143,11 +127,12 @@ class FeeAdmin(AutoRecordName):
 
 # Register your models here.
 
-admin.site.register(iC_Type, MPTTModelAdmin) # can be commented after creating 'Membership', 'Document' and 'Payment' types
-admin.site.register(iC_Record) # can be commented
+#admin.site.register(iC_Type, MPTTModelAdmin) # can be commented after creating 'Membership', 'Document' and 'Payment' types
+#admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
 
 admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
+#admin.site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
 admin.site.register(iC_Membership, MembershipAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 admin.site.register(iC_Stallholder)
