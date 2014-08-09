@@ -38,9 +38,10 @@ url(r'^soci/', include(user_admin_site.urls)),
 url(r'^invoices/', include('Invoices.urls', namespace='Invoices')),
 #Our welcoming module
 url(r'^welcome/', include('Welcome.urls', namespace='Welcome')),
+#public_form
+url(r'^public_form/', include('public_form.urls', namespace='public_form')),
 #Default http index --> redirect to soci space
 url(r'^', include(user_admin_site.urls)),
-
 )
 
 #MEDIA

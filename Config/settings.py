@@ -161,6 +161,10 @@ SUIT_CONFIG = {
     # 'LIST_PER_PAGE': 15
 }
 
+#public_form
+ACCOUNT_ACTIVATION_DAYS = 5
+SITE_URL = "http://gestio.cooperativa.cat/"
+
 '''
 5 Templates
 '''

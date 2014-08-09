@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+
+
+{% block extrastyle %}{{ block.super }}
+	<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />
+	{{ form.media }}
+{% endblock %}
+
+{% block content %}
+
+	<div id="content-main">
+		<h1>{{ record_type }}</h1>
+
+		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+			
+		{% csrf_token %}
+			<label for="public_form">{{ moment }}</label><br />
+			<sup>{% trans 'Nota:' %}</sup> <p><a href="{{ activation_url }}">{% trans "Link d'activació " %}</a></p>
+			<p>
+				<h4>
+					<sup>{% trans 'state:' %}</sup> {% trans moment %}
+				</h4>
+				<br>
+				<img src="{% static moment_img %}">
+			</p>
+
+	</div>
+
+{% endblock %}
