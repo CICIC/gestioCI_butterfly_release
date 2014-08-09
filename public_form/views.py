@@ -111,7 +111,8 @@ def activate_membership(request, activation_key):
 
 		ic_m.ic_project_id = 97 #Type.objects.get(name="Cooperativa Integral")
 		ic_m.save()
-		return HttpResponseRedirect( reverse('cooper:{0}_{1}_change'.format("Welcome", record_type_string), args=(ic_m.id,)) )
+		from Cooper.admin import *
+		return HttpResponseRedirect( "/cooper/Welcome/ic_akin_membership/" + ic_m.id.__str__()  )
 
 	extra_context = {}
 	extra_context['moment'] = _(u"No s'ha pogut activar res")

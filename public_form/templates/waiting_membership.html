@@ -13,10 +13,10 @@
 		<h1>{{ record_type }}</h1>
 
 		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-			
+		<p> {% trans "S'ha enviat un email amb un link per verificar i activar el teu compte" %}</p>
 		{% csrf_token %}
 			<label for="public_form">{{ moment }}</label><br />
-			<sup>{% trans 'Nota:' %}</sup> <p><a href="{{ activation_url }}">{% trans "Link d'activació " %}</a></p>
+			<sup>{% trans 'Nota:' %}</sup> <p><a href="{{ activation_url }}">{% trans "Si vols, pots anar desde aquí: link d'activació " %}</a></p>
 			<p>
 				<h4>
 					<sup>{% trans 'state:' %}</sup> {% trans moment %}
