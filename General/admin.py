@@ -5,9 +5,14 @@ from django.forms.extras import widgets
 
 from django.utils.translation import ugettext as _
 
+from django.forms.models import BaseInlineFormSet
+from django.forms.formsets import formset_factory
+
 from mptt.admin import MPTTModelAdmin
 from mptt.fields import TreeForeignKey, TreeManyToManyField
 #from mptt.forms import MPTTAdminForm, TreeNodeChoiceField
+
+from django_mptt_admin.admin import DjangoMpttAdmin
 
 from General.models import *  # Tree, Human, Adress, Region, Concept, Type, Being_Type
 
@@ -16,6 +21,22 @@ from General.models import *  # Tree, Human, Adress, Region, Concept, Type, Bein
     #fields = ['name']
 #    mptt_level_indent = 20
 #    mptt_indent_field = "name"
+
+from django.core.urlresolvers import reverse
+
+class InlineEditLinkMixin(object):
+    readonly_fields = ['edit_details']
+    edit_label = "Edit"
+    def edit_details(self, obj):
+        if obj.id:
+            opts = self.model._meta
+            return "<a href='%s' target='_blank'>%s</a>" % (reverse(
+                'admin:%s_%s_change' % (opts.app_label, opts.object_name.lower()),
+                args=[obj.id]
+            ), self.edit_label)
+        else:
+            return "(save to edit details)"
+    edit_details.allow_tags = True
 
 
 from itertools import chain
@@ -26,6 +47,13 @@ from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.html import escape, conditional_escape
 
+class AutoNameMixin(admin.ModelAdmin):
+  def save_model(self, request, obj, form, change):
+    instance = form.save(commit=False)
+    instance.name = instance.__unicode__()
+    instance.save()
+    form.save_m2m()
+    return instance
 
 class M_nonmaterialInline(admin.StackedInline):
   model = rel_Material_Nonmaterials
@@ -51,7 +79,7 @@ class M_recordInline(admin.StackedInline):
     }),
   )
 
-class M_addressInline(admin.TabularInline):
+class M_addressInline(admin.StackedInline):
   model = rel_Material_Addresses
   extra = 0
   fk_name = 'material'
@@ -64,14 +92,105 @@ class M_addressInline(admin.TabularInline):
   )
 
 
+'''
+class accountForm(forms.ModelForm):
+  model = AccountCes
 
-class H_addressInline(admin.StackedInline):
+  def clean_human(self):
+    if self.cleaned_data['human'] is None or self.cleaned_data['human'] == '':
+      print '>>> human is NONE'
+    else:
+      #self.initial['human'] = self.cleaned_data['human']
+      print '<<< human: '+self.cleaned_data['human'].__unicode__()
+      #print '<<< name: '+self.cleaned_data['name']
+      #self.clean_name()
+      return self.cleaned_data['human']
+
+  def clean_name(self):
+    out = self.cleaned_data['unit'].code+': '+self.cleaned_data['human'].__unicode__()+' '+self.cleaned_data['code']+self.cleaned_data['number']
+    if self.cleaned_data['name'] == '' or self.cleaned_data['name'] is None:
+      print '---- name is NONE, out:'+out
+      self.cleaned_data['name'] = out
+      return out
+    else:
+      print '---- name:'+self.cleaned_data['name']
+      return self.cleaned_data['name']
+
+
+  def __init__(self, *args, **kwargs):
+
+    super(accountForm, self).__init__(*args, **kwargs)
+
+    if hasattr(self.instance, 'human'):
+      self.initial['human'] = self.instance.human
+      print ':::: jelow: '+str(self.instance.human)
+      print ':::: name: '+str(self.instance.name)
+    else:
+      #self.initial['human'] = self.instance
+      #print ':::: sin human: '+str(self.initial['human'])
+      #self.clean_name()
+      print ':::: sin human: '
+      print ':::: name: '+str(self.instance.name)
+      #print ':::: cleaned:'+self.cleaned_data
+      #print ':::: '+str(self.instance)#.__unicode__()
+
+      #print ':::: jelow: '+self.instance.human
+'''
+
+
+class AccountCesAdmin(AutoNameMixin):
+  list_display = ['name', 'human', 'entity', 'code', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields':
+        ('human', 'record_type', 'entity', 'unit', 'code', 'number', 'name'),
+
+    }),
+  )
+  #def save_model(self, request, obj, form, change):
+  #  print 'CES: '+obj.__unicode__()
+  #  obj.name = obj.__unicode__()
+  #  obj.save()
+
+class AccountBankAdmin(AutoNameMixin):
+  list_display = ['name', 'human', 'company', 'code', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields':
+        ('human', 'record_type', 'company', 'unit', 'code', 'number', 'name'),
+
+    }),
+  )
+  #def save_model(self, request, obj, form, change):
+  #  print 'BANK: '+obj.__unicode__()
+  #  obj.name = obj.__unicode__()
+  #  obj.save()
+
+class AccountCryptoAdmin(AutoNameMixin):
+  list_display = ['name', 'human', 'number', 'unit']
+  fieldsets = (
+    (' ', {
+      'fields': #('accountCes', 'relation')
+        ('human', 'record_type', 'unit', 'number', 'name'),
+
+    }),
+  )
+  #def save_model(self, request, obj, form, change):
+  #  print 'CRYPTO: '+obj.__unicode__()
+  #  obj.name = obj.__unicode__()
+  #  obj.save()
+
+
+
+class H_addressInline(admin.StackedInline, InlineEditLinkMixin):
     model = rel_Human_Addresses
     extra = 0
+    raw_id_fields = ('address',)
+    readonly_fields = ('edit_details',)
     fieldsets = (
       (' ', {
         'classes': ('collapse',),
-        'fields': (('address','relation'),)
+        'fields': (('address', 'relation'),)
       }),
     )
 
@@ -161,6 +280,31 @@ class H_companyInline(admin.StackedInline):
       }),
     )
 
+
+'''
+class accountCesForm(forms.ModelForm):
+  model = AccountCes
+  fieldsets = (
+    (' ', {
+      'classes': ('collapse',),
+      'fields': (#('accountCes', 'relation')
+        ('record_type', 'entity'), ('unit', 'code', 'number'),# 'name'),# 'human'),
+      )
+    }),
+  )
+
+class accountCesInlineFormSet(BaseInlineFormSet):
+  def __init__(self, *args, **kwargs):
+    kwargs['initial'] = [
+      {'record_type': Record_Type.objects.get(clas='AccountCes')},
+    ]
+    super(accountCesInlineFormSet, self).__init__(*args, **kwargs)
+    #self.initial = [
+    #    {'record_type': Record_Type.objects.get(clas='AccountCes')}, #{'name': 'en-US'}, {'name': 'es-ES'}
+    #]
+    print self.initial
+'''
+
 class H_accountCesInline(admin.StackedInline):
   model = AccountCes
   extra = 0
@@ -168,15 +312,14 @@ class H_accountCesInline(admin.StackedInline):
   fieldsets = (
     (' ', {
       'classes': ('collapse',),
-      'fields': (
-        ('record_type', 'entity', 'unit', 'code', 'number'),
+      'fields': (#('accountCes', 'relation')
+        ('entity', 'unit'), ('code', 'number'),# 'name'),# 'human'),
       )
     }),
   )
-  def save_model(self, request, obj, form, change):
-    print 'JELOW' #obj.__unicode__
-    obj.name = obj.__unicode__()
-    obj.save()
+  #formset = accountCesInlineFormSet
+  #readonly_fields = ['record_type',]
+  #form = accountForm
 
 class H_accountBankInline(admin.StackedInline):
   model = AccountBank
@@ -186,7 +329,7 @@ class H_accountBankInline(admin.StackedInline):
     (' ', {
       'classes': ('collapse',),
       'fields': (
-        ('record_type', 'company', 'unit', 'code', 'number'),
+        ('company', 'unit'), ('code', 'number'),
       )
     }),
   )
@@ -199,7 +342,7 @@ class H_accountCryptoInline(admin.StackedInline):
     (' ', {
       'classes': ('collapse',),
       'fields': (
-        ('record_type', 'unit', 'number'),
+        ('unit', 'number'),
       )
     }),
   )
@@ -216,25 +359,95 @@ class H_assetInline(admin.StackedInline):
       )
     }),
   )
+  #inlines = [  # TODO inlines into inlines didn't appear
+  #  M_addressInline,
+  #]
+
+
+
+class HumanAdmin(AutoNameMixin):
+  list_display = ['name', 'nickname', 'email']
+  search_fields = ('name','nickname','email',)
+  def save_formset(self, request, form, formset, change):
+    def set_human_name(instance):
+      if not instance.human:
+        instance.human = request.human
+      if not instance.name:
+        instance.name = instance.__unicode__()
+      instance.save()
+
+    def set_accountCes_recordtype(instance):
+      if not instance.record_type:
+        instance.record_type = Record_Type.objects.get(clas='AccountCes')
+      instance.save()
+    def set_accountBank_recordtype(instance):
+      if not instance.record_type:
+        instance.record_type = Record_Type.objects.get(clas='AccountBank')
+      instance.save()
+    def set_accountCrypto_recordtype(instance):
+      if not instance.record_type:
+        instance.record_type = Record_Type.objects.get(clas='AccountCrypto')
+      instance.save()
+
+    if formset.model == AccountCes or formset.model == AccountBank or formset.model == AccountCrypto:
+      instances = formset.save(commit=False)
+      map(set_human_name, instances)
+
+      if formset.model == AccountCes:
+        map(set_accountCes_recordtype, instances)
+      if formset.model == AccountBank:
+        map(set_accountBank_recordtype, instances)
+      if formset.model == AccountCrypto:
+        map(set_accountCrypto_recordtype, instances)
+
+      formset.save_m2m()
+      return instances
+    else:
+      return formset.save()
+
+
+class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
+  fieldsets = (
+    (None, {
+      'fields':(('name', 'nickname'),
+                ('website', 'socialweb'),
+                ('project_type', 'parent', 'ecommerce'),
+                ('email', 'email2', 'telephone'),)
+    }),
+    (_(u"Dates inici/fi"), {
+      'classes': ('collapse',),
+      'fields': (('birth_date', 'death_date'),)
+    }),
+    (_(u"Descripció"), {
+      'classes': ('collapse',),
+      'fields': (('description'),)
+    }),
+  )
   inlines = [
-    M_addressInline,
+    H_addressInline,
+    H_jobInline,
+
+    H_accountCesInline,
+    H_accountBankInline,
+    H_accountCryptoInline,
+
+    H_personInline,
+    H_projectInline,
+    H_companyInline,
+
+    H_assetInline,
+    #H_regionInline,
+    H_materialInline,
+    H_nonmaterialInline,
+    #H_recordInline,
   ]
 
 
-
-class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
-  #class Media:
-  #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
-  #  css = {
-  #    'all': ('css/mselect-to-mcheckbox.css',)
-  #  }
-  #list_select_related = True
-  #select_related = ['accountsCes']
-  #project_type = Being_Type.objects.all()
+class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
   list_display = ['name', 'nickname', 'project_type', '_is_collective']#, 'ref_persons']
   list_filter = ('project_type',)
-  search_fields = ('name', 'nickname', 'project_type')
+  search_fields = ('name', 'nickname', 'project_type', 'email')
 
   def ref_persons(self, obj):
     return obj.project._get_ref_persons
@@ -242,7 +455,8 @@ class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
   #ref_persons.list = []
   #ref_persons.allow_tags = True
 
-  fieldsets = (
+  '''
+  fieldsets = Public_ProjectAdmin.fieldsets + (
     (None, {
       'fields':(('name', 'nickname'),
                 ('website', 'socialweb'),
@@ -269,38 +483,16 @@ class ProjectAdmin(MPTTModelAdmin): # admin.ModelAdmin):
   )
   #filter_horizontal = ('ref_members',) # 'arts',) # 'addresses',)
   #filter_horizontal = ('accounts',) # 'arts',) # 'addresses',)
+  '''
 
-  inlines = [
-    H_addressInline,
-    H_jobInline,
-
-    H_accountCesInline,
-    H_accountBankInline,
-    H_accountCryptoInline,
-
-    H_personInline,
-    H_projectInline,
-    H_companyInline,
-
-    H_assetInline,
-    #H_regionInline,
-    H_materialInline,
-    H_nonmaterialInline,
+  inlines = Public_ProjectAdmin.inlines + [
     H_recordInline,
   ]
 
 
 
-class PersonAdmin(admin.ModelAdmin):
-  #class Media:
-  #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
-  #  css = {
-  #    'all': ('css/mselect-to-mcheckbox.css',)
-  #  }
 
-  list_display = ['name', 'nickname', 'email']
-  search_fields = ('name', 'nickname', 'email')
-
+class Public_PersonAdmin(HumanAdmin):
   fieldsets = (
     (None, {
       'fields':(('name', 'surnames', 'id_card'),
@@ -311,7 +503,11 @@ class PersonAdmin(admin.ModelAdmin):
     (_(u"Dates naixement/mort"), {
       'classes': ('collapse',),
       'fields': (('birth_date', 'death_date'),)
-    })
+    }),
+    (_(u"Descripció"), {
+      'classes': ('collapse',),
+      'fields': (('description'),)
+    }),
   )
   #filter_horizontal = ('arts',)# 'projects',) # 'addresses',)
   inlines = [
@@ -325,15 +521,76 @@ class PersonAdmin(admin.ModelAdmin):
     #H_personInline,
     H_projectInline,
     H_companyInline,
+    H_assetInline,
 
     H_regionInline,
     H_materialInline,
     H_nonmaterialInline,
+    #H_recordInline,
+  ]
+
+
+class PersonAdmin(Public_PersonAdmin):
+
+  list_display = ['name', 'surnames', 'nickname', 'email']
+  search_fields = ('name', 'surenames', 'nickname', 'email')
+
+  '''
+  fieldsets = (
+    (None, {
+      'fields':(('name', 'surnames', 'id_card'),
+                ('nickname', 'nickname2'),
+                ('email', 'email2'),
+                ('website', 'telephone'))
+    }),
+    (_(u"Dates naixement/mort"), {
+      'classes': ('collapse',),
+      'fields': (('birth_date', 'death_date'),)
+    }),
+    (_(u"Descripció"), {
+      'classes': ('collapse',),
+      'fields': (('description'),)
+    }),
+  )
+  #filter_horizontal = ('arts',)# 'projects',) # 'addresses',)
+  '''
+  inlines = Public_PersonAdmin.inlines + [
     H_recordInline,
   ]
 
 
-class CompanyAdmin(admin.ModelAdmin): # admin.ModelAdmin):
+
+
+class Public_CompanyAdmin(HumanAdmin):
+  fieldsets = (
+    (None, {
+      'fields':(('name', 'nickname', 'company_type'),
+                ('legal_name', 'vat_number'),
+                ('email', 'telephone', 'website'))
+    }),
+    (_(u"Dates inici/fi"), {
+      'classes': ('collapse',),
+      'fields': (('birth_date', 'death_date'),)
+    })
+  )
+  #filter_horizontal = ('ref_members',) # 'jobs',) # 'addresses')
+  inlines = [
+    H_addressInline,
+    H_jobInline,
+    H_personInline,
+
+    H_accountCesInline,
+    H_accountBankInline,
+    H_accountCryptoInline,
+
+    H_materialInline,
+    H_nonmaterialInline,
+    H_regionInline,
+    #H_recordInline,
+  ]
+
+
+class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
   #class Media:
   #  js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
   #  css = {
@@ -344,6 +601,7 @@ class CompanyAdmin(admin.ModelAdmin): # admin.ModelAdmin):
   list_filter = ('company_type',)
   search_fields = ('name', 'nickname', 'email', 'company_type')
 
+  '''
   fieldsets = (
     (None, {
       'fields':(('name', 'nickname', 'company_type'),
@@ -360,23 +618,11 @@ class CompanyAdmin(admin.ModelAdmin): # admin.ModelAdmin):
     })
   )
   #filter_horizontal = ('ref_members',) # 'jobs',) # 'addresses')
-  inlines = [
-    H_addressInline,
-    H_jobInline,
-    H_personInline,
-
-    H_accountCesInline,
-    H_accountBankInline,
-    H_accountCryptoInline,
-
-    #H_projectInline,
-    #H_companyInline,
-
-    H_materialInline,
-    H_nonmaterialInline,
-    H_regionInline,
+  '''
+  inlines = Public_CompanyAdmin.inlines + [
     H_recordInline,
   ]
+
 
 '''
 class HumanAdmin(admin.ModelAdmin):
@@ -385,52 +631,34 @@ class HumanAdmin(admin.ModelAdmin):
 '''
 
 
-class accountForm(forms.ModelForm):
-  model = AccountCes
-  def clean_name(self):
-    print 'HOLA'
-    #return self.unicode
-  def clean(self):
-    if self.instance.name == '' or self.instance.name is None:
-      #self.instance.name = self.instance.__unicode__()
-      self.cleaned_data['name'] = self.instance.__unicode__()
-      print 'Jola '+self.instance.name
-
-
-class AccountCesAdmin(admin.ModelAdmin):
-  list_display = ['name', 'entity', 'code', 'number', 'unit']
-
-  #form = accountForm
-  def save_model(self, request, obj, form, change):
-    print obj.__unicode__
-    obj.name = obj.__unicode__()
-    obj.save()
-
 
 # Register your models here.
 
 #admin.site.register(Tree)
 
 #admin.site.register(Being)
-admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
-#admin.site.register(Human, HumanAdmin)
+#admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
+admin.site.register(Human, HumanAdmin)
 admin.site.register(Person, PersonAdmin)
+#admin.site.register(Person, Public_PersonAdmin)  # public comentable
 
 admin.site.register(Project, ProjectAdmin)
+#admin.site.register(Project, Public_ProjectAdmin)  # public comentable
 admin.site.register(Project_Type, MPTTModelAdmin)
 
 admin.site.register(Company, CompanyAdmin)
+#admin.site.register(Company, Public_CompanyAdmin)   # public comentable
 admin.site.register(Company_Type, MPTTModelAdmin)
 
 #admin.site.register(rel_Human_Humans)
 
-admin.site.register(Art, MPTTModelAdmin) # Comment this line after creating 'Relation' and 'Job' inside Arts.
-admin.site.register(Relation, MPTTModelAdmin)
+###admin.site.register(Art, MPTTModelAdmin) # Comment this line after creating 'Relation' and 'Job' inside Arts.
+admin.site.register(Relation, DjangoMpttAdmin)
 admin.site.register(Job, MPTTModelAdmin)
 
 
 #admin.site.register(Artwork)
-admin.site.register(Artwork_Type, MPTTModelAdmin) # Comment this line after creating 'Unit', 'Record', 'Material' and 'Nonmaterial' inside Artwork_Types
+#admin.site.register(Artwork_Type, MPTTModelAdmin) # Comment this line after creating 'Unit', 'Record', 'Material' and 'Nonmaterial' inside Artwork_Types
 admin.site.register(Unit)
 admin.site.register(Unit_Type, MPTTModelAdmin)
 admin.site.register(UnitRatio)
@@ -445,17 +673,17 @@ admin.site.register(Asset)
 admin.site.register(Record)
 admin.site.register(Record_Type, MPTTModelAdmin)
 admin.site.register(AccountCes, AccountCesAdmin)
-admin.site.register(AccountBank)
-admin.site.register(AccountCrypto)
+admin.site.register(AccountBank, AccountBankAdmin)
+admin.site.register(AccountCrypto, AccountCryptoAdmin)
 
 
 #admin.site.register(Space)
-admin.site.register(Space_Type, MPTTModelAdmin) # Comment this line after creating 'Address' and 'Region' inside Space_Types
+#admin.site.register(Space_Type, MPTTModelAdmin) # Comment this line after creating 'Address' and 'Region' inside Space_Types
 admin.site.register(Address)
 admin.site.register(Address_Type, MPTTModelAdmin)
 
 admin.site.register(Region, MPTTModelAdmin)
 admin.site.register(Region_Type, MPTTModelAdmin)
 
-admin.site.register(Concept, MPTTModelAdmin)
-admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
+#admin.site.register(Concept, MPTTModelAdmin)
+#admin.site.register(Type, DjangoMpttAdmin) # Comment this line whenever you don't need to edit the main whole Types tree

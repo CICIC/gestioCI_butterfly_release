@@ -27,7 +27,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 '''
 
 
-''' 
+'''
 1 Global vars
 '''
 # SECURITY WARNING: Keep the secret key used in production secret!
@@ -63,6 +63,8 @@ INSTALLED_APPS = (
     'csvimport', 	# This provides import CSV to Model https://pypi.python.org/pypi/django-csvimport
     'localflavor', 	# This provide NIF/NIE/CIF form field
     'mptt', # This provide Tree management in a 'nested set' style
+    'django_mptt_admin',
+    'public_form'
     #'feincms',
     #'feincms.module.page',
     #'feincms.module.medialibrary'
@@ -108,7 +110,7 @@ DATABASES = {
 4 Custom plugins config
 '''
 #django-csvimport
-CSVIMPORT_MODELS = ["Invoices.periodTaxes", 
+CSVIMPORT_MODELS = ["Invoices.periodTaxes",
 		"Invoices.sales_invoice",
 		"Invoices.purchase_invoice",
 		"Invoices.period_close",
@@ -125,7 +127,7 @@ CRON_CLASSES = [
     "cron.testBot",
     "cron.EmailsNotifierCron",
     "cron.PeriodCloseAutomaticClose"
-] 
+]
 CRONJOBS = [
     ('*/1 * * * *', 'Config.cron')
 ]
@@ -160,6 +162,11 @@ SUIT_CONFIG = {
     # 'LIST_PER_PAGE': 15
 }
 
+#public_form
+ACCOUNT_ACTIVATION_DAYS = 5
+#SITE_URL = "http://gestio.cooperativa.cat:8082"
+SITE_URL = "http://169.254.226.5:8082"
+
 '''
 5 Templates
 '''
@@ -184,10 +191,11 @@ STATICFILES_DIRS = (
 		BASE_DIR + '/Invoices/templates/',
 		BASE_DIR + '/General/templates/',
 		BASE_DIR + '/Welcome/templates/',
+		BASE_DIR + '/public_form/templates/',
 )
 
 
-''' 
+'''
 6 Localization
 '''
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
@@ -211,7 +219,7 @@ USE_TZ = True
 '''
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "mail.cooperativaintegral.cat"
-EMAIL_HOST_USER = "gestioci@cooperativa.cat" 
+EMAIL_HOST_USER = "gestioci@cooperativa.cat"
 EMAIL_HOST_PASSWORD = "0¡salud Y libertad!"
 DEFAULT_FROM_EMAIL = "gestioci@cooperativa.cat"
 
@@ -235,6 +243,3 @@ EMAIL_USE_TLS = False
 '''
 LOGIN_REDIRECT_URL='/cooper'
 LOGIN_URL='/cooper'
-
-
-
