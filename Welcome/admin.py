@@ -49,6 +49,30 @@ class AkinMembershipAdmin(AutoRecordName):
   )
 
 
+class PersonMembershipAdmin(AutoRecordName):
+  list_display = ['name', 'person', 'join_date', '_has_id_card']
+  raw_id_fields = ('person',)
+  readonly_fields = ('record_type', 'name', '_has_id_card',)
+  fieldsets = (
+    (None, {
+      'fields':(('record_type', 'ic_project', '_has_id_card'),
+                ('person', 'join_date', 'end_date'),
+                ('description', 'name'))
+    }),
+  )
+
+class ProjectMembershipAdmin(AutoRecordName):
+  list_display = ['name', 'person', 'join_date', '_has_id_card']
+  raw_id_fields = ('person',)
+  readonly_fields = ('record_type', 'name', '_has_id_card',)
+  fieldsets = (
+    (None, {
+      'fields':(('record_type', 'ic_project', '_has_id_card'),
+                ('person', 'join_date', 'end_date'),
+                ('description', 'name'))
+    }),
+  )
+
 
 class Public_MembershipAdmin(AutoRecordName):
   raw_id_fields = ('human',)
@@ -72,7 +96,7 @@ class MembershipAdmin(AutoRecordName):
     (None, {
       'fields':(
         ('record_type', 'name'),
-        ('human', 'ic_project', 'ic_CESnum'),
+        ('human', 'ic_project', 'ic_CESnum'),	
         ('contribution', 'virtual_market', 'labor_contract'),
         ('join_fee', 'join_date', 'end_date', '_join_fee_payed'),
         ('expositors', 'description'))
@@ -132,6 +156,9 @@ class FeeAdmin(AutoRecordName):
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
 
 admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
+admin.site.register(iC_Person_Membership, PersonMembershipAdmin)
+admin.site.register(iC_Project_Membership, ProjectMembershipAdmin)
+
 #admin.site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
 admin.site.register(iC_Membership, MembershipAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)

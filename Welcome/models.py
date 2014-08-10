@@ -47,7 +47,8 @@ class iC_Record_Type(iC_Type):
 
 
 
-class iC_Akin_Membership(iC_Record):
+'''
+class iC_Person_Membership(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
   #record_type = TreeForeignKey('iC_Record_Type', limit_choices_to={'clas':'iC_Akin_Membership'})
   person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
@@ -55,8 +56,8 @@ class iC_Akin_Membership(iC_Record):
   join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
   end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
   class Meta:
-    verbose_name = _(u"Alta de Soci Afí CI")
-    verbose_name_plural = _(u"Altes de Socis Afins CI")
+    verbose_name = _(u"Alta de Soci Cooperatiu individual CI")
+    verbose_name_plural = _(u"Altes de Socis Cooperatius Individuals CI")
 
   def _has_id_card(self):
     if self.person.id_card is None or self.person.id_card == '':
@@ -73,12 +74,10 @@ class iC_Akin_Membership(iC_Record):
     else:
       return self.record_type.name+': '+self.person.__unicode__()
   def __init__(self, *args, **kwargs):
-    super(iC_Akin_Membership, self).__init__(*args, **kwargs)
-    self.record_type = iC_Record_Type.objects.get(clas='iC_Akin_Membership')  # there's only one ic_record_type for this kind of member
-    #if self.ic_project is None or self.ic_project == '':
-      #print Project.objects.filter(nickname='CIC').first()
-      #self.ic_project = Project.objects.filter(nickname='CIC').first()
-
+    super(iC_Person_Membership, self).__init__(*args, **kwargs)
+    self.record_type = iC_Record_Type.objects.get(clas='iC_Person_Membership')  # there's only one ic_record_type for this kind of member
+  '''
+ 
 
 class iC_Membership(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
@@ -110,6 +109,82 @@ class iC_Membership(iC_Record):
   _join_fee_payed.boolean = True
   _join_fee_payed.short_description = _(u"Quota d'Alta Pagada?")
   joinfee_payed = property(_join_fee_payed)
+
+class iC_Akin_Membership(iC_Membership):
+  #record_type = TreeForeignKey('iC_Record_Type', limit_choices_to={'clas':'iC_Akin_Membership'})
+  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
+  class Meta:
+    verbose_name = _(u"Alta de Soci Afí CI")
+    verbose_name_plural = _(u"Altes de Socis Afins CI")
+
+  def _has_id_card(self):
+    if self.person.id_card is None or self.person.id_card == '':
+      return False
+    else:
+      return True
+  _has_id_card.boolean = True
+  _has_id_card.short_description = _(u"Dni/Nie?")
+  has_id_card = property(_has_id_card)
+
+  def __unicode__(self):
+    if self.record_type is None or self.record_type == '':
+      return self.ic_project.nickname+' > '+self.person.__unicode__()
+    else:
+      return self.record_type.name+': '+self.person.__unicode__()
+  def __init__(self, *args, **kwargs):
+    super(iC_Akin_Membership, self).__init__(*args, **kwargs)
+    self.record_type = iC_Record_Type.objects.get(clas='iC_Akin_Membership')  # there's only one ic_record_type for this kind of member
+    #if self.ic_project is None or self.ic_project == '':
+      #print Project.objects.filter(nickname='CIC').first()
+      #self.ic_project = Project.objects.filter(nickname='CIC').first()
+
+class iC_Person_Membership(iC_Membership):
+  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
+  class Meta:
+    verbose_name = _(u"Alta de Soci Cooperatius individual CI")
+    verbose_name_plural = _(u"Altes de Socis Cooperatius individuals CI")
+
+  def _has_id_card(self):
+    if self.person.id_card is None or self.person.id_card == '':
+      return False
+    else:
+      return True
+  _has_id_card.boolean = True
+  _has_id_card.short_description = _(u"Dni/Nie?")
+  has_id_card = property(_has_id_card)
+
+  def __unicode__(self):
+    if self.record_type is None or self.record_type == '':
+      return self.ic_project.nickname+' > '+self.person.__unicode__()
+    else:
+      return self.record_type.name+': '+self.person.__unicode__()
+  def __init__(self, *args, **kwargs):
+    super(iC_Person_Membership, self).__init__(*args, **kwargs)
+    self.record_type = iC_Record_Type.objects.get(clas='iC_Person_Membership')  # there's only one ic_record_type for this kind of member
+
+class iC_Project_Membership(iC_Membership):
+  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
+  class Meta:
+    verbose_name = _(u"Alta de Projecte Col·lectiu CI")
+    verbose_name_plural = _(u"Altes de Projectes Col·lectius CI")
+
+  def _has_id_card(self):
+    if self.person.id_card is None or self.person.id_card == '':
+      return False
+    else:
+      return True
+  _has_id_card.boolean = True
+  _has_id_card.short_description = _(u"Dni/Nie?")
+  has_id_card = property(_has_id_card)
+
+  def __unicode__(self):
+    if self.record_type is None or self.record_type == '':
+      return self.ic_project.nickname+' > '+self.person.__unicode__()
+    else:
+      return self.record_type.name+': '+self.person.__unicode__()
+  def __init__(self, *args, **kwargs):
+    super(iC_Project_Membership, self).__init__(*args, **kwargs)
+    self.record_type = iC_Record_Type.objects.get(clas='iC_Project_Membership')  # there's only one ic_record_type for this kind of member
 
 '''
 class iC_Membership_Type(iC_Record_Type):
