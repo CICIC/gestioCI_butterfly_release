@@ -4,9 +4,26 @@ from django import forms
 from Welcome.models import Person
 from django.utils.translation import ugettext_lazy as _
 attrs_dict = {'class': 'required'}
-class create_membership_form(forms.ModelForm):
-	from Welcome.models import iC_Record_Type
 
+from General.models import Project
+class project_form(forms.ModelForm):
+	class Meta:
+		model = Project
+
+class create_membership_form(forms.ModelForm):
+
+	CHOICES_PERSON = (
+		("anonymous", _(u'Anònim')), 
+		("public", _(u'Públic')), 
+	)
+	# Create field with loaded choices-------------------------------------------------
+	type_person = forms.ChoiceField(
+		widget=forms.RadioSelect, 
+		choices=CHOICES_PERSON, 
+		label=_(u"Tipus de persona"), 
+		localize=True, required=True)
+
+		
 	#Menú choices-----------------------------------------------------------------------
 	'''
 	typ = iC_Record_Type.objects.get(clas='iC_Membership')
@@ -16,6 +33,7 @@ class create_membership_form(forms.ModelForm):
 		print type.id
 		CHOICES = CHOICES + ( ( type.id, type.name) ,)  
 	'''
+	from Welcome.models import iC_Record_Type
 	from Welcome.models import iC_Type
 	choice_one = iC_Type.objects.get(clas="iC_Akin_Membership")
 	choice_two = iC_Type.objects.get(clas="iC_Person_Membership")
@@ -46,6 +64,18 @@ class create_membership_form(forms.ModelForm):
 	password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
 								label=_("Password (again)"))
 
+	project_name = forms.RegexField(regex=r'^[\w.@+-]+$',
+								max_length=30,
+								widget=forms.TextInput(attrs=attrs_dict),
+								label=_("Nom"),
+								required=False,
+								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+	project_website = forms.RegexField(regex=r'^[\w.@+-]+$',
+								label=_("Web"),
+								max_length=100,
+								widget=forms.TextInput(attrs=attrs_dict),
+								required=False,
+								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 	from django.contrib.admin import VERTICAL
 	radio_fields = {"type": VERTICAL}
 
@@ -83,5 +113,5 @@ class create_membership_form(forms.ModelForm):
 			'create_membership.js', )
 	class Meta:
 		model = Person
-		fields = ("type", "username", "email", "password1", "password2", "id_card", "surnames", "name", "telephone")
+		fields = ("type_person", "type", "username", "email", "id_card", "surnames", "nickname", "telephone")
 

@@ -27,7 +27,6 @@ class RegistrationManager(models.Manager):
 			try:
 				profile = self.get(activation_key=activation_key)
 			except self.model.DoesNotExist:
-				print "no model"
 				return False
 			if not profile.activation_key_expired():
 				user = profile.user
@@ -36,16 +35,15 @@ class RegistrationManager(models.Manager):
 				profile.activation_key = self.model.ACTIVATED
 				profile.save()
 				return user
-		print "no sha1"
 		return False
 
 	def create_inactive_user(self, username, email, password,
-							 site, person, record_type, send_email=True):
+							 site, person, project, record_type, send_email=True):
 
 		new_user = User.objects.create_user(username, email, password)
 		new_user.is_active = False
 		new_user.save()
-		registration_profile = self.create_profile(new_user, person, record_type )
+		registration_profile = self.create_profile(new_user, person, project, record_type )
 
 		if send_email:
 			registration_profile.send_activation_email(site)
@@ -53,24 +51,27 @@ class RegistrationManager(models.Manager):
 		return new_user
 	create_inactive_user = transaction.commit_on_success(create_inactive_user)
 
-	def create_profile(self, user, person, record_type):
+	def create_profile(self, user, person, project, record_type):
 
 		salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
 		username = user.username
 		if isinstance(username, unicode):
 			username = username.encode('utf-8')
 		activation_key = hashlib.sha1(salt+username).hexdigest()
-		
+
 		create_user = self.create(user=user,
-						   activation_key=activation_key, person = person, record_type = record_type )
+						   activation_key=activation_key, person = person, project=project, record_type = record_type )
 		from django.contrib.auth.models import Group
 		print record_type.name
-		g = Group.objects.get(name=record_type.clas) 
+		try:
+			g = Group.objects.get(name=record_type.clas) 
+		except:
+			g = Group(name=record_type.clas)
+			g.save()
 		g.user_set.add(user) 
 		return create_user
 
 	def delete_expired_users(self):
-
 		for profile in self.all():
 			try:
 				if profile.activation_key_expired():
@@ -91,6 +92,8 @@ class RegistrationProfile(models.Model):
 
 	from General.models import Person
 	person = models.ForeignKey(Person, unique=True, verbose_name=_('Persona'))
+	from General.models import Project
+	project = models.ForeignKey(Project, blank=True, null=True, verbose_name=_('Project'))
 
 	from Welcome.models import iC_Record_Type
 	record_type = models.ForeignKey(iC_Record_Type, unique=False, verbose_name=_('Tipus alta'))

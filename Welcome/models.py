@@ -111,12 +111,7 @@ class iC_Membership(iC_Record):
   joinfee_payed = property(_join_fee_payed)
 
 class iC_Akin_Membership(iC_Membership):
-  #record_type = TreeForeignKey('iC_Record_Type', limit_choices_to={'clas':'iC_Akin_Membership'})
   person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
-  class Meta:
-    verbose_name = _(u"Alta de Soci Afí CI")
-    verbose_name_plural = _(u"Altes de Socis Afins CI")
-
   def _has_id_card(self):
     if self.person.id_card is None or self.person.id_card == '':
       return False
@@ -134,9 +129,11 @@ class iC_Akin_Membership(iC_Membership):
   def __init__(self, *args, **kwargs):
     super(iC_Akin_Membership, self).__init__(*args, **kwargs)
     self.record_type = iC_Record_Type.objects.get(clas='iC_Akin_Membership')  # there's only one ic_record_type for this kind of member
-    #if self.ic_project is None or self.ic_project == '':
-      #print Project.objects.filter(nickname='CIC').first()
-      #self.ic_project = Project.objects.filter(nickname='CIC').first()
+ 
+  class Meta:
+    verbose_name = _(u"Alta de Soci Afí CI")
+    verbose_name_plural = _(u"Altes de Socis Afins CI")
+ 
 
 class iC_Person_Membership(iC_Membership):
   person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
@@ -163,7 +160,8 @@ class iC_Person_Membership(iC_Membership):
     self.record_type = iC_Record_Type.objects.get(clas='iC_Person_Membership')  # there's only one ic_record_type for this kind of member
 
 class iC_Project_Membership(iC_Membership):
-  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
+  project = models.OneToOneField('General.Project', verbose_name=_(u"Projecte col·lectiu"))
+  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona referencia"))
   class Meta:
     verbose_name = _(u"Alta de Projecte Col·lectiu CI")
     verbose_name_plural = _(u"Altes de Projectes Col·lectius CI")
@@ -319,7 +317,11 @@ class Fee(iC_Record):
   rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
 
   def __unicode__(self):
-    return self.record_type.name+': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+'] > '+self.project.nickname
+		if self.record_type is None:
+			record_type = "<record:type.name>"
+		else:
+			record_type = self.record_type.name
+		return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+'] > '+self.project.nickname
 
   class Meta:
     verbose_name = _(u"Quota")

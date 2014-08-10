@@ -9,7 +9,7 @@ SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
 class user_registration_bot(object):
 
-	def register(self, request, person, record_type_id, **kwargs):
+	def register(self, request, person, project, record_type_id, **kwargs):
 
 		username, email, password = kwargs['username'], kwargs['email'], kwargs['password1']
 
@@ -19,7 +19,7 @@ class user_registration_bot(object):
 
 		from public_form.models import RegistrationProfile
 		new_user = RegistrationProfile.objects.create_inactive_user(
-						username, email, password, site, person, record_type
+						username, email, password, site, person, project, record_type
 					)
 
 		from public_form import signals
@@ -36,6 +36,7 @@ class user_registration_bot(object):
 			current_registration = RegistrationProfile.objects.get(activation_key = activation_key)
 		except:
 			return False
+
 		activated = RegistrationProfile.objects.activate_user(activation_key)
 		if activated:
 			from public_form import signals
@@ -46,3 +47,6 @@ class user_registration_bot(object):
 		else:
 			return False
 
+	def get_person(self, user):
+		from public_form.models import RegistrationProfile
+		return RegistrationProfile.objects.get(user=user).person

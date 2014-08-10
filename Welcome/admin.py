@@ -19,7 +19,7 @@ class AutoRecordName(admin.ModelAdmin):
     #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
     instance.name = instance.__unicode__()
     if not hasattr(instance,'ic_project') or instance.ic_project is None:
-      instance.ic_project = Project.objects.get(pk=3)
+      instance.ic_project = Project.objects.get(pk=27)
     instance.save()
     form.save_m2m()
     return instance
@@ -37,16 +37,8 @@ class Public_AkinMembershipAdmin(AutoRecordName):
 
 
 class AkinMembershipAdmin(AutoRecordName):
-  list_display = ['name', 'person', 'join_date', '_has_id_card']
-  raw_id_fields = ('person',)
-  readonly_fields = ('record_type', 'name', '_has_id_card',)
-  fieldsets = (
-    (None, {
-      'fields':(('record_type', 'ic_project', '_has_id_card'),
-                ('person', 'join_date', 'end_date'),
-                ('description', 'name'))
-    }),
-  )
+	from General.models import Person
+	model = Person
 
 
 class PersonMembershipAdmin(AutoRecordName):
@@ -62,13 +54,13 @@ class PersonMembershipAdmin(AutoRecordName):
   )
 
 class ProjectMembershipAdmin(AutoRecordName):
-  list_display = ['name', 'person', 'join_date', '_has_id_card']
-  raw_id_fields = ('person',)
-  readonly_fields = ('record_type', 'name', '_has_id_card',)
+  list_display = ['name', 'project', 'join_date',]
+  raw_id_fields = ('project',)
+  readonly_fields = ('record_type', 'name',)
   fieldsets = (
     (None, {
-      'fields':(('record_type', 'ic_project', '_has_id_card'),
-                ('person', 'join_date', 'end_date'),
+      'fields':(('record_type', 'ic_project', ),
+                ('project', 'join_date', 'end_date'),
                 ('description', 'name'))
     }),
   )
@@ -155,7 +147,7 @@ class FeeAdmin(AutoRecordName):
 #admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
 
-admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
+admin.site.register(iC_Akin_Membership)
 admin.site.register(iC_Person_Membership, PersonMembershipAdmin)
 admin.site.register(iC_Project_Membership, ProjectMembershipAdmin)
 
