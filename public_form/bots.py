@@ -36,9 +36,7 @@ class user_registration_bot(object):
 			current_registration = RegistrationProfile.objects.get(activation_key = activation_key)
 		except:
 			return False
-
 		activated = RegistrationProfile.objects.activate_user(activation_key)
-		return current_registration
 		if activated:
 			from public_form import signals
 			signals.user_activated.send(sender=self.__class__,
