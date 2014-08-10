@@ -64,6 +64,7 @@ INSTALLED_APPS = (
     'localflavor', 	# This provide NIF/NIE/CIF form field
     'mptt', # This provide Tree management in a 'nested set' style
     'django_mptt_admin',
+    'public_form'
     #'feincms',
     #'feincms.module.page',
     #'feincms.module.medialibrary'
@@ -163,7 +164,8 @@ SUIT_CONFIG = {
 
 #public_form
 ACCOUNT_ACTIVATION_DAYS = 5
-SITE_URL = "http://gestio.cooperativa.cat/"
+#SITE_URL = "http://gestio.cooperativa.cat:8082"
+SITE_URL = "http://169.254.226.5:8082"
 
 '''
 5 Templates
@@ -189,6 +191,7 @@ STATICFILES_DIRS = (
 		BASE_DIR + '/Invoices/templates/',
 		BASE_DIR + '/General/templates/',
 		BASE_DIR + '/Welcome/templates/',
+		BASE_DIR + '/public_form/templates/',
 )
 
 
