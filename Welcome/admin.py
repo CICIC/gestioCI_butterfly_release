@@ -26,14 +26,8 @@ class AutoRecordName(admin.ModelAdmin):
 
 
 class Public_AkinMembershipAdmin(AutoRecordName):
-  raw_id_fields = ('person',)
-  readonly_fields = ('_has_id_card',)
-  fieldsets = (
-    (None, {
-      'fields':(('person', 'join_date'),
-                ('description', '_has_id_card'))
-    }),
-  )
+	list_display = ('name', 'person', 'join_date', '_has_id_card', 'join_fee', 'ic_CESnum')
+	model = iC_Akin_Membership
 
 
 class AkinMembershipAdmin(AutoRecordName):

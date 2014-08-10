@@ -50,6 +50,10 @@ user_admin_site.register(Person, Public_PersonAdmin)
 
 from General.models import Project
 from General.admin import Public_ProjectAdmin
+class Public_ProjectAdmin(Public_PersonAdmin):
+		def queryset(self, request):
+			from public_form import bots
+			return Project.objects.filter(id=bots.user_registration_bot().get_pr(request.user).id)
 user_admin_site.register(Project, Public_ProjectAdmin)
 
 from public_form.models import RegistrationProfile

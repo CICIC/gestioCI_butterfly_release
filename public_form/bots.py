@@ -50,3 +50,6 @@ class user_registration_bot(object):
 	def get_person(self, user):
 		from public_form.models import RegistrationProfile
 		return RegistrationProfile.objects.get(user=user).person
+	def get_project(self, user):
+		from public_form.models import RegistrationProfile
+		return RegistrationProfile.objects.get(user=user).project
