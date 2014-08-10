@@ -5,12 +5,23 @@ from django.forms.extras import widgets
 
 from django.utils.translation import ugettext as _
 
-#Add any Invoice new Entity for COOPER below:
 from Cooper.admin import user_admin_site
 
 from Welcome.models import iC_Akin_Membership
 from Welcome.admin import AkinMembershipAdmin
 user_admin_site.register(iC_Akin_Membership, AkinMembershipAdmin)
+
+from Welcome.models import iC_Person_Membership
+from Welcome.admin import PersonMembershipAdmin
+user_admin_site.register(iC_Person_Membership, PersonMembershipAdmin)
+
+from Welcome.models import iC_Project_Membership
+from Welcome.admin import ProjectMembershipAdmin
+user_admin_site.register(iC_Project_Membership, ProjectMembershipAdmin)
+
+from Welcome.models import Fee
+from Welcome.admin import FeeAdmin
+user_admin_site.register(Fee, FeeAdmin)
 
 from public_form.models import RegistrationProfile
 from django.contrib import admin
@@ -34,7 +45,6 @@ class only_pending_filter(SimpleListFilter):
 		if self.value() ==  'Pending':
 			return queryset.exclude(activation_key = "ALREADY_ACTIVATED")
 
-			
 class RegistrationProfileAdmin(ModelAdmin):
 	list_filter= (only_pending_filter, 'record_type',)
 	model = RegistrationProfile
