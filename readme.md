@@ -19,4 +19,6 @@ pip install django-mptt
 
 pip install django-mptt-admin
 
+pip install Image 
+
 pip install suit?
