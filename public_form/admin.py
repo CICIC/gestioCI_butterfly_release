@@ -10,9 +10,10 @@ from Cooper.admin import user_admin_site
 from Welcome.models import iC_Akin_Membership
 from Welcome.admin import Public_AkinMembershipAdmin
 class Public_AkinMembershipAdmin(Public_AkinMembershipAdmin):
-		def queryset(self, request):
-			from public_form import bots
-			return iC_Akin_Membership.objects.filter(person=bots.user_registration_bot().get_person(request.user))
+	list_editable = ( "join_fee", "ic_CESnum",)
+	def queryset(self, request):
+		from public_form import bots
+		return iC_Akin_Membership.objects.filter(person=bots.user_registration_bot().get_person(request.user))
 user_admin_site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
 
 from Welcome.models import iC_Person_Membership

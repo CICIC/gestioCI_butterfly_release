@@ -1,5 +1,13 @@
 #encoding=utf-8
 
+#si es soci afi es deixa en blanc
+#mover campo teléfono de la dirección a la person
+#Direcció filtrar REGIÓ per comarca (se tiene que crear un clas para poder filtrar)
+#Intentar traer los formularios child dentro del parent en lugar del raw_id con la lupa
+# Ocultar campos de relación
+
+
+
 import datetime
 import hashlib
 import random

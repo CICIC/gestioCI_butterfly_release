@@ -49,7 +49,13 @@ class user_registration_bot(object):
 
 	def get_person(self, user):
 		from public_form.models import RegistrationProfile
-		return RegistrationProfile.objects.get(user=user).person
+		try:
+			return RegistrationProfile.objects.get(user=user).person
+		except:
+			return None
 	def get_project(self, user):
 		from public_form.models import RegistrationProfile
-		return RegistrationProfile.objects.get(user=user).project
+		try:
+			return RegistrationProfile.objects.get(user=user).project
+		except:
+			return None

@@ -13,8 +13,8 @@ class project_form(forms.ModelForm):
 class create_membership_form(forms.ModelForm):
 
 	CHOICES_PERSON = (
-		("anonymous", _(u'Anònim')), 
-		("public", _(u'Públic')), 
+		("anonymous", _(u'Anònim (No omplirè dades persona)')), 
+		("public", _(u'Persona (Omplirè dades de persona)')), 
 	)
 	# Create field with loaded choices-------------------------------------------------
 	type_person = forms.ChoiceField(

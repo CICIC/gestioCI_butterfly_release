@@ -126,10 +126,12 @@ def activate_membership(request, activation_key):
 			fee_amount = 30 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
 		elif record_type_string == "ic_person_membership":
 			from Welcome.models import iC_Person_Membership
+			#ic_m = iC_Membership( human=account.person, ic_project=project)
 			ic_m = iC_Person_Membership( person=account.person, ic_project=project)
 			fee_amount = 30 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
 		elif record_type_string == "ic_project_membership":
 			from Welcome.models import iC_Project_Membership
+			#ic_m = iC_Membership( human=account.person, ic_project=project, project=account.project)
 			ic_m = iC_Project_Membership( person=account.person, ic_project=project, project=account.project)
 			fee_amount = 60 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
 		ic_m.record_type = account.record_type 
@@ -149,7 +151,7 @@ def activate_membership(request, activation_key):
 		)
 		current_fee.save()
 		from Cooper.admin import *
-		return HttpResponseRedirect( "/cooper/Welcome/" + record_type_string + "/" + ic_m.id.__str__()  )
+		return HttpResponseRedirect( "/cooper/General/person/" + account.person.id.__str__()  )
 
 	extra_context = {}
 	extra_context['moment'] = _(u"No s'ha pogut activar res")
