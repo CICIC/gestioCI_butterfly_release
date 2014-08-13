@@ -54,9 +54,10 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 	#gestioCI APPS
     'Invoices', 	# This is gestioCI block1 Selfoccupated coopers APP
-	   'Cooper', 		# This is gestioCI block1 Selfoccupated coopers APP
-     'General',  # This is the general models APP including five main types of data
-     'Welcome',   # This is the membership maker APP
+    'Cooper', 		# This is gestioCI block1 Selfoccupated coopers APP
+    'General',  # This is the general models APP including five main types of data
+    'Welcome',   # This is the membership maker APP
+    'public_form'
 	#common APPS
     'south', 		# This is command line BBDD helper
     'django_cron', 	# This controls scheduled EmailNotifications https://pypi.python.org/pypi/django-cron
@@ -64,7 +65,6 @@ INSTALLED_APPS = (
     'localflavor', 	# This provide NIF/NIE/CIF form field
     'mptt', # This provide Tree management in a 'nested set' style
     'django_mptt_admin',
-    'public_form'
     #'feincms',
     #'feincms.module.page',
     #'feincms.module.medialibrary'
@@ -165,7 +165,8 @@ SUIT_CONFIG = {
 #public_form
 ACCOUNT_ACTIVATION_DAYS = 5
 #SITE_URL = "http://gestio.cooperativa.cat:8082"
-SITE_URL = "http://169.254.226.5:8082"
+#SITE_URL = "http://169.254.226.5:8082"
+SITE_URL = "http:/localhost:8000"
 
 '''
 5 Templates
@@ -218,10 +219,10 @@ USE_TZ = True
 7 EMail
 '''
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "mail.cooperativaintegral.cat"
-EMAIL_HOST_USER = "gestioci@cooperativa.cat"
-EMAIL_HOST_PASSWORD = "0¡salud Y libertad!"
-DEFAULT_FROM_EMAIL = "gestioci@cooperativa.cat"
+EMAIL_HOST = "mail.host.tld"
+EMAIL_HOST_USER = "email@host.tld"
+EMAIL_HOST_PASSWORD = "password"
+DEFAULT_FROM_EMAIL = "email@host.tld"
 
 #Opción 1
 EMAIL_PORT = 587
