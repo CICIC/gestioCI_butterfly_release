@@ -57,7 +57,7 @@ INSTALLED_APPS = (
     'Cooper', 		# This is gestioCI block1 Selfoccupated coopers APP
     'General',  # This is the general models APP including five main types of data
     'Welcome',   # This is the membership maker APP
-    'public_form'
+    'public_form',
 	#common APPS
     'south', 		# This is command line BBDD helper
     'django_cron', 	# This controls scheduled EmailNotifications https://pypi.python.org/pypi/django-cron
