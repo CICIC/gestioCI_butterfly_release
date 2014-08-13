@@ -166,7 +166,7 @@ SUIT_CONFIG = {
 ACCOUNT_ACTIVATION_DAYS = 5
 #SITE_URL = "http://gestio.cooperativa.cat:8082"
 #SITE_URL = "http://169.254.226.5:8082"
-SITE_URL = "http:/localhost:8000"
+SITE_URL = "http://localhost:8000"
 
 '''
 5 Templates
