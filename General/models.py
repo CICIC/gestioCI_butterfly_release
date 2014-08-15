@@ -550,7 +550,7 @@ class Address(Space):  # Create own ID's
 
   class Meta:
     verbose_name= _(u'Adreça')
-    verbose_name_plural= _(u's- Adreçes')
+    verbose_name_plural= _(u's- Adreces')
   def __unicode__(self):
     return self.name+' ('+self.p_address+' - '+self.town+')'
 
@@ -558,7 +558,7 @@ class Address_Type(Space_Type):
   space_type = models.OneToOneField('Space_Type', primary_key=True, parent_link=True)
   class Meta:
     verbose_name = _(u"Tipus d'Adreça")
-    verbose_name_plural = _(u"s-> Tipus d'Adreçes")
+    verbose_name_plural = _(u"s-> Tipus d'Adreces")
 
 
 
@@ -607,7 +607,7 @@ class Nonmaterial(Artwork):  # Create own ID's
   nonmaterial_type = TreeForeignKey('Nonmaterial_Type', blank=True, null=True, verbose_name=_(u"Tipus d'obra inmaterial"))
 
   records = models.ManyToManyField('Record', through='rel_Nonmaterial_Records', blank=True, null=True, verbose_name=_(u"Registres relacionats"))
-  addresses = models.ManyToManyField('Address', through='rel_Nonmaterial_Addresses', blank=True, null=True, verbose_name=_(u"Adreçes relacionades"))
+  addresses = models.ManyToManyField('Address', through='rel_Nonmaterial_Addresses', blank=True, null=True, verbose_name=_(u"Adreces relacionades"))
   jobs = models.ManyToManyField('Job', through='rel_Nonmaterial_Jobs', blank=True, null=True, verbose_name=_(u"Arts/Oficis relacionats"))
   nonmaterials = models.ManyToManyField('self', through='rel_Nonmaterial_Nonmaterials', symmetrical=False, blank=True, null=True, verbose_name=_(u"obres Inmaterials relacionades"))
 
@@ -638,7 +638,7 @@ class Material(Artwork): # Create own ID's
 
   nonmaterials = models.ManyToManyField('Nonmaterial', through='rel_Material_Nonmaterials', blank=True, null=True, verbose_name=_(u"Inmaterials relacionats"))
   records = models.ManyToManyField('Record', through='rel_Material_Records', blank=True, null=True, verbose_name=_(u"Registres relacionats"))
-  addresses = models.ManyToManyField('Address', through='rel_Material_Addresses', blank=True, null=True, verbose_name=_(u"Adreçes relacionades"))
+  addresses = models.ManyToManyField('Address', through='rel_Material_Addresses', blank=True, null=True, verbose_name=_(u"Adreces relacionades"))
   materials = models.ManyToManyField('self', through='rel_Material_Materials', symmetrical=False, blank=True, null=True, verbose_name=_(u"obres Materials relacionades"))
   jobs = models.ManyToManyField('Job', through='rel_Material_Jobs', blank=True, null=True, verbose_name=_(u"Arts/Oficis relacionats"))
 
@@ -686,7 +686,7 @@ class Unit(Artwork):  # Create own ID's
   unit_type = TreeForeignKey('Unit_Type', blank=True, null=True, verbose_name=_(u"Tipus d'Unitat"))
   code = models.CharField(max_length=4, verbose_name=_(u"Codi o Símbol"))
 
-  region = TreeForeignKey('Region', blank=True, null=True, verbose_name=_(u"Regió d'us asociada"))
+  region = TreeForeignKey('Region', blank=True, null=True, verbose_name=_(u"Regió d'us associada"))
   human = models.ForeignKey('Human', blank=True, null=True, verbose_name=_(u"Entitat relacionada"))
 
   class Meta:
