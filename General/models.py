@@ -70,7 +70,8 @@ class Being_Type(Type):
 class Human(Being):  # Create own ID's
   nickname = models.CharField(max_length=50, blank=True, verbose_name=_(u"Sobrenom"), help_text=_(u"El sobrenom (nickname) de l'entitat Humana"))
   email = models.EmailField(max_length=100, blank=True, verbose_name=_(u"Email"), help_text=_(u"L'adreça d'email principal de l'entitat humana"))
-  telephone = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telèfon"), help_text=_(u"El telèfon principal de l'entitat Humana"))
+  telephone_cell = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telèfon mòbil"), help_text=_(u"El telèfon principal de l'entitat Humana"))
+  telephone_land = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telèfon fix"))
   website = models.CharField(max_length=100, blank=True, verbose_name=_(u"Web"), help_text=_(u"L'adreça web principal de l'entitat humana"))
   jobs = TreeManyToManyField('Job', through='rel_Human_Jobs', verbose_name=_(u"Activitats, Oficis"), blank=True, null=True)
   addresses = models.ManyToManyField('Address', through='rel_Human_Addresses', verbose_name=_(u"Adreçes"), blank=True, null=True)
@@ -84,7 +85,6 @@ class Human(Being):  # Create own ID's
   companies = models.ManyToManyField('Company', through='rel_Human_Companies', related_name='hum_companies', verbose_name=_(u"Empreses"), blank=True, null=True)
 
   #accountsCes = models.ManyToManyField('AccountCes', related_name='human', verbose_name=_(u"Comptes M.S."), blank=True, null=True, help_text=_(u"Comptes de Moneda Social de l'entitat (ICES/CES)"))
-  #comment = models.TextField(blank=True, null=True, verbose_name=_(u"Comentari entitat"))
 
   description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció entitat"))
 
@@ -98,10 +98,10 @@ class Human(Being):  # Create own ID's
     else:
       return self.name+' ('+self.nickname+')'
 
-  def my_accounts(self):
+  def _my_accounts(self):
     return list(chain(self.accountsCes, self.accountsCrypto, self.accountsBank))
-  #my_accounts.list = []
-  accounts = property(my_accounts)
+  #_my_accounts.list = []
+  accounts = property(_my_accounts)
 
 
 
@@ -196,7 +196,7 @@ class rel_Human_Jobs(models.Model):
   job = TreeForeignKey('Job', verbose_name=_(u"Ofici"))
   relation = TreeForeignKey('Relation', related_name='hu_job+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"ofi")
+    verbose_name = _(u"H_ofi")
     verbose_name_plural = _(u"Oficis de l'entitat")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -209,7 +209,7 @@ class rel_Human_Addresses(models.Model):
   address = models.ForeignKey('Address', verbose_name=_(u"Adreça"))
   relation = TreeForeignKey('Relation', related_name='hu_adr+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"adr")
+    verbose_name = _(u"H_adr")
     verbose_name_plural = _(u"Adreçes de l'entitat")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -222,7 +222,7 @@ class rel_Human_Regions(models.Model):
   region = models.ForeignKey('Region', verbose_name=_(u"Regió"))
   relation = TreeForeignKey('Relation', related_name='hu_reg+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"reg")
+    verbose_name = _(u"H_reg")
     verbose_name_plural = _(u"Regions vinculades")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -236,7 +236,7 @@ class rel_Human_Records(models.Model):
   record = models.ForeignKey('Record', verbose_name=_(u"Registre"))
   relation = TreeForeignKey('Relation', related_name='hu_rec+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"rec")
+    verbose_name = _(u"H_rec")
     verbose_name_plural = _(u"Registres vinculats")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -249,7 +249,7 @@ class rel_Human_Materials(models.Model):
   material = models.ForeignKey('Material', verbose_name=_(u"obra Material"))
   relation = TreeForeignKey('Relation', related_name='hu_mat+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"mat")
+    verbose_name = _(u"H_mat")
     verbose_name_plural = _(u"Obres materials")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -262,7 +262,7 @@ class rel_Human_Nonmaterials(models.Model):
   nonmaterial = models.ForeignKey('Nonmaterial', verbose_name=_(u"obra Inmaterial"))
   relation = TreeForeignKey('Relation', related_name='hu_non+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"inm")
+    verbose_name = _(u"H_inm")
     verbose_name_plural = _(u"Obres inmaterials")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -276,7 +276,7 @@ class rel_Human_Persons(models.Model):
   person = models.ForeignKey('Person', related_name='rel_humans', verbose_name=_(u"Persona vinculada"))
   relation = TreeForeignKey('Relation', related_name='hu_hum+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"per")
+    verbose_name = _(u"H_per")
     verbose_name_plural = _(u"Persones vinculades")
   def __unicode__(self):
     if self.relation is None or self.relation.gerund is None or self.relation.gerund == '':
@@ -289,7 +289,7 @@ class rel_Human_Projects(models.Model):
   project = TreeForeignKey('Project', related_name='rel_humans', verbose_name=_(u"Projecte vinculat"))
   relation = TreeForeignKey('Relation', related_name='hu_hum+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"pro")
+    verbose_name = _(u"H_pro")
     verbose_name_plural = _(u"Projectes vinculats")
   def __unicode__(self):
     if self.project.project_type is None or self.project.project_type == '':
@@ -304,7 +304,7 @@ class rel_Human_Companies(models.Model):
   company = models.ForeignKey('Company', verbose_name=_(u"Empresa vinculada"))
   relation = TreeForeignKey('Relation', related_name='hu_hum+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
-    verbose_name = _(u"emp")
+    verbose_name = _(u"H_emp")
     verbose_name_plural = _(u"Empreses vinculades")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -318,7 +318,7 @@ class rel_Material_Nonmaterials(models.Model):
   nonmaterial = models.ForeignKey('Nonmaterial', verbose_name=_(u"Inmaterial vinculat"))
   relation = TreeForeignKey('Relation', related_name='ma_non+', blank=True, null=True)
   class Meta:
-    verbose_name = _(u"inm")
+    verbose_name = _(u"M_inm")
     verbose_name_plural = _(u"Inmaterials vinculats")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -331,7 +331,7 @@ class rel_Material_Records(models.Model):
   record = models.ForeignKey('Record', verbose_name=_(u"Registre vinculat"))
   relation = TreeForeignKey('Relation', related_name='ma_reg+', blank=True, null=True)
   class Meta:
-    verbose_name = _(u"rec")
+    verbose_name = _(u"M_rec")
     verbose_name_plural = _(u"Registres vinculats")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -344,7 +344,7 @@ class rel_Material_Addresses(models.Model):
   address = models.ForeignKey('Address', verbose_name=_(u"Adreça vinculada"))
   relation = TreeForeignKey('Relation', related_name='ma_adr+', blank=True, null=True)
   class Meta:
-    verbose_name = _(u"adr")
+    verbose_name = _(u"M_adr")
     verbose_name_plural = _(u"Adreçes vinculades")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -357,7 +357,7 @@ class rel_Material_Materials(models.Model):
   material2 = models.ForeignKey('Material', related_name='submaterials', verbose_name=_(u"obres Materials vinculades"))
   relation = TreeForeignKey('Relation', related_name='ma_mat+', blank=True, null=True, verbose_name=_(u"Relació"))
   class Meta:
-    verbose_name = _(u"mat.")
+    verbose_name = _(u"M_mat")
     verbose_name_plural = _(u"obres Materials vinculades")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -370,7 +370,7 @@ class rel_Material_Jobs(models.Model):
   job = models.ForeignKey('Job', related_name='materials', verbose_name=_(u"Arts/Oficis vinculades"))
   relation = TreeForeignKey('Relation', related_name='ma_job+', blank=True, null=True, verbose_name=_(u"Relació"))
   class Meta:
-    verbose_name = _(u"job.")
+    verbose_name = _(u"M_ofi")
     verbose_name_plural = _(u"Arts/Oficis vinculades")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -384,7 +384,7 @@ class rel_Nonmaterial_Records(models.Model):
   record = models.ForeignKey('Record', verbose_name=_(u"Registre vinculat"))
   relation = TreeForeignKey('Relation', related_name='no_reg+', blank=True, null=True)
   class Meta:
-    verbose_name = _(u"rec")
+    verbose_name = _(u"N_rec")
     verbose_name_plural = _(u"Registres vinculats")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -397,7 +397,7 @@ class rel_Nonmaterial_Addresses(models.Model):
   address = models.ForeignKey('Address', verbose_name=_(u"Adreça vinculada"))
   relation = TreeForeignKey('Relation', related_name='no_adr+', blank=True, null=True)
   class Meta:
-    verbose_name = _(u"adr")
+    verbose_name = _(u"N_adr")
     verbose_name_plural = _(u"Adreçes vinculades")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -410,7 +410,7 @@ class rel_Nonmaterial_Jobs(models.Model):
   job = models.ForeignKey('Job', related_name='nonmaterials', verbose_name=_(u"Arts/Oficis vinculades"))
   relation = TreeForeignKey('Relation', related_name='no_job+', blank=True, null=True, verbose_name=_(u"Relació"))
   class Meta:
-    verbose_name = _(u"job.")
+    verbose_name = _(u"N_ofi")
     verbose_name_plural = _(u"Arts/Oficis vinculades")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -423,7 +423,7 @@ class rel_Nonmaterial_Nonmaterials(models.Model):
   nonmaterial2 = models.ForeignKey('Nonmaterial', related_name='subnonmaterials', verbose_name=_(u"obres Inmaterials vinculades"))
   relation = TreeForeignKey('Relation', related_name='ma_mat+', blank=True, null=True, verbose_name=_(u"Relació"))
   class Meta:
-    verbose_name = _(u"mat.")
+    verbose_name = _(u"N_mat")
     verbose_name_plural = _(u"obres Inmaterials vinculades")
   def __unicode__(self):
     if self.relation.gerund is None or self.relation.gerund == '':
@@ -531,7 +531,7 @@ class Address(Space):  # Create own ID's
   postalcode = models.CharField(max_length=5, blank=True, null=True, verbose_name=_(u"Codi postal"))
   region = TreeForeignKey('Region', blank=True, null=True, related_name='rel_addresses', verbose_name=_(u"Regió"))
 
-  telephone = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telefon fix"))
+  #telephone = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telefon fix"))
   ic_larder = models.BooleanField(default=False, verbose_name=_(u"És Rebost?"))
   main_address = models.BooleanField(default=False, verbose_name=_(u"Adreça principal?"))
   size = models.DecimalField(max_digits=20, decimal_places=2, blank=True, null=True, verbose_name=_(u'Tamany'), help_text=_(u"Quantitat d'unitats (accepta 2 decimals)"))

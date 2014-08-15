@@ -24,7 +24,8 @@ def create_membership(request, record_type_id=4):
 			print "#Save person--------------------------------------------------------"
 			from Welcome.models import Person
 			current_person = form.save()
-			current_person.name = form.cleaned_data.get("nickname")
+			current_person.name = form.cleaned_data.get("name")
+			current_person.nickname = form.cleaned_data.get("nickname")
 			current_person.save()
 			print current_person.id
 			print "#Save project--------------------------------------------------------"
@@ -53,7 +54,7 @@ def create_membership(request, record_type_id=4):
 	else:
 		#INITIAL-----------------------------------------------------------------
 		#Create form from default------------------------------------------------
-		form = create_membership_form( 
+		form = create_membership_form(
 				initial= {
 						"type" : record_type_id ,
 						"type_person": "public"
@@ -75,8 +76,8 @@ def create_membership(request, record_type_id=4):
 		context[key] = callable(value) and value() or value
 	print "#Render form -----------------------------------------------------------------"
 	return render_to_response(
-		'create_membership.html', 
-		{'form': form}, 
+		'create_membership.html',
+		{'form': form},
 		context_instance=context
 	)
 
@@ -97,8 +98,8 @@ def wait_membership(request, user_id = 0):
 		context[key] = callable(value) and value() or value
 	print "#Render form -----------------------------------------------------------------"
 	return render_to_response(
-		'waiting_membership.html', 
-		{'RegistrationProfile' : current_registration}, 
+		'waiting_membership.html',
+		{'RegistrationProfile' : current_registration},
 		context_instance=context
 		)
 
@@ -115,15 +116,20 @@ def activate_membership(request, activation_key):
 		record_type_string = account.record_type.clas.lower()
 		from General.models import Project
 		try:
-			project = Project.objects.get(id=6) #site project "Cooperativa Integral"
+			project = Project.objects.get(nickname='CIC') #site project "Cooperativa Integral"
 		except:
 			project = Project()
 		print "proceso"
 		if record_type_string == "ic_akin_membership":
 			from Welcome.models import iC_Akin_Membership
-			from General.models import Project 
+			#from General.models import Project
 			ic_m = iC_Akin_Membership( person=account.person, ic_project=project)
-			fee_amount = 30 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
+			#fee_amount = 0 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
+			ic_m.record_type = account.record_type
+			ic_m.human_id = account.person.id
+			ic_m.save()
+			return HttpResponseRedirect( "/cooper/General/person/" + account.person.id.__str__()  )
+			
 		elif record_type_string == "ic_person_membership":
 			from Welcome.models import iC_Person_Membership
 			#ic_m = iC_Membership( human=account.person, ic_project=project)
@@ -134,7 +140,7 @@ def activate_membership(request, activation_key):
 			#ic_m = iC_Membership( human=account.person, ic_project=project, project=account.project)
 			ic_m = iC_Project_Membership( person=account.person, ic_project=project, project=account.project)
 			fee_amount = 60 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
-		ic_m.record_type = account.record_type 
+		ic_m.record_type = account.record_type
 		ic_m.human_id = account.person.id
 		ic_m.save()
 		from Welcome.models import Fee
@@ -144,9 +150,9 @@ def activate_membership(request, activation_key):
 			human = account.person,
 			project = project,
 			amount = fee_amount,
-			unit = Unit.objects.get(name="EURO"),
+			unit = Unit.objects.get(name="Euro"),
 			membership = ic_m,
-			issue_date = datetime.now(), 
+			issue_date = datetime.now(),
 			deadline_date = datetime.now() + timedelta(days=5) ,
 		)
 		current_fee.save()

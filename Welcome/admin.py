@@ -18,25 +18,32 @@ class AutoRecordName(admin.ModelAdmin):
     instance = form.save(commit=False)
     #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
     instance.name = instance.__unicode__()
-    if not hasattr(instance,'ic_project') or instance.ic_project is None:
-      instance.ic_project = Project.objects.get(pk=27)
+    if not hasattr(instance, 'ic_project') or instance.ic_project is None:
+      instance.ic_project = Project.objects.get(nickname='CIC')
+    if not hasattr(instance, 'human') or instance.human is None:
+      if hasattr(instance, 'project') and instance.project is not None:
+        instance.human = instance.project
+      if hasattr(instance, 'person') and instance.person is not None:
+        instance.human = instance.person
     instance.save()
     form.save_m2m()
     return instance
 
 
 class Public_AkinMembershipAdmin(AutoRecordName):
-	list_display = ('name', 'person', 'join_date', '_has_id_card', 'join_fee', 'ic_CESnum')
-	model = iC_Akin_Membership
+  raw_id_fields = ('person',)
+  readonly_fields = ('_has_id_card',)
+  fieldsets = (
+    (None, {
+      'fields':(('person', 'join_date'),
+                ('description', '_has_id_card'))
+    }),
+  )
+  model = iC_Akin_Membership
 
 
 class AkinMembershipAdmin(AutoRecordName):
-	from General.models import Person
-	model = Person
-
-
-class PersonMembershipAdmin(AutoRecordName):
-  list_display = ['name', 'person', 'join_date', '_has_id_card']
+  list_display = ['name', 'person', 'join_date', '_has_id_card',]
   raw_id_fields = ('person',)
   readonly_fields = ('record_type', 'name', '_has_id_card',)
   fieldsets = (
@@ -46,23 +53,43 @@ class PersonMembershipAdmin(AutoRecordName):
                 ('description', 'name'))
     }),
   )
+  model = iC_Akin_Membership
 
-class ProjectMembershipAdmin(AutoRecordName):
-  list_display = ['name', 'project', 'join_date',]
-  raw_id_fields = ('project',)
-  readonly_fields = ('record_type', 'name',)
+
+class PersonMembershipAdmin(AutoRecordName):
+  list_display = ['name', 'person', 'join_date', '_join_fee_payed']
+  raw_id_fields = ('person',)
+  readonly_fields = ('record_type', 'name', '_join_fee_payed',)
   fieldsets = (
     (None, {
-      'fields':(('record_type', 'ic_project', ),
-                ('project', 'join_date', 'end_date'),
-                ('description', 'name'))
+      'fields':(
+        ('record_type', 'name'),
+        ('person', 'ic_project', 'ic_CESnum'),
+        ('contribution', 'virtual_market', 'labor_contract'),
+        ('join_fee', 'join_date', 'end_date', '_join_fee_payed'),
+        ('expositors', 'description'))
+    }),
+  )
+
+class ProjectMembershipAdmin(AutoRecordName):
+  list_display = ['name', 'project', 'join_date', '_join_fee_payed']
+  raw_id_fields = ('project',)
+  readonly_fields = ('record_type', 'name', '_join_fee_payed',)
+  fieldsets = (
+    (None, {
+      'fields':(
+        ('record_type', 'name'),
+        ('project', 'ic_project', 'ic_CESnum'),
+        ('contribution', 'virtual_market'),
+        ('join_fee', 'join_date', 'end_date', '_join_fee_payed'),
+        ('expositors', 'description'))
     }),
   )
 
 
 class Public_MembershipAdmin(AutoRecordName):
   raw_id_fields = ('human',)
-  readonly_fields = ('ic_CESnum', 'join_fee', 'join_date', 'human')
+  readonly_fields = ('ic_CESnum', 'join_fee', 'join_date', 'human',)
   fieldsets = (
     (None, {
       'fields':(('human', 'ic_CESnum'),
@@ -82,7 +109,7 @@ class MembershipAdmin(AutoRecordName):
     (None, {
       'fields':(
         ('record_type', 'name'),
-        ('human', 'ic_project', 'ic_CESnum'),	
+        ('human', 'ic_project', 'ic_CESnum'),
         ('contribution', 'virtual_market', 'labor_contract'),
         ('join_fee', 'join_date', 'end_date', '_join_fee_payed'),
         ('expositors', 'description'))
@@ -92,19 +119,19 @@ class MembershipAdmin(AutoRecordName):
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     if db_field.name == 'record_type':
       typ = iC_Record_Type.objects.get(clas='iC_Membership')
-      kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght)
+      kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
     return super(MembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 
 
 class SelfEmployedAdmin(AutoRecordName):
-  #list_display = ['name', 'membership', 'join_date', '_join_fee_payed']
+  #list_display = ['name', 'ic_membership', 'join_date', '_join_fee_payed']
 
   fieldsets = (#MembershipAdmin.fieldsets + (
     (_(u"fase 1: Autoocupat"), {
       'fields': (
-        ('membership', 'join_date', 'end_date'),
+        ('ic_membership', 'join_date', 'end_date'),
         ('rel_fees', 'organic')
       )
     }),
@@ -141,7 +168,7 @@ class FeeAdmin(AutoRecordName):
 #admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
 
-admin.site.register(iC_Akin_Membership)
+admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
 admin.site.register(iC_Person_Membership, PersonMembershipAdmin)
 admin.site.register(iC_Project_Membership, ProjectMembershipAdmin)
 

@@ -22,6 +22,8 @@ class iC_Record(Artwork):  # create own ID's
   def __unicode__(self):
     if self.record_type is None or self.record_type == '':
       return self.name
+    elif self.name is None or self.name == '':
+      return self.record_type.name+': ??'
     else:
       return self.record_type.name+': '+self.name
 
@@ -77,7 +79,41 @@ class iC_Person_Membership(iC_Record):
     super(iC_Person_Membership, self).__init__(*args, **kwargs)
     self.record_type = iC_Record_Type.objects.get(clas='iC_Person_Membership')  # there's only one ic_record_type for this kind of member
   '''
- 
+
+
+class iC_Akin_Membership(iC_Record):
+  ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
+  person = models.ForeignKey('General.Person', verbose_name=_(u"Persona, membre afí"))
+  ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
+  ic_membership = models.ForeignKey('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada al registre de Soci"))
+  join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
+  end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
+
+  def _has_id_card(self):
+    if self.person.id_card is None or self.person.id_card == '':
+      return False
+    else:
+      return True
+  _has_id_card.boolean = True
+  _has_id_card.short_description = _(u"Dni/Nie?")
+  has_id_card = property(_has_id_card)
+
+  def __unicode__(self):
+    if self.record_type is None or self.record_type == '':
+      return self.ic_project.nickname+' > '+self.person.__unicode__()
+    else:
+      return self.record_type.name+': '+self.person.__unicode__()
+  def __init__(self, *args, **kwargs):
+    super(iC_Akin_Membership, self).__init__(*args, **kwargs)
+    self.record_type = iC_Record_Type.objects.get(clas='iC_Akin_Membership')  # there's only one ic_record_type for this kind of member
+    if not hasattr(self, 'ic_project') or self.ic_project is None:
+      self.ic_project = Project.objects.get(nickname='CIC')
+
+  class Meta:
+    verbose_name = _(u"Alta de Soci Afí CI")
+    verbose_name_plural = _(u"Altes de Socis Afins CI")
+
+
 
 class iC_Membership(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
@@ -89,7 +125,6 @@ class iC_Membership(iC_Record):
   join_fee = models.ForeignKey('Fee', verbose_name=_(u"Cuota d'alta"))
 
   ic_CESnum = models.CharField(max_length=8, blank=True, null=True, verbose_name=_(u"Numero al CES/iCES"))
-  labor_contract = models.OneToOneField('iC_Labor_Contract', blank=True, null=True, verbose_name=_(u"Contracte laboral?"))
 
   virtual_market = models.BooleanField(default=False, verbose_name=_(u"Mercat Virtual?"))
   expositors = models.ManyToManyField('General.Address', blank=True, null=True, verbose_name=_(u"Expositors (adreçes)"))
@@ -110,45 +145,15 @@ class iC_Membership(iC_Record):
   _join_fee_payed.short_description = _(u"Quota d'Alta Pagada?")
   joinfee_payed = property(_join_fee_payed)
 
-class iC_Akin_Membership(iC_Membership):
-  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
-  def _has_id_card(self):
-    if self.person.id_card is None or self.person.id_card == '':
-      return False
-    else:
-      return True
-  _has_id_card.boolean = True
-  _has_id_card.short_description = _(u"Dni/Nie?")
-  has_id_card = property(_has_id_card)
-
-  def __unicode__(self):
-    if self.record_type is None or self.record_type == '':
-      return self.ic_project.nickname+' > '+self.person.__unicode__()
-    else:
-      return self.record_type.name+': '+self.person.__unicode__()
-  def __init__(self, *args, **kwargs):
-    super(iC_Akin_Membership, self).__init__(*args, **kwargs)
-    self.record_type = iC_Record_Type.objects.get(clas='iC_Akin_Membership')  # there's only one ic_record_type for this kind of member
- 
-  class Meta:
-    verbose_name = _(u"Alta de Soci Afí CI")
-    verbose_name_plural = _(u"Altes de Socis Afins CI")
- 
 
 class iC_Person_Membership(iC_Membership):
-  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
-  class Meta:
-    verbose_name = _(u"Alta de Soci Cooperatius individual CI")
-    verbose_name_plural = _(u"Altes de Socis Cooperatius individuals CI")
+  ic_membership = models.OneToOneField('iC_Membership', primary_key=True, parent_link=True)
+  person = models.ForeignKey('General.Person', verbose_name=_(u"Persona Sòcia"))
+  labor_contract = models.OneToOneField('iC_Labor_Contract', blank=True, null=True, verbose_name=_(u"Contracte laboral?"))
 
-  def _has_id_card(self):
-    if self.person.id_card is None or self.person.id_card == '':
-      return False
-    else:
-      return True
-  _has_id_card.boolean = True
-  _has_id_card.short_description = _(u"Dni/Nie?")
-  has_id_card = property(_has_id_card)
+  class Meta:
+    verbose_name = _(u"Alta de Soci Cooperatiu individual CI")
+    verbose_name_plural = _(u"Altes de Socis Cooperatius Individuals CI")
 
   def __unicode__(self):
     if self.record_type is None or self.record_type == '':
@@ -158,31 +163,28 @@ class iC_Person_Membership(iC_Membership):
   def __init__(self, *args, **kwargs):
     super(iC_Person_Membership, self).__init__(*args, **kwargs)
     self.record_type = iC_Record_Type.objects.get(clas='iC_Person_Membership')  # there's only one ic_record_type for this kind of member
+    if not hasattr(self, 'ic_project') or self.ic_project is None:
+      self.ic_project = Project.objects.get(nickname='CIC')
 
 class iC_Project_Membership(iC_Membership):
-  project = models.OneToOneField('General.Project', verbose_name=_(u"Projecte col·lectiu"))
-  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona referencia"))
+  ic_membership = models.OneToOneField('iC_Membership', primary_key=True, parent_link=True)
+  project = models.ForeignKey('General.Project', verbose_name=_(u"Projecte Sòci"))
+  #person = models.OneToOneField('General.Person', verbose_name=_(u"Persona referencia"))
   class Meta:
     verbose_name = _(u"Alta de Projecte Col·lectiu CI")
     verbose_name_plural = _(u"Altes de Projectes Col·lectius CI")
 
-  def _has_id_card(self):
-    if self.person.id_card is None or self.person.id_card == '':
-      return False
-    else:
-      return True
-  _has_id_card.boolean = True
-  _has_id_card.short_description = _(u"Dni/Nie?")
-  has_id_card = property(_has_id_card)
-
   def __unicode__(self):
     if self.record_type is None or self.record_type == '':
-      return self.ic_project.nickname+' > '+self.person.__unicode__()
+      return self.ic_project.nickname+' > '+self.project.__unicode__()
     else:
-      return self.record_type.name+': '+self.person.__unicode__()
+      return self.record_type.name+': '+self.project.__unicode__()
   def __init__(self, *args, **kwargs):
     super(iC_Project_Membership, self).__init__(*args, **kwargs)
-    self.record_type = iC_Record_Type.objects.get(clas='iC_Project_Membership')  # there's only one ic_record_type for this kind of member
+    if self.record_type is None or self.record_type == '':
+      self.record_type = iC_Record_Type.objects.get(clas='iC_Project_Membership')  # if empty, put generic ic_record_type for project membership
+    if not hasattr(self, 'ic_project') or self.ic_project is None:
+      self.ic_project = Project.objects.get(nickname='CIC')
 
 '''
 class iC_Membership_Type(iC_Record_Type):
@@ -195,12 +197,12 @@ class iC_Membership_Type(iC_Record_Type):
 
 class iC_Self_Employed(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
-  membership = models.ForeignKey('iC_Membership', related_name='self_employed', verbose_name=_(u"Soci (registre)"))
+  ic_membership = models.ForeignKey('iC_Membership', related_name='self_employed', verbose_name=_(u"Registre de Soci"))
 
-  join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
-  end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
+  join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta autoocupat"))
+  end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa autoocupat"))
 
-  rel_fees = models.ManyToManyField('Fee', blank=True, null=True, verbose_name=_(u"Quotes relacionades"))
+  rel_fees = models.ManyToManyField('Fee', blank=True, null=True, limit_choices_to={'membership':ic_membership}, verbose_name=_(u"Quotes relacionades"))
 
   organic = models.BooleanField(verbose_name=_(u"Productes ecològics/organics?"))
   #welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))

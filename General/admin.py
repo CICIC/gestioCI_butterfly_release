@@ -50,7 +50,8 @@ from django.utils.html import escape, conditional_escape
 class AutoNameMixin(admin.ModelAdmin):
   def save_model(self, request, obj, form, change):
     instance = form.save(commit=False)
-    instance.name = instance.__unicode__()
+    if instance.name is None or instance.name == '':
+      instance.name = instance.__unicode__()
     instance.save()
     form.save_m2m()
     return instance
@@ -186,7 +187,7 @@ class H_addressInline(admin.StackedInline, InlineEditLinkMixin):
     model = rel_Human_Addresses
     extra = 0
     raw_id_fields = ('address',)
-    readonly_fields = ('edit_details',)
+    #readonly_fields = ('edit_details',)
     fieldsets = (
       (' ', {
         'classes': ('collapse',),
@@ -267,6 +268,11 @@ class H_projectInline(admin.StackedInline):
         'fields': (('project','relation'),)
       }),
     )
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+      if db_field.name == 'relation':
+        rel = Relation.objects.get(clas='rel_pers_proj')
+        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id)
+      return super(H_projectInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_companyInline(admin.StackedInline):
     model = rel_Human_Companies
@@ -407,12 +413,14 @@ class HumanAdmin(AutoNameMixin):
 
 
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
+  readonly_fields = ('_get_ref_persons',)
   fieldsets = (
     (None, {
       'fields':(('name', 'nickname'),
                 ('website', 'socialweb'),
                 ('project_type', 'parent', 'ecommerce'),
-                ('email', 'email2', 'telephone'),)
+                ('email', 'email2', 'telephone_cell', 'telephone_land'),
+                ('_get_ref_persons',))
     }),
     (_(u"Dates inici/fi"), {
       'classes': ('collapse',),
@@ -436,7 +444,7 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
     H_companyInline,
 
     H_assetInline,
-    #H_regionInline,
+    H_regionInline,
     H_materialInline,
     H_nonmaterialInline,
     #H_recordInline,
@@ -445,7 +453,7 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
 
 class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
-  list_display = ['name', 'nickname', 'project_type', '_is_collective']#, 'ref_persons']
+  list_display = ['name', 'nickname', 'project_type', 'email', '_is_collective']#, 'ref_persons']
   list_filter = ('project_type',)
   search_fields = ('name', 'nickname', 'project_type', 'email')
 
@@ -496,14 +504,14 @@ class Public_PersonAdmin(HumanAdmin):
   fieldsets = (
     (None, {
       'fields':(('name', 'surnames', 'id_card'),
-                ('nickname', 'nickname2'),
+                ('nickname', 'nickname2', 'birth_date'),
                 ('email', 'email2'),
-                ('website', 'telephone'))
+                ('website', 'telephone_cell', 'telephone_land'))
     }),
-    (_(u"Dates naixement/mort"), {
-      'classes': ('collapse',),
-      'fields': (('birth_date', 'death_date'),)
-    }),
+    #(_(u"Dates naixement/mort"), {
+    #  'classes': ('collapse',),
+    #  'fields': (('birth_date', 'death_date'),)
+    #}),
     (_(u"Descripció"), {
       'classes': ('collapse',),
       'fields': (('description'),)
@@ -530,10 +538,11 @@ class Public_PersonAdmin(HumanAdmin):
   ]
 
 
+
 class PersonAdmin(Public_PersonAdmin):
 
   list_display = ['name', 'surnames', 'nickname', 'email']
-  search_fields = ('name', 'surenames', 'nickname', 'email')
+  search_fields = ('name', 'surnames', 'nickname', 'email')
 
   '''
   fieldsets = (
@@ -566,7 +575,7 @@ class Public_CompanyAdmin(HumanAdmin):
     (None, {
       'fields':(('name', 'nickname', 'company_type'),
                 ('legal_name', 'vat_number'),
-                ('email', 'telephone', 'website'))
+                ('email', 'telephone_cell', 'telephone_land', 'website'))
     }),
     (_(u"Dates inici/fi"), {
       'classes': ('collapse',),
@@ -630,6 +639,25 @@ class HumanAdmin(admin.ModelAdmin):
   search_fields = ('name','nickname','email',)
 '''
 
+class AddressAdmin(admin.ModelAdmin):
+  list_display = ['name', 'address_type', 'p_address', 'town', 'postalcode', 'region', 'main_address',]
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('name', 'address_type', 'ic_larder'),
+        ('p_address', 'town', 'postalcode'),
+        ('region', 'main_address'),
+        ('size', 'size_unit'),
+        ('description', 'longitude', 'latitude'),
+        ('jobs',))
+    }),
+  )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'size_unit':
+      typ = Unit_Type.objects.get(clas='area')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    return super(AddressAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 
 # Register your models here.
@@ -679,7 +707,7 @@ admin.site.register(AccountCrypto, AccountCryptoAdmin)
 
 #admin.site.register(Space)
 #admin.site.register(Space_Type, MPTTModelAdmin) # Comment this line after creating 'Address' and 'Region' inside Space_Types
-admin.site.register(Address)
+admin.site.register(Address, AddressAdmin)
 admin.site.register(Address_Type, MPTTModelAdmin)
 
 admin.site.register(Region, MPTTModelAdmin)

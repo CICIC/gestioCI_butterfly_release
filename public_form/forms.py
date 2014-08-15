@@ -11,19 +11,19 @@ class project_form(forms.ModelForm):
 		model = Project
 
 class create_membership_form(forms.ModelForm):
-
+	'''
 	CHOICES_PERSON = (
-		("anonymous", _(u'Anònim (No omplirè dades persona)')), 
-		("public", _(u'Persona (Omplirè dades de persona)')), 
+		("anonymous", _(u'Anònim (No omplirè dades persona)')),
+		("public", _(u'Persona (Omplirè dades de persona)')),
 	)
 	# Create field with loaded choices-------------------------------------------------
 	type_person = forms.ChoiceField(
-		widget=forms.RadioSelect, 
-		choices=CHOICES_PERSON, 
-		label=_(u"Tipus de persona"), 
+		widget=forms.RadioSelect,
+		choices=CHOICES_PERSON,
+		label=_(u"Tipus de persona"),
 		localize=True, required=True)
+	'''
 
-		
 	#Menú choices-----------------------------------------------------------------------
 	'''
 	typ = iC_Record_Type.objects.get(clas='iC_Membership')
@@ -31,7 +31,7 @@ class create_membership_form(forms.ModelForm):
 	CHOICES = ()
 	for type in types:
 		print type.id
-		CHOICES = CHOICES + ( ( type.id, type.name) ,)  
+		CHOICES = CHOICES + ( ( type.id, type.name) ,)
 	'''
 	from Welcome.models import iC_Record_Type
 	from Welcome.models import iC_Type
@@ -39,16 +39,16 @@ class create_membership_form(forms.ModelForm):
 	choice_two = iC_Type.objects.get(clas="iC_Person_Membership")
 	choice_three = iC_Type.objects.get(clas="iC_Project_Membership")
 	CHOICES = (
-		(choice_one.id, choice_one.name), 
-		(choice_two.id, choice_two.name), 
-		(choice_three.id, choice_three.name), 
+		(choice_one.id, choice_one.name),
+		(choice_two.id, choice_two.name),
+		(choice_three.id, choice_three.name),
 	)
 
 	# Create field with loaded choices-------------------------------------------------
 	type = forms.ChoiceField(
-		widget=forms.RadioSelect, 
-		choices=CHOICES, 
-		label=_(u"Tipus d'Alta"), 
+		widget=forms.RadioSelect,
+		choices=CHOICES,
+		label=_(u"Tipus d'Alta"),
 		localize=True, required=True)
 
 	username = forms.RegexField(regex=r'^[\w.@+-]+$',
@@ -57,21 +57,27 @@ class create_membership_form(forms.ModelForm):
 								label=_("Username"),
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 	email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict,
-															   maxlength=75)),
+															   max_length=100)),
 							 label=_("E-mail"))
 	password1 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
 								label=_("Password"))
 	password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
 								label=_("Password (again)"))
 
-	project_name = forms.RegexField(regex=r'^[\w.@+-]+$',
-								max_length=30,
+	name = forms.RegexField(regex=r'^[\w.@+-]+$',
+								max_length=50,
 								widget=forms.TextInput(attrs=attrs_dict),
-								label=_("Nom"),
+								label=_("Nom real"),
+								required=False,
+								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+	project_name = forms.RegexField(regex=r'^[\w.@+-]+$',
+								max_length=50,
+								widget=forms.TextInput(attrs=attrs_dict),
+								label=_("Nom del projecte"),
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 	project_website = forms.RegexField(regex=r'^[\w.@+-]+$',
-								label=_("Web"),
+								label=_("Web del projecte"),
 								max_length=100,
 								widget=forms.TextInput(attrs=attrs_dict),
 								required=False,
@@ -106,12 +112,11 @@ class create_membership_form(forms.ModelForm):
 				raise forms.ValidationError(_("The two password fields didn't match."))
 		return self.cleaned_data
 	class Media:
-		js = ( 
+		js = (
 			"admin/js/core.js",
 			"admin/js/jquery.js",
 			"admin/js/jquery.init.js",
 			'create_membership.js', )
 	class Meta:
 		model = Person
-		fields = ("type_person", "type", "username", "email", "id_card", "surnames", "nickname", "telephone")
-
+		fields = ("type", "username", "email", "id_card", "name", "surnames", "nickname", "telephone_cell", 'telephone_land')

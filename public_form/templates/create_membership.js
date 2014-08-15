@@ -5,11 +5,11 @@
 		}else{
 			$('#project_section').hide();
 		}
-		if ( $('#id_type_person_1').filter(':checked').val() != undefined ) {
-			$('#public_section').show();
-		}else{
-			$('#public_section').hide();
-		}
+		//if ( $('#id_type_person_1').filter(':checked').val() != undefined ) {
+		//	$('#public_section').show();
+		//}else{
+		//	$('#public_section').hide();
+		//}
 	}
 	$(document).ready(function () {
 		showForms();
@@ -21,8 +21,8 @@
 		$('#id_type').change(function () {
 			showForms();
 		});
-		$('#id_type_person').change(function () {
-			showForms();
-		});
+		//$('#id_type_person').change(function () {
+		//	showForms();
+		//});
 	} )
 }) (django.jQuery);
