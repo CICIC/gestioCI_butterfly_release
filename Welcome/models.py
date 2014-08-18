@@ -12,6 +12,13 @@ from General.models import *
 
 #from General.models import Record, Human, Person, Project, Relation
 
+a_str = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
+a_str1 = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Welcome/"
+a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
+a_str3 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank'>"
+add_pers = 'add Persona'#_(u"Nova Persona")
+add_proj = 'add Project'#_(u"Nou Projecte")
+
 # Create your models here.
 
 class iC_Record(Artwork):  # create own ID's
@@ -49,43 +56,11 @@ class iC_Record_Type(iC_Type):
 
 
 
-'''
-class iC_Person_Membership(iC_Record):
-  ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
-  #record_type = TreeForeignKey('iC_Record_Type', limit_choices_to={'clas':'iC_Akin_Membership'})
-  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
-  ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
-  join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
-  end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
-  class Meta:
-    verbose_name = _(u"Alta de Soci Cooperatiu individual CI")
-    verbose_name_plural = _(u"Altes de Socis Cooperatius Individuals CI")
-
-  def _has_id_card(self):
-    if self.person.id_card is None or self.person.id_card == '':
-      return False
-    else:
-      return True
-  _has_id_card.boolean = True
-  _has_id_card.short_description = _(u"Dni/Nie?")
-  has_id_card = property(_has_id_card)
-
-  def __unicode__(self):
-    if self.record_type is None or self.record_type == '':
-      return self.ic_project.nickname+' > '+self.person.__unicode__()
-    else:
-      return self.record_type.name+': '+self.person.__unicode__()
-  def __init__(self, *args, **kwargs):
-    super(iC_Person_Membership, self).__init__(*args, **kwargs)
-    self.record_type = iC_Record_Type.objects.get(clas='iC_Person_Membership')  # there's only one ic_record_type for this kind of member
-  '''
-
-
 class iC_Akin_Membership(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
-  person = models.ForeignKey('General.Person', verbose_name=_(u"Persona, membre afí"))
+  person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
   ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
-  ic_membership = models.ForeignKey('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada al registre de Soci"))
+  ic_membership = models.ForeignKey('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada al Projecte Soci"))
   join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
   end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
 
@@ -113,6 +88,14 @@ class iC_Akin_Membership(iC_Record):
     verbose_name = _(u"Alta de Soci Afí CI")
     verbose_name_plural = _(u"Altes de Socis Afins CI")
 
+  def _person_link(self):
+    if hasattr(self, 'person'):
+      return self.person.selflink()
+    else:
+      lnk1 = a_str + "person/add/" + a_str2 + add_pers + "</a>"
+      return lnk1
+  _person_link.allow_tags = True
+  _person_link.short_description = ''
 
 
 class iC_Membership(iC_Record):
@@ -137,13 +120,37 @@ class iC_Membership(iC_Record):
 
   class Meta:
     verbose_name = _(u"Alta de Soci CI")
-    verbose_name_plural = _(u"Altes de Socis CI")
+    verbose_name_plural = _(u"Altes de Socis CI (tots menys afins)")
 
   def _join_fee_payed(self):
     return self.join_fee.payed
   _join_fee_payed.boolean = True
   _join_fee_payed.short_description = _(u"Quota d'Alta Pagada?")
   joinfee_payed = property(_join_fee_payed)
+
+  def _human_link(self):
+    if hasattr(self, 'human'):
+      return self.human.selflink()
+    else:
+      lnk1 = a_str + "person/add/" + a_str2 + add_pers + "</a>"
+      lnk2 = a_str + "project/add/" + a_str3 + add_proj + "</a>"
+      return lnk1+' / '+lnk2
+  _human_link.allow_tags = True
+  _human_link.short_description = ''
+
+  def _joinfee_link(self):
+    if hasattr(self, 'join_fee'):
+      return self.join_fee.selflink()
+    else:
+      lnk = a_str1 + "fee/add/" + a_str2 + "add Fee</a>"
+      return lnk
+  _joinfee_link.allow_tags = True
+  _joinfee_link.short_description = ''
+
+  def __init__(self, *args, **kwargs):
+    super(iC_Membership, self).__init__(*args, **kwargs)
+    if not hasattr(self, 'ic_project') or self.ic_project is None:
+      self.ic_project = Project.objects.get(nickname='CIC')
 
 
 class iC_Person_Membership(iC_Membership):
@@ -163,8 +170,15 @@ class iC_Person_Membership(iC_Membership):
   def __init__(self, *args, **kwargs):
     super(iC_Person_Membership, self).__init__(*args, **kwargs)
     self.record_type = iC_Record_Type.objects.get(clas='iC_Person_Membership')  # there's only one ic_record_type for this kind of member
-    if not hasattr(self, 'ic_project') or self.ic_project is None:
-      self.ic_project = Project.objects.get(nickname='CIC')
+
+  def _person_link(self):
+    if hasattr(self, 'person'):
+      return self.person.selflink()
+    else:
+      lnk1 = a_str + "person/add/" + a_str2 + add_pers + "</a>"
+      return lnk1
+  _person_link.allow_tags = True
+  _person_link.short_description = ''
 
 class iC_Project_Membership(iC_Membership):
   ic_membership = models.OneToOneField('iC_Membership', primary_key=True, parent_link=True)
@@ -183,8 +197,16 @@ class iC_Project_Membership(iC_Membership):
     super(iC_Project_Membership, self).__init__(*args, **kwargs)
     if self.record_type is None or self.record_type == '':
       self.record_type = iC_Record_Type.objects.get(clas='iC_Project_Membership')  # if empty, put generic ic_record_type for project membership
-    if not hasattr(self, 'ic_project') or self.ic_project is None:
-      self.ic_project = Project.objects.get(nickname='CIC')
+
+  def _project_link(self):
+    if hasattr(self, 'project'):
+      return self.project.selflink()
+    else:
+      lnk1 = a_str + "project/add/" + a_str2 + add_proj + "</a>"
+      return lnk1
+  _project_link.allow_tags = True
+  _project_link.short_description = ''
+
 
 '''
 class iC_Membership_Type(iC_Record_Type):
@@ -207,14 +229,17 @@ class iC_Self_Employed(iC_Record):
   organic = models.BooleanField(verbose_name=_(u"Productes ecològics/organics?"))
   #welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
 
-  #req_id_cards = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
+  def _rel_id_cards(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
+    pers = rel_Human_Persons.objects.filter(human=self.ic_membership.human)
+    return pers
+  _rel_id_cards.allow_tags = True
+
   '''
   req_address_contract = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix contractes (lloguer, cessió, etc)?"))
   req_insurance = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix assegurances?"))
   req_licence = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix llicències?"))
   req_images = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix fotos?"))
   '''
-
   rel_address_contracts = models.ManyToManyField('iC_Address_Contract', blank=True, null=True, verbose_name=_(u"Contractes d'Adreça vinculats"))
   rel_insurances = models.ManyToManyField('iC_Insurance', blank=True, null=True, verbose_name=_(u"Assegurances vinculades"))
   rel_licences = models.ManyToManyField('iC_Licence', blank=True, null=True, verbose_name=_(u"Llicències vinculades"))
@@ -338,6 +363,18 @@ class Fee(iC_Record):
   _is_payed.short_description = _(u"Pagada?")
   payed = property(_is_payed)
 
+  def __init__(self, *args, **kwargs):
+    super(Fee, self).__init__(*args, **kwargs)
+    if not hasattr(self, 'project') or self.project is None or self.project == '':
+      self.project = Project.objects.get(nickname='CIC')  # if empty, put generic ic_record_type for project membership
+
+  def selflink(self):
+    if self.id:
+      return a_str1 + "fee/" + str(self.id) + a_str2 + "Edita</a>"# % str(self.id)
+    else:
+      return "Not present"
+  selflink.allow_tags = True
+  selflink.short_description = ''
 
 class Payment_Type(iC_Type):
   ic_type = models.OneToOneField('iC_Type', primary_key=True, parent_link=True)

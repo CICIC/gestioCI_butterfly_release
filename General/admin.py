@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 
 from django.forms.models import BaseInlineFormSet
 from django.forms.formsets import formset_factory
+#from django.forms.models import BaseModelFormSet
 
 from mptt.admin import MPTTModelAdmin
 from mptt.fields import TreeForeignKey, TreeManyToManyField
@@ -148,10 +149,11 @@ class AccountCesAdmin(AutoNameMixin):
 
     }),
   )
-  #def save_model(self, request, obj, form, change):
-  #  print 'CES: '+obj.__unicode__()
-  #  obj.name = obj.__unicode__()
-  #  obj.save()
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'unit':
+      typ = Unit_Type.objects.get(clas='social_currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    return super(AccountCesAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class AccountBankAdmin(AutoNameMixin):
   list_display = ['name', 'human', 'company', 'code', 'number', 'unit']
@@ -162,10 +164,11 @@ class AccountBankAdmin(AutoNameMixin):
 
     }),
   )
-  #def save_model(self, request, obj, form, change):
-  #  print 'BANK: '+obj.__unicode__()
-  #  obj.name = obj.__unicode__()
-  #  obj.save()
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'unit':
+      typ = Unit_Type.objects.get(clas='fiat_currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    return super(AccountBankAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class AccountCryptoAdmin(AutoNameMixin):
   list_display = ['name', 'human', 'number', 'unit']
@@ -176,10 +179,11 @@ class AccountCryptoAdmin(AutoNameMixin):
 
     }),
   )
-  #def save_model(self, request, obj, form, change):
-  #  print 'CRYPTO: '+obj.__unicode__()
-  #  obj.name = obj.__unicode__()
-  #  obj.save()
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'unit':
+      typ = Unit_Type.objects.get(clas='crypto_currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    return super(AccountCryptoAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 
@@ -187,13 +191,18 @@ class H_addressInline(admin.StackedInline, InlineEditLinkMixin):
     model = rel_Human_Addresses
     extra = 0
     raw_id_fields = ('address',)
-    #readonly_fields = ('edit_details',)
+    readonly_fields = ('selflink',)#'edit_details',)
     fieldsets = (
       (' ', {
         'classes': ('collapse',),
-        'fields': (('address', 'relation'),)
+        'fields': (('address', 'selflink', 'relation', 'main_address'),)
       }),
     )
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+      if db_field.name == 'relation':
+        rel = Relation.objects.get(clas='rel_hum_addr')
+        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id)
+      return super(H_addressInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_jobInline(admin.StackedInline):
     model = rel_Human_Jobs
@@ -204,6 +213,11 @@ class H_jobInline(admin.StackedInline):
         'fields': (('job','relation'),)
       }),
     )
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+      if db_field.name == 'relation':
+        rel = Relation.objects.get(clas='rel_hum_art')
+        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id)
+      return super(H_jobInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_recordInline(admin.StackedInline):
     model = rel_Human_Records
@@ -256,6 +270,11 @@ class H_personInline(admin.StackedInline):
         'fields': (('person','relation'),)
       }),
     )
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+      if db_field.name == 'relation':
+        rel = Relation.objects.get(clas='rel_proj_pers')
+        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id)
+      return super(H_personInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_projectInline(admin.StackedInline):
     model = rel_Human_Projects
@@ -287,29 +306,31 @@ class H_companyInline(admin.StackedInline):
     )
 
 
-'''
-class accountCesForm(forms.ModelForm):
-  model = AccountCes
+class Proj_refPersonInlineSet(BaseInlineFormSet):
+  def __init__(self, *args, **kwargs):
+    super(Proj_refPersonInlineSet, self).__init__(*args, **kwargs)
+    self.klass = 'Proj_refPersonInline'
+    rel = Relation.objects.get(clas='reference')
+    if hasattr(kwargs['instance'], 'human'):
+      self.queryset = rel_Human_Persons.objects.filter(relation=rel, human=kwargs['instance'].human)
+
+class Proj_refPersonInline(admin.StackedInline):
+  model = rel_Human_Persons
+  fk_name = 'human'
+  extra = 0
+  raw_id_fields = ('person',)
+  readonly_fields = ('selflink',)
+  formset = Proj_refPersonInlineSet
   fieldsets = (
     (' ', {
       'classes': ('collapse',),
-      'fields': (#('accountCes', 'relation')
-        ('record_type', 'entity'), ('unit', 'code', 'number'),# 'name'),# 'human'),
-      )
+      'fields': (('person', 'selflink',),)
     }),
   )
+  verbose_name = _(u"Persona de Referència")
+  verbose_name_plural = _(u"Persones de Referència")
 
-class accountCesInlineFormSet(BaseInlineFormSet):
-  def __init__(self, *args, **kwargs):
-    kwargs['initial'] = [
-      {'record_type': Record_Type.objects.get(clas='AccountCes')},
-    ]
-    super(accountCesInlineFormSet, self).__init__(*args, **kwargs)
-    #self.initial = [
-    #    {'record_type': Record_Type.objects.get(clas='AccountCes')}, #{'name': 'en-US'}, {'name': 'es-ES'}
-    #]
-    print self.initial
-'''
+
 
 class H_accountCesInline(admin.StackedInline):
   model = AccountCes
@@ -323,9 +344,11 @@ class H_accountCesInline(admin.StackedInline):
       )
     }),
   )
-  #formset = accountCesInlineFormSet
-  #readonly_fields = ['record_type',]
-  #form = accountForm
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'unit':
+      typ = Unit_Type.objects.get(clas='social_currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    return super(H_accountCesInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_accountBankInline(admin.StackedInline):
   model = AccountBank
@@ -339,6 +362,11 @@ class H_accountBankInline(admin.StackedInline):
       )
     }),
   )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'unit':
+      typ = Unit_Type.objects.get(clas='fiat_currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    return super(H_accountBankInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_accountCryptoInline(admin.StackedInline):
   model = AccountCrypto
@@ -352,6 +380,11 @@ class H_accountCryptoInline(admin.StackedInline):
       )
     }),
   )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'unit':
+      typ = Unit_Type.objects.get(clas='crypto_currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    return super(H_accountCryptoInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_assetInline(admin.StackedInline):
   model = Asset
@@ -395,9 +428,17 @@ class HumanAdmin(AutoNameMixin):
         instance.record_type = Record_Type.objects.get(clas='AccountCrypto')
       instance.save()
 
-    if formset.model == AccountCes or formset.model == AccountBank or formset.model == AccountCrypto:
+    def set_proj_refPerson_relation(instance):
+      if not instance.relation:
+        instance.relation = Relation.objects.get(clas='reference')
+      instance.save()
+    def set_nothing(instance):
+      instance.save()
+
+    if formset.model == AccountCes or formset.model == AccountBank or formset.model == AccountCrypto or formset.model == rel_Human_Persons:
       instances = formset.save(commit=False)
-      map(set_human_name, instances)
+      if not formset.model == rel_Human_Persons:
+        map(set_human_name, instances)
 
       if formset.model == AccountCes:
         map(set_accountCes_recordtype, instances)
@@ -406,6 +447,12 @@ class HumanAdmin(AutoNameMixin):
       if formset.model == AccountCrypto:
         map(set_accountCrypto_recordtype, instances)
 
+      if formset.model == rel_Human_Persons:
+        if hasattr(formset, 'klass'):
+          map(set_proj_refPerson_relation, instances)
+        else:
+          map(set_nothing, instances)
+
       formset.save_m2m()
       return instances
     else:
@@ -413,19 +460,19 @@ class HumanAdmin(AutoNameMixin):
 
 
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
-  readonly_fields = ('_get_ref_persons',)
+  #readonly_fields = ('_get_ref_persons',)
+
   fieldsets = (
     (None, {
-      'fields':(('name', 'nickname'),
-                ('website', 'socialweb'),
-                ('project_type', 'parent', 'ecommerce'),
-                ('email', 'email2', 'telephone_cell', 'telephone_land'),
-                ('_get_ref_persons',))
+      'fields':(('name', 'nickname', 'project_type'),
+                ('website', 'ecommerce', 'socialweb'),
+                ('email', 'email2', 'telephone_cell'),
+                ('birth_date', 'parent', 'telephone_land'))
     }),
-    (_(u"Dates inici/fi"), {
-      'classes': ('collapse',),
-      'fields': (('birth_date', 'death_date'),)
-    }),
+    #(_(u"Dates inici/fi"), {
+    #  'classes': ('collapse',),
+    #  'fields': (('birth_date', 'death_date'),)
+    #}),
     (_(u"Descripció"), {
       'classes': ('collapse',),
       'fields': (('description'),)
@@ -439,12 +486,13 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
     H_accountBankInline,
     H_accountCryptoInline,
 
-    H_personInline,
+    Proj_refPersonInline,
+    #H_personInline,
     H_projectInline,
     H_companyInline,
 
     H_assetInline,
-    H_regionInline,
+    #H_regionInline,
     H_materialInline,
     H_nonmaterialInline,
     #H_recordInline,
@@ -457,9 +505,9 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
   list_filter = ('project_type',)
   search_fields = ('name', 'nickname', 'project_type', 'email')
 
-  def ref_persons(self, obj):
-    return obj.project._get_ref_persons
-  ref_persons.admin_order_field = 'project___get_ref_persons'
+  #def ref_persons(self, obj):
+  #  return obj.project._get_ref_persons
+  #ref_persons.admin_order_field = 'project___get_ref_persons'
   #ref_persons.list = []
   #ref_persons.allow_tags = True
 
@@ -495,6 +543,8 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
   inlines = Public_ProjectAdmin.inlines + [
     H_recordInline,
+    H_personInline,
+    H_regionInline,
   ]
 
 
@@ -640,15 +690,17 @@ class HumanAdmin(admin.ModelAdmin):
 '''
 
 class AddressAdmin(admin.ModelAdmin):
-  list_display = ['name', 'address_type', 'p_address', 'town', 'postalcode', 'region', 'main_address',]
+  readonly_fields = ('_main_addr_of',)
+  list_display = ['name', 'address_type', 'p_address', 'town', 'postalcode', 'region', '_main_addr_of',]
+  list_filter = ('address_type',)
+  search_fields = ('name', 'p_address', 'town', 'postalcode', 'region')
   fieldsets = (
     (None, {
       'fields': (
         ('name', 'address_type', 'ic_larder'),
         ('p_address', 'town', 'postalcode'),
-        ('region', 'main_address'),
-        ('size', 'size_unit'),
-        ('description', 'longitude', 'latitude'),
+        ('region', '_main_addr_of'),
+        ('description', 'size', 'size_unit', 'longitude', 'latitude'),
         ('jobs',))
     }),
   )
@@ -656,6 +708,9 @@ class AddressAdmin(admin.ModelAdmin):
     if db_field.name == 'size_unit':
       typ = Unit_Type.objects.get(clas='area')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    if db_field.name == 'region':
+      typ = Region_Type.objects.get(clas='region')
+      kwargs['queryset'] = Region.objects.filter(region_type=typ)
     return super(AddressAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -670,8 +725,8 @@ admin.site.register(Human, HumanAdmin)
 admin.site.register(Person, PersonAdmin)
 #admin.site.register(Person, Public_PersonAdmin)  # public comentable
 
-admin.site.register(Project, ProjectAdmin)
-#admin.site.register(Project, Public_ProjectAdmin)  # public comentable
+#admin.site.register(Project, ProjectAdmin)
+admin.site.register(Project, Public_ProjectAdmin)  # public comentable
 admin.site.register(Project_Type, MPTTModelAdmin)
 
 admin.site.register(Company, CompanyAdmin)

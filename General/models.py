@@ -13,6 +13,8 @@ from itertools import chain
 
 # Create your models here.
 
+a_str = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
+a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
 
 
 # C O N C E P T S - (Conceptes...)
@@ -73,9 +75,10 @@ class Human(Being):  # Create own ID's
   telephone_cell = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telèfon mòbil"), help_text=_(u"El telèfon principal de l'entitat Humana"))
   telephone_land = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telèfon fix"))
   website = models.CharField(max_length=100, blank=True, verbose_name=_(u"Web"), help_text=_(u"L'adreça web principal de l'entitat humana"))
+  description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció entitat"))
+
   jobs = TreeManyToManyField('Job', through='rel_Human_Jobs', verbose_name=_(u"Activitats, Oficis"), blank=True, null=True)
   addresses = models.ManyToManyField('Address', through='rel_Human_Addresses', verbose_name=_(u"Adreçes"), blank=True, null=True)
-
   regions = models.ManyToManyField('Region', through='rel_Human_Regions', verbose_name=_(u"Regions"), blank=True, null=True)
   records = models.ManyToManyField('Record', through='rel_Human_Records', verbose_name=_(u"Registres"), blank=True, null=True)
   materials = models.ManyToManyField('Material', through='rel_Human_Materials', verbose_name=_(u"obres Materials"), blank=True, null=True)
@@ -83,10 +86,6 @@ class Human(Being):  # Create own ID's
   persons = models.ManyToManyField('Person', through='rel_Human_Persons', related_name='hum_persons', verbose_name=_(u"Persones"), blank=True, null=True)
   projects = models.ManyToManyField('Project', through='rel_Human_Projects', related_name='hum_projects', verbose_name=_(u"Projectes"), blank=True, null=True)
   companies = models.ManyToManyField('Company', through='rel_Human_Companies', related_name='hum_companies', verbose_name=_(u"Empreses"), blank=True, null=True)
-
-  #accountsCes = models.ManyToManyField('AccountCes', related_name='human', verbose_name=_(u"Comptes M.S."), blank=True, null=True, help_text=_(u"Comptes de Moneda Social de l'entitat (ICES/CES)"))
-
-  description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció entitat"))
 
   class Meta:
     verbose_name = _(u"Humà")
@@ -102,6 +101,17 @@ class Human(Being):  # Create own ID's
     return list(chain(self.accountsCes, self.accountsCrypto, self.accountsBank))
   #_my_accounts.list = []
   accounts = property(_my_accounts)
+
+  def selflink(self):
+    if self.id:
+      if hasattr(self, 'person'):
+        return a_str + "person/" + str(self.person.id) + a_str2 + "Edita</a>"# % str(self.id)
+      elif hasattr(self, 'project'):
+        return a_str + "project/" + str(self.project.id) + a_str2 + "Edita</a>"# % str(self.id)
+    else:
+      return "Not present"
+  selflink.allow_tags = True
+  selflink.short_description = ''
 
 
 
@@ -129,7 +139,6 @@ class Person(Human):
         return self.name+' '+self.surnames+' ('+self.nickname+')'
 
 
-
 class Project(MPTTModel, Human):
   human = models.OneToOneField('Human', primary_key=True, parent_link=True)
   project_type = TreeForeignKey('Project_Type', blank=True, null=True, verbose_name=_(u"Tipus de projecte"))
@@ -154,13 +163,8 @@ class Project(MPTTModel, Human):
   collective = property(_is_collective)
 
   ecommerce = models.BooleanField(default=False, verbose_name=_(u"Comerç electrònic?"))
-  def _get_ref_persons(self):
-    return rel_Human_Persons.filter(
-      person__pk = self.human.pk,
-      relation__clas = 'referent'
-    )
-  _get_ref_persons.list = True
-  ref_persons = property(_get_ref_persons)
+
+  #ref_persons = models.ManyToManyField('Person', blank=True, null=True, verbose_name=_(u"Persones de referència"))
 
   class Meta:
     verbose_name= _(u'Projecte')
@@ -206,8 +210,9 @@ class rel_Human_Jobs(models.Model):
 
 class rel_Human_Addresses(models.Model):
   human = models.ForeignKey('Human')
-  address = models.ForeignKey('Address', verbose_name=_(u"Adreça"))
+  address = models.ForeignKey('Address', related_name='rel_human', verbose_name=_(u"Adreça"))
   relation = TreeForeignKey('Relation', related_name='hu_adr+', blank=True, null=True, verbose_name=_(u"relació"))
+  main_address = models.BooleanField(default=False, verbose_name=_(u"Adreça principal?"))
   class Meta:
     verbose_name = _(u"H_adr")
     verbose_name_plural = _(u"Adreçes de l'entitat")
@@ -216,6 +221,15 @@ class rel_Human_Addresses(models.Model):
       return self.address.__unicode__()
     else:
       return self.relation.gerund+' > '+self.address.__unicode__()
+  def _is_main(self):
+    return self.main_address
+  _is_main.boolean = True
+  is_main = property(_is_main)
+  def selflink(self):
+    if self.address:
+      return self.address.selflink()
+  selflink.allow_tags = True
+  selflink.short_description = ''
 
 class rel_Human_Regions(models.Model):
   human = models.ForeignKey('Human')
@@ -283,6 +297,12 @@ class rel_Human_Persons(models.Model):
       return self.person.__unicode__()
     else:
       return self.relation.gerund+' > '+self.person.__unicode__()
+
+  def selflink(self):
+    return self.person.selflink()
+  selflink.allow_tags = True
+  selflink.short_description = ''
+
 
 class rel_Human_Projects(models.Model):
   human = models.ForeignKey('Human', related_name='human_projects')
@@ -460,7 +480,11 @@ class Art(MPTTModel):  # Abstract
   parent = TreeForeignKey('self', null=True, blank=True, related_name='subarts')
 
   def __unicode__(self):
-    return self.name+', '+self.verb
+    if self.verb:
+      return self.name+', '+self.verb
+    else:
+      return self.name
+
   class Meta:
 
     abstract = True
@@ -477,10 +501,16 @@ class Relation(Art):  # Create own ID's (TREE)
     verbose_name= _(u'Relació')
     verbose_name_plural= _(u'a- Relacions')
   def __unicode__(self):
-    if self.clas is None or self.clas == '':
-      return self.name+', '+self.verb
+    if self.verb:
+      if self.clas is None or self.clas == '':
+        return self.name+', '+self.verb
+      else:
+        return self.name+', '+self.verb+' ('+self.clas+')'
     else:
-      return self.name+', '+self.verb+' ('+self.clas+')'
+      if self.clas is None or self.clas == '':
+        return self.name
+      else:
+        return self.name+' ('+self.clas+')'
 
 
 class Job(Art):    # Create own ID's (TREE)
@@ -515,8 +545,7 @@ class Space(models.Model):  # Abstact
 
 class Space_Type(Type):
   typ = models.OneToOneField('Type', primary_key=True, parent_link=True)
-  #concept = models.OneToOneField(Concept, parent_link=True)
-  #tree = models.ForeignKey(Tree, limit_choices_to={'clas': 'Space_Type'})
+
   class Meta:
     verbose_name= _(u"Tipus d'Espai")
     verbose_name_plural= _(u"s--> Tipus d'Espais")
@@ -529,11 +558,11 @@ class Address(Space):  # Create own ID's
   p_address = models.CharField(max_length=200, verbose_name=_(u"Direcció"), help_text=_(u"Adreça postal vàlida per a enviaments"))
   town = models.CharField(max_length=150, verbose_name=_(u"Població"), help_text=_(u"Poble, ciutat o municipi"))
   postalcode = models.CharField(max_length=5, blank=True, null=True, verbose_name=_(u"Codi postal"))
-  region = TreeForeignKey('Region', blank=True, null=True, related_name='rel_addresses', verbose_name=_(u"Regió"))
+  region = TreeForeignKey('Region', blank=True, null=True, related_name='rel_addresses', verbose_name=_(u"Comarca"))
 
   #telephone = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telefon fix"))
   ic_larder = models.BooleanField(default=False, verbose_name=_(u"És Rebost?"))
-  main_address = models.BooleanField(default=False, verbose_name=_(u"Adreça principal?"))
+  #main_address = models.BooleanField(default=False, verbose_name=_(u"Adreça principal?"))
   size = models.DecimalField(max_digits=20, decimal_places=2, blank=True, null=True, verbose_name=_(u'Tamany'), help_text=_(u"Quantitat d'unitats (accepta 2 decimals)"))
   size_unit = models.ForeignKey('Unit', blank=True, null=True, verbose_name=_(u"Unitat de mesura"))
   longitude = models.IntegerField(blank=True, null=True, verbose_name=_(u"Longitud (geo)"))
@@ -542,6 +571,16 @@ class Address(Space):  # Create own ID's
   jobs = models.ManyToManyField('Job', related_name='addresses', blank=True, null=True, verbose_name=_(u"Oficis relacionats"))
 
   description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció de l'Adreça"), help_text=_(u"Localització exacta, indicacions per arribar o comentaris"))
+
+  def _main_addr_of(self):
+    rel = rel_Human_Addresses.objects.filter(address=self, main_address=True).first() #TODO accept various and make a list
+    if rel:
+      return rel.human
+    else:
+      return _(u'ningú')
+  _main_addr_of.allow_tags = True
+  _main_addr_of.short_description = _(u"Adreça principal de")
+  main_addr_of = property(_main_addr_of)
 
   def _has_contracts(self):
     pass
@@ -553,6 +592,13 @@ class Address(Space):  # Create own ID's
     verbose_name_plural= _(u's- Adreces')
   def __unicode__(self):
     return self.name+' ('+self.p_address+' - '+self.town+')'
+
+  def selflink(self):
+    if self.id:
+        return a_str + "address/" + str(self.id) + a_str2 + "Edita</a>"# % str(self.id)
+    else:
+        return "Not present"
+  selflink.allow_tags = True
 
 class Address_Type(Space_Type):
   space_type = models.OneToOneField('Space_Type', primary_key=True, parent_link=True)
