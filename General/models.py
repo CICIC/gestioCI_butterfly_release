@@ -14,7 +14,8 @@ from itertools import chain
 # Create your models here.
 
 a_str = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
-a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
+#a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
+a_str2 = "?_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
 
 
 # C O N C E P T S - (Conceptes...)
@@ -217,7 +218,7 @@ class rel_Human_Addresses(models.Model):
     verbose_name = _(u"H_adr")
     verbose_name_plural = _(u"Adreçes de l'entitat")
   def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
+    if self.relation is None or self.relation.gerund is None or self.relation.gerund == '':
       return self.address.__unicode__()
     else:
       return self.relation.gerund+' > '+self.address.__unicode__()
@@ -257,6 +258,10 @@ class rel_Human_Records(models.Model):
       return self.record.__unicode__()
     else:
       return self.record.record_type+': '+self.relation.gerund+' > '+self.record.__unicode__()
+  def selflink(self):
+    return self.record.selflink()
+  selflink.allow_tags = True
+  selflink.short_description = ''
 
 class rel_Human_Materials(models.Model):
   human = models.ForeignKey('Human')
@@ -503,9 +508,9 @@ class Relation(Art):  # Create own ID's (TREE)
   def __unicode__(self):
     if self.verb:
       if self.clas is None or self.clas == '':
-        return self.name+', '+self.verb
+        return self.verb
       else:
-        return self.name+', '+self.verb+' ('+self.clas+')'
+        return self.verb+' ('+self.clas+')'
     else:
       if self.clas is None or self.clas == '':
         return self.name
@@ -523,9 +528,9 @@ class Job(Art):    # Create own ID's (TREE)
     verbose_name_plural= _(u'a- Oficis')
   def __unicode__(self):
     if self.clas is None or self.clas == '':
-      return self.name+', '+self.verb
+      return self.name#+', '+self.verb
     else:
-      return self.name+', '+self.verb+' ('+self.clas+')'
+      return self.name+' ('+self.clas+')'
 
 
 
@@ -599,6 +604,7 @@ class Address(Space):  # Create own ID's
     else:
         return "Not present"
   selflink.allow_tags = True
+  
 
 class Address_Type(Space_Type):
   space_type = models.OneToOneField('Space_Type', primary_key=True, parent_link=True)
@@ -719,6 +725,12 @@ class Record(Artwork):  # Create own ID's
       return self.name
     else:
       return self.record_type.name+': '+self.name
+  def selflink(self):
+    if self.id:
+        return a_str + "record/" + str(self.id) + a_str2 + "Edita</a>"# % str(self.id)
+    else:
+        return "Not present"
+  selflink.allow_tags = True
 
 class Record_Type(Artwork_Type):
   artwork_type = models.OneToOneField('Artwork_Type', primary_key=True, parent_link=True)

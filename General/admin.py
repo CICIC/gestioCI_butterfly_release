@@ -200,6 +200,7 @@ class H_addressInline(admin.StackedInline, InlineEditLinkMixin):
     )
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
       if db_field.name == 'relation':
+        #print self.human
         rel = Relation.objects.get(clas='rel_hum_addr')
         kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id)
       return super(H_addressInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
@@ -228,6 +229,11 @@ class H_recordInline(admin.StackedInline):
         'fields': (('record','relation'),)
       }),
     )
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+      if db_field.name == 'relation':
+        rel = Relation.objects.get(clas='rel_hum_reco')
+        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id)
+      return super(H_recordInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_regionInline(admin.StackedInline):
     model = rel_Human_Regions
@@ -469,6 +475,7 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
                 ('email', 'email2', 'telephone_cell'),
                 ('birth_date', 'parent', 'telephone_land'))
     }),
+    #(H_addressInline),
     #(_(u"Dates inici/fi"), {
     #  'classes': ('collapse',),
     #  'fields': (('birth_date', 'death_date'),)
@@ -487,7 +494,7 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
     H_accountCryptoInline,
 
     Proj_refPersonInline,
-    #H_personInline,
+    H_personInline,
     H_projectInline,
     H_companyInline,
 

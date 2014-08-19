@@ -1,3 +1,4 @@
+#encoding=utf-8
 from django.contrib import admin
 
 from django import forms
@@ -16,8 +17,8 @@ from General.models import Image
 class AutoRecordName(admin.ModelAdmin):
   def save_model(self, request, obj, form, change):
     instance = form.save(commit=False)
-    #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
-    instance.name = instance.__unicode__()
+    if not hasattr(instance,'name') or instance.name is None or instance.name == '':
+      instance.name = instance.__unicode__()
     if not hasattr(instance, 'ic_project') or instance.ic_project is None:
       instance.ic_project = Project.objects.get(nickname='CIC')
     if not hasattr(instance, 'human') or instance.human is None:
@@ -25,6 +26,10 @@ class AutoRecordName(admin.ModelAdmin):
         instance.human = instance.project
       if hasattr(instance, 'person') and instance.person is not None:
         instance.human = instance.person
+    if not hasattr(instance, 'ic_membership') or instance.ic_membership is None or instance.ic_membership == '':
+      print 'JELOW SAVE_MODEL'
+      print self.model
+      #instance.ic_membership = iC_Membership.objects.get()
     instance.save()
     form.save_m2m()
     return instance
@@ -148,44 +153,102 @@ class ProjectMembershipAdmin(AutoRecordName):
     return super(ProjectMembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+class SE_relAddressContractInline(admin.StackedInline):
+  model = iC_Address_Contract
+  #fk_name = 'ic_membership'#'ic_self_employed'
+  extra = 0
+  #raw_id_fields = ('record',)
+  #readonly_fields = ('selflink',)
+  #formset = Proj_refPersonInlineSet
+  fieldsets = (
+    (' ', {
+      'classes': ('collapse',),
+      'fields': (('company', 'address',),
+                 ('price', 'price_unit', 'start_date', 'end_date'),)
+      #'fields': (('record', 'selflink',),)
+    }),
+  )
+  verbose_name = _(u"reg Contracte d'Adreça")
+  verbose_name_plural = _(u"reg Contractes d'Adreça")
 
+'''
+class SelfEmployedForm(forms.BaseModelForm):
+  def __init__(self, *args, **kwargs):
+    self.request = kwargs.pop('request', None)
+    super(SelfEmployedForm, self).__init__(*args, **kwargs)
+    print 'FORM: '+str(self)
+'''
 
 class SelfEmployedAdmin(AutoRecordName):
   model = iC_Self_Employed
   list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
-
-  readonly_fields = ('_rel_id_cards',)
+  #formset = SelfEmployedForm
+  readonly_fields = ('_rel_id_cards', '_member_link')
+  raw_id_fields = ('rel_address_contracts', 'ic_membership',)# 'rel_fees')
   fieldsets = (#MembershipAdmin.fieldsets + (
     (_(u"fase 1: Autoocupat"), {
+      'classes': ('collapse',),
       'fields': (
-        ('ic_membership', 'join_date', 'end_date'),
-        ('rel_fees', 'organic')
+        ('ic_membership', '_member_link', 'organic',),
+        ('rel_fees',)
       )
     }),
     (_(u"fase 2: Llista de tasques"), {
+      'classes': ('collapse',),
       'fields': (('_rel_id_cards', 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
     }),
     (_(u"fase 3: Alta"), {
+      'classes': ('collapse',),
       'fields': (
-        ('assigned_vat', 'review_vat', 'last_review_date'),
-        ('rel_accountBank', 'mentor_membership','mentor_comment'))
+        ('join_date', 'assigned_vat', 'review_vat', 'last_review_date'),
+        ('rel_accountBank', 'mentor_membership', 'mentor_comment', 'end_date'))
     }),
   )
-  #list_display = ['name']
+  filter_horizontal = ('rel_fees',)
+  inlines = [
+    #SE_relAddressContractInline,
+  ]
+  #def __init__(self, *args, **kwargs):
+  #  print 'INIT!'
+
+  '''
+  mem = 'none'
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'ic_membership':
+      print 'VALUE: '+str(db_field)
+      print 'SET: '+str(kwargs)
+      #mem = kwargs['queryset']
+      print 'MEM: '+self.mem
+    return super(SelfEmployedAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+  def formfield_for_manytomany(self, db_field, request, **kwargs):
+    print db_field.name
+    print kwargs
+    if db_field.name == 'ic_membership':
+      self.mem = kwargs['queryset']
+    if db_field.name == 'rel_fees':
+      #typ = iC_Record_Type.objects.get(clas='Fee')
+      print 'JALOW self: '+str(self.model.ic_membership)#+str(hasattr(self, 'model'))
+      if hasattr(self.model, 'ic_membership'):
+        print 'JALOW mem: '+self.mem
+        #print 'MEMBER: '+self.model.ic_membership
+        #kwargs['queryset'] = Fee.objects.filter(human=self.ic_membership.human)
+    return super(SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+  '''
 
 class FeeAdmin(AutoRecordName):
   model = Fee
-  readonly_fields = ('project',)
+  readonly_fields = ('project', '_ic_membership', '_ic_selfemployed',)
 
   search_fields = ('name', 'unit')
   list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
   list_filter = ('unit',)
-  raw_id_fields = ('human', 'membership', 'rel_account')
+  raw_id_fields = ('human', 'rel_account')
   fieldsets = (
     (None, {
       'fields': (
         ('record_type', 'project'),
-        ('human', 'membership'),
+        ('human', '_ic_membership', '_ic_selfemployed'),
         ('amount', 'unit'),
         ('issue_date', 'deadline_date'),
         ('payment_type', 'payment_date'),
@@ -201,6 +264,31 @@ class FeeAdmin(AutoRecordName):
       typs = Unit_Type.objects.filter(clas__icontains='currency')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
     return super(FeeAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+class AddressContractAdmin(AutoRecordName):
+  model = iC_Address_Contract
+
+  readonly_fields = ('_ic_membership', '_ic_selfemployed',)
+  raw_id_fields = ('address',)
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('name', '_ic_membership', '_ic_selfemployed'),
+        ('doc_type', 'company'),
+        ('address', 'price', 'price_unit'),
+        ('start_date', 'end_date'),
+      )
+    }),
+  )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'doc_type':
+      typ = iC_Document_Type.objects.get(clas='iC_Address_Contract')
+      kwargs['queryset'] = iC_Document_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+    if db_field.name == 'price_unit':
+      typs = Unit_Type.objects.filter(clas__icontains='currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
+    return super(AddressContractAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 # Register your models here.
@@ -222,7 +310,7 @@ admin.site.register(iC_Stallholder)
 #admin.site.register(iC_Document)
 admin.site.register(iC_Document_Type, MPTTModelAdmin)
 admin.site.register(iC_Labor_Contract)
-admin.site.register(iC_Address_Contract)
+admin.site.register(iC_Address_Contract, AddressContractAdmin)
 admin.site.register(iC_Insurance)
 admin.site.register(iC_Licence)
 
