@@ -17,6 +17,7 @@ a_str = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Ge
 #a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
 a_str2 = "?_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
 
+a_edit = '<b>Edita</b>'
 
 # C O N C E P T S - (Conceptes...)
 
@@ -106,9 +107,9 @@ class Human(Being):  # Create own ID's
   def selflink(self):
     if self.id:
       if hasattr(self, 'person'):
-        return a_str + "person/" + str(self.person.id) + a_str2 + "Edita</a>"# % str(self.id)
+        return a_str + "person/" + str(self.person.id) + a_str2 + a_edit + "</a>"# % str(self.id)
       elif hasattr(self, 'project'):
-        return a_str + "project/" + str(self.project.id) + a_str2 + "Edita</a>"# % str(self.id)
+        return a_str + "project/" + str(self.project.id) + a_str2 + a_edit + "</a>"# % str(self.id)
     else:
       return "Not present"
   selflink.allow_tags = True
@@ -600,11 +601,11 @@ class Address(Space):  # Create own ID's
 
   def selflink(self):
     if self.id:
-        return a_str + "address/" + str(self.id) + a_str2 + "Edita</a>"# % str(self.id)
+        return a_str + "address/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
     else:
         return "Not present"
   selflink.allow_tags = True
-  
+
 
 class Address_Type(Space_Type):
   space_type = models.OneToOneField('Space_Type', primary_key=True, parent_link=True)
@@ -727,7 +728,7 @@ class Record(Artwork):  # Create own ID's
       return self.record_type.name+': '+self.name
   def selflink(self):
     if self.id:
-        return a_str + "record/" + str(self.id) + a_str2 + "Edita</a>"# % str(self.id)
+        return a_str + "record/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
     else:
         return "Not present"
   selflink.allow_tags = True

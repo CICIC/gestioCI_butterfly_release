@@ -13,27 +13,54 @@ from mptt.forms import MPTTAdminForm, TreeNodeChoiceField
 from Welcome.models import *
 from General.models import Image
 
+from django.forms.models import BaseInlineFormSet
+
+from django.forms.formsets import formset_factory
 
 class AutoRecordName(admin.ModelAdmin):
   def save_model(self, request, obj, form, change):
     instance = form.save(commit=False)
-    if not hasattr(instance,'name') or instance.name is None or instance.name == '':
-      instance.name = instance.__unicode__()
-    if not hasattr(instance, 'ic_project') or instance.ic_project is None:
+    #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
+    instance.name = instance.__unicode__()
+    if hasattr(instance, 'ic_project') and instance.ic_project is None:
+      print 'SAVE_MODEL: not ic_project! put CIC to '+instance.name
       instance.ic_project = Project.objects.get(nickname='CIC')
     if not hasattr(instance, 'human') or instance.human is None:
       if hasattr(instance, 'project') and instance.project is not None:
+        print 'SAVE_MODEL: not human! put project...'
         instance.human = instance.project
       if hasattr(instance, 'person') and instance.person is not None:
+        print 'SAVE_MODEL: not human! put person...'
         instance.human = instance.person
-    if not hasattr(instance, 'ic_membership') or instance.ic_membership is None or instance.ic_membership == '':
-      print 'JELOW SAVE_MODEL'
-      print self.model
-      #instance.ic_membership = iC_Membership.objects.get()
+    #if not hasattr(instance, 'ic_membership') or instance.ic_membership is None or instance.ic_membership == '':
+    #  print 'JELOW SAVE_MODEL'
+    #  print self.model
+      #print obj.selfemployed
+      #print instance.selfemployed
+
+      #print request.ic_membership
+      #instance.ic_membership = request.ic_membership
     instance.save()
     form.save_m2m()
     return instance
+  '''
+  def save_formset(self, request, form, formset, change):
+    def set_relAddrContract_member(instance):
+      if not instance.ic_membership:
+        print 'SAVE_FORMSET: put ic_membership > '+str(request.ic_membership)
+        #instance.ic_membership = request.ic_membership
+      instance.save()
+    if formset.model == iC_Address_Contract:
+      print 'SAVE_FORMSET: put ic_membership??'
+      instances = formset.save(commit=False)
+      if formset.model == iC_Address_Contract:
+        map(set_relAddrContract_member, instances)
 
+      formset.save_m2m()
+      return instances
+    else:
+      return formset.save()
+  '''
 
 class Public_AkinMembershipAdmin(AutoRecordName):
   raw_id_fields = ('person',)
@@ -153,23 +180,47 @@ class ProjectMembershipAdmin(AutoRecordName):
     return super(ProjectMembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+class SE_relAddressContractInlineSet(BaseInlineFormSet):
+
+  def __init__(self, *args, **kwargs):
+    super(SE_relAddressContractInlineSet, self).__init__(*args, **kwargs)
+
+    #if hasattr(kwargs['instance'], 'ic_membership'):
+      #print 'INLINESET: '+str(kwargs['instance'].ic_membership)
+      #print kwargs['instance']
+    #  self.queryset = iC_Address_Contract.objects.filter(ic_membership=kwargs['instance'].ic_membership)
+
+
 class SE_relAddressContractInline(admin.StackedInline):
   model = iC_Address_Contract
-  #fk_name = 'ic_membership'#'ic_self_employed'
+  #fk_name = 'selfemployed'#'selfemployed'#'ic_self_employed'
   extra = 0
-  #raw_id_fields = ('record',)
-  #readonly_fields = ('selflink',)
-  #formset = Proj_refPersonInlineSet
+  raw_id_fields = ('address',)
+  readonly_fields = ('_address_link',)
+  #formset = SE_relAddressContractInlineSet
+  #form = SE_relAddressContractInlineForm
   fieldsets = (
     (' ', {
       'classes': ('collapse',),
-      'fields': (('company', 'address',),
-                 ('price', 'price_unit', 'start_date', 'end_date'),)
-      #'fields': (('record', 'selflink',),)
+      'fields': (
+              ('company', 'address', '_address_link',),
+              ('doc_type', 'price', 'price_unit',),
+              ('start_date', 'end_date',))
     }),
   )
   verbose_name = _(u"reg Contracte d'Adreça")
   verbose_name_plural = _(u"reg Contractes d'Adreça")
+
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'doc_type':
+      typ = iC_Document_Type.objects.get(clas='iC_Address_Contract')
+      kwargs['queryset'] = iC_Document_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+    if db_field.name == 'price_unit':
+      typs = Unit_Type.objects.filter(clas__icontains='currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
+    return super(SE_relAddressContractInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+
 
 '''
 class SelfEmployedForm(forms.BaseModelForm):
@@ -179,35 +230,47 @@ class SelfEmployedForm(forms.BaseModelForm):
     print 'FORM: '+str(self)
 '''
 
-class SelfEmployedAdmin(AutoRecordName):
+class Public_SelfEmployedAdmin(AutoRecordName):
+  class Media:
+    css = {
+      'all': ('selfemployed.css',)
+    }
+    js = ()
+
   model = iC_Self_Employed
   list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
   #formset = SelfEmployedForm
-  readonly_fields = ('_rel_id_cards', '_member_link')
-  raw_id_fields = ('rel_address_contracts', 'ic_membership',)# 'rel_fees')
+  readonly_fields = ('_member_link', '_rel_id_cards', '_rel_address_contract', '_rel_fees')
+  raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_address_contracts')#, 'rel_fees')
   fieldsets = (#MembershipAdmin.fieldsets + (
     (_(u"fase 1: Autoocupat"), {
-      'classes': ('collapse',),
+      #'classes': ('collapse',),
       'fields': (
         ('ic_membership', '_member_link', 'organic',),
-        ('rel_fees',)
+        ('rel_fees', '_rel_fees',)
       )
     }),
-    (_(u"fase 2: Llista de tasques"), {
-      'classes': ('collapse',),
-      'fields': (('_rel_id_cards', 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
-    }),
+    #(_(u"fase 2: Llista de tasques"), {
+    #  'classes': ('collapse',),
+    #  'fields': (('_rel_id_cards', 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
+    #}),
     (_(u"fase 3: Alta"), {
       'classes': ('collapse',),
       'fields': (
         ('join_date', 'assigned_vat', 'review_vat', 'last_review_date'),
         ('rel_accountBank', 'mentor_membership', 'mentor_comment', 'end_date'))
     }),
+    (_(u"fase 2: Llista de tasques"), {
+      #'classes': ('collapse',),
+      'fields': (
+          ('_rel_id_cards',),
+          ('rel_address_contracts', '_rel_address_contract'))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
+    }),
   )
-  filter_horizontal = ('rel_fees',)
-  inlines = [
+  #filter_horizontal = ('rel_fees',)# 'rel_address_contracts')
+  #inlines = [
     #SE_relAddressContractInline,
-  ]
+  #]
   #def __init__(self, *args, **kwargs):
   #  print 'INIT!'
 
@@ -236,13 +299,47 @@ class SelfEmployedAdmin(AutoRecordName):
     return super(SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
   '''
 
+class SelfEmployedAdmin(Public_SelfEmployedAdmin):
+  model = iC_Self_Employed
+  list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
+  #formset = SelfEmployedForm
+  readonly_fields = ('name', 'record_type', '_rel_id_cards', '_member_link', '_rel_address_contract')
+  raw_id_fields = ('rel_address_contracts', 'ic_membership',)# 'rel_fees')
+  fieldsets = (#MembershipAdmin.fieldsets + (
+    (None, {
+      #'classes': ('collapse',),
+      'fields': (
+        ('name', 'record_type',),
+        ('ic_membership', '_member_link', 'organic',),
+        ('rel_fees',)
+      )
+    }),
+    (_(u"fase 2: Llista de tasques"), {
+      #'classes': ('collapse',),
+      'fields': (('_rel_id_cards',),
+        ('rel_address_contracts', '_rel_address_contract',),
+        ('rel_insurances', 'rel_licences', 'rel_images'))
+    }),
+    (_(u"fase 3: Alta"), {
+      #'classes': ('collapse',),
+      'fields': (
+        ('join_date', 'assigned_vat', 'review_vat', 'last_review_date'),
+        ('rel_accountBank', 'mentor_membership', 'mentor_comment', 'end_date'))
+    }),
+  )
+  filter_horizontal = ('rel_fees',)
+  inlines = [
+    #SE_relAddressContractInline,
+  ]
+
+
 class FeeAdmin(AutoRecordName):
   model = Fee
   readonly_fields = ('project', '_ic_membership', '_ic_selfemployed',)
 
   search_fields = ('name', 'unit')
   list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
-  list_filter = ('unit',)
+  #list_filter = ('unit',)
   raw_id_fields = ('human', 'rel_account')
   fieldsets = (
     (None, {
@@ -268,16 +365,19 @@ class FeeAdmin(AutoRecordName):
 
 class AddressContractAdmin(AutoRecordName):
   model = iC_Address_Contract
+  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_address_link')
 
-  readonly_fields = ('_ic_membership', '_ic_selfemployed',)
+  list_display = ['name', 'doc_type', 'company', 'address', '_ic_membership']
+  search_fields = ('name', 'company', 'doc_type')
+  #list_filter = ('doc_type', 'company')
   raw_id_fields = ('address',)
   fieldsets = (
     (None, {
       'fields': (
         ('name', '_ic_membership', '_ic_selfemployed'),
         ('doc_type', 'company'),
-        ('address', 'price', 'price_unit'),
-        ('start_date', 'end_date'),
+        ('address', '_address_link', 'price', 'price_unit'),
+        ('start_date', 'end_date'),# 'ic_membership'),
       )
     }),
   )
@@ -302,9 +402,13 @@ admin.site.register(iC_Project_Membership, ProjectMembershipAdmin)
 
 #admin.site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
 admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
+
 #admin.site.register(iC_Membership, Public_MembershipAdmin)
 admin.site.register(iC_Membership, MembershipAdmin)
-admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
+
+admin.site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
+#admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
+
 admin.site.register(iC_Stallholder)
 
 #admin.site.register(iC_Document)

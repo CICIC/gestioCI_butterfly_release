@@ -25,6 +25,12 @@ from General.models import *  # Tree, Human, Adress, Region, Concept, Type, Bein
 
 from django.core.urlresolvers import reverse
 
+#from django.contrib.admin import InlineModelAdmin
+
+#class StackedInline(admin.StackedInline):
+#  print self
+#  defaults = defaults + {"classes": self.classes}
+
 class InlineEditLinkMixin(object):
     readonly_fields = ['edit_details']
     edit_label = "Edit"
@@ -265,22 +271,6 @@ class H_nonmaterialInline(admin.StackedInline):
       }),
     )
 
-class H_personInline(admin.StackedInline):
-    model = rel_Human_Persons
-    fk_name = 'human'
-    extra = 0
-    raw_id_fields = ('person',)
-    fieldsets = (
-      (' ', {
-        'classes': ('collapse',),
-        'fields': (('person','relation'),)
-      }),
-    )
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-      if db_field.name == 'relation':
-        rel = Relation.objects.get(clas='rel_proj_pers')
-        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id)
-      return super(H_personInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_projectInline(admin.StackedInline):
     model = rel_Human_Projects
@@ -311,10 +301,29 @@ class H_companyInline(admin.StackedInline):
       }),
     )
 
+class H_personInline(admin.StackedInline):
+    model = rel_Human_Persons
+    fk_name = 'human'
+    extra = 0
+    raw_id_fields = ('person',)
+    fieldsets = (
+      (' ', {
+        'classes': ('collapse',),
+        'fields': (('person','relation'),)
+      }),
+    )
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+      if db_field.name == 'relation':
+        rel = Relation.objects.get(clas='rel_proj_pers')
+        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id)
+      return super(H_personInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 class Proj_refPersonInlineSet(BaseInlineFormSet):
   def __init__(self, *args, **kwargs):
     super(Proj_refPersonInlineSet, self).__init__(*args, **kwargs)
+    #print str(self)
+    #self.classes = ('collapse',)
     self.klass = 'Proj_refPersonInline'
     rel = Relation.objects.get(clas='reference')
     if hasattr(kwargs['instance'], 'human'):
@@ -329,13 +338,43 @@ class Proj_refPersonInline(admin.StackedInline):
   formset = Proj_refPersonInlineSet
   fieldsets = (
     (' ', {
-      'classes': ('collapse',),
+      #'classes': ('collapse',),
       'fields': (('person', 'selflink',),)
     }),
   )
   verbose_name = _(u"Persona de Referència")
   verbose_name_plural = _(u"Persones de Referència")
+  classes = ['collapse', 'collapsed']
 
+
+class Proj_personInlineSet(BaseInlineFormSet):
+  def __init__(self, *args, **kwargs):
+    super(Proj_personInlineSet, self).__init__(*args, **kwargs)
+    #self.klass = 'Proj_personInline'
+    rel = Relation.objects.get(clas='reference')
+    if hasattr(kwargs['instance'], 'human'):
+      self.queryset = rel_Human_Persons.objects.filter(human=kwargs['instance'].human).exclude(relation=rel)
+
+class Proj_personInline(admin.StackedInline):
+  model = rel_Human_Persons
+  fk_name = 'human'
+  extra = 0
+  raw_id_fields = ('person',)
+  readonly_fields = ('selflink',)
+  formset = Proj_personInlineSet
+  fieldsets = (
+    (' ', {
+      'classes': ('collapse',),
+      'fields': (('person', 'selflink', 'relation'),)
+    }),
+  )
+  verbose_name = _(u"Persona vinculada")
+  verbose_name_plural = _(u"altres persones vinculades")
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'relation':
+      rel = Relation.objects.get(clas='rel_proj_pers')
+      kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id).exclude(clas='reference')
+    return super(Proj_personInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class H_accountCesInline(admin.StackedInline):
@@ -454,7 +493,7 @@ class HumanAdmin(AutoNameMixin):
         map(set_accountCrypto_recordtype, instances)
 
       if formset.model == rel_Human_Persons:
-        if hasattr(formset, 'klass'):
+        if hasattr(formset, 'klass') and formset.klass == 'Proj_refPersonInline':
           map(set_proj_refPerson_relation, instances)
         else:
           map(set_nothing, instances)
@@ -494,7 +533,8 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
     H_accountCryptoInline,
 
     Proj_refPersonInline,
-    H_personInline,
+    Proj_personInline,
+    #H_personInline,
     H_projectInline,
     H_companyInline,
 
