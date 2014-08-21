@@ -789,7 +789,7 @@ class Record_Type(Artwork_Type):
 
 class UnitRatio(Record):
   record = models.OneToOneField('Record', primary_key=True, parent_link=True)
-  #record_type = TreeForeignKey('Record_Type', blank=True, null=True)
+
   in_unit = models.ForeignKey('Unit', related_name='ratio_in', verbose_name=_(u"Unitat entrant"))
   rate = models.DecimalField(max_digits=6, decimal_places=3, verbose_name=_(u"Ratio multiplicador"))
   out_unit = models.ForeignKey('Unit', related_name='ratio_out', verbose_name=_(u"Unitat sortint"))
@@ -797,7 +797,7 @@ class UnitRatio(Record):
     verbose_name = _(u"Equivalencia entre Unitats")
     verbose_name_plural = _(u"o- Equivalencies entre Unitats")
   def __unicode__(self):
-    return self.name+' ('+self.in_unit.code+' * '+str(self.rate)+' = '+self.out_unit.code+')'
+    return self.in_unit.name+' * '+str(self.rate)+' = '+self.out_unit.name
 
 
 class AccountCes(Record):

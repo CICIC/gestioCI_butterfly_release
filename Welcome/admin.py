@@ -26,10 +26,10 @@ class AutoRecordName(admin.ModelAdmin):
       print 'SAVE_MODEL: not ic_project! put CIC to '+instance.name
       instance.ic_project = Project.objects.get(nickname='CIC')
     if not hasattr(instance, 'human') or instance.human is None:
-      if hasattr(instance, 'project') and instance.project is not None:
+      if hasattr(instance, 'project'):# and instance.project is not None:
         print 'SAVE_MODEL: not human! put project...'
         instance.human = instance.project
-      if hasattr(instance, 'person') and instance.person is not None:
+      if hasattr(instance, 'person'):# and instance.person is not None:
         print 'SAVE_MODEL: not human! put person...'
         instance.human = instance.person
     #if not hasattr(instance, 'ic_membership') or instance.ic_membership is None or instance.ic_membership == '':
@@ -63,29 +63,30 @@ class AutoRecordName(admin.ModelAdmin):
   '''
 
 class Public_AkinMembershipAdmin(AutoRecordName):
-  raw_id_fields = ('person',)
+  model = iC_Akin_Membership
+  raw_id_fields = ('person', 'ic_membership',)
   readonly_fields = ('_has_id_card', '_person_link',)
   fieldsets = (
     (None, {
-      'fields':(('person', '_person_link', 'join_date'),
+      'fields':(('person', '_person_link',),
+                ('join_date', 'ic_membership',),
                 ('description', '_has_id_card'))
     }),
   )
-  model = iC_Akin_Membership
 
 
 class AkinMembershipAdmin(Public_AkinMembershipAdmin):
-  list_display = ['name', 'person', 'join_date', '_has_id_card',]
-  raw_id_fields = ('person',)
+  list_display = ['name', 'person', 'join_date', 'ic_membership', '_has_id_card',]
+  #raw_id_fields = ('person', 'ic_membership',)
   readonly_fields = ('record_type', 'name', 'ic_project', '_has_id_card', '_person_link')
   fieldsets = (
     (None, {
       'fields':(('record_type', 'ic_project', '_has_id_card'),
-                ('person', '_person_link', 'join_date', 'end_date'),
+                ('person', '_person_link', 'ic_membership', ),
+                ('join_date', 'end_date'),
                 ('description', 'name'))
     }),
   )
-  model = iC_Akin_Membership
 
 
 class Public_MembershipAdmin(AutoRecordName):
@@ -336,7 +337,7 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
 
 class FeeAdmin(AutoRecordName):
   model = Fee
-  readonly_fields = ('project', '_ic_membership', '_ic_selfemployed',)
+  readonly_fields = ('name', 'project', '_ic_membership', '_ic_selfemployed', '_auto_amount')
 
   search_fields = ('name', 'unit')
   list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
@@ -347,7 +348,7 @@ class FeeAdmin(AutoRecordName):
       'fields': (
         ('record_type', 'project'),
         ('human', '_ic_membership', '_ic_selfemployed'),
-        ('amount', 'unit'),
+        ('unit', 'amount', '_auto_amount'),
         ('issue_date', 'deadline_date'),
         ('payment_type', 'payment_date'),
         ('rel_account', 'name')
@@ -362,6 +363,11 @@ class FeeAdmin(AutoRecordName):
       typs = Unit_Type.objects.filter(clas__icontains='currency')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
     return super(FeeAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+  def get_readonly_fields(self, request, obj=None):
+    if obj and obj.record_type.clas.startswith('('):
+      return self.readonly_fields + ('amount',)
+    return self.readonly_fields
 
 class LearnSessionAdmin(AutoRecordName):
   model = Learn_Session

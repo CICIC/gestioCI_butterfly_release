@@ -15,8 +15,9 @@ from General.models import *
 a_str = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_str1 = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Welcome/"
 #a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
-a_str2 = "?_popup=1&_changelist_filters=_popup=1' target='_blank' style='margin-left:-100px'>"
-a_str3 = "?_popup=1&_changelist_filters=_popup=1' target='_blank'>"
+#a_str2 = "?_popup=1&_changelist_filters=_popup=1' target='_blank' style='margin-left:-100px'>"
+a_str2 = "?_popup=1' target='_blank' style='margin-left:-100px'>"
+a_str3 = "?_popup=1' target='_blank'>"
 add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
@@ -98,7 +99,7 @@ class iC_Akin_Membership(iC_Record):
 
   class Meta:
     verbose_name = _(u"Alta de Soci Afí CI")
-    verbose_name_plural = _(u"Altes de Socis Afins CI")
+    verbose_name_plural = _(u"- Altes de Socis Afins CI")
 
   def _person_link(self):
     if hasattr(self, 'person'):
@@ -138,7 +139,7 @@ class iC_Membership(iC_Record):
 
   class Meta:
     verbose_name = _(u"Alta de Soci CI")
-    verbose_name_plural = _(u"Altes de Socis CI (tots menys afins)")
+    verbose_name_plural = _(u"r-> Altes de Socis CI (tots menys afins)")
 
   def _join_fee_payed(self):
     return self.join_fee.payed
@@ -186,7 +187,7 @@ class iC_Person_Membership(iC_Membership):
 
   class Meta:
     verbose_name = _(u"Alta de Soci Cooperatiu individual CI")
-    verbose_name_plural = _(u"- Altes de Socis Cooperatius Individuals CI")
+    verbose_name_plural = _(u"- Altes Socis Cooperatius Individuals CI")
 
   #def __unicode__(self):
   #  if self.record_type is None or self.record_type == '':
@@ -220,7 +221,7 @@ class iC_Project_Membership(iC_Membership):
   #person = models.OneToOneField('General.Person', verbose_name=_(u"Persona referencia"))
   class Meta:
     verbose_name = _(u"Alta de Projecte Col·lectiu CI")
-    verbose_name_plural = _(u"- Altes de Projectes Col·lectius CI")
+    verbose_name_plural = _(u"- Altes Socis Projectes Col·lectius CI")
 
   #def __unicode__(self):
   #  if self.record_type is None or self.record_type == '':
@@ -320,8 +321,8 @@ class iC_Self_Employed(iC_Record):
       return self.record_type.name+': '+self.ic_membership.__unicode__()
 
   class Meta:
-    verbose_name = _(u"Soci Autoocupat")
-    verbose_name_plural = _(u"Altes Socis Autoocupats")
+    verbose_name = _(u"Alta Proj.Autoocupat")
+    verbose_name_plural = _(u"- Altes Proj. Autoocupats")
 
   def __init__(self, *args, **kwargs):
     super(iC_Self_Employed, self).__init__(*args, **kwargs)
@@ -362,7 +363,10 @@ class iC_Self_Employed(iC_Record):
     out = ''
     if rels.count() > 0:
       for rel in rels:
-        out += a_str +'person/'+str(rel.person.id)+a_str3 + '<b>'+str(rel.person) + '</b></a>: '+str(rel.person.id_card) +' / '
+        if hasattr(rel, 'person'):
+          out += a_str +'person/'+str(rel.person.id)+a_str3 + '<b>'+str(rel.person) + '</b></a>: '+str(rel.person.id_card) +' / '
+        else:
+          print '_REL_ID_CARDS: rel has not Person! '+str(rel)
       return out
     else:
       out = a_str +'person/'+str(self.ic_membership.human.id)+a_str3+ str(self.ic_membership.human)+'</a>: '+str(self.ic_membership.human.person.id_card)
@@ -394,8 +398,8 @@ class iC_Stallholder(iC_Self_Employed):  # Firaire
   )
   tent_type = models.CharField(max_length=5, choices=TentType, verbose_name=_(u"Tipus de carpa"))
   class Meta:
-    verbose_name = _(u"Soci Firaire")
-    verbose_name_plural = _(u"- Altes Socis Firaires")
+    verbose_name = _(u"Alta Proj.Autoocupat Firaire")
+    verbose_name_plural = _(u"- Altes Proj. Autoocupats Firaires")
 
 
 
@@ -502,7 +506,50 @@ class Fee(iC_Record):
     #    mem = self.selfemployed.first().ic_membership
     #    print 'FEE: TE SELFEMPLOYED ('+str(mem)+') i no te MEMBERSHIP ('+str(self.membership)+')'
     #    self.membership.add(mem)# = self.selfemployed.first().ic_membership
+  def _auto_amount(self):
+    if self.record_type.clas.startswith('(') and self.unit is not None:
+      arr = self.record_type.clas.strip('()').split('_')
+      if arr[0].isdigit():
+        uni = Unit.objects.filter(code=arr[1])
+        if uni.count() == 1:
+          eqi = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=self.unit)
+          rate = 1
+          if eqi.count() == 0:
+            #print uni.first()
+            #print self.unit
+            if uni.first() == self.unit:
+              #print '_AUTO_AMOUNT: equal!'
+              pass
+            else:
+              print '_AUTO_AMOUNT: not equal'
+              eqi2 = UnitRatio.objects.filter(in_unit=self.unit)
+              #print '_AUTO_AMOUNT: eqi2: '+str(eqi2)
+              #print '_AUTO_AMOUNT: eqi2.first '+str(eqi2.first().out_unit.name)
+              eqi3 = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=eqi2.first().out_unit)
+              #print '_AUTO_AMOUNT: eqi3: '+str(eqi3)
+              rate2 = eqi3.first().rate
+              print '_AUTO_AMOUNT: rate2: '+str(rate2)
+              rate = (1/eqi2.first().rate)*rate2
+          elif eqi.count() == 1:
+            rate = eqi.first().rate
+          else:
+            print '_AUTO_AMOUNT: eqi ??: '+str(eqi)
+          val = float(arr[0])/float(rate)
+          setattr(self, 'amount', val)
+          print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
+          return True
+        else:
+          print '_AUTO_AMOUNT: uni.count != 1 !!? '+str(uni)
+          return False
+      print '_AUTO_AMOUNT: arr[0] not digit! '+str(arr[0])
+      return False
+    return None
+  _auto_amount.boolean = True
+  _auto_amount.short_description = _(u"Auto import!")
 
+  def save(self):
+    self._auto_amount()
+    super(Fee,self).save()
 
   def _selflink(self):
     if self.id:

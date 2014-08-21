@@ -718,7 +718,21 @@ class AccountCryptoAdmin(AutoNameMixin):
 
 class UnitRatioAdmin(AutoNameMixin):
   model = UnitRatio
-  list_display = ['name', 'in_unit', 'rate', 'out_unit']
+  #readonly_fields = ('name',)
+
+  search_fields = ('name', 'record_type',)
+  list_display = ['name', 'in_unit', 'rate', 'out_unit', 'record_type',]
+  #list_filter = ('record_type',)
+
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('in_unit', 'rate', 'out_unit'),
+        ('name', 'record_type',),
+        ('description',),
+      )
+    }),
+  )
 
 
 
