@@ -19,7 +19,7 @@ a_str2 = "?_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
 
 a_edit = '<b>Edita</b>'
 
-# C O N C E P T S - (Conceptes...)
+#   C O N C E P T S - (Conceptes...)
 
 class Concept(MPTTModel):  # Abstract
   name = models.CharField(unique=True, verbose_name=_(u"Nom"), max_length=200, help_text=_(u"El nom del Concepte"), default="")
@@ -50,7 +50,7 @@ class Type(Concept):  # Create own ID's (TREE)
 
 
 
-# B E I N G S - (Éssers, Entitats, Projectes...)
+#   B E I N G S - (Éssers, Entitats, Projectes...)
 
 class Being(models.Model):  # Abstract
   name = models.CharField(verbose_name=_(u"Nom"), max_length=200, help_text=_(u"El nom de la Entitat"))
@@ -97,14 +97,14 @@ class Human(Being):  # Create own ID's
     if self.nickname is None or self.nickname == '':
       return self.name
     else:
-      return self.name+' ('+self.nickname+')'
+      return self.nickname+' ('+self.name+')'
 
   def _my_accounts(self):
     return list(chain(self.accountsCes, self.accountsCrypto, self.accountsBank))
   #_my_accounts.list = []
   accounts = property(_my_accounts)
 
-  def selflink(self):
+  def _selflink(self):
     if self.id:
       if hasattr(self, 'person'):
         return a_str + "person/" + str(self.person.id) + a_str2 + a_edit + "</a>"# % str(self.id)
@@ -112,8 +112,8 @@ class Human(Being):  # Create own ID's
         return a_str + "project/" + str(self.project.id) + a_str2 + a_edit + "</a>"# % str(self.id)
     else:
       return "Not present"
-  selflink.allow_tags = True
-  selflink.short_description = ''
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
 
 
@@ -227,15 +227,15 @@ class rel_Human_Addresses(models.Model):
     return self.main_address
   _is_main.boolean = True
   is_main = property(_is_main)
-  def selflink(self):
+  def _selflink(self):
     if self.address:
-      return self.address.selflink()
-  selflink.allow_tags = True
-  selflink.short_description = ''
+      return self.address._selflink()
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
 class rel_Human_Regions(models.Model):
   human = models.ForeignKey('Human')
-  region = models.ForeignKey('Region', verbose_name=_(u"Regió"))
+  region = TreeForeignKey('Region', verbose_name=_(u"Regió"))
   relation = TreeForeignKey('Relation', related_name='hu_reg+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
     verbose_name = _(u"H_reg")
@@ -255,14 +255,16 @@ class rel_Human_Records(models.Model):
     verbose_name = _(u"H_rec")
     verbose_name_plural = _(u"Registres vinculats")
   def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
+    if not hasattr(self.relation, 'gerund') or self.relation.gerund is None or self.relation.gerund == '':
       return self.record.__unicode__()
     else:
-      return self.record.record_type+': '+self.relation.gerund+' > '+self.record.__unicode__()
-  def selflink(self):
-    return self.record.selflink()
-  selflink.allow_tags = True
-  selflink.short_description = ''
+      if not hasattr(self.record, 'record_type') or self.record.record_type is None or self.record.record_type == '':
+        return self.relation.gerund+' > '+self.record.__unicode__()
+      return self.record.record_type.name+': '+self.relation.gerund+' > '+self.record.__unicode__()
+  def _selflink(self):
+    return self.record._selflink()
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
 class rel_Human_Materials(models.Model):
   human = models.ForeignKey('Human')
@@ -272,7 +274,7 @@ class rel_Human_Materials(models.Model):
     verbose_name = _(u"H_mat")
     verbose_name_plural = _(u"Obres materials")
   def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
+    if not hasattr(self.relation, 'gerund') or self.relation.gerund is None or self.relation.gerund == '':
       return self.material.__unicode__()
     else:
       return self.relation.gerund+' > '+self.material.__unicode__()
@@ -304,10 +306,10 @@ class rel_Human_Persons(models.Model):
     else:
       return self.relation.gerund+' > '+self.person.__unicode__()
 
-  def selflink(self):
-    return self.person.selflink()
-  selflink.allow_tags = True
-  selflink.short_description = ''
+  def _selflink(self):
+    return self.person._selflink()
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
 
 class rel_Human_Projects(models.Model):
@@ -338,6 +340,292 @@ class rel_Human_Companies(models.Model):
     else:
       return '('+self.company.company_type.being_type.name+') '+self.relation.gerund+' > '+self.company.__unicode__()
 
+
+
+'''
+class rel_Address_Jobs(models.Model):
+  address = models.ForeignKey('Address')
+  job = models.ForeignKey('Job', verbose_name=_(u"Art/Ofici vinculat"))
+  relation = TreeForeignKey('Relation', related_name='ad_job+', blank=True, null=True)
+  class Meta:
+    verbose_name = _(u"job")
+    verbose_name_plural = _(u"Arts/Oficis vinculats")
+  def __unicode__(self):
+    if self.relation.gerund is None or self.relation.gerund == '':
+      return self.job.__unicode__()
+    else:
+      return self.relation.gerund+' > '+self.job.__unicode__()
+'''
+
+
+
+#   A R T S - (Verbs, Relacions, Arts, Oficis, Sectors...)
+
+class Art(MPTTModel):  # Abstract
+  name = models.CharField(unique=True, max_length=200, verbose_name=_(u"Nom"), help_text=_(u"El nom de l'Art"))
+  verb = models.CharField(max_length=200, blank=True, verbose_name=_(u"Verb"), help_text=_(u"El verb de la acció, infinitiu"))
+  gerund = models.CharField(max_length=200, blank=True, verbose_name=_(u"Gerundi"), help_text=_(u"El verb en gerundi, present"))
+  description = models.TextField(blank=True, verbose_name=_(u"Descripció"))
+
+  parent = TreeForeignKey('self', null=True, blank=True, related_name='subarts')
+
+  def __unicode__(self):
+    if self.verb:
+      return self.name+', '+self.verb
+    else:
+      return self.name
+
+  class Meta:
+
+    abstract = True
+
+    verbose_name = _(u"Art")
+    verbose_name_plural = _(u"a- Arts")
+
+
+class Relation(Art):  # Create own ID's (TREE)
+  #art = models.OneToOneField('Art', primary_key=True, parent_link=True)
+  clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=50,
+                          help_text=_(u"Model de django o classe python associada a la Relació"))
+  class Meta:
+    verbose_name= _(u'Relació')
+    verbose_name_plural= _(u'a- Relacions')
+  def __unicode__(self):
+    if self.verb:
+      if self.clas is None or self.clas == '':
+        return self.verb
+      else:
+        return self.verb+' ('+self.clas+')'
+    else:
+      if self.clas is None or self.clas == '':
+        return self.name
+      else:
+        return self.name+' ('+self.clas+')'
+
+
+class Job(Art):    # Create own ID's (TREE)
+  #art = models.OneToOneField('Art', primary_key=True, parent_link=True)
+  clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=50,
+                          help_text=_(u"Model de django o classe python associada a l'Ofici'"))
+
+  class Meta:
+    verbose_name= _(u'Ofici')
+    verbose_name_plural= _(u'a- Oficis')
+  def __unicode__(self):
+    if self.clas is None or self.clas == '':
+      return self.name#+', '+self.verb
+    else:
+      return self.name+' ('+self.clas+')'
+
+
+
+
+#   S P A C E S - (Regions, Espais, Adreçes...)
+
+class Space(models.Model):  # Abstact
+  name = models.CharField(verbose_name=_(u"Nom"), max_length=100, help_text=_(u"El nom de l'Espai"))
+  #space_type = TreeForeignKey('Space_Type', blank=True, null=True, verbose_name=_(u"Tipus d'espai"))
+  #m2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+  def __unicode__(self):
+    return self.name
+
+  class Meta:
+    abstract = True;
+
+class Space_Type(Type):
+  typ = models.OneToOneField('Type', primary_key=True, parent_link=True)
+
+  class Meta:
+    verbose_name= _(u"Tipus d'Espai")
+    verbose_name_plural= _(u"s--> Tipus d'Espais")
+
+
+
+class Address(Space):  # Create own ID's
+  #space = models.OneToOneField('Space', primary_key=True, parent_link=True)
+  address_type = TreeForeignKey('Address_Type', blank=True, null=True, verbose_name=_(u"Tipus d'adreça"))
+  p_address = models.CharField(max_length=200, verbose_name=_(u"Direcció"), help_text=_(u"Adreça postal vàlida per a enviaments"))
+  town = models.CharField(max_length=150, verbose_name=_(u"Població"), help_text=_(u"Poble, ciutat o municipi"))
+  postalcode = models.CharField(max_length=5, blank=True, null=True, verbose_name=_(u"Codi postal"))
+  region = TreeForeignKey('Region', blank=True, null=True, related_name='rel_addresses', verbose_name=_(u"Comarca"))
+
+  #telephone = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telefon fix"))
+  ic_larder = models.BooleanField(default=False, verbose_name=_(u"És Rebost?"))
+  #main_address = models.BooleanField(default=False, verbose_name=_(u"Adreça principal?"))
+  size = models.DecimalField(max_digits=20, decimal_places=2, blank=True, null=True, verbose_name=_(u'Tamany'), help_text=_(u"Quantitat d'unitats (accepta 2 decimals)"))
+  size_unit = models.ForeignKey('Unit', blank=True, null=True, verbose_name=_(u"Unitat de mesura"))
+  longitude = models.IntegerField(blank=True, null=True, verbose_name=_(u"Longitud (geo)"))
+  latitude = models.IntegerField(blank=True, null=True, verbose_name=_(u"Latitud (geo)"))
+
+  jobs = models.ManyToManyField('Job', related_name='addresses', blank=True, null=True, verbose_name=_(u"Oficis relacionats"))
+
+  description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció de l'Adreça"), help_text=_(u"Localització exacta, indicacions per arribar o comentaris"))
+
+  def _main_addr_of(self):
+    rel = rel_Human_Addresses.objects.filter(address=self, main_address=True).first() #TODO accept various and make a list
+    if rel:
+      return rel.human
+    else:
+      return _(u'ningú')
+  _main_addr_of.allow_tags = True
+  _main_addr_of.short_description = _(u"Adreça principal de")
+  main_addr_of = property(_main_addr_of)
+
+  def _has_contracts(self):
+    pass
+  def _has_licences(self):
+    pass
+
+  class Meta:
+    verbose_name= _(u'Adreça')
+    verbose_name_plural= _(u's- Adreces')
+  def __unicode__(self):
+    return self.name+' ('+self.p_address+' - '+self.town+')'
+
+  def _selflink(self):
+    if self.id:
+        return a_str + "address/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
+    else:
+        return "Not present"
+  _selflink.allow_tags = True
+
+class Address_Type(Space_Type):
+  space_type = models.OneToOneField('Space_Type', primary_key=True, parent_link=True)
+  class Meta:
+    verbose_name = _(u"Tipus d'Adreça")
+    verbose_name_plural = _(u"s-> Tipus d'Adreces")
+
+
+
+class Region(MPTTModel, Space):  # Create own ID's (TREE)
+  #space = models.OneToOneField('Space', primary_key=True, parent_link=True)
+  region_type = TreeForeignKey('Region_Type', blank=True, null=True, verbose_name=_(u"Tipus de regió"))
+  parent = TreeForeignKey('self', null=True, blank=True, related_name='subregions')
+
+  description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció de la Regió"))
+
+  class Meta:
+    verbose_name= _(u'Regió')
+    verbose_name_plural= _(u's- Regions')
+
+class Region_Type(Space_Type):
+  space_type = models.OneToOneField('Space_Type', primary_key=True, parent_link=True)
+  class Meta:
+    verbose_name = _(u"Tipus de Regió")
+    verbose_name_plural = _(u"s-> Tipus de Regions")
+
+
+
+
+#   A R T W O R K S - (Obres, Coses, Registres, Documents...)
+
+class Artwork(models.Model):  # Abstract
+  name = models.CharField(verbose_name=_(u"Nom"), max_length=200, blank=True, null=True, help_text=_(u"El nom de la obra (Registre, Unitat, Cosa)"))
+  #artwork_type = TreeForeignKey('Artwork_Type', blank=True, verbose_name=_(u"Tipus d'Obra"))
+  description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció"))
+
+  def __unicode__(self):
+    return self.name
+
+  class Meta:
+    abstract = True
+
+class Artwork_Type(Type):
+  typ = models.OneToOneField('Type', primary_key=True, parent_link=True)
+  class Meta:
+    verbose_name = _(u"Tipus d'Obra")
+    verbose_name_plural = _(u"o--> Tipus d'Obres")
+
+
+
+# - - - - - N O N - M A T E R I A L
+
+class rel_Nonmaterial_Records(models.Model):
+  nonmaterial = models.ForeignKey('Nonmaterial')
+  record = models.ForeignKey('Record', verbose_name=_(u"Registre vinculat"))
+  relation = TreeForeignKey('Relation', related_name='no_reg+', blank=True, null=True)
+  class Meta:
+    verbose_name = _(u"N_rec")
+    verbose_name_plural = _(u"Registres vinculats")
+  def __unicode__(self):
+    if self.relation.gerund is None or self.relation.gerund == '':
+      return self.record.__unicode__()
+    else:
+      return '('+self.record.record_type.name+') '+self.relation.gerund+' > '+self.record.__unicode__()
+
+class rel_Nonmaterial_Addresses(models.Model):
+  nonmaterial = models.ForeignKey('Nonmaterial')
+  address = models.ForeignKey('Address', verbose_name=_(u"Adreça vinculada"))
+  relation = TreeForeignKey('Relation', related_name='no_adr+', blank=True, null=True)
+  class Meta:
+    verbose_name = _(u"N_adr")
+    verbose_name_plural = _(u"Adreçes vinculades")
+  def __unicode__(self):
+    if self.relation.gerund is None or self.relation.gerund == '':
+      return self.address.__unicode__()
+    else:
+      return '('+self.address.address_type.name+') '+self.relation.gerund+' > '+self.address.__unicode__()
+
+class rel_Nonmaterial_Jobs(models.Model):
+  nonmaterial = models.ForeignKey('Nonmaterial')
+  job = models.ForeignKey('Job', related_name='nonmaterials', verbose_name=_(u"Arts/Oficis vinculades"))
+  relation = TreeForeignKey('Relation', related_name='no_job+', blank=True, null=True, verbose_name=_(u"Relació"))
+  class Meta:
+    verbose_name = _(u"N_ofi")
+    verbose_name_plural = _(u"Arts/Oficis vinculades")
+  def __unicode__(self):
+    if self.relation.gerund is None or self.relation.gerund == '':
+      return self.job.__unicode__()
+    else:
+      return self.relation.gerund+' > '+self.job.__unicode__()
+
+class rel_Nonmaterial_Nonmaterials(models.Model):
+  nonmaterial = models.ForeignKey('Nonmaterial')
+  nonmaterial2 = models.ForeignKey('Nonmaterial', related_name='subnonmaterials', verbose_name=_(u"obres Inmaterials vinculades"))
+  relation = TreeForeignKey('Relation', related_name='ma_mat+', blank=True, null=True, verbose_name=_(u"Relació"))
+  class Meta:
+    verbose_name = _(u"N_mat")
+    verbose_name_plural = _(u"obres Inmaterials vinculades")
+  def __unicode__(self):
+    if self.relation.gerund is None or self.relation.gerund == '':
+      return self.nonmaterial2.__unicode__()
+    else:
+      return '('+self.nonmaterial2.material_type.name+') '+self.relation.gerund+' > '+self.nonmaterial2.__unicode__()
+
+
+class Nonmaterial(Artwork):  # Create own ID's
+  nonmaterial_type = TreeForeignKey('Nonmaterial_Type', blank=True, null=True, verbose_name=_(u"Tipus d'obra inmaterial"))
+
+  records = models.ManyToManyField('Record', through='rel_Nonmaterial_Records', blank=True, null=True, verbose_name=_(u"Registres relacionats"))
+  addresses = models.ManyToManyField('Address', through='rel_Nonmaterial_Addresses', blank=True, null=True, verbose_name=_(u"Adreces relacionades"))
+  jobs = models.ManyToManyField('Job', through='rel_Nonmaterial_Jobs', blank=True, null=True, verbose_name=_(u"Arts/Oficis relacionats"))
+  nonmaterials = models.ManyToManyField('self', through='rel_Nonmaterial_Nonmaterials', symmetrical=False, blank=True, null=True, verbose_name=_(u"obres Inmaterials relacionades"))
+
+  class Meta:
+    verbose_name = _(u"Obra Inmaterial")
+    verbose_name_plural = _(u"o- Obres Inmaterials")
+
+class Nonmaterial_Type(Artwork_Type):
+  artwork_type = models.OneToOneField('Artwork_Type', primary_key=True, parent_link=True)
+  class Meta:
+    verbose_name= _(u"Tipus d'obra Inmaterial")
+    verbose_name_plural= _(u"o-> Tipus d'obres Inmaterials")
+
+
+
+class Image(Nonmaterial):
+  nonmaterial = models.OneToOneField('Nonmaterial', primary_key=True, parent_link=True)
+  image = models.ImageField(upload_to='files/images', blank=True, null=True, verbose_name=_(u"Imatge (jpg/png)"))
+  #footer = models.TextField(blank=True, null=True, verbose_name=_(u"Peu de foto"))
+  url = models.URLField(blank=True, null=True, verbose_name=_(u"Url de la imatge"))
+  class Meta:
+    verbose_name = _(u"Imatge")
+    verbose_name_plural = _(u"o- Imatges")
+
+
+
+# - - - - - M A T E R I A L
 
 class rel_Material_Nonmaterials(models.Model):
   material = models.ForeignKey('Material')
@@ -405,287 +693,6 @@ class rel_Material_Jobs(models.Model):
       return self.relation.gerund+' > '+self.job.__unicode__()
 
 
-class rel_Nonmaterial_Records(models.Model):
-  nonmaterial = models.ForeignKey('Nonmaterial')
-  record = models.ForeignKey('Record', verbose_name=_(u"Registre vinculat"))
-  relation = TreeForeignKey('Relation', related_name='no_reg+', blank=True, null=True)
-  class Meta:
-    verbose_name = _(u"N_rec")
-    verbose_name_plural = _(u"Registres vinculats")
-  def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
-      return self.record.__unicode__()
-    else:
-      return '('+self.record.record_type.name+') '+self.relation.gerund+' > '+self.record.__unicode__()
-
-class rel_Nonmaterial_Addresses(models.Model):
-  nonmaterial = models.ForeignKey('Nonmaterial')
-  address = models.ForeignKey('Address', verbose_name=_(u"Adreça vinculada"))
-  relation = TreeForeignKey('Relation', related_name='no_adr+', blank=True, null=True)
-  class Meta:
-    verbose_name = _(u"N_adr")
-    verbose_name_plural = _(u"Adreçes vinculades")
-  def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
-      return self.address.__unicode__()
-    else:
-      return '('+self.address.address_type.name+') '+self.relation.gerund+' > '+self.address.__unicode__()
-
-class rel_Nonmaterial_Jobs(models.Model):
-  nonmaterial = models.ForeignKey('Nonmaterial')
-  job = models.ForeignKey('Job', related_name='nonmaterials', verbose_name=_(u"Arts/Oficis vinculades"))
-  relation = TreeForeignKey('Relation', related_name='no_job+', blank=True, null=True, verbose_name=_(u"Relació"))
-  class Meta:
-    verbose_name = _(u"N_ofi")
-    verbose_name_plural = _(u"Arts/Oficis vinculades")
-  def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
-      return self.job.__unicode__()
-    else:
-      return self.relation.gerund+' > '+self.job.__unicode__()
-
-class rel_Nonmaterial_Nonmaterials(models.Model):
-  nonmaterial = models.ForeignKey('Nonmaterial')
-  nonmaterial2 = models.ForeignKey('Nonmaterial', related_name='subnonmaterials', verbose_name=_(u"obres Inmaterials vinculades"))
-  relation = TreeForeignKey('Relation', related_name='ma_mat+', blank=True, null=True, verbose_name=_(u"Relació"))
-  class Meta:
-    verbose_name = _(u"N_mat")
-    verbose_name_plural = _(u"obres Inmaterials vinculades")
-  def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
-      return self.nonmaterial2.__unicode__()
-    else:
-      return '('+self.nonmaterial2.material_type.name+') '+self.relation.gerund+' > '+self.nonmaterial2.__unicode__()
-
-
-'''
-class rel_Address_Jobs(models.Model):
-  address = models.ForeignKey('Address')
-  job = models.ForeignKey('Job', verbose_name=_(u"Art/Ofici vinculat"))
-  relation = TreeForeignKey('Relation', related_name='ad_job+', blank=True, null=True)
-  class Meta:
-    verbose_name = _(u"job")
-    verbose_name_plural = _(u"Arts/Oficis vinculats")
-  def __unicode__(self):
-    if self.relation.gerund is None or self.relation.gerund == '':
-      return self.job.__unicode__()
-    else:
-      return self.relation.gerund+' > '+self.job.__unicode__()
-'''
-
-
-
-# A R T S - (Verbs, Relacions, Arts, Oficis, Sectors...)
-
-class Art(MPTTModel):  # Abstract
-  name = models.CharField(unique=True, max_length=200, verbose_name=_(u"Nom"), help_text=_(u"El nom de l'Art"))
-  verb = models.CharField(max_length=200, blank=True, verbose_name=_(u"Verb"), help_text=_(u"El verb de la acció, infinitiu"))
-  gerund = models.CharField(max_length=200, blank=True, verbose_name=_(u"Gerundi"), help_text=_(u"El verb en gerundi, present"))
-  description = models.TextField(blank=True, verbose_name=_(u"Descripció"))
-
-  parent = TreeForeignKey('self', null=True, blank=True, related_name='subarts')
-
-  def __unicode__(self):
-    if self.verb:
-      return self.name+', '+self.verb
-    else:
-      return self.name
-
-  class Meta:
-
-    abstract = True
-
-    verbose_name = _(u"Art")
-    verbose_name_plural = _(u"a- Arts")
-
-
-class Relation(Art):  # Create own ID's (TREE)
-  #art = models.OneToOneField('Art', primary_key=True, parent_link=True)
-  clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=50,
-                          help_text=_(u"Model de django o classe python associada a la Relació"))
-  class Meta:
-    verbose_name= _(u'Relació')
-    verbose_name_plural= _(u'a- Relacions')
-  def __unicode__(self):
-    if self.verb:
-      if self.clas is None or self.clas == '':
-        return self.verb
-      else:
-        return self.verb+' ('+self.clas+')'
-    else:
-      if self.clas is None or self.clas == '':
-        return self.name
-      else:
-        return self.name+' ('+self.clas+')'
-
-
-class Job(Art):    # Create own ID's (TREE)
-  #art = models.OneToOneField('Art', primary_key=True, parent_link=True)
-  clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=50,
-                          help_text=_(u"Model de django o classe python associada a l'Ofici'"))
-
-  class Meta:
-    verbose_name= _(u'Ofici')
-    verbose_name_plural= _(u'a- Oficis')
-  def __unicode__(self):
-    if self.clas is None or self.clas == '':
-      return self.name#+', '+self.verb
-    else:
-      return self.name+' ('+self.clas+')'
-
-
-
-
-# S P A C E S - (Regions, Espais, Adreçes...)
-
-class Space(models.Model):  # Abstact
-  name = models.CharField(verbose_name=_(u"Nom"), max_length=100, help_text=_(u"El nom de l'Espai"))
-  #space_type = TreeForeignKey('Space_Type', blank=True, null=True, verbose_name=_(u"Tipus d'espai"))
-  #m2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-
-  def __unicode__(self):
-    return self.name
-
-  class Meta:
-    abstract = True;
-
-class Space_Type(Type):
-  typ = models.OneToOneField('Type', primary_key=True, parent_link=True)
-
-  class Meta:
-    verbose_name= _(u"Tipus d'Espai")
-    verbose_name_plural= _(u"s--> Tipus d'Espais")
-
-
-
-class Address(Space):  # Create own ID's
-  #space = models.OneToOneField('Space', primary_key=True, parent_link=True)
-  address_type = TreeForeignKey('Address_Type', blank=True, null=True, verbose_name=_(u"Tipus d'adreça"))
-  p_address = models.CharField(max_length=200, verbose_name=_(u"Direcció"), help_text=_(u"Adreça postal vàlida per a enviaments"))
-  town = models.CharField(max_length=150, verbose_name=_(u"Població"), help_text=_(u"Poble, ciutat o municipi"))
-  postalcode = models.CharField(max_length=5, blank=True, null=True, verbose_name=_(u"Codi postal"))
-  region = TreeForeignKey('Region', blank=True, null=True, related_name='rel_addresses', verbose_name=_(u"Comarca"))
-
-  #telephone = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telefon fix"))
-  ic_larder = models.BooleanField(default=False, verbose_name=_(u"És Rebost?"))
-  #main_address = models.BooleanField(default=False, verbose_name=_(u"Adreça principal?"))
-  size = models.DecimalField(max_digits=20, decimal_places=2, blank=True, null=True, verbose_name=_(u'Tamany'), help_text=_(u"Quantitat d'unitats (accepta 2 decimals)"))
-  size_unit = models.ForeignKey('Unit', blank=True, null=True, verbose_name=_(u"Unitat de mesura"))
-  longitude = models.IntegerField(blank=True, null=True, verbose_name=_(u"Longitud (geo)"))
-  latitude = models.IntegerField(blank=True, null=True, verbose_name=_(u"Latitud (geo)"))
-
-  jobs = models.ManyToManyField('Job', related_name='addresses', blank=True, null=True, verbose_name=_(u"Oficis relacionats"))
-
-  description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció de l'Adreça"), help_text=_(u"Localització exacta, indicacions per arribar o comentaris"))
-
-  def _main_addr_of(self):
-    rel = rel_Human_Addresses.objects.filter(address=self, main_address=True).first() #TODO accept various and make a list
-    if rel:
-      return rel.human
-    else:
-      return _(u'ningú')
-  _main_addr_of.allow_tags = True
-  _main_addr_of.short_description = _(u"Adreça principal de")
-  main_addr_of = property(_main_addr_of)
-
-  def _has_contracts(self):
-    pass
-  def _has_licences(self):
-    pass
-
-  class Meta:
-    verbose_name= _(u'Adreça')
-    verbose_name_plural= _(u's- Adreces')
-  def __unicode__(self):
-    return self.name+' ('+self.p_address+' - '+self.town+')'
-
-  def selflink(self):
-    if self.id:
-        return a_str + "address/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
-    else:
-        return "Not present"
-  selflink.allow_tags = True
-
-
-class Address_Type(Space_Type):
-  space_type = models.OneToOneField('Space_Type', primary_key=True, parent_link=True)
-  class Meta:
-    verbose_name = _(u"Tipus d'Adreça")
-    verbose_name_plural = _(u"s-> Tipus d'Adreces")
-
-
-
-class Region(MPTTModel, Space):  # Create own ID's (TREE)
-  #space = models.OneToOneField('Space', primary_key=True, parent_link=True)
-  region_type = TreeForeignKey('Region_Type', blank=True, null=True, verbose_name=_(u"Tipus de regió"))
-  parent = TreeForeignKey('self', null=True, blank=True, related_name='subregions')
-
-  description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció de la Regió"))
-
-  class Meta:
-    verbose_name= _(u'Regió')
-    verbose_name_plural= _(u's- Regions')
-
-class Region_Type(Space_Type):
-  space_type = models.OneToOneField('Space_Type', primary_key=True, parent_link=True)
-  class Meta:
-    verbose_name = _(u"Tipus de Regió")
-    verbose_name_plural = _(u"s-> Tipus de Regions")
-
-
-
-
-# A R T W O R K S - (Obres, Coses, Registres, Documents...)
-
-class Artwork(models.Model):  # Abstract
-  name = models.CharField(verbose_name=_(u"Nom"), max_length=200, blank=True, null=True, help_text=_(u"El nom de la obra (Registre, Unitat, Cosa)"))
-  #artwork_type = TreeForeignKey('Artwork_Type', blank=True, verbose_name=_(u"Tipus d'Obra"))
-  description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció"))
-
-  def __unicode__(self):
-    return self.name
-
-  class Meta:
-    abstract = True
-
-class Artwork_Type(Type):
-  typ = models.OneToOneField('Type', primary_key=True, parent_link=True)
-  class Meta:
-    verbose_name = _(u"Tipus d'Obra")
-    verbose_name_plural = _(u"o--> Tipus d'Obres")
-
-
-
-class Nonmaterial(Artwork):  # Create own ID's
-  nonmaterial_type = TreeForeignKey('Nonmaterial_Type', blank=True, null=True, verbose_name=_(u"Tipus d'obra inmaterial"))
-
-  records = models.ManyToManyField('Record', through='rel_Nonmaterial_Records', blank=True, null=True, verbose_name=_(u"Registres relacionats"))
-  addresses = models.ManyToManyField('Address', through='rel_Nonmaterial_Addresses', blank=True, null=True, verbose_name=_(u"Adreces relacionades"))
-  jobs = models.ManyToManyField('Job', through='rel_Nonmaterial_Jobs', blank=True, null=True, verbose_name=_(u"Arts/Oficis relacionats"))
-  nonmaterials = models.ManyToManyField('self', through='rel_Nonmaterial_Nonmaterials', symmetrical=False, blank=True, null=True, verbose_name=_(u"obres Inmaterials relacionades"))
-
-  class Meta:
-    verbose_name = _(u"Obra Inmaterial")
-    verbose_name_plural = _(u"o- Obres Inmaterials")
-
-class Nonmaterial_Type(Artwork_Type):
-  artwork_type = models.OneToOneField('Artwork_Type', primary_key=True, parent_link=True)
-  class Meta:
-    verbose_name= _(u"Tipus d'obra Inmaterial")
-    verbose_name_plural= _(u"o-> Tipus d'obres Inmaterials")
-
-
-
-class Image(Nonmaterial):
-  nonmaterial = models.OneToOneField('Nonmaterial', primary_key=True, parent_link=True)
-  image = models.ImageField(upload_to='files/images', blank=True, null=True, verbose_name=_(u"Imatge (jpg/png)"))
-  #footer = models.TextField(blank=True, null=True, verbose_name=_(u"Peu de foto"))
-  url = models.URLField(blank=True, null=True, verbose_name=_(u"Url de la imatge"))
-  class Meta:
-    verbose_name = _(u"Imatge")
-    verbose_name_plural = _(u"o- Imatges")
-
-
 class Material(Artwork): # Create own ID's
   material_type = TreeForeignKey('Material_Type', blank=True, null=True, verbose_name=_(u"Tipus d'obra física"))
 
@@ -705,6 +712,7 @@ class Material_Type(Artwork_Type):
     verbose_name= _(u"Tipus d'obra Material")
     verbose_name_plural= _(u"o-> Tipus d'obres Materials")
 
+
 class Asset(Material):
   material = models.OneToOneField('Material', primary_key=True, parent_link=True)
   human = models.ForeignKey('Human', verbose_name=_(u"Entitat"))
@@ -715,31 +723,19 @@ class Asset(Material):
   def __unicode__(self):
     return '('+self.material_type.name+') '+self.material.name
 
-
-class Record(Artwork):  # Create own ID's
-  record_type = TreeForeignKey('Record_Type', blank=True, null=True, verbose_name=_(u"Tipus de Registre"))
-  class Meta:
-    verbose_name= _(u'Registre')
-    verbose_name_plural= _(u'o- Registres')
-  def __unicode__(self):
-    if self.record_type is None or self.record_type == '':
-      return self.name
-    else:
-      return self.record_type.name+': '+self.name
-  def selflink(self):
-    if self.id:
-        return a_str + "record/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
-    else:
-        return "Not present"
-  selflink.allow_tags = True
-
-class Record_Type(Artwork_Type):
-  artwork_type = models.OneToOneField('Artwork_Type', primary_key=True, parent_link=True)
-  class Meta:
-    verbose_name= _(u'Tipus de Registre')
-    verbose_name_plural= _(u'o-> Tipus de Registres')
+  def _addresses(self):
+    out = ''#ul_tag
+    if self.addresses.count() > 0:
+      for add in self.addresses:
+        out += add.__unicode__()+', '
+      return out
+    return 'ninguna'
+  _addresses.allow_tags = True
+  _addresses.short_description = _(u"Adreçes vinculades?")
 
 
+
+# - - - - - U N I T S
 
 class Unit(Artwork):  # Create own ID's
   unit_type = TreeForeignKey('Unit_Type', blank=True, null=True, verbose_name=_(u"Tipus d'Unitat"))
@@ -762,6 +758,33 @@ class Unit_Type(Artwork_Type):
     verbose_name = _(u"Tipus d'Unitat")
     verbose_name_plural = _(u"o-> Tipus d'Unitats")
 
+
+
+# - - - - - R E C O R D
+
+class Record(Artwork):  # Create own ID's
+  record_type = TreeForeignKey('Record_Type', blank=True, null=True, verbose_name=_(u"Tipus de Registre"))
+  class Meta:
+    verbose_name= _(u'Registre')
+    verbose_name_plural= _(u'o- Registres')
+  def __unicode__(self):
+    if self.record_type is None or self.record_type == '':
+      return self.name
+    else:
+      return self.record_type.name+': '+self.name
+
+  def _selflink(self):
+    if self.id:
+        return a_str + "record/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
+    else:
+        return "Not present"
+  _selflink.allow_tags = True
+
+class Record_Type(Artwork_Type):
+  artwork_type = models.OneToOneField('Artwork_Type', primary_key=True, parent_link=True)
+  class Meta:
+    verbose_name= _(u'Tipus de Registre')
+    verbose_name_plural= _(u'o-> Tipus de Registres')
 
 
 class UnitRatio(Record):

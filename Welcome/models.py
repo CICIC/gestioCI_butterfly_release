@@ -21,6 +21,8 @@ add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
 
+ul_tag = '<ul style="margin-left:-10em;">'
+ul_tag1 = '<ul>'
 
 # Create your models here.
 
@@ -36,12 +38,12 @@ class iC_Record(Artwork):  # create own ID's
       return self.record_type.name+': ??'
     else:
       return self.record_type.name+': '+self.name
-  def selflink(self):
+  def _selflink(self):
     if self.id:
         return a_str + "ic_record/" + str(self.id) + a_str2 + a_edit + "</a>"# % str(self.id)
     else:
         return "Not present"
-  selflink.allow_tags = True
+  _selflink.allow_tags = True
 
 class iC_Type(Concept):  # create own ID's
   clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200,
@@ -59,8 +61,8 @@ class iC_Type(Concept):  # create own ID's
 class iC_Record_Type(iC_Type):
   ic_type = models.OneToOneField('iC_Type', primary_key=True, parent_link=True)
   class Meta:
-    verbose_name= _(u'Tipus de Registre')
-    verbose_name_plural= _(u'c-> Tipus de Registres')
+    verbose_name= _(u'Tipus de Registre CI')
+    verbose_name_plural= _(u'c-> Tipus de Registres CI')
 
 
 
@@ -100,7 +102,7 @@ class iC_Akin_Membership(iC_Record):
 
   def _person_link(self):
     if hasattr(self, 'person'):
-      return self.person.selflink()
+      return self.person._selflink()
     else:
       lnk1 = a_str + "person/add/" + a_str2 + add_pers + "</a>"
       return lnk1
@@ -126,9 +128,13 @@ class iC_Membership(iC_Record):
 
   def __unicode__(self):
     if self.record_type is None or self.record_type == '':
-      return self.ic_project.nickname+' > '+self.human.__unicode__()
+      if self.ic_CESnum is None or self.ic_CESnum == '':
+        return self.ic_project.nickname+' (!record_type) > '+self.human.__unicode__()
+      return self.ic_CESnum+' ('+self.human.nickname+') !record_type'
     else:
-      return self.record_type.name+': '+self.human.__unicode__()
+      if self.ic_CESnum is None or self.ic_CESnum == '':
+        return self.record_type.name+': '+self.human.__unicode__()
+      return self.ic_CESnum+' ('+self.human.nickname+')'
 
   class Meta:
     verbose_name = _(u"Alta de Soci CI")
@@ -142,7 +148,7 @@ class iC_Membership(iC_Record):
 
   def _human_link(self):
     if hasattr(self, 'human'):
-      return self.human.selflink()
+      return self.human._selflink()
     else:
       lnk1 = a_str + "person/add/" + a_str2 + add_pers + "</a>"
       lnk2 = a_str + "project/add/" + a_str3 + add_proj + "</a>"
@@ -152,20 +158,20 @@ class iC_Membership(iC_Record):
 
   def _joinfee_link(self):
     if hasattr(self, 'join_fee'):
-      return self.join_fee.selflink()
+      return self.join_fee._selflink()
     else:
       lnk = a_str1 + "fee/add/" + a_str2 + "add Fee</a>"
       return lnk
   _joinfee_link.allow_tags = True
   _joinfee_link.short_description = ''
 
-  def selflink(self):
+  def _selflink(self):
     if self.id:
       return a_str1 + "ic_membership/" + str(self.id) + a_str2 + a_edit + "</a>"# % str(self.id)
     else:
       return "Not present"
-  selflink.allow_tags = True
-  selflink.short_description = ''
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
   def __init__(self, *args, **kwargs):
     super(iC_Membership, self).__init__(*args, **kwargs)
@@ -180,33 +186,33 @@ class iC_Person_Membership(iC_Membership):
 
   class Meta:
     verbose_name = _(u"Alta de Soci Cooperatiu individual CI")
-    verbose_name_plural = _(u"Altes de Socis Cooperatius Individuals CI")
+    verbose_name_plural = _(u"- Altes de Socis Cooperatius Individuals CI")
 
-  def __unicode__(self):
-    if self.record_type is None or self.record_type == '':
-      return self.ic_project.nickname+' > '+self.person.__unicode__()
-    else:
-      return self.record_type.name+': '+self.person.__unicode__()
+  #def __unicode__(self):
+  #  if self.record_type is None or self.record_type == '':
+  #    return self.ic_project.nickname+' > '+self.person.__unicode__()
+  #  else:
+  #    return self.record_type.name+': '+self.person.__unicode__()
   def __init__(self, *args, **kwargs):
     super(iC_Person_Membership, self).__init__(*args, **kwargs)
     self.record_type = iC_Record_Type.objects.get(clas='iC_Person_Membership')  # there's only one ic_record_type for this kind of member
 
   def _person_link(self):
     if hasattr(self, 'person'):
-      return self.person.selflink()
+      return self.person._selflink()
     else:
       lnk1 = a_str + "person/add/" + a_str2 + add_pers + "</a>"
       return lnk1
   _person_link.allow_tags = True
   _person_link.short_description = ''
 
-  def selflink(self):
+  def _selflink(self):
     if self.id:
       return a_str1 + "ic_person_membership/" + str(self.id) + a_str2 + a_edit + "</a>"# % str(self.id)
     else:
       return "Not present"
-  selflink.allow_tags = True
-  selflink.short_description = ''
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
 class iC_Project_Membership(iC_Membership):
   ic_membership = models.OneToOneField('iC_Membership', primary_key=True, parent_link=True)
@@ -214,13 +220,13 @@ class iC_Project_Membership(iC_Membership):
   #person = models.OneToOneField('General.Person', verbose_name=_(u"Persona referencia"))
   class Meta:
     verbose_name = _(u"Alta de Projecte Col·lectiu CI")
-    verbose_name_plural = _(u"Altes de Projectes Col·lectius CI")
+    verbose_name_plural = _(u"- Altes de Projectes Col·lectius CI")
 
-  def __unicode__(self):
-    if self.record_type is None or self.record_type == '':
-      return self.ic_project.nickname+' > '+self.project.__unicode__()
-    else:
-      return self.record_type.name+': '+self.project.__unicode__()
+  #def __unicode__(self):
+  #  if self.record_type is None or self.record_type == '':
+  #    return self.ic_project.nickname+' > '+self.project.__unicode__()
+  #  else:
+  #    return self.record_type.name+': '+self.project.__unicode__()
   def __init__(self, *args, **kwargs):
     super(iC_Project_Membership, self).__init__(*args, **kwargs)
     if self.record_type is None or self.record_type == '':
@@ -228,20 +234,20 @@ class iC_Project_Membership(iC_Membership):
 
   def _project_link(self):
     if hasattr(self, 'project'):
-      return self.project.selflink()
+      return self.project._selflink()
     else:
       lnk1 = a_str + "project/add/" + a_str2 + add_proj + "</a>"
       return lnk1
   _project_link.allow_tags = True
   _project_link.short_description = ''
 
-  def selflink(self):
+  def _selflink(self):
     if self.id:
       return a_str1 + "ic_project_membership/" + str(self.id) + a_str2 + a_edit + "</a>"# % str(self.id)
     else:
       return "Not present"
-  selflink.allow_tags = True
-  selflink.short_description = ''
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
 
 '''
@@ -290,30 +296,28 @@ class iC_Self_Employed(iC_Record):
   mentor_comment = models.TextField(blank=True, null=True, verbose_name=_(u"Comentaris soci mentor"))
 
   def _has_assisted_welcome(self):
-    if Learn_Session.objects.filter(
-        record_type__clas='welcome_session',
-        assistants__human__pk=self.membership.human.pk).count() > 0:
+    if self.ic_membership.human.assist_sessions.filter(record_type__clas='welcome_session').count() > 0:
       return True
     else:
       return False
   _has_assisted_welcome.boolean = True
+  _has_assisted_welcome.short_description = _(u"Assistencia a l'Acollida?")
   welcome_session = property(_has_assisted_welcome)
 
   def _has_assisted_socialcoin(self):
-    if Learn_Session.objects.filter(
-        record_type__clas='socialcoin_session',
-        assistants__human__pk=self.membership.human.pk).count() > 0:
+    if self.ic_membership.human.assist_sessions.filter(record_type__clas='socialcoin_session').count() > 0:
       return True
     else:
       return False
   _has_assisted_socialcoin.boolean = True
+  _has_assisted_socialcoin.short_description = _(u"Assistencia a Moneda Social?")
   socialcoin_session = property(_has_assisted_socialcoin)
 
   def __unicode__(self):
     if self.record_type is None or self.record_type == '':
-      return self.ic_membership.ic_project.nickname+' > '+self.ic_membership.human.__unicode__()
+      return self.ic_membership.ic_project.nickname+' > '+self.ic_membership.__unicode__()
     else:
-      return self.record_type.name+': '+self.ic_membership.human.__unicode__()
+      return self.record_type.name+': '+self.ic_membership.__unicode__()
 
   class Meta:
     verbose_name = _(u"Soci Autoocupat")
@@ -343,10 +347,8 @@ class iC_Self_Employed(iC_Record):
   _member_link.short_description = ''
 
   def _rel_fees(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
-    #print 'JELOW: '+str(self.rel_fees.all())
     fees = self.rel_fees.all()
-    #print 'FEES: '+str(fees)
-    out = '<ul style="margin-left:-10em;">'
+    out = ul_tag
     if fees.count() > 0:
       for fee in fees:
         out += '<li>'+a_str1 +'fee/'+str(fee.id)+a_str3 + '<b>'+fee.__unicode__() +'</b></a>: '+ str(fee.payed) +' </li>'
@@ -370,13 +372,12 @@ class iC_Self_Employed(iC_Record):
 
   def _rel_address_contract(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
     addrs = self.rel_address_contracts.all()
-    out = '<span style="margin-left:-100px;">'
+    out = ul_tag1
     if addrs.count() > 0:
       for adr in addrs:
-        out += a_str1 +'ic_address_contract/'+str(adr.id)+a_str3 + '<b>'+adr.__unicode__() +'</b></a>: '+ adr.doc_type.__unicode__() +'  /  '
-      return out + '</span>'
-    else:
-      return 'none'
+        out += '<li>'+a_str1 +'ic_address_contract/'+str(adr.id)+a_str3 + '<b>'+adr.__unicode__() +'</b></a>: '+adr.doc_type.__unicode__()+'</li>'
+      return out + '</ul>'
+    return False
   _rel_address_contract.allow_tags = True
   _rel_address_contract.short_description = ''#_(u"contractes?")
 
@@ -394,7 +395,7 @@ class iC_Stallholder(iC_Self_Employed):  # Firaire
   tent_type = models.CharField(max_length=5, choices=TentType, verbose_name=_(u"Tipus de carpa"))
   class Meta:
     verbose_name = _(u"Soci Firaire")
-    verbose_name_plural = _(u"Altes Socis Firaires")
+    verbose_name_plural = _(u"- Altes Socis Firaires")
 
 
 
@@ -406,10 +407,24 @@ class Learn_Session(iC_Record):
   duration = models.TimeField(default='01:00', verbose_name=_(u"Duració"))
   address = models.ForeignKey('General.Address', blank=True, null=True, verbose_name=_(u"Adreça"))
   def __unicode__(self):
-    return self.nonmaterial.name+': '+self.datetime+' ('+self.facilitator.name+') '+self.address.name
+    return self.nonmaterial.name+': '+str(self.datetime.date())+' ('+self.facilitator.name+') '+self.address.name
   class Meta:
     verbose_name = _(u"Sessió formativa")
     verbose_name_plural = _(u"r- Sessions formatives")
+
+  def _assistants_link(self):
+    assis = self.assistants.all()
+    if assis.count() > 0:
+      out = ul_tag1
+      for ass in assis:
+        slug = 'person'
+        if hasattr(ass, 'project'):
+          slug = 'project'
+        out += '<li>'+a_str+ slug+'/'+str(ass.id)+ a_str3+ '<b>'+ass.__unicode__()+'</b></a> <span class="mini">_'+str(ass.id)+'</span>'
+      return out+'</ul>'
+    return False
+  _assistants_link.allow_tags = True
+  _assistants_link.short_description = ''
 
 
 class Project_Accompaniment(iC_Record):
@@ -489,13 +504,13 @@ class Fee(iC_Record):
     #    self.membership.add(mem)# = self.selfemployed.first().ic_membership
 
 
-  def selflink(self):
+  def _selflink(self):
     if self.id:
       return a_str1 + "fee/" + str(self.id) + a_str2 + a_edit + "</a>"# % str(self.id)
     else:
       return "Not present"
-  selflink.allow_tags = True
-  selflink.short_description = ''
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
 class Payment_Type(iC_Type):
   ic_type = models.OneToOneField('iC_Type', primary_key=True, parent_link=True)
@@ -594,7 +609,7 @@ class iC_Address_Contract(iC_Document):
 
   def _address_link(self):
     if hasattr(self, 'address'):
-      return self.address.selflink()
+      return self.address._selflink()
     return False
   _address_link.allow_tags = True
   _address_link.short_description = ''

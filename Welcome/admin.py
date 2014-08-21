@@ -115,7 +115,7 @@ class MembershipAdmin(Public_MembershipAdmin):
   readonly_fields = ('_join_fee_payed', '_human_link', 'ic_project', '_joinfee_link')
 
   search_fields = ('name', 'ic_CESnum',)
-  list_display = ['name', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed']
+  list_display = ['name', 'record_type', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed']
   #list_filter = ('record_type',)
   raw_id_fields = ('human', 'expositors',)
   fieldsets = (
@@ -240,14 +240,15 @@ class Public_SelfEmployedAdmin(AutoRecordName):
   model = iC_Self_Employed
   list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
   #formset = SelfEmployedForm
-  readonly_fields = ('_member_link', '_rel_id_cards', '_rel_address_contract', '_rel_fees')
+  readonly_fields = ('_member_link', '_has_assisted_welcome', '_rel_id_cards', '_rel_address_contract', '_rel_fees')
   raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_address_contracts')#, 'rel_fees')
   fieldsets = (#MembershipAdmin.fieldsets + (
     (_(u"fase 1: Autoocupat"), {
       #'classes': ('collapse',),
       'fields': (
         ('ic_membership', '_member_link', 'organic',),
-        ('rel_fees', '_rel_fees',)
+        ('rel_fees', '_rel_fees',),
+        ('_has_assisted_welcome',)
       )
     }),
     #(_(u"fase 2: Llista de tasques"), {
@@ -362,6 +363,32 @@ class FeeAdmin(AutoRecordName):
       kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
     return super(FeeAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
+class LearnSessionAdmin(AutoRecordName):
+  model = Learn_Session
+  readonly_fields = ('name', '_assistants_link',)
+
+  list_display = ['name', 'nonmaterial', 'datetime', 'address', 'facilitator']
+  search_fields = ('name', 'address',)
+  raw_id_fields = ('assistants',)
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('nonmaterial', 'datetime', 'duration'),
+        ('address', 'facilitator'),
+        ('assistants', '_assistants_link',),
+        ('description', 'record_type', 'name')
+      )
+    }),
+  )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'record_type':
+      typ = iC_Record_Type.objects.get(clas='Learn_Session')
+      kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
+    if db_field.name == 'nonmaterial':
+      #typ = Nonmaterial_Type.objects.get(clas='ic_learn')
+      typs = Nonmaterial_Type.objects.filter(parent__clas='ic_learn')
+      kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
+    return super(LearnSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class AddressContractAdmin(AutoRecordName):
   model = iC_Address_Contract
@@ -376,7 +403,8 @@ class AddressContractAdmin(AutoRecordName):
       'fields': (
         ('name', '_ic_membership', '_ic_selfemployed'),
         ('doc_type', 'company'),
-        ('address', '_address_link', 'price', 'price_unit'),
+        ('address', '_address_link', 'file'),
+        ('price', 'price_unit'),
         ('start_date', 'end_date'),# 'ic_membership'),
       )
     }),
@@ -419,7 +447,7 @@ admin.site.register(iC_Insurance)
 admin.site.register(iC_Licence)
 
 admin.site.register(Fee, FeeAdmin)
-admin.site.register(Learn_Session)
+admin.site.register(Learn_Session, LearnSessionAdmin)
 admin.site.register(Project_Accompaniment)
 admin.site.register(Image)
 
