@@ -19,21 +19,30 @@ def create_membership(request, record_type_id=4):
 		print "#POST-------------------------------------------------------------------"
 		print "#Create form from request-----------------------------------------------"
 		form = create_membership_form(request.POST)
+		print "#Created form from request-----------------------------------------------"
+		#for fm in form:
+		#	print str(fm)
+
 		if form.is_valid():
 			record_type_id = request.POST["type"]
 			print "#Save person--------------------------------------------------------"
 			from Welcome.models import Person
+
 			current_person = form.save()
+			#print 'PERSON NAME: '+str(current_person)
 			current_person.name = form.cleaned_data.get("name")
+			#print 'PERSON NAME: '+current_person.name
 			current_person.nickname = form.cleaned_data.get("nickname")
 			current_person.save()
 			print current_person.id
+
 			print "#Save project--------------------------------------------------------"
-			from Welcome.models import iC_Type
+			from Welcome.models import iC_Record_Type
+
 			current_project = None
 			print record_type_id
-			print iC_Type.objects.get(clas="iC_Project_Membership").id
-			if str(record_type_id) == str(iC_Type.objects.get(clas="iC_Project_Membership").id):
+			#print iC_Record_Type.objects.get(clas="iC_Project_Membership").id
+			if str(record_type_id) == str(iC_Record_Type.objects.get(clas="iC_Project_Membership").id):
 				print "se ha de guardar el rpojectyo"
 				from Welcome.models import Project
 				current_project = Project(name=form.cleaned_data.get("project_name"), website=form.cleaned_data.get("project_website"))
@@ -49,17 +58,18 @@ def create_membership(request, record_type_id=4):
 				reverse('public_form:wait_membership', args=(current_user.id,))
 			)
 		else:
-			print "#Cannot save---------------------------------------------------------"
+			print "# CANNOT SAVE! ---------------------------------------------------------"
 			print form.errors
+			#print form.errors
 	else:
-		#INITIAL-----------------------------------------------------------------
+		print 'INITIAL-----------------------------------------------------------------'
 		#Create form from default------------------------------------------------
 		form = create_membership_form(
 				initial= {
 						"type" : record_type_id ,
 						"type_person": "public"
-						}
-				)
+				}
+		)
 	print "#Load extra data--------------------------------------------------------------"
 	extra_context = {}
 
@@ -96,12 +106,12 @@ def wait_membership(request, user_id = 0):
 	context = RequestContext(request)
 	for key, value in extra_context.items():
 		context[key] = callable(value) and value() or value
-	print "#Render form -----------------------------------------------------------------"
+	print "#Render WAIT form -----------------------------------------------------------------"
 	return render_to_response(
 		'waiting_membership.html',
 		{'RegistrationProfile' : current_registration},
 		context_instance=context
-		)
+	)
 
 
 def activate_membership(request, activation_key):
@@ -119,7 +129,8 @@ def activate_membership(request, activation_key):
 			project = Project.objects.get(nickname='CIC') #site project "Cooperativa Integral"
 		except:
 			project = Project()
-		print "proceso"
+
+		print "proceso: "+record_type_string
 		if record_type_string == "ic_akin_membership":
 			from Welcome.models import iC_Akin_Membership
 			#from General.models import Project
@@ -129,33 +140,69 @@ def activate_membership(request, activation_key):
 			ic_m.human_id = account.person.id
 			ic_m.save()
 			return HttpResponseRedirect( "/cooper/General/person/" + account.person.id.__str__()  )
-			
-		elif record_type_string == "ic_person_membership":
-			from Welcome.models import iC_Person_Membership
-			#ic_m = iC_Membership( human=account.person, ic_project=project)
-			ic_m = iC_Person_Membership( person=account.person, ic_project=project)
-			fee_amount = 30 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
-		elif record_type_string == "ic_project_membership":
-			from Welcome.models import iC_Project_Membership
-			#ic_m = iC_Membership( human=account.person, ic_project=project, project=account.project)
-			ic_m = iC_Project_Membership( person=account.person, ic_project=project, project=account.project)
-			fee_amount = 60 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
+
+		else:
+			from Welcome.models import Record_Type
+			from Welcome.models import iC_Record_Type
+			from Welcome.models import Fee
+			from Welcome.models import Unit
+			from Welcome.models import UnitRatio
+
+			from datetime import date, timedelta, datetime
+
+			if record_type_string == "ic_person_membership":
+				fee_type = iC_Record_Type.objects.get(clas__contains='individual')
+				lohuman = account.person
+			elif record_type_string == "ic_project_membership":
+				fee_type = iC_Record_Type.objects.get(clas__contains='collective')
+				lohuman = account.project
+
+			current_fee = Fee(
+				human = lohuman,
+				project = project,
+				record_type = fee_type,
+				#amount = fee_amount,
+				unit = Unit.objects.get(name="Euro"),
+				#membership = ic_m,
+				issue_date = datetime.now(),
+				deadline_date = datetime.now() + timedelta(days=5) ,
+			)
+			print '### guardant quota alta: '+str(current_fee)
+			current_fee.save()
+
+			if record_type_string == "ic_person_membership":
+
+				from Welcome.models import iC_Person_Membership
+				ic_m = iC_Person_Membership( ic_project=project, human=account.person, person=account.person, join_fee=current_fee)
+
+				ic_m.human_id = account.person.id
+
+			elif record_type_string == "ic_project_membership":
+
+				from Welcome.models import iC_Project_Membership
+				from Welcome.models import Person
+				from Welcome.models import Relation
+
+				print 'iC_Project_Membership: ic:'+str(project)+' proj:'+str(account.project)
+				ic_m = iC_Project_Membership( ic_project=project, human=account.project, project=account.project, join_fee=current_fee)
+
+				ref_typ = Relation.objects.get(clas='reference')
+				ref_obj, created = ic_m.human.human_persons.get_or_create(person=account.person, relation=ref_typ)
+				print 'iC_Project_Membership: ref created? '+str(created)+' obj: '+str(ref_obj)
+				print 'iC_Project_Membership: _get_ref_persons: '+str(ic_m.project._get_ref_persons())
+				print 'iC_Project_Membership: join_fee: '+str(ic_m.join_fee)
+				ic_m.human_id = account.project.id
+
+			else:
+				print '(activate_membership) RECORD_TYPE_STRING no reconegut!, esborro Quota !'
+				current_fee.delete()
+				return 'FALSE'
+
+			#fee_amount = 60 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
 		ic_m.record_type = account.record_type
-		ic_m.human_id = account.person.id
+		#ic_m.human_id = account.person.id
 		ic_m.save()
-		from Welcome.models import Fee
-		from General.models import Unit
-		from datetime import date, timedelta, datetime
-		current_fee = Fee(
-			human = account.person,
-			project = project,
-			amount = fee_amount,
-			unit = Unit.objects.get(name="Euro"),
-			membership = ic_m,
-			issue_date = datetime.now(),
-			deadline_date = datetime.now() + timedelta(days=5) ,
-		)
-		current_fee.save()
+
 		from Cooper.admin import *
 		return HttpResponseRedirect( "/cooper/General/person/" + account.person.id.__str__()  )
 

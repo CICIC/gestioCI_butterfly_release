@@ -57,12 +57,26 @@ from django.utils.html import escape, conditional_escape
 class AutoNameMixin(admin.ModelAdmin):
   def save_model(self, request, obj, form, change):
     instance = form.save(commit=False)
+    if not hasattr(instance, 'name'):
+      print 'AUTO NAME SAVE hasnot name!! '+str(obj)
+    #if instance.name is None or instance.name == '':
+    instance.name = instance.__unicode__()
+    instance.save()
+    form.save_m2m()
+    return instance
+
+'''
+class AutoRecordRelationMixin(admin.ModelAdmin):
+  def save_model(self, request, obj, form, change):
+    instance = form.save(commit=False)
+    if hasattr(instance, 'name'):
+      print 'AUTO NAME SAVE hasnot name!! '+str(obj)
     if instance.name is None or instance.name == '':
       instance.name = instance.__unicode__()
     instance.save()
     form.save_m2m()
     return instance
-
+'''
 
 '''
 class accountForm(forms.ModelForm):
@@ -116,7 +130,7 @@ class accountForm(forms.ModelForm):
 
 class H_addressInline(admin.StackedInline, InlineEditLinkMixin):
     model = rel_Human_Addresses
-    extra = 0
+    extra = 1
     raw_id_fields = ('address',)
     readonly_fields = ('_selflink',)#'edit_details',)
     fieldsets = (
@@ -128,7 +142,7 @@ class H_addressInline(admin.StackedInline, InlineEditLinkMixin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
       if db_field.name == 'relation':
         rel = Relation.objects.get(clas='rel_hum_spac')
-        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id).exclude(clas__icontains='_regi', parent__clas__icontains='_regi')
+        kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id).exclude(clas='rel_hum_regi').exclude(parent__clas='rel_hum_regi')
       return super(H_addressInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_jobInline(admin.StackedInline):
@@ -392,8 +406,9 @@ class H_assetInline(admin.StackedInline):
   #]
 
 
+rel_tit = Relation.objects.get(clas='holder')
 
-class HumanAdmin(AutoNameMixin):
+class HumanAdmin(admin.ModelAdmin):
   list_display = ['name', 'nickname', 'email']
   search_fields = ('name','nickname','email',)
   def save_formset(self, request, form, formset, change):
@@ -407,6 +422,30 @@ class HumanAdmin(AutoNameMixin):
     def set_accountCes_recordtype(instance):
       if not instance.record_type:
         instance.record_type = Record_Type.objects.get(clas='AccountCes')
+      #recs = instance.human.records.all()
+      #ac_ces = instance.human.accountsCes.all()
+
+      #print 'AccountsCES: '+str(instance.human.accountsCes.all())
+      #print 'Records: '+str(instance.human.records.all())
+      #print 'instance: '+str(instance)
+      #print 'rel_tit: '+str(rel_tit)
+      #new_rel, created = instance.human.records.get_or_create(accountces=instance, relation=rel_tit)
+      new_rel, created = rel_Human_Records.objects.get_or_create(human=instance.human, record=instance, relation=rel_tit)
+      print 'NEW_REL: '+str(new_rel)+' CREATED: '+str(created)
+
+      '''
+      print 'Fields:'
+      print [f.name for f in instance.human._meta.fields]
+      print 'M 2 M:'
+      print [f.name for f in instance.human._meta.many_to_many]
+      print 'relRecords: COL: '
+      recz = instance.human._meta.get_field('records')
+      print recz.m2m_column_name()
+      print 'relRecords: REV: '
+      print recz.m2m_reverse_name()
+      '''
+
+      #if not instance.
       instance.save()
     def set_accountBank_recordtype(instance):
       if not instance.record_type:
@@ -451,7 +490,7 @@ class HumanAdmin(AutoNameMixin):
 
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
   model = Project
-  #readonly_fields = ('_get_ref_persons',)
+  readonly_fields = ('_ref_persons', '_ic_membership',)
   fieldsets = (
     (None, {
       'fields':(('name', 'nickname', 'project_type'),
@@ -460,8 +499,8 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
                 ('birth_date', 'parent', 'telephone_land'))
     }),
     (_(u"Descripció"), {
-      'classes': ('collapse',),
-      'fields': (('description'),)
+      #'classes': ('collapse',),
+      'fields': (('description', '_ref_persons', '_ic_membership',),)
     }),
   )
   inlines = [
@@ -502,6 +541,8 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
 
 class Public_PersonAdmin(HumanAdmin):
+  list_display = ['name', 'surnames', 'nickname', 'email']
+  readonly_fields = ('_ic_membership', '_fees_to_pay',)
   fieldsets = (
     (None, {
       'fields':(('name', 'surnames', 'id_card'),
@@ -510,8 +551,8 @@ class Public_PersonAdmin(HumanAdmin):
                 ('website', 'telephone_cell', 'telephone_land'))
     }),
     (_(u"Descripció"), {
-      'classes': ('collapse',),
-      'fields': (('description'),)
+      #'classes': ('collapse',),
+      'fields': (('description', '_ic_membership', '_fees_to_pay',),)
     }),
   )
   #filter_horizontal = ('arts',)# 'projects',) # 'addresses',)
@@ -536,7 +577,7 @@ class Public_PersonAdmin(HumanAdmin):
 
 class PersonAdmin(Public_PersonAdmin):
 
-  list_display = ['name', 'surnames', 'nickname', 'email']
+  #list_display = ['name', 'surnames', 'nickname', 'email']
   search_fields = ('name', 'surnames', 'nickname', 'email')
 
   inlines = Public_PersonAdmin.inlines + [
@@ -683,6 +724,8 @@ class AccountCesAdmin(AutoNameMixin):
       typ = Unit_Type.objects.get(clas='social_currency')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
     return super(AccountCesAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+
 
 class AccountBankAdmin(AutoNameMixin):
   model = AccountBank

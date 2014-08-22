@@ -72,11 +72,11 @@ class RegistrationManager(models.Manager):
 		from django.contrib.auth.models import Group
 		print record_type.name
 		try:
-			g = Group.objects.get(name=record_type.clas) 
+			g = Group.objects.get(name=record_type.clas)
 		except:
 			g = Group(name=record_type.clas)
 			g.save()
-		g.user_set.add(user) 
+		g.user_set.add(user)
 		return create_user
 
 	def delete_expired_users(self):
@@ -89,6 +89,7 @@ class RegistrationManager(models.Manager):
 						profile.delete()
 			except User.DoesNotExist:
 				profile.delete()
+
 
 from django.conf import settings
 class RegistrationProfile(models.Model):
@@ -139,7 +140,7 @@ class RegistrationProfile(models.Model):
 								   ctx_dict)
 		# Email subject *must not* contain newlines
 		subject = ''.join(subject.splitlines())
-		
+
 		message = render_to_string('activation_email.html',
 								   ctx_dict)
 

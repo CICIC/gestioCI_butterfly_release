@@ -18,6 +18,12 @@ from django.forms.models import BaseInlineFormSet
 from django.forms.formsets import formset_factory
 
 class AutoRecordName(admin.ModelAdmin):
+  class Media:
+    css = {
+      'all': ('admin_record.css',)
+    }
+    js = ()
+
   def save_model(self, request, obj, form, change):
     instance = form.save(commit=False)
     #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
@@ -134,7 +140,7 @@ class MembershipAdmin(Public_MembershipAdmin):
 
 class PersonMembershipAdmin(AutoRecordName):
   model = iC_Person_Membership
-  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_person_link', '_joinfee_link')
+  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_person_link', '_joinfee_link', '_ic_selfemployed_list')
 
   search_fields = ('name', 'ic_CESnum')
   list_display = ['name', 'person', 'ic_CESnum', 'join_date', '_join_fee_payed']
@@ -147,7 +153,7 @@ class PersonMembershipAdmin(AutoRecordName):
         ('contribution', 'virtual_market', 'labor_contract'),
         ('join_fee', '_joinfee_link', '_join_fee_payed'),
         ('join_date', 'end_date'),
-        ('expositors', 'name', 'description'))
+        ('expositors', '_ic_selfemployed_list', 'description'))
     }),
   )
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -158,7 +164,7 @@ class PersonMembershipAdmin(AutoRecordName):
 
 class ProjectMembershipAdmin(AutoRecordName):
   model = iC_Project_Membership
-  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_project_link', '_joinfee_link')
+  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_project_link', '_joinfee_link', '_ic_selfemployed_list')
 
   search_fields = ('name', 'ic_CESnum')
   list_display = ['name', 'project', 'ic_CESnum', 'join_date', '_join_fee_payed']
@@ -171,7 +177,7 @@ class ProjectMembershipAdmin(AutoRecordName):
         ('contribution', 'virtual_market'),
         ('join_fee', '_joinfee_link', '_join_fee_payed'),
         ('join_date', 'end_date',),
-        ('expositors', 'name', 'description'))
+        ('expositors', '_ic_selfemployed_list', 'description'))
     }),
   )
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -190,7 +196,6 @@ class SE_relAddressContractInlineSet(BaseInlineFormSet):
       #print 'INLINESET: '+str(kwargs['instance'].ic_membership)
       #print kwargs['instance']
     #  self.queryset = iC_Address_Contract.objects.filter(ic_membership=kwargs['instance'].ic_membership)
-
 
 class SE_relAddressContractInline(admin.StackedInline):
   model = iC_Address_Contract
@@ -222,7 +227,6 @@ class SE_relAddressContractInline(admin.StackedInline):
     return super(SE_relAddressContractInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-
 '''
 class SelfEmployedForm(forms.BaseModelForm):
   def __init__(self, *args, **kwargs):
@@ -234,7 +238,7 @@ class SelfEmployedForm(forms.BaseModelForm):
 class Public_SelfEmployedAdmin(AutoRecordName):
   class Media:
     css = {
-      'all': ('selfemployed.css',)
+      'all': ('admin_record.css', 'selfemployed.css',)
     }
     js = ()
 
@@ -242,7 +246,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
   list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
   #formset = SelfEmployedForm
   readonly_fields = ('_member_link', '_has_assisted_welcome', '_rel_id_cards', '_rel_address_contract', '_rel_fees')
-  raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_address_contracts')#, 'rel_fees')
+  raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_address_contracts', 'rel_fees',)
   fieldsets = (#MembershipAdmin.fieldsets + (
     (_(u"fase 1: Autoocupat"), {
       #'classes': ('collapse',),
@@ -334,15 +338,53 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
     #SE_relAddressContractInline,
   ]
 
-
-class FeeAdmin(AutoRecordName):
+class Public_FeeAdmin(AutoRecordName):
   model = Fee
-  readonly_fields = ('name', 'project', '_ic_membership', '_ic_selfemployed', '_auto_amount')
+  readonly_fields = ('name', 'record_type', 'human', 'project',
+                  'issue_date', 'deadline_date', 'payment_date',
+                  '_ic_membership', '_ic_selfemployed', '_auto_amount',)
 
   search_fields = ('name', 'unit')
   list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
   #list_filter = ('unit',)
   raw_id_fields = ('human', 'rel_account')
+  fieldsets = (
+    (None, {
+      'fields': (
+        #('record_type', 'project'),
+        ('human', '_ic_membership', '_ic_selfemployed'),
+        ('unit', 'amount', '_auto_amount'),
+        ('issue_date', 'deadline_date'),
+        ('payment_type', 'payment_date'),
+        ('rel_account',)# 'name')
+      )
+    }),
+  )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'record_type':
+      typ = iC_Record_Type.objects.get(clas='Fee')
+      kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+    if db_field.name == 'unit':
+      typs = Unit_Type.objects.filter(clas__icontains='currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
+    return super(Public_FeeAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+  def get_readonly_fields(self, request, obj=None):
+    if obj and obj.record_type.clas.startswith('('):
+      return self.readonly_fields + ('amount',)
+    return self.readonly_fields
+
+
+class FeeAdmin(Public_FeeAdmin):
+  #model = Fee
+  readonly_fields = ('name', 'project', '_ic_membership', '_ic_selfemployed', '_auto_amount')
+  #editable_fields = ('unit', 'payment_type',)
+
+  #search_fields = ('name', 'unit')
+  #list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
+  #list_filter = ('unit',)
+  #raw_id_fields = ('human', 'rel_account')
+
   fieldsets = (
     (None, {
       'fields': (
@@ -355,6 +397,7 @@ class FeeAdmin(AutoRecordName):
       )
     }),
   )
+  '''
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     if db_field.name == 'record_type':
       typ = iC_Record_Type.objects.get(clas='Fee')
@@ -368,6 +411,7 @@ class FeeAdmin(AutoRecordName):
     if obj and obj.record_type.clas.startswith('('):
       return self.readonly_fields + ('amount',)
     return self.readonly_fields
+  '''
 
 class LearnSessionAdmin(AutoRecordName):
   model = Learn_Session
@@ -452,7 +496,9 @@ admin.site.register(iC_Address_Contract, AddressContractAdmin)
 admin.site.register(iC_Insurance)
 admin.site.register(iC_Licence)
 
+#admin.site.register(Fee, Public_FeeAdmin)
 admin.site.register(Fee, FeeAdmin)
+
 admin.site.register(Learn_Session, LearnSessionAdmin)
 admin.site.register(Project_Accompaniment)
 admin.site.register(Image)

@@ -1,0 +1,7 @@
+input.vManyToManyRawIdAdminField {
+  display: none;
+}
+
+input.vForeignKeyRawIdAdminField {
+  display: none;
+}

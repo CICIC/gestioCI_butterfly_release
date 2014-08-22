@@ -13,11 +13,18 @@ from itertools import chain
 
 # Create your models here.
 
-a_str = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
+a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
+a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Welcome/"
 #a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
 a_str2 = "?_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
+a_str3 = "?_popup=1&t=human' target='_blank'>"
 
 a_edit = '<b>Edita</b>'
+
+ul_tag1 = '<ul style="margin-left:-10em;">'
+ul_tag = '<ul>'
+
+str_none = '<p>ninguna</p>'
 
 #   C O N C E P T S - (Conceptes...)
 
@@ -100,21 +107,89 @@ class Human(Being):  # Create own ID's
       return self.nickname+' ('+self.name+')'
 
   def _my_accounts(self):
-    return list(chain(self.accountsCes, self.accountsCrypto, self.accountsBank))
+    return list(chain(self.accountsCes.all(), self.accountsCrypto.all(), self.accountsBank.all()))
   #_my_accounts.list = []
   accounts = property(_my_accounts)
 
   def _selflink(self):
     if self.id:
       if hasattr(self, 'person'):
-        return a_str + "person/" + str(self.person.id) + a_str2 + a_edit + "</a>"# % str(self.id)
+        return a_strG + "person/" + str(self.person.id) + a_str2 + a_edit + "</a>"# % str(self.id)
       elif hasattr(self, 'project'):
-        return a_str + "project/" + str(self.project.id) + a_str2 + a_edit + "</a>"# % str(self.id)
+        return a_strG + "project/" + str(self.project.id) + a_str2 + a_edit + "</a>"# % str(self.id)
     else:
       return "Not present"
   _selflink.allow_tags = True
   _selflink.short_description = ''
 
+  def _ic_membership(self):
+    #print self.ic_membership_set.all()
+    if hasattr(self, 'ic_person_membership_set'):
+      ic_ms = self.ic_person_membership_set.all()
+      out = ul_tag
+      for ms in ic_ms:
+        out += '<li>'+a_strW + "ic_person_membership/" + str(ms.id) + a_str3 + ms.name + "</a></li>"
+      return out+'</ul>'
+    elif hasattr(self, 'ic_project_membership_set'):
+      ic_ms = self.ic_project_membership_set.all()
+      out = ul_tag
+      for ms in ic_ms:
+        out += '<li>'+a_strW + "ic_project_membership/" + str(ms.id) + a_str3 + ms.name + "</a></li>"
+      if out == ul_tag:
+        return str_none
+      return out+'</ul>'
+    return str_none
+  _ic_membership.allow_tags = True
+  _ic_membership.short_description = _(u"reg.Altes Soci")
+
+  def _fees_to_pay(self):
+    print self.out_fees.all()
+    if self.out_fees.all().count() > 0:
+      out = ul_tag
+      for fe in self.out_fees.all():
+        if not fe.payed:
+          out += '<li>'+a_strW + "fee/" + str(fe.id) + a_str3 + fe.name + "</a></li>"
+      if out == ul_tag:
+        return str_none
+      return out+'</ul>'
+    return str_none
+  _fees_to_pay.allow_tags = True
+  _fees_to_pay.short_description = _(u"Quotes per pagar")
+
+  def __init__(self, *args, **kwargs):
+    super(Human, self).__init__(*args, **kwargs)
+
+    if not 'rel_tit' in globals():
+      rel_tit = Relation.objects.get(clas='holder')
+
+    #print 'I N I T   H U M A N :  '+self.name
+
+    if hasattr(self, 'accountsCes') and self.accountsCes.count() > 0:
+      recrels = rel_Human_Records.objects.filter(human=self, record__in=self.accountsCes.all())
+      if recrels.count() == 0:
+        for acc in self.accountsCes.all():
+          newrec, created = rel_Human_Records.objects.get_or_create(human=self, record=acc, relation=rel_tit)
+          print '- new_REC acc_Ces: CREATED:'+str(created)+' :: '+str(newrec)
+
+    if hasattr(self, 'accountsBank') and self.accountsBank.count() > 0:
+      recrels = rel_Human_Records.objects.filter(human=self, record__in=self.accountsBank.all())
+      if recrels.count() == 0:
+        for acc in self.accountsBank.all():
+          newrec, created = rel_Human_Records.objects.get_or_create(human=self, record=acc, relation=rel_tit)
+          print '- new_REC acc_Bank: CREATED:'+str(created)+' :: '+str(newrec)
+
+    if hasattr(self, 'accountsCrypto') and self.accountsCrypto.count() > 0:
+      recrels = rel_Human_Records.objects.filter(human=self, record__in=self.accountsCrypto.all())
+      if recrels.count() == 0:
+        for acc in self.accountsCrypto.all():
+          newrec, created = rel_Human_Records.objects.get_or_create(human=self, record=acc, relation=rel_tit)
+          print '- new_REC acc_Crypto: CREATED:'+str(created)+' :: '+str(newrec)
+
+      #print 'recrels: '+str(recrels)
+      #print self.accountsCes.all()
+      #print self.records.all()
+      #if hasattr(self.records)
+      #self.project = Project.objects.get(nickname='CIC')
 
 
 class Person(Human):
@@ -148,7 +223,7 @@ class Project(MPTTModel, Human):
   socialweb = models.CharField(max_length=100, blank=True, verbose_name=_(u"Web Social"))
   email2 = models.EmailField(blank=True, verbose_name=_(u"Email alternatiu"))
 
-  images = models.ManyToManyField('Image', blank=True, null=True, verbose_name=_(u"Imatges"))
+  #images = models.ManyToManyField('Image', blank=True, null=True, verbose_name=_(u"Imatges"))
 
   #assets = models.ManyToManyField('Asset', through='rel_Human_Materials', null=True, verbose_name=_(u"Actius del projecte"))
   #def _has_assets(self):
@@ -171,6 +246,22 @@ class Project(MPTTModel, Human):
   class Meta:
     verbose_name= _(u'Projecte')
     verbose_name_plural= _(u'e- Projectes')
+
+  def _get_ref_persons(self):
+    return self.human_persons.filter(relation__clas='reference')
+
+  def _ref_persons(self):
+    prs = self._get_ref_persons()
+    if prs.count() > 0:
+      out = ul_tag
+      for pr in prs:
+        out += '<li>'+str(pr)+'</li>'
+      return out+'</ul>'
+    return str(prs)
+  _ref_persons.allow_tags = True
+  _ref_persons.short_description = _(u"Pers.de Referència?")
+
+
 
 class Project_Type(Being_Type):
   being_type = models.OneToOneField('Being_Type', primary_key=True, parent_link=True)
@@ -418,7 +509,7 @@ class Job(Art):    # Create own ID's (TREE)
       return self.name+' ('+self.clas+')'
 
 
-
+#rel_tit = Relation.objects.get(clas='holder')
 
 #   S P A C E S - (Regions, Espais, Adreçes...)
 
@@ -485,7 +576,7 @@ class Address(Space):  # Create own ID's
 
   def _selflink(self):
     if self.id:
-        return a_str + "address/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
+        return a_strG + "address/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
     else:
         return "Not present"
   _selflink.allow_tags = True
@@ -775,7 +866,7 @@ class Record(Artwork):  # Create own ID's
 
   def _selflink(self):
     if self.id:
-        return a_str + "record/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
+        return a_strG + "record/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
     else:
         return "Not present"
   _selflink.allow_tags = True

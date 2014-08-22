@@ -1,11 +1,12 @@
 #encoding=utf-8
 
 from django import forms
+#from Welcome.models import Person
 from Welcome.models import Person
 from django.utils.translation import ugettext_lazy as _
 attrs_dict = {'class': 'required'}
 
-from General.models import Project
+from Welcome.models import Project
 class project_form(forms.ModelForm):
 	class Meta:
 		model = Project
@@ -35,9 +36,9 @@ class create_membership_form(forms.ModelForm):
 	'''
 	from Welcome.models import iC_Record_Type
 	from Welcome.models import iC_Type
-	choice_one = iC_Type.objects.get(clas="iC_Akin_Membership")
-	choice_two = iC_Type.objects.get(clas="iC_Person_Membership")
-	choice_three = iC_Type.objects.get(clas="iC_Project_Membership")
+	choice_one = iC_Record_Type.objects.get(clas="iC_Akin_Membership")
+	choice_two = iC_Record_Type.objects.get(clas="iC_Person_Membership")
+	choice_three = iC_Record_Type.objects.get(clas="iC_Project_Membership")
 	CHOICES = (
 		(choice_one.id, choice_one.name),
 		(choice_two.id, choice_two.name),
@@ -56,32 +57,38 @@ class create_membership_form(forms.ModelForm):
 								widget=forms.TextInput(attrs=attrs_dict),
 								label=_("Username"),
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+
 	email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict,
-															   max_length=100)),
-							 label=_("E-mail"))
+								max_length=100)),
+							  label=_("E-mail"))
+
 	password1 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
 								label=_("Password"))
+
 	password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
 								label=_("Password (again)"))
 
 	name = forms.RegexField(regex=r'^[\w.@+-]+$',
 								max_length=50,
-								widget=forms.TextInput(attrs=attrs_dict),
+								widget=forms.TextInput(),
 								label=_("Nom real"),
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+
 	project_name = forms.RegexField(regex=r'^[\w.@+-]+$',
-								max_length=50,
-								widget=forms.TextInput(attrs=attrs_dict),
+								max_length=100,
+								widget=forms.TextInput(),
 								label=_("Nom del projecte"),
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+
 	project_website = forms.RegexField(regex=r'^[\w.@+-]+$',
 								label=_("Web del projecte"),
 								max_length=100,
-								widget=forms.TextInput(attrs=attrs_dict),
+								widget=forms.TextInput(),
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+
 	from django.contrib.admin import VERTICAL
 	radio_fields = {"type": VERTICAL}
 
@@ -89,34 +96,47 @@ class create_membership_form(forms.ModelForm):
 		print "#Clean nickname---------------------------------------------------------------"
 		if self.cleaned_data.get("nickname") is None:
 			return self.cleaned_data.get("username")
-		else:
-			return self.cleaned_data.get("nickname")
+		return self.cleaned_data.get("nickname")
+
 	def clean_name(self):
-		print "#Clean name---------------------------------------------------------------"
-		if self.cleaned_data.get("name") is None:
+		print "#Clean Name---------------------------------------------------------------"
+		print 'Pers_NAME? '+str(self.cleaned_data.get("name"))
+		#print 'NAME: '+str(self.cleaned_data['name'])
+		if self.cleaned_data.get("name") is None or self.cleaned_data.get("name") == '':
+			print 'Clean_Person_Name: A N O N Y M U S ? '+str(self.cleaned_data)
 			return "anonymous"
 		else:
+			#self.cleaned_data['name'] = self.cleaned_data.get("person_name")
+			#print 'Clean_Person_Name: '+str(self.cleaned_data.get("person_name"))
 			return self.cleaned_data.get("name")
-
+	'''
+	def clean_project_name(self):
+		print "#Clean project_name---------------------------------------------------------------"
+		if self.cleaned_data.get("project_name") is None or self.cleaned_data.get("project_name") == '':
+			print 'Clean_Project_Name: A N O N Y M U S'
+			return "anonymous"
+		return self.cleaned_data.get("project_name")
+	'''
 	def clean_username(self):
 		from django.contrib.auth.models import User
 		existing = User.objects.filter(username__iexact=self.cleaned_data['username'])
 		if existing.exists():
 			raise forms.ValidationError(_("A user with that username already exists."))
-		else:
-			return self.cleaned_data['username']
+		return self.cleaned_data['username']
 
 	def clean(self):
 		if 'password1' in self.cleaned_data and 'password2' in self.cleaned_data:
 			if self.cleaned_data['password1'] != self.cleaned_data['password2']:
 				raise forms.ValidationError(_("The two password fields didn't match."))
 		return self.cleaned_data
+
 	class Media:
 		js = (
 			"admin/js/core.js",
 			"admin/js/jquery.js",
 			"admin/js/jquery.init.js",
 			'create_membership.js', )
+
 	class Meta:
 		model = Person
 		fields = ("type", "username", "email", "id_card", "name", "surnames", "nickname", "telephone_cell", 'telephone_land')

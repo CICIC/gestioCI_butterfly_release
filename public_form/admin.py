@@ -1,3 +1,4 @@
+#encoding=utf-8
 from django.contrib import admin
 
 from django import forms
@@ -7,6 +8,8 @@ from django.utils.translation import ugettext as _
 
 from Cooper.admin import user_admin_site
 
+from itertools import chain
+
 from Welcome.models import iC_Akin_Membership
 from Welcome.admin import Public_AkinMembershipAdmin
 class Public_AkinMembershipAdmin(Public_AkinMembershipAdmin):
@@ -14,7 +17,8 @@ class Public_AkinMembershipAdmin(Public_AkinMembershipAdmin):
 	def queryset(self, request):
 		from public_form import bots
 		return iC_Akin_Membership.objects.filter(person=bots.user_registration_bot().get_person(request.user))
-user_admin_site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
+#user_admin_site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
+
 
 from Welcome.models import iC_Person_Membership
 from Welcome.admin import PersonMembershipAdmin
@@ -22,32 +26,43 @@ class PersonMembershipAdmin(PersonMembershipAdmin):
 	def queryset(self, request):
 		from public_form import bots
 		return iC_Person_Membership.objects.filter(person=bots.user_registration_bot().get_person(request.user))
-user_admin_site.register(iC_Person_Membership, PersonMembershipAdmin)
+#user_admin_site.register(iC_Person_Membership, PersonMembershipAdmin)
+
 
 from Welcome.models import iC_Project_Membership
 from Welcome.admin import ProjectMembershipAdmin
 class ProjectMembershipAdmin(ProjectMembershipAdmin):
 	def queryset(self, request):
 		from public_form import bots
-		return iC_Project_Membership.objects.filter(person=bots.user_registration_bot().get_person(request.user))
-user_admin_site.register(iC_Project_Membership, ProjectMembershipAdmin)
+		return iC_Project_Membership.objects.filter(human_persons__human=bots.user_registration_bot().get_person(request.user))
+#user_admin_site.register(iC_Project_Membership, ProjectMembershipAdmin)
+
 
 from Welcome.models import Fee
-from Welcome.admin import FeeAdmin
-class FeeAdmin(FeeAdmin):
+from Welcome.admin import Public_FeeAdmin
+class Public_FeeAdmin(Public_FeeAdmin):
 	def queryset(self, request):
 		from public_form import bots
-		return Fee.objects.filter(human=bots.user_registration_bot().get_person(request.user))
-user_admin_site.register(Fee, FeeAdmin)
+		ref_pro = bots.user_registration_bot().get_person(request.user).rel_humans.filter(relation__clas='reference').values('human')
+		fees = Fee.objects.filter(human=bots.user_registration_bot().get_person(request.user))
+		if fees.count() > 0:
+			# añadir al queryset los ref_projects del person TODO
+			return fees
+		else:
+			fees = Fee.objects.filter(human__in=ref_pro)
+		#print 'FEES ok: '+str(fees)
+		return fees
+user_admin_site.register(Fee, Public_FeeAdmin)
+
 
 from General.models import Person
 from General.admin import Public_PersonAdmin
-
 class Public_PersonAdmin(Public_PersonAdmin):
 	def queryset(self, request):
 		from public_form import bots
 		return Person.objects.filter(id=bots.user_registration_bot().get_person(request.user).id)
 user_admin_site.register(Person, Public_PersonAdmin)
+
 
 from General.models import Project
 from General.admin import Public_ProjectAdmin
@@ -57,11 +72,13 @@ class Public_ProjectAdmin(Public_ProjectAdmin):
 		return Project.objects.all()#.filter(id=bots.user_registration_bot().get_project(request.user).id)
 user_admin_site.register(Project, Public_ProjectAdmin)
 
+
 from public_form.models import RegistrationProfile
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin import SimpleListFilter
 #Use this in like => list_filter = (onlyownedFilter,)
+
 class only_pending_filter(SimpleListFilter):
 	title = _(u'Estat')
 
