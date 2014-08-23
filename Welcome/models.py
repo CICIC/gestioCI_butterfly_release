@@ -25,6 +25,9 @@ a_edit = '<b>Editar</b>'
 ul_tag = '<ul>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
 
+ico_no = '<img src="/static/admin/img/icon-no.gif" alt="False">'
+ico_yes = '<img src="/static/admin/img/icon-yes.gif" alt="True">'
+
 # Create your models here.
 
 class iC_Record(Artwork):  # create own ID's
@@ -185,6 +188,16 @@ class iC_Membership(iC_Record):
     return str_none
   _ic_selfemployed_list.allow_tags = True
   _ic_selfemployed_list.short_description = _(u"reg. alta Autoocupat")
+
+  def _expositors_list(self):
+    out = ul_tag
+    for add in self.expositors.all():
+      out += '<li>'+ add.name +' (x)</li>' # TODO poner link de borrar a la X
+    if out == ul_tag:
+      return str_none
+    return out+'</ul>'
+  _expositors_list.allow_tags = True
+  _expositors_list.short_description = ''
 
   def _selflink(self):
     if self.id:
@@ -368,7 +381,10 @@ class iC_Self_Employed(iC_Record):
     out = ul_tag
     if fees.count() > 0:
       for fee in fees:
-        out += '<li>'+a_strW +'fee/'+str(fee.id)+a_str3 + '<b>'+fee.__unicode__() +'</b></a>: '+ str(fee.payed) +' </li>'
+        ico = ico_no
+        if fee.payed:
+          ico = ico_yes
+        out += '<li>'+a_strW +'fee/'+str(fee.id)+a_str3 + '<b>'+fee.__unicode__() +'</b></a>: &nbsp; '+ ico +' </li>'
       return out + '</ul>'
     return False
   _rel_fees.allow_tags = True
@@ -503,7 +519,7 @@ class Fee(iC_Record):
 			record_type = "<record:type.name>"
 		else:
 			record_type = self.record_type.name
-		return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+'] > '+self.project.nickname
+		return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
 
   class Meta:
     verbose_name = _(u"Quota")
@@ -558,7 +574,7 @@ class Fee(iC_Record):
             print '_AUTO_AMOUNT: eqi ??: '+str(eqi)
           val = float(arr[0])/float(rate)
           setattr(self, 'amount', val)
-          print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
+          #print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
           return True
         else:
           print '_AUTO_AMOUNT: uni.count != 1 !!? '+str(uni)

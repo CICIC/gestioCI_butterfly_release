@@ -140,20 +140,24 @@ class MembershipAdmin(Public_MembershipAdmin):
 
 class PersonMembershipAdmin(AutoRecordName):
   model = iC_Person_Membership
-  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_person_link', '_joinfee_link', '_ic_selfemployed_list')
+  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_person_link',
+                      '_joinfee_link', '_ic_selfemployed_list', '_expositors_list')
 
   search_fields = ('name', 'ic_CESnum')
   list_display = ['name', 'person', 'ic_CESnum', 'join_date', '_join_fee_payed']
-  raw_id_fields = ('person', 'join_fee',)
+  raw_id_fields = ('person', 'join_fee', 'expositors',)
   fieldsets = (
     (None, {
       'fields':(
-        ('record_type', 'ic_project'),
-        ('person', '_person_link', 'ic_CESnum'),
-        ('contribution', 'virtual_market', 'labor_contract'),
+        ('record_type',),
+        ('ic_CESnum', 'ic_project',),
+        ('person', '_person_link',),
         ('join_fee', '_joinfee_link', '_join_fee_payed'),
+        ('contribution', 'virtual_market'),
         ('join_date', 'end_date'),
-        ('expositors', '_ic_selfemployed_list', 'description'))
+        ('expositors', '_expositors_list',),
+        ('labor_contract','_ic_selfemployed_list',),
+        ('description',))
     }),
   )
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -164,20 +168,23 @@ class PersonMembershipAdmin(AutoRecordName):
 
 class ProjectMembershipAdmin(AutoRecordName):
   model = iC_Project_Membership
-  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_project_link', '_joinfee_link', '_ic_selfemployed_list')
+  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_project_link',
+                    '_joinfee_link', '_ic_selfemployed_list', '_expositors_list',)
 
   search_fields = ('name', 'ic_CESnum')
   list_display = ['name', 'project', 'ic_CESnum', 'join_date', '_join_fee_payed']
-  raw_id_fields = ('project', 'join_fee',)
+  raw_id_fields = ('project', 'join_fee', 'expositors',)
   fieldsets = (
     (None, {
       'fields':(
-        ('record_type', 'ic_project'),
-        ('project', '_project_link', 'ic_CESnum'),
-        ('contribution', 'virtual_market'),
+        ('record_type',),
+        ('ic_CESnum', 'ic_project',),
+        ('project', '_project_link',),
         ('join_fee', '_joinfee_link', '_join_fee_payed'),
+        ('contribution', 'virtual_market'),
         ('join_date', 'end_date',),
-        ('expositors', '_ic_selfemployed_list', 'description'))
+        ('expositors', '_expositors_list',),
+        ('_ic_selfemployed_list', 'description'))
     }),
   )
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -263,8 +270,10 @@ class Public_SelfEmployedAdmin(AutoRecordName):
     (_(u"fase 3: Alta"), {
       'classes': ('collapse',),
       'fields': (
-        ('join_date', 'assigned_vat', 'review_vat', 'last_review_date'),
-        ('rel_accountBank', 'mentor_membership', 'mentor_comment', 'end_date'))
+        ('join_date', ),
+        ('assigned_vat', 'review_vat', 'last_review_date'),
+        ('rel_accountBank',),
+        ('mentor_membership', 'mentor_comment',))
     }),
     (_(u"fase 2: Llista de tasques"), {
       #'classes': ('collapse',),
