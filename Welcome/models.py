@@ -22,8 +22,27 @@ add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
 
+str_remove = 'treu'
 ul_tag = '<ul>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
+
+ico_no = '<img src="/static/admin/img/icon-no.gif" alt="False">'
+ico_yes = '<img src="/static/admin/img/icon-yes.gif" alt="True">'
+
+'''
+@app.route('/update_fnk', method=["POST"])
+def update_fnk(self, **data):
+    print 'JEELOW'
+    print str(self)
+    print str(data)
+    ret_val = 'JOOL'
+
+    return jsonify({"update_fnk", ret_val})
+'''
+
+def erase_id_link(field, id):
+  out = '<a class="erase_id_on_box" name="'+str(field)+','+str(id)+'" href="javascript:;">'+str_remove+'</a>'
+  return out
 
 # Create your models here.
 
@@ -113,6 +132,7 @@ class iC_Akin_Membership(iC_Record):
     if hasattr(self, 'person'):
       return self.person._selflink()
     else:
+      return str_none
       lnk1 = a_strG + "person/add/" + a_str2 + add_pers + "</a>"
       return lnk1
   _person_link.allow_tags = True
@@ -185,6 +205,16 @@ class iC_Membership(iC_Record):
     return str_none
   _ic_selfemployed_list.allow_tags = True
   _ic_selfemployed_list.short_description = _(u"reg. alta Autoocupat")
+
+  def _expositors_list(self):
+    out = ul_tag
+    for add in self.expositors.all():
+      out += '<li>'+ add.name +' - '+erase_id_link('expositors', add.id)+'</li>'
+    if out == ul_tag:
+      return str_none
+    return out+'</ul>'
+  _expositors_list.allow_tags = True
+  _expositors_list.short_description = ''
 
   def _selflink(self):
     if self.id:
@@ -285,7 +315,7 @@ class iC_Self_Employed(iC_Record):
 
   rel_fees = models.ManyToManyField('Fee', related_name='selfemployed', blank=True, null=True,
                                     verbose_name=_(u"Quotes trimestrals"),
-                                    limit_choices_to={'record_type__parent__clas': 'quarterly_fee'})#human':ic_membership.human.pk})#.self_employed})
+                                    )#limit_choices_to={'record_type__parent__clas': 'quarterly_fee'})#human':ic_membership.human.pk})#.self_employed})
 
   organic = models.BooleanField(verbose_name=_(u"Productes ecològics/organics?"))
   #welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
@@ -297,15 +327,15 @@ class iC_Self_Employed(iC_Record):
   req_images = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix fotos?"))
   '''
   rel_address_contracts = models.ManyToManyField('iC_Address_Contract', related_name="selfemployed", blank=True, null=True, verbose_name=_(u"Contractes d'Adreça vinculats"))
-  rel_insurances = models.ManyToManyField('iC_Insurance', blank=True, null=True, verbose_name=_(u"Assegurances vinculades"))
-  rel_licences = models.ManyToManyField('iC_Licence', blank=True, null=True, verbose_name=_(u"Llicències vinculades"))
-  rel_images = models.ManyToManyField('General.Image', blank=True, null=True, verbose_name=_(u"Imatges requerides"))
+  rel_insurances = models.ManyToManyField('iC_Insurance', related_name="selfemployed", blank=True, null=True, verbose_name=_(u"Assegurances vinculades"))
+  rel_licences = models.ManyToManyField('iC_Licence', related_name="selfemployed", blank=True, null=True, verbose_name=_(u"Llicències vinculades"))
+  rel_images = models.ManyToManyField('General.Image', related_name="selfemployed", blank=True, null=True, verbose_name=_(u"Imatges requerides"))
 
 
   rel_accountBank = models.ForeignKey('General.AccountBank', blank=True, null=True, verbose_name=_(u"Compte bancari CI associat"))
   #socialcoin_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió moneda social?"))
 
-  assigned_vat = models.DecimalField(max_digits=4, decimal_places=2, default=18, verbose_name=_(u"IVA assignat"))
+  assigned_vat = models.DecimalField(max_digits=4, decimal_places=2, default=18, blank=True, null=True, verbose_name=_(u"IVA assignat"))
   review_vat = models.BooleanField(default=False, verbose_name=_(u"IVA en revisió?"))
   last_review_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data última revisió IVA"))
 
@@ -313,11 +343,12 @@ class iC_Self_Employed(iC_Record):
   mentor_comment = models.TextField(blank=True, null=True, verbose_name=_(u"Comentaris soci mentor"))
 
   def _has_assisted_welcome(self):
-    if self.ic_membership.human.assist_sessions.filter(record_type__clas='welcome_session').count() > 0:
-      return True
+    sess = self.ic_membership.human.assist_sessions.filter(record_type__clas='welcome_session')
+    if sess.count() > 0:
+      return ico_yes+' &nbsp;'+str(sess.first().datetime.date())+' ('+str(sess.first().address.name)+')'
     else:
-      return False
-  _has_assisted_welcome.boolean = True
+      return ico_no
+  _has_assisted_welcome.allow_tags = True
   _has_assisted_welcome.short_description = _(u"Assistencia a l'Acollida?")
   welcome_session = property(_has_assisted_welcome)
 
@@ -368,7 +399,10 @@ class iC_Self_Employed(iC_Record):
     out = ul_tag
     if fees.count() > 0:
       for fee in fees:
-        out += '<li>'+a_strW +'fee/'+str(fee.id)+a_str3 + '<b>'+fee.__unicode__() +'</b></a>: '+ str(fee.payed) +' </li>'
+        ico = ico_no
+        if fee.payed:
+          ico = ico_yes
+        out += '<li>'+a_strW +'fee/'+str(fee.id)+a_str3 + '<b>'+fee.__unicode__() +'</b></a>: &nbsp; '+ ico +' </li>'
       return out + '</ul>'
     return False
   _rel_fees.allow_tags = True
@@ -395,13 +429,43 @@ class iC_Self_Employed(iC_Record):
     out = ul_tag
     if addrs.count() > 0:
       for adr in addrs:
-        out += '<li>'+a_strW +'ic_address_contract/'+str(adr.id)+a_str3 + '<b>'+adr.__unicode__() +'</b></a>: '+adr.doc_type.__unicode__()+'</li>'
+        out += '<li>'+a_strW +'ic_address_contract/'+str(adr.id)+a_str3 + '<b>'+adr.__unicode__() +'</b></a>: '+adr.doc_type.name+'</li>'
       return out + '</ul>'
-    return False
+    return str_none
   _rel_address_contract.allow_tags = True
   _rel_address_contract.short_description = ''#_(u"contractes?")
 
+  def _rel_licences(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
+    lics = self.rel_licences.all()
+    out = ul_tag
+    job = adr = ''
+    if lics.count() > 0:
+      for lic in lics:
+        if lic.rel_job:
+          job = lic.rel_job.name
+        if lic.rel_address:
+          adr = lic.rel_address.name
+        out += '<li>'+a_strW +'ic_licence/'+str(lic.id)+a_str3 + '<b>'+lic.__unicode__() +'</b></a>: '+job+' '+adr+'</li>'
+      return out + '</ul>'
+    return str_none
+  _rel_licences.allow_tags = True
+  _rel_licences.short_description = ''
 
+  def _rel_insurances(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
+    insus = self.rel_insurances.all()
+    out = ul_tag
+    job = adr = ''
+    if insus.count() > 0:
+      for ins in insus:
+        if ins.rel_job:
+          job = ins.rel_job.name
+        if ins.rel_address:
+          adr = ins.rel_address.name
+        out += '<li>'+a_strW +'ic_insurance/'+str(ins.id)+a_str3 + '<b>'+ins.__unicode__() +'</b></a>: '+job+' '+adr+'</li>'
+      return out + '</ul>'
+    return str_none
+  _rel_insurances.allow_tags = True
+  _rel_insurances.short_description = ''
 
 
 
@@ -425,7 +489,8 @@ class iC_Stallholder(iC_Self_Employed):  # Firaire
 
 class Learn_Session(iC_Record):
   nonmaterial = models.ForeignKey('General.Nonmaterial', verbose_name=_(u"Formació (obra inmaterial)"))
-  assistants = models.ManyToManyField('General.Human', related_name='assist_sessions', blank=True, null=True, verbose_name=_(u"Assistents"))
+  assistants = models.ManyToManyField('General.Human', related_name='assist_sessions', blank=True, null=True,
+            verbose_name=_(u"Assistents"), help_text=_(u"buscar"))
   facilitator = models.ForeignKey('General.Human', related_name='facilitate_sessions', blank=True, null=True, verbose_name=_(u"Facilitador"))
   datetime = models.DateTimeField(blank=True, null=True, verbose_name=_(u"Dia i Hora"))
   duration = models.TimeField(default='01:00', verbose_name=_(u"Duració"))
@@ -444,12 +509,15 @@ class Learn_Session(iC_Record):
         slug = 'person'
         if hasattr(ass, 'project'):
           slug = 'project'
-        out += '<li>'+a_strG+ slug+'/'+str(ass.id)+ a_str3+ '<b>'+ass.__unicode__()+'</b></a> <span class="mini">_'+str(ass.id)+'</span>'
+        out += '<li>'+a_strG+ slug+'/'+str(ass.id)+ a_str3+ '<b>'+ass.__unicode__()+'</b></a> - '+erase_id_link('assistants', ass.id)
       return out+'</ul>'
-    return False
+    return str_none
   _assistants_link.allow_tags = True
   _assistants_link.short_description = ''
 
+  def _num_assistants(self):
+    return self.assistants.count()
+  _num_assistants.short_description = _(u"Num")
 
 class Project_Accompaniment(iC_Record):
   human = models.ForeignKey('General.Human', related_name='accompaniments', verbose_name=_(u"Projecte"))
@@ -503,7 +571,7 @@ class Fee(iC_Record):
 			record_type = "<record:type.name>"
 		else:
 			record_type = self.record_type.name
-		return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+'] > '+self.project.nickname
+		return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
 
   class Meta:
     verbose_name = _(u"Quota")
@@ -558,7 +626,7 @@ class Fee(iC_Record):
             print '_AUTO_AMOUNT: eqi ??: '+str(eqi)
           val = float(arr[0])/float(rate)
           setattr(self, 'amount', val)
-          print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
+          #print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
           return True
         else:
           print '_AUTO_AMOUNT: uni.count != 1 !!? '+str(uni)
@@ -572,6 +640,14 @@ class Fee(iC_Record):
   def save(self):
     self._auto_amount()
     super(Fee,self).save()
+
+  def _erase_account(self):
+    if hasattr(self, 'rel_account'):
+      return erase_id_link('rel_account', self.rel_account.id)
+    return False
+  _erase_account.allow_tags = True
+  _erase_account.short_description = ''
+
 
   def _selflink(self):
     if self.id:
@@ -594,6 +670,24 @@ class iC_Document(iC_Record):
   doc_type = TreeForeignKey('iC_Document_Type', blank=True, null=True, verbose_name=_(u"Tipus de document"))
   #description = models.TextField(blank=True, verbose_name=_(u"Comentari"))
   file = models.FileField(upload_to='ic/docs', blank=True, null=True, verbose_name=_(u"Document escanejat"))
+
+  def _ic_membership(self):
+    if hasattr(self, 'membership') and self.membership:
+      print 'ADDRESS_CONTRACT te MEMBERSHIP ??!! '
+      return self.membership.first()
+    elif hasattr(self, 'selfemployed') and hasattr(self.selfemployed.first(), 'ic_membership'):
+      return self.selfemployed.first().ic_membership
+    return False
+  _ic_membership.allow_tags = True
+  _ic_membership.short_description = _(u"alta Soci")
+
+  def _ic_selfemployed(self):
+    if hasattr(self, 'selfemployed'):
+      return self.selfemployed.first()
+    return False
+  _ic_selfemployed.allow_tags = True
+  _ic_selfemployed.short_description = _(u"Autoocupat")
+
 
 class iC_Document_Type(iC_Record_Type):
   record_type = models.OneToOneField('iC_Record_Type', primary_key=True, parent_link=True)
@@ -644,38 +738,6 @@ class iC_Address_Contract(iC_Document):
     verbose_name = _(u"Contracte d'Adreça CI")
     verbose_name_plural = _(u"d- Contractes d'Adreçes CI")
 
-  '''
-  def __init__(self, *args, **kwargs):
-    super(iC_Address_Contract, self).__init__(*args, **kwargs)
-    if not hasattr(self, 'ic_membership'):# or self.ic_membership is None:
-      if hasattr(self, 'selfemployed') and hasattr(self.selfemployed.first(), 'ic_membership'):
-        #self.ic_membership = self.selfemployed.first().ic_membership
-        print 'PUT ic_MEMBERSHIP ?: '+str(self.ic_membership)
-
-    self.name = self.__unicode__()
-  '''
-  def _ic_membership(self):
-    if hasattr(self, 'membership') and self.membership:
-      print 'ADDRESS_CONTRACT te MEMBERSHIP ??!! '
-      return self.membership.first()
-    elif hasattr(self.selfemployed.first(), 'ic_membership'):
-      #self.ic_membership = self.selfemployed.first().ic_membership
-      #if not self.name == self.__unicode__():
-      #  self.name = self.__unicode__()
-      #  print '_IC_MEMBERSHIP: has selfemployed but no ic_membership, SET NAME!!'
-      #self.name = self.__unicode__()
-      return self.selfemployed.first().ic_membership
-    return False
-  _ic_membership.allow_tags = True
-  _ic_membership.short_description = _(u"alta Soci")
-
-  def _ic_selfemployed(self):
-    if hasattr(self, 'selfemployed'):
-      return self.selfemployed.first()
-    return False
-  _ic_selfemployed.allow_tags = True
-  _ic_selfemployed.short_description = _(u"Autoocupat")
-
   def _address_link(self):
     if hasattr(self, 'address'):
       return self.address._selflink()
@@ -697,11 +759,29 @@ class iC_Insurance(iC_Document):
   rel_job = models.ForeignKey('General.Job', blank=True, null=True, verbose_name=_(u"Ofici assegurat"))
 
   def __unicode__(self):
-    return self.company.nickname+': '+self.membership.human.name+' ('+self.membership.ic_CESnum+')'
+    if hasattr(self, 'selfemployed') and self.selfemployed.count():
+      return self.company.nickname+': '+self.selfemployed.first().ic_membership.__unicode__()
+    else:
+      return self.doc_type.name+': ?? '+self.number
 
   class Meta:
     verbose_name = _(u"Assegurança soci CI")
     verbose_name_plural = _(u"d- Assegurances socis CI")
+
+  def _erase_address(self):
+    if hasattr(self, 'rel_address'):
+      return erase_id_link('rel_address', self.rel_address.id)
+    return False
+  _erase_address.allow_tags = True
+  _erase_address.short_description = ''
+
+  def _erase_job(self):
+    if hasattr(self, 'rel_job'):
+      return erase_id_link('rel_job', self.rel_job.id)
+    return False
+  _erase_job.allow_tags = True
+  _erase_job.short_description = ''
+
 
 
 class iC_Licence(iC_Document):
@@ -715,8 +795,25 @@ class iC_Licence(iC_Document):
   rel_job = models.ForeignKey('General.Job', blank=True, null=True, verbose_name=_(u"Ofici relacionat"))
 
   def __unicode__(self):
-    return self.name+': '+self.membership.human.name+' ('+self.membership.ic_CESnum+')'
+    if hasattr(self, 'selfemployed') and self.selfemployed.count():
+      return self.doc_type.name+': '+self.selfemployed.first().ic_membership.__unicode__()
+    else:
+      return self.doc_type.name+': ?? '+self.number
 
   class Meta:
     verbose_name = _(u"Llicència soci CI")
     verbose_name_plural = _(u"d- Llicències socis CI")
+
+  def _erase_address(self):
+    if hasattr(self, 'rel_address'):
+      return erase_id_link('rel_address', self.rel_address.id)
+    return False
+  _erase_address.allow_tags = True
+  _erase_address.short_description = ''
+
+  def _erase_job(self):
+    if hasattr(self, 'rel_job'):
+      return erase_id_link('rel_job', self.rel_job.id)
+    return False
+  _erase_job.allow_tags = True
+  _erase_job.short_description = ''

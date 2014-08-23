@@ -46,6 +46,7 @@ WSGI_APPLICATION = 'Config.wsgi.application'
 '''
 INSTALLED_APPS = (
     #'suit',
+    #'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -64,7 +65,7 @@ INSTALLED_APPS = (
     'csvimport', 	# This provides import CSV to Model https://pypi.python.org/pypi/django-csvimport
     'localflavor', 	# This provide NIF/NIE/CIF form field
     'mptt', # This provide Tree management in a 'nested set' style
-    'django_mptt_admin',
+    #'django_mptt_admin',
     #'feincms',
     #'feincms.module.page',
     #'feincms.module.medialibrary'
@@ -80,13 +81,15 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
-	"django.contrib.auth.context_processors.auth",
+  #"django.core.context_processors.request",
+
+  "django.contrib.auth.context_processors.auth",
 	"django.core.context_processors.debug",
 	"django.core.context_processors.i18n",
 	"django.core.context_processors.media",
 	"django.core.context_processors.static",
 	"django.core.context_processors.tz",
-	"django.contrib.messages.context_processors.messages"
+	"django.contrib.messages.context_processors.messages",
 )
 
 
@@ -181,12 +184,14 @@ MEDIA_BASE = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, MEDIA_BASE)
 MEDIA_URL = '/media/'
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 # a) for PRODUCTION
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
 # b) for DEVELOPMENT
 STATIC_URL = '/static/'
+
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "templates"),
 		BASE_DIR + '/Invoices/templates/',
@@ -194,7 +199,6 @@ STATICFILES_DIRS = (
 		BASE_DIR + '/Welcome/templates/',
 		BASE_DIR + '/public_form/templates/',
 )
-
 
 '''
 6 Localization

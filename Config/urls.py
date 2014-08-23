@@ -13,7 +13,7 @@ admin.autodiscover()
 
 
 #URL PARAMETERS
-#JS 
+#JS
 js_info_dict = {
 	'packages': ('Invoices.package',),
 }
@@ -29,6 +29,8 @@ url(r'^cooper/reset/done/$', 'django.contrib.auth.views.password_reset_complete'
 #Localization
 url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', js_info_dict),
 url(r'^i18n/', include('django.conf.urls.i18n')),
+
+#url(r'^grappelli/', include('grappelli.urls')), # grappelli URLS
 #Our semantic entity sites
 url(r'^admin/', include(admin.site.urls)),
 url(r'^cooper/', include(user_admin_site.urls)),
@@ -36,6 +38,7 @@ url(r'^cooper/', include(user_admin_site.urls)),
 url(r'^soci/', include(user_admin_site.urls)),
 #Our invoicing module
 url(r'^invoices/', include('Invoices.urls', namespace='Invoices')),
+
 #Our welcoming module
 url(r'^welcome/', include('Welcome.urls', namespace='Welcome')),
 #public_form

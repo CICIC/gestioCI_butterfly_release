@@ -19,7 +19,7 @@ a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/W
 a_str2 = "?_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
 a_str3 = "?_popup=1&t=human' target='_blank'>"
 
-a_edit = '<b>Edita</b>'
+a_edit = '<b>Editar</b>'
 
 ul_tag1 = '<ul style="margin-left:-10em;">'
 ul_tag = '<ul>'
@@ -128,13 +128,13 @@ class Human(Being):  # Create own ID's
       ic_ms = self.ic_person_membership_set.all()
       out = ul_tag
       for ms in ic_ms:
-        out += '<li>'+a_strW + "ic_person_membership/" + str(ms.id) + a_str3 + ms.name + "</a></li>"
+        out += '<li>'+a_strW + "ic_person_membership/" + str(ms.id) + a_str3 + '<b>'+ms.name +"</b></a></li>"
       return out+'</ul>'
     elif hasattr(self, 'ic_project_membership_set'):
       ic_ms = self.ic_project_membership_set.all()
       out = ul_tag
       for ms in ic_ms:
-        out += '<li>'+a_strW + "ic_project_membership/" + str(ms.id) + a_str3 + ms.name + "</a></li>"
+        out += '<li>'+a_strW + "ic_project_membership/" + str(ms.id) + a_str3 + '<b>'+ms.name +"</b></a></li>"
       if out == ul_tag:
         return str_none
       return out+'</ul>'
@@ -143,12 +143,11 @@ class Human(Being):  # Create own ID's
   _ic_membership.short_description = _(u"reg.Altes Soci")
 
   def _fees_to_pay(self):
-    print self.out_fees.all()
     if self.out_fees.all().count() > 0:
       out = ul_tag
       for fe in self.out_fees.all():
         if not fe.payed:
-          out += '<li>'+a_strW + "fee/" + str(fe.id) + a_str3 + fe.name + "</a></li>"
+          out += '<li>'+a_strW + "fee/" + str(fe.id) + a_str3 +'<b>'+ fe.name + "</b></a></li>"
       if out == ul_tag:
         return str_none
       return out+'</ul>'
@@ -210,6 +209,7 @@ class Person(Human):
       else:
         return self.name+' '+self.surnames
     else:
+      #return self.nickname
       if self.surnames is None or self.surnames == '':
         return self.name+' ('+self.nickname+')'
       else:
@@ -223,12 +223,8 @@ class Project(MPTTModel, Human):
   socialweb = models.CharField(max_length=100, blank=True, verbose_name=_(u"Web Social"))
   email2 = models.EmailField(blank=True, verbose_name=_(u"Email alternatiu"))
 
+  ecommerce = models.BooleanField(default=False, verbose_name=_(u"Comerç electrònic?"))
   #images = models.ManyToManyField('Image', blank=True, null=True, verbose_name=_(u"Imatges"))
-
-  #assets = models.ManyToManyField('Asset', through='rel_Human_Materials', null=True, verbose_name=_(u"Actius del projecte"))
-  #def _has_assets(self):
-  #  return self.materials.objects.select_related('asset').all()
-  #assets = property(_has_assets)
 
   def _is_collective(self):
     if self.persons.count() < 2 and self.projects.count() < 2:
@@ -238,8 +234,6 @@ class Project(MPTTModel, Human):
   _is_collective.boolean = True
   _is_collective.short_description = _(u"és col·lectiu?")
   collective = property(_is_collective)
-
-  ecommerce = models.BooleanField(default=False, verbose_name=_(u"Comerç electrònic?"))
 
   #ref_persons = models.ManyToManyField('Person', blank=True, null=True, verbose_name=_(u"Persones de referència"))
 
@@ -303,7 +297,8 @@ class rel_Human_Jobs(models.Model):
 
 class rel_Human_Addresses(models.Model):
   human = models.ForeignKey('Human')
-  address = models.ForeignKey('Address', related_name='rel_human', verbose_name=_(u"Adreça"))
+  address = models.ForeignKey('Address', related_name='rel_human', verbose_name=_(u"Adreça"),
+     help_text=_(u"Un cop escollida l'adreça, desa el perfil per veure el seu nom aquí."))
   relation = TreeForeignKey('Relation', related_name='hu_adr+', blank=True, null=True, verbose_name=_(u"relació"))
   main_address = models.BooleanField(default=False, verbose_name=_(u"Adreça principal?"))
   class Meta:
@@ -405,7 +400,8 @@ class rel_Human_Persons(models.Model):
 
 class rel_Human_Projects(models.Model):
   human = models.ForeignKey('Human', related_name='human_projects')
-  project = TreeForeignKey('Project', related_name='rel_humans', verbose_name=_(u"Projecte vinculat"))
+  project = TreeForeignKey('Project', related_name='rel_humans', verbose_name=_(u"Projecte vinculat"),
+     help_text=_(u"Un cop escollit el projecte, desa el perfil per veure el seu nom aquí."))
   relation = TreeForeignKey('Relation', related_name='hu_hum+', blank=True, null=True, verbose_name=_(u"relació"))
   class Meta:
     verbose_name = _(u"H_pro")
@@ -416,7 +412,12 @@ class rel_Human_Projects(models.Model):
         return self.project.__unicode__()
       else:
         return self.relation.gerund+' > '+self.project.__unicode__()
-    return '('+self.project.project_type.being_type.name+') '+self.relation.gerund+' > '+self.project.name
+    else:
+      if not self.relation or self.relation.gerund is None or self.relation.gerund == '':
+        return '('+self.project.project_type.being_type.name+') rel? > '+self.project.name
+      else:
+        return '('+self.project.project_type.being_type.name+') '+self.relation.gerund+' > '+self.project.name
+
 
 class rel_Human_Companies(models.Model):
   human= models.ForeignKey('Human', related_name='human_companies')
@@ -574,6 +575,16 @@ class Address(Space):  # Create own ID's
   def __unicode__(self):
     return self.name+' ('+self.p_address+' - '+self.town+')'
 
+  def _jobs_list(self):
+    out = ul_tag
+    for jo in self.jobs.all():
+      out += '<li><b>'+jo.verb+'</b> <span class="mini">('+str(jo.id)+')</span></li>'
+    if out == ul_tag:
+      return str_none
+    return out+'</ul>'
+  _jobs_list.allow_tags = True
+  _jobs_list.short_description = ''
+
   def _selflink(self):
     if self.id:
         return a_strG + "address/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
@@ -612,7 +623,7 @@ class Region_Type(Space_Type):
 #   A R T W O R K S - (Obres, Coses, Registres, Documents...)
 
 class Artwork(models.Model):  # Abstract
-  name = models.CharField(verbose_name=_(u"Nom"), max_length=200, blank=True, null=True, help_text=_(u"El nom de la obra (Registre, Unitat, Cosa)"))
+  name = models.CharField(verbose_name=_(u"Nom"), max_length=200, blank=True, null=True) #, help_text=_(u"El nom de la obra (Registre, Unitat, Cosa)"))
   #artwork_type = TreeForeignKey('Artwork_Type', blank=True, verbose_name=_(u"Tipus d'Obra"))
   description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció"))
 
@@ -746,7 +757,7 @@ class rel_Material_Records(models.Model):
 
 class rel_Material_Addresses(models.Model):
   material = models.ForeignKey('Material')
-  address = models.ForeignKey('Address', verbose_name=_(u"Adreça vinculada"))
+  address = models.ForeignKey('Address', related_name='materials', verbose_name=_(u"Adreça vinculada"))
   relation = TreeForeignKey('Relation', related_name='ma_adr+', blank=True, null=True)
   class Meta:
     verbose_name = _(u"M_adr")
@@ -797,6 +808,31 @@ class Material(Artwork): # Create own ID's
     verbose_name = _(u"Obra Material")
     verbose_name_plural = _(u"o- Obres Materials")
 
+  def _addresses_list(self):
+    out = ul_tag
+    print self.addresses.all()
+    if self.addresses.all().count() > 0:
+      for add in self.addresses.all():
+        rel = add.materials.filter(material=self).first().relation
+        out += '<li>'+rel.gerund+': <b>'+add.__unicode__()+'</b></li>'
+      return out+'</ul>'
+    return str_none
+  _addresses_list.allow_tags = True
+  _addresses_list.short_description = _(u"Adreçes vinculades?")
+
+  def _jobs_list(self):
+    out = ul_tag
+    print self.jobs.all()
+    if self.jobs.all().count() > 0:
+      for job in self.jobs.all():
+        rel = job.materials.filter(material=self).first().relation
+        out += '<li>'+rel.gerund+': <b>'+job.__unicode__()+'</b></li>'
+      return out+'</ul>'
+    return str_none
+  _jobs_list.allow_tags = True
+  _jobs_list.short_description = _(u"Arts/oficis vinculats?")
+
+
 class Material_Type(Artwork_Type):
   artwork_type = models.OneToOneField('Artwork_Type', primary_key=True, parent_link=True)
   class Meta:
@@ -814,15 +850,13 @@ class Asset(Material):
   def __unicode__(self):
     return '('+self.material_type.name+') '+self.material.name
 
-  def _addresses(self):
-    out = ''#ul_tag
-    if self.addresses.count() > 0:
-      for add in self.addresses:
-        out += add.__unicode__()+', '
-      return out
-    return 'ninguna'
-  _addresses.allow_tags = True
-  _addresses.short_description = _(u"Adreçes vinculades?")
+  def _selflink(self):
+    if self.id:
+        return a_strG + "asset/" + str(self.id) + a_str2 + a_edit +"</a>"# % str(self.id)
+    else:
+        return "Not present"
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
 
 
 
@@ -905,7 +939,7 @@ class AccountCes(Record):
     verbose_name_plural= _(u'o- Comptes CES')
 
   def __unicode__(self):
-    return '('+self.unit.code+') '+self.human.__unicode__()+' '+self.code+self.number#+' '+self.name
+    return '('+self.unit.code+') '+self.human.nickname+' '+self.code+self.number#+' '+self.name
 
 class AccountBank(Record):
   record = models.OneToOneField('Record', primary_key=True, parent_link=True)
@@ -922,7 +956,7 @@ class AccountBank(Record):
     verbose_name_plural= _(u'o- Comptes Bancaris')
 
   def __unicode__(self):
-    return '('+self.unit.code+') '+self.human.__unicode__()+' '+self.number+' - '+self.company.__unicode__()
+    return '('+self.unit.code+') '+self.company.nickname+': '+self.human.nickname+' '+self.number
 
 class AccountCrypto(Record):
   record = models.OneToOneField('Record', primary_key=True, parent_link=True)
@@ -933,4 +967,4 @@ class AccountCrypto(Record):
     verbose_name = _(u"Compte Criptomoneda")
     verbose_name_plural = _(u"o- Comptes Criptomonedes")
   def __unicode__(self):
-    return '('+self.unit.code+') '+self.human.__unicode__()+' '+self.number # +' '+self.name
+    return '('+self.unit.code+') '+self.human.nickname+' '+self.number # +' '+self.name

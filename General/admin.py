@@ -55,6 +55,21 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape, conditional_escape
 
 class AutoNameMixin(admin.ModelAdmin):
+  #class Media:
+    #css = {
+    #    "all": ("my_styles.css",)
+    #}
+  #  js = ("general.js",)
+
+  #si añadimos datos a rendear en la template, debemos setear aqui:
+  #change_form_template = 'admin/myapp/extras/openstreetmap_change_form.html'
+  def change_view(self, request, object_id, form_url='', extra_context=None):
+    extra_context = extra_context or {}
+    #extra_context['osm_data'] = self.get_osm_info()
+    return super(AutoNameMixin, self).change_view(request, object_id,
+        form_url, extra_context=extra_context)
+
+
   def save_model(self, request, obj, form, change):
     instance = form.save(commit=False)
     if not hasattr(instance, 'name'):
@@ -64,6 +79,18 @@ class AutoNameMixin(admin.ModelAdmin):
     instance.save()
     form.save_m2m()
     return instance
+
+class Css_Mixin(admin.ModelAdmin):
+  class Media:
+    css = {
+      'all': ('admin_record.css',)# 'selfemployed.css',)
+    }
+    js = ("general.js",)
+
+class AutoSaveFK_mixinline(admin.StackedInline):
+  class Media:
+    js = ('saveOnFKchange.js',)
+
 
 '''
 class AutoRecordRelationMixin(admin.ModelAdmin):
@@ -128,26 +155,34 @@ class accountForm(forms.ModelForm):
 # ----------  H U M A N
 
 
-class H_addressInline(admin.StackedInline, InlineEditLinkMixin):
+class H_addressInline(admin.StackedInline):
     model = rel_Human_Addresses
-    extra = 1
+    extra = 0
     raw_id_fields = ('address',)
     readonly_fields = ('_selflink',)#'edit_details',)
+    #fields = (('address', '_selflink', 'main_address', 'relation'),)
     fieldsets = (
       (' ', {
         'classes': ('collapse',),
-        'fields': (('address', '_selflink', 'relation', 'main_address'),)
+        'fields': (('address', '_selflink', 'main_address', 'relation'),)
       }),
     )
+    #formset = H_addressInlineSet
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
       if db_field.name == 'relation':
-        rel = Relation.objects.get(clas='rel_hum_spac')
+        if '/General/project/' in request.path:
+          rel = Relation.objects.get(clas='rel_proj_addr')
+        elif '/General/person/' in request.path:
+          rel = Relation.objects.get(clas='rel_pers_addr')
+        else:
+          rel = Relation.objects.get(clas='rel_hum_spac')
         kwargs['queryset'] = Relation.objects.filter(lft__gt=rel.lft, rght__lt=rel.rght, tree_id=rel.tree_id).exclude(clas='rel_hum_regi').exclude(parent__clas='rel_hum_regi')
       return super(H_addressInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_jobInline(admin.StackedInline):
     model = rel_Human_Jobs
     extra = 0
+    #fields = (('job','relation'),)
     fieldsets = (
       (' ', {
         'classes': ('collapse',),
@@ -292,12 +327,13 @@ class Proj_refPersonInline(admin.StackedInline):
   raw_id_fields = ('person',)
   readonly_fields = ('_selflink',)
   formset = Proj_refPersonInlineSet
-  fieldsets = (
-    (' ', {
-      #'classes': ('collapse',),
-      'fields': (('person', '_selflink',),)
-    }),
-  )
+  fields = (('person', '_selflink',),)
+  #fieldsets = (
+  #  (' ', {
+  #    #'classes': ('collapse',),
+  #    'fields': (('person', '_selflink',),)
+  #  }),
+  #)
   verbose_name = _(u"Persona de Referència")
   verbose_name_plural = _(u"Persones de Referència")
   classes = ['collapse', 'collapsed']
@@ -349,6 +385,9 @@ class H_accountCesInline(admin.StackedInline):
     if db_field.name == 'unit':
       typ = Unit_Type.objects.get(clas='social_currency')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    if db_field.name == 'entity':
+      typs = Project_Type.objects.filter(clas='ces')
+      kwargs['queryset'] = Project.objects.filter(project_type__in=typs)
     return super(H_accountCesInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_accountBankInline(admin.StackedInline):
@@ -388,27 +427,30 @@ class H_accountCryptoInline(admin.StackedInline):
     return super(H_accountCryptoInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class H_assetInline(admin.StackedInline):
+  #model = rel_Human_Material
   model = Asset
   extra = 0
   fk_name = 'human'
-  readonly_fields = ('_addresses',)
+  readonly_fields = ('_addresses_list', '_jobs_list', '_selflink',)
   fieldsets = (
     (' ', {
       'classes': ('collapse',),
       'fields': (
         ('name', 'material_type'),
-        ('description', '_addresses', 'reciprocity'),
+        ('description',),
+        ('reciprocity',),
+        ('_selflink', '_addresses_list', '_jobs_list',),
       )
     }),
   )
   #inlines = [  # TODO inlines into inlines didn't appear
   #  M_addressInline,
-  #]
+  #]'''
 
 
-rel_tit = Relation.objects.get(clas='holder')
 
-class HumanAdmin(admin.ModelAdmin):
+
+class HumanAdmin(Css_Mixin):
   list_display = ['name', 'nickname', 'email']
   search_fields = ('name','nickname','email',)
   def save_formset(self, request, form, formset, change):
@@ -425,6 +467,8 @@ class HumanAdmin(admin.ModelAdmin):
       #recs = instance.human.records.all()
       #ac_ces = instance.human.accountsCes.all()
 
+      if not 'rel_tit' in globals():
+        rel_tit = Relation.objects.get(clas='holder')
       #print 'AccountsCES: '+str(instance.human.accountsCes.all())
       #print 'Records: '+str(instance.human.records.all())
       #print 'instance: '+str(instance)
@@ -490,7 +534,7 @@ class HumanAdmin(admin.ModelAdmin):
 
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
   model = Project
-  readonly_fields = ('_ref_persons', '_ic_membership',)
+  readonly_fields = ('_ref_persons', '_ic_membership', '_fees_to_pay',)
   fieldsets = (
     (None, {
       'fields':(('name', 'nickname', 'project_type'),
@@ -500,28 +544,28 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
     }),
     (_(u"Descripció"), {
       #'classes': ('collapse',),
-      'fields': (('description', '_ref_persons', '_ic_membership',),)
+      'fields': (('description',),
+                ('_ic_membership', '_fees_to_pay',),)
     }),
   )
   inlines = [
+    Proj_refPersonInline,
     H_addressInline,
     H_jobInline,
+    H_assetInline,
 
+    #Proj_personInline,
+    #H_personInline,
+    H_projectInline,
+    #H_companyInline,
+
+    #H_regionInline,
+    #H_materialInline,
+    #H_nonmaterialInline,
+    #H_recordInline,
     H_accountCesInline,
     H_accountBankInline,
     H_accountCryptoInline,
-
-    Proj_refPersonInline,
-    Proj_personInline,
-    #H_personInline,
-    H_projectInline,
-    H_companyInline,
-
-    H_assetInline,
-    #H_regionInline,
-    H_materialInline,
-    H_nonmaterialInline,
-    #H_recordInline,
   ]
 
 class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
@@ -531,10 +575,24 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
   search_fields = ('name', 'nickname', 'project_type', 'email')
 
 
-  inlines = Public_ProjectAdmin.inlines + [
-    H_recordInline,
+  inlines = [
+    Proj_refPersonInline,
+    H_addressInline,
+    H_jobInline,
+    H_assetInline,
+
+    Proj_personInline,
     H_personInline,
+    H_projectInline,
+    H_companyInline,
+
     H_regionInline,
+    H_materialInline,
+    H_nonmaterialInline,
+    H_recordInline,
+    H_accountCesInline,
+    H_accountBankInline,
+    H_accountCryptoInline,
   ]
 
 
@@ -552,27 +610,28 @@ class Public_PersonAdmin(HumanAdmin):
     }),
     (_(u"Descripció"), {
       #'classes': ('collapse',),
-      'fields': (('description', '_ic_membership', '_fees_to_pay',),)
+      'fields': (('description',),
+                 ('_ic_membership', '_fees_to_pay',),)
     }),
   )
   #filter_horizontal = ('arts',)# 'projects',) # 'addresses',)
   inlines = [
     H_addressInline,
     H_jobInline,
-
-    H_accountCesInline,
-    H_accountBankInline,
-    H_accountCryptoInline,
+    H_assetInline,
 
     #H_personInline,
     H_projectInline,
-    H_companyInline,
-    H_assetInline,
+    #H_companyInline,
 
-    H_regionInline,
-    H_materialInline,
-    H_nonmaterialInline,
+    #H_regionInline,
+    #H_materialInline,
+    #H_nonmaterialInline,
     #H_recordInline,
+
+    H_accountCesInline,
+    #H_accountBankInline,
+    H_accountCryptoInline,
   ]
 
 class PersonAdmin(Public_PersonAdmin):
@@ -580,9 +639,23 @@ class PersonAdmin(Public_PersonAdmin):
   #list_display = ['name', 'surnames', 'nickname', 'email']
   search_fields = ('name', 'surnames', 'nickname', 'email')
 
-  inlines = Public_PersonAdmin.inlines + [
-    H_recordInline,
+  inlines = [
+    H_addressInline,
+    H_jobInline,
+    H_assetInline,
+
     H_personInline,
+    H_projectInline,
+    H_companyInline,
+
+    H_regionInline,
+    H_materialInline,
+    H_nonmaterialInline,
+    H_recordInline,
+
+    H_accountCesInline,
+    H_accountBankInline,
+    H_accountCryptoInline,
   ]
 
 
@@ -604,16 +677,20 @@ class Public_CompanyAdmin(HumanAdmin):
   inlines = [
     H_addressInline,
     H_jobInline,
+    H_assetInline,
+
     H_personInline,
+    #H_projectInline,
+    #H_companyInline,
+
+    #H_materialInline,
+    #H_nonmaterialInline,
+    #H_regionInline,
+    #H_recordInline,
 
     H_accountCesInline,
     H_accountBankInline,
     H_accountCryptoInline,
-
-    H_materialInline,
-    H_nonmaterialInline,
-    H_regionInline,
-    #H_recordInline,
   ]
 
 class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
@@ -627,45 +704,47 @@ class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
   list_filter = ('company_type',)
   search_fields = ('name', 'nickname', 'email', 'company_type')
 
-  '''
-  fieldsets = (
-    (None, {
-      'fields':(('name', 'nickname', 'company_type'),
-                ('legal_name', 'vat_number'),
-                ('email', 'telephone', 'website'))
-    }),
-    #(_(u"Membres de referencia"), {
-    #  'classes': ('collapse',),
-    #  'fields':('ref_persons',),
-    #}),
-    (_(u"Dates inici/fi"), {
-      'classes': ('collapse',),
-      'fields': (('birth_date', 'death_date'),)
-    })
-  )
-  #filter_horizontal = ('ref_members',) # 'jobs',) # 'addresses')
-  '''
-  inlines = Public_CompanyAdmin.inlines + [
+
+  inlines = [
+    H_addressInline,
+    H_jobInline,
+    H_assetInline,
+
+    H_personInline,
+    H_projectInline,
+    H_companyInline,
+
+    H_materialInline,
+    H_nonmaterialInline,
+    H_regionInline,
     H_recordInline,
+
+    H_accountCesInline,
+    H_accountBankInline,
+    H_accountCryptoInline,
   ]
 
 
 
-#--------- S P A C E
+#---------  S P A C E
 
-class AddressAdmin(admin.ModelAdmin):
-  readonly_fields = ('_main_addr_of',)
+class Public_AddressAdmin(admin.ModelAdmin):
+  readonly_fields = ('_main_addr_of', '_jobs_list',)
   list_display = ['name', 'address_type', 'p_address', 'town', 'postalcode', 'region', '_main_addr_of',]
   list_filter = ('address_type', 'region',)
   search_fields = ('name', 'p_address', 'town', 'postalcode', 'region')
+  raw_id_fields = ('jobs',)
   fieldsets = (
     (None, {
       'fields': (
-        ('name', 'address_type', 'ic_larder'),
-        ('p_address', 'town', 'postalcode'),
+        ('name', 'p_address',),
+        ('town', 'postalcode'),
         ('region', '_main_addr_of'),
-        ('description', 'size', 'size_unit', 'longitude', 'latitude'),
-        ('jobs',))
+        ('address_type', 'ic_larder'),
+        ('description',),# 'longitude', 'latitude'),
+        ('size', 'size_unit',),
+        ('jobs', '_jobs_list',)
+      )
     }),
   )
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -673,13 +752,29 @@ class AddressAdmin(admin.ModelAdmin):
       typ = Unit_Type.objects.get(clas='area')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
     if db_field.name == 'region':
-      typ = Region_Type.objects.get(clas='region')
+      typ = Region_Type.objects.get(clas='region') # filtrando solo Comarcas
       kwargs['queryset'] = Region.objects.filter(region_type=typ)
-    return super(AddressAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+    return super(Public_AddressAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+class AddressAdmin(Public_AddressAdmin):
+
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('name', 'p_address',),
+        ('town', 'postalcode'),
+        ('region', '_main_addr_of'),
+        ('address_type', 'ic_larder'),
+        ('description', 'longitude', 'latitude'),
+        ('size', 'size_unit',),
+        ('jobs', '_jobs_list',)
+      )
+    }),
+  )
 
 
 
-# --------- A R T S
+#---------  A R T S
 
 class RelationAdmin(DjangoMpttAdmin):
   model = Relation
@@ -723,9 +818,10 @@ class AccountCesAdmin(AutoNameMixin):
     if db_field.name == 'unit':
       typ = Unit_Type.objects.get(clas='social_currency')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
+    if db_field.name == 'entity':
+      typs = Project_Type.objects.filter(clas='ces')
+      kwargs['queryset'] = Project.objects.filter(project_type__in=typs)
     return super(AccountCesAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
-
-
 
 class AccountBankAdmin(AutoNameMixin):
   model = AccountBank
@@ -758,6 +854,7 @@ class AccountCryptoAdmin(AutoNameMixin):
       typ = Unit_Type.objects.get(clas='crypto_currency')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typ)
     return super(AccountCryptoAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 class UnitRatioAdmin(AutoNameMixin):
   model = UnitRatio
@@ -988,17 +1085,21 @@ class MaterialAdmin(Public_MaterialAdmin):
 class Public_AssetAdmin(Public_MaterialAdmin):
   model = Asset
   list_display = ['name', 'human', 'material_type', 'reciprocity',]
-  readonly_fields = ('_addresses',)
+  #readonly_fields = ('_addresses_list',)
   raw_id_fields = ('human',)
   fieldsets = MaterialAdmin.fieldsets + (
     (None, {
       'fields': (
-        ('human', '_addresses',),
+        ('human',),# '_addresses_list',),
         ('reciprocity',))
     }),
   )
+  inlines = [
+    M_addressInline,
+    M_jobInline,
+  ]
 
-class AssetAdmin(MaterialAdmin):
+class AssetAdmin(Public_MaterialAdmin):
   inlines = MaterialAdmin.inlines
 
 
@@ -1092,15 +1193,15 @@ class Type_RegionAdmin(MPTTModelAdmin):
 #admin.site.register(Being_Type, MPTTModelAdmin) # Comment this line after creating 'Human', then 'Person', 'Project' and 'Company' under Human, inside Being_Types.
 admin.site.register(Human, HumanAdmin)
 
-admin.site.register(Person, PersonAdmin)
-#admin.site.register(Person, Public_PersonAdmin)  # public comentable
+#admin.site.register(Person, PersonAdmin)
+admin.site.register(Person, Public_PersonAdmin)  # public comentable
 
 #admin.site.register(Project, ProjectAdmin)
 admin.site.register(Project, Public_ProjectAdmin)  # public comentable
 admin.site.register(Project_Type, Type_ProjectAdmin)
 
-admin.site.register(Company, CompanyAdmin)
-#admin.site.register(Company, Public_CompanyAdmin)   # public comentable
+#admin.site.register(Company, CompanyAdmin)
+admin.site.register(Company, Public_CompanyAdmin)   # public comentable
 admin.site.register(Company_Type, Type_CompanyAdmin)
 
 
@@ -1120,8 +1221,8 @@ admin.site.register(Unit_Type, Type_UnitAdmin)
 
 #--------- Nonmaterial
 admin.site.register(Nonmaterial_Type, Type_NonmaterialAdmin)
-#admin.site.register(Nonmaterial, Public_NonmaterialAdmin)    # public comentable
-admin.site.register(Nonmaterial, NonmaterialAdmin)
+admin.site.register(Nonmaterial, Public_NonmaterialAdmin)    # public comentable
+#admin.site.register(Nonmaterial, NonmaterialAdmin)
 
 #--------- Material
 admin.site.register(Material_Type, Type_MaterialAdmin)
@@ -1145,7 +1246,8 @@ admin.site.register(AccountCrypto, AccountCryptoAdmin)
 
 #admin.site.register(Space)
 #admin.site.register(Space_Type, MPTTModelAdmin) # Comment this line after creating 'Address' and 'Region' inside Space_Types
-admin.site.register(Address, AddressAdmin)
+admin.site.register(Address, Public_AddressAdmin)
+#admin.site.register(Address, AddressAdmin)
 admin.site.register(Address_Type, Type_AddressAdmin)
 
 admin.site.register(Region, MPTTModelAdmin)

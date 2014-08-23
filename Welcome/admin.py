@@ -17,12 +17,19 @@ from django.forms.models import BaseInlineFormSet
 
 from django.forms.formsets import formset_factory
 
+
+
 class AutoRecordName(admin.ModelAdmin):
   class Media:
     css = {
       'all': ('admin_record.css',)
     }
-    js = ()
+    js = (
+      "admin/js/core.js",
+      "admin/js/jquery.js",
+      "admin/js/jquery.init.js",
+      'welcome.js',
+    )
 
   def save_model(self, request, obj, form, change):
     instance = form.save(commit=False)
@@ -140,20 +147,24 @@ class MembershipAdmin(Public_MembershipAdmin):
 
 class PersonMembershipAdmin(AutoRecordName):
   model = iC_Person_Membership
-  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_person_link', '_joinfee_link', '_ic_selfemployed_list')
+  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_person_link',
+                      '_joinfee_link', '_ic_selfemployed_list', '_expositors_list')
 
   search_fields = ('name', 'ic_CESnum')
   list_display = ['name', 'person', 'ic_CESnum', 'join_date', '_join_fee_payed']
-  raw_id_fields = ('person', 'join_fee',)
+  raw_id_fields = ('person', 'join_fee', 'expositors',)
   fieldsets = (
     (None, {
       'fields':(
-        ('record_type', 'ic_project'),
-        ('person', '_person_link', 'ic_CESnum'),
-        ('contribution', 'virtual_market', 'labor_contract'),
+        ('record_type',),
+        ('ic_CESnum', 'ic_project',),
+        ('person', '_person_link',),
         ('join_fee', '_joinfee_link', '_join_fee_payed'),
+        ('contribution', 'virtual_market'),
         ('join_date', 'end_date'),
-        ('expositors', '_ic_selfemployed_list', 'description'))
+        ('expositors', '_expositors_list',),
+        ('labor_contract','_ic_selfemployed_list',),
+        ('description',))
     }),
   )
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -164,20 +175,23 @@ class PersonMembershipAdmin(AutoRecordName):
 
 class ProjectMembershipAdmin(AutoRecordName):
   model = iC_Project_Membership
-  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_project_link', '_joinfee_link', '_ic_selfemployed_list')
+  readonly_fields = ('record_type', 'name', 'ic_project', '_join_fee_payed', '_project_link',
+                    '_joinfee_link', '_ic_selfemployed_list', '_expositors_list',)
 
   search_fields = ('name', 'ic_CESnum')
   list_display = ['name', 'project', 'ic_CESnum', 'join_date', '_join_fee_payed']
-  raw_id_fields = ('project', 'join_fee',)
+  raw_id_fields = ('project', 'join_fee', 'expositors',)
   fieldsets = (
     (None, {
       'fields':(
-        ('record_type', 'ic_project'),
-        ('project', '_project_link', 'ic_CESnum'),
-        ('contribution', 'virtual_market'),
+        ('record_type',),
+        ('ic_CESnum', 'ic_project',),
+        ('project', '_project_link',),
         ('join_fee', '_joinfee_link', '_join_fee_payed'),
+        ('contribution', 'virtual_market'),
         ('join_date', 'end_date',),
-        ('expositors', '_ic_selfemployed_list', 'description'))
+        ('expositors', '_expositors_list',),
+        ('_ic_selfemployed_list', 'description'))
     }),
   )
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -185,6 +199,7 @@ class ProjectMembershipAdmin(AutoRecordName):
       typ = Relation.objects.get(clas='contribute')
       kwargs['queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
     return super(ProjectMembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 
 class SE_relAddressContractInlineSet(BaseInlineFormSet):
@@ -227,26 +242,31 @@ class SE_relAddressContractInline(admin.StackedInline):
     return super(SE_relAddressContractInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-'''
-class SelfEmployedForm(forms.BaseModelForm):
+
+class SelfEmployedForm(forms.ModelForm):
   def __init__(self, *args, **kwargs):
     self.request = kwargs.pop('request', None)
     super(SelfEmployedForm, self).__init__(*args, **kwargs)
-    print 'FORM: '+str(self)
-'''
+    #print 'FORM: KWARGS: '+str(kwargs)
+
 
 class Public_SelfEmployedAdmin(AutoRecordName):
   class Media:
     css = {
       'all': ('admin_record.css', 'selfemployed.css',)
     }
-    js = ()
+    js = ('welcome.js', 'selfemployed.js',)
 
   model = iC_Self_Employed
   list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
-  #formset = SelfEmployedForm
-  readonly_fields = ('_member_link', '_has_assisted_welcome', '_rel_id_cards', '_rel_address_contract', '_rel_fees')
-  raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_address_contracts', 'rel_fees',)
+  form = SelfEmployedForm
+
+  readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards',
+                    '_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin')
+
+  raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees',
+                  'rel_address_contracts', 'rel_licences', 'rel_insurances')
+
   fieldsets = (#MembershipAdmin.fieldsets + (
     (_(u"fase 1: Autoocupat"), {
       #'classes': ('collapse',),
@@ -256,29 +276,28 @@ class Public_SelfEmployedAdmin(AutoRecordName):
         ('_has_assisted_welcome',)
       )
     }),
-    #(_(u"fase 2: Llista de tasques"), {
-    #  'classes': ('collapse',),
-    #  'fields': (('_rel_id_cards', 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
-    #}),
-    (_(u"fase 3: Alta"), {
-      'classes': ('collapse',),
-      'fields': (
-        ('join_date', 'assigned_vat', 'review_vat', 'last_review_date'),
-        ('rel_accountBank', 'mentor_membership', 'mentor_comment', 'end_date'))
-    }),
     (_(u"fase 2: Llista de tasques"), {
-      #'classes': ('collapse',),
+      'classes': ('collapse', 'welcome',),
       'fields': (
           ('_rel_id_cards',),
-          ('rel_address_contracts', '_rel_address_contract'))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
+          ('rel_address_contracts', '_rel_address_contract'),
+          ('rel_licences', '_rel_licences'),
+          ('rel_insurances', '_rel_insurances'),
+          ('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
+    }),
+    (_(u"fase 3: Alta"), {
+      'classes': ('collapse', 'welcome',),
+      'fields': (
+        ('join_date', ),
+        ('assigned_vat', 'review_vat', 'last_review_date'),
+        ('rel_accountBank',),
+        ('mentor_membership', 'mentor_comment',))
     }),
   )
   #filter_horizontal = ('rel_fees',)# 'rel_address_contracts')
   #inlines = [
     #SE_relAddressContractInline,
   #]
-  #def __init__(self, *args, **kwargs):
-  #  print 'INIT!'
 
   '''
   mem = 'none'
@@ -290,63 +309,70 @@ class Public_SelfEmployedAdmin(AutoRecordName):
       print 'MEM: '+self.mem
     return super(SelfEmployedAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
-  def formfield_for_manytomany(self, db_field, request, **kwargs):
-    print db_field.name
-    print kwargs
-    if db_field.name == 'ic_membership':
-      self.mem = kwargs['queryset']
-    if db_field.name == 'rel_fees':
-      #typ = iC_Record_Type.objects.get(clas='Fee')
-      print 'JALOW self: '+str(self.model.ic_membership)#+str(hasattr(self, 'model'))
-      if hasattr(self.model, 'ic_membership'):
-        print 'JALOW mem: '+self.mem
-        #print 'MEMBER: '+self.model.ic_membership
-        #kwargs['queryset'] = Fee.objects.filter(human=self.ic_membership.human)
-    return super(SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
   '''
+  def formfield_for_manytomany(self, db_field, request, **kwargs):
+    if db_field.name == 'rel_fees':
+      kwargs['queryset'] = Fee.objects.filter(record_type__parent__clas='quarterly_fee')
+    return super(Public_SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
 
 class SelfEmployedAdmin(Public_SelfEmployedAdmin):
+  class Media:
+    css = {
+      'all': ('admin_record.css', 'selfemployed.css',)
+    }
+    js = ('welcome.js',)
+
   model = iC_Self_Employed
   list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
   #formset = SelfEmployedForm
-  readonly_fields = ('name', 'record_type', '_rel_id_cards', '_member_link', '_rel_address_contract')
-  raw_id_fields = ('rel_address_contracts', 'ic_membership',)# 'rel_fees')
+  #readonly_fields = ('name', 'record_type', '_rel_id_cards', '_member_link', '_rel_address_contract')
+  #raw_id_fields = ('rel_address_contracts', 'ic_membership',)# 'rel_fees')
+  '''
   fieldsets = (#MembershipAdmin.fieldsets + (
-    (None, {
+    (_(u"fase 1: Autoocupat"), {
       #'classes': ('collapse',),
       'fields': (
-        ('name', 'record_type',),
         ('ic_membership', '_member_link', 'organic',),
-        ('rel_fees',)
+        ('rel_fees', '_rel_fees',),
+        ('_has_assisted_welcome',)
       )
     }),
-    (_(u"fase 2: Llista de tasques"), {
-      #'classes': ('collapse',),
-      'fields': (('_rel_id_cards',),
-        ('rel_address_contracts', '_rel_address_contract',),
-        ('rel_insurances', 'rel_licences', 'rel_images'))
-    }),
     (_(u"fase 3: Alta"), {
-      #'classes': ('collapse',),
+      'classes': ('collapse', 'welcome',),
       'fields': (
-        ('join_date', 'assigned_vat', 'review_vat', 'last_review_date'),
-        ('rel_accountBank', 'mentor_membership', 'mentor_comment', 'end_date'))
+        ('join_date', ),
+        ('assigned_vat', 'review_vat', 'last_review_date'),
+        ('rel_accountBank',),
+        ('mentor_membership', 'mentor_comment',))
+    }),
+    (_(u"fase 2: Llista de tasques"), {
+      'classes': ('collapse', 'welcome',),
+      'fields': (
+          ('_rel_id_cards',),
+          ('rel_address_contracts', '_rel_address_contract'),
+          ('rel_licences', '_rel_licences'),
+          ('rel_insurances', '_rel_insurances'),
+          ('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
     }),
   )
-  filter_horizontal = ('rel_fees',)
-  inlines = [
+  '''
+  #filter_horizontal = ('rel_fees',)
+  #inlines = [
     #SE_relAddressContractInline,
-  ]
+  #]
+
+
 
 class Public_FeeAdmin(AutoRecordName):
   model = Fee
   readonly_fields = ('name', 'record_type', 'human', 'project',
                   'issue_date', 'deadline_date', 'payment_date',
-                  '_ic_membership', '_ic_selfemployed', '_auto_amount',)
+                  '_ic_membership', '_ic_selfemployed', '_auto_amount', '_erase_account')
 
-  search_fields = ('name', 'unit')
+  search_fields = ('name', 'unit',)
   list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
-  #list_filter = ('unit',)
+  list_filter = ('unit',)
   raw_id_fields = ('human', 'rel_account')
   fieldsets = (
     (None, {
@@ -356,7 +382,7 @@ class Public_FeeAdmin(AutoRecordName):
         ('unit', 'amount', '_auto_amount'),
         ('issue_date', 'deadline_date'),
         ('payment_type', 'payment_date'),
-        ('rel_account',)# 'name')
+        ('rel_account', '_erase_account',)# 'name')
       )
     }),
   )
@@ -377,7 +403,7 @@ class Public_FeeAdmin(AutoRecordName):
 
 class FeeAdmin(Public_FeeAdmin):
   #model = Fee
-  readonly_fields = ('name', 'project', '_ic_membership', '_ic_selfemployed', '_auto_amount')
+  readonly_fields = ('name', 'project', '_ic_membership', '_ic_selfemployed', '_auto_amount', '_erase_account')
   #editable_fields = ('unit', 'payment_type',)
 
   #search_fields = ('name', 'unit')
@@ -393,7 +419,7 @@ class FeeAdmin(Public_FeeAdmin):
         ('unit', 'amount', '_auto_amount'),
         ('issue_date', 'deadline_date'),
         ('payment_type', 'payment_date'),
-        ('rel_account', 'name')
+        ('rel_account', '_erase_account')# 'name')
       )
     }),
   )
@@ -415,9 +441,10 @@ class FeeAdmin(Public_FeeAdmin):
 
 class LearnSessionAdmin(AutoRecordName):
   model = Learn_Session
-  readonly_fields = ('name', '_assistants_link',)
+  readonly_fields = ('name', '_assistants_link', '_num_assistants',)
 
-  list_display = ['name', 'nonmaterial', 'datetime', 'address', 'facilitator']
+  list_display = ['name', 'nonmaterial', 'datetime', '_num_assistants', 'address', 'facilitator']
+  list_filter = ('nonmaterial', 'datetime',)
   search_fields = ('name', 'address',)
   raw_id_fields = ('assistants',)
   fieldsets = (
@@ -426,7 +453,8 @@ class LearnSessionAdmin(AutoRecordName):
         ('nonmaterial', 'datetime', 'duration'),
         ('address', 'facilitator'),
         ('assistants', '_assistants_link',),
-        ('description', 'record_type', 'name')
+        ('description',),
+        ('record_type', 'name')
       )
     }),
   )
@@ -451,11 +479,14 @@ class AddressContractAdmin(AutoRecordName):
   fieldsets = (
     (None, {
       'fields': (
-        ('name', '_ic_membership', '_ic_selfemployed'),
-        ('doc_type', 'company'),
-        ('address', '_address_link', 'file'),
+        ('_ic_membership', '_ic_selfemployed'),
+        ('doc_type',),
+        ('address', '_address_link'),
+        ('company',),
         ('price', 'price_unit'),
-        ('start_date', 'end_date'),# 'ic_membership'),
+        ('start_date', 'end_date'),
+        ('file',),
+        ('description',)
       )
     }),
   )
@@ -468,6 +499,67 @@ class AddressContractAdmin(AutoRecordName):
       kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
     return super(AddressContractAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
+class LicenceAdmin(AutoRecordName):
+  model = iC_Licence
+  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_erase_address', '_erase_job')
+
+  list_display = ['name', 'doc_type', 'number', 'end_date', '_ic_membership']
+  search_fields = ('name', 'number', 'doc_type')
+  #list_filter = ('doc_type', 'company')
+  raw_id_fields = ('rel_address', 'rel_job',)
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('_ic_membership', '_ic_selfemployed'),
+        ('doc_type',),
+        ('number',),
+        ('start_date', 'end_date'),
+        ('file',),
+        ('rel_address', '_erase_address'),
+        ('rel_job', '_erase_job'),
+        ('description',)
+      )
+    }),
+  )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'doc_type':
+      typ = iC_Document_Type.objects.get(clas='iC_Licence')
+      kwargs['queryset'] = iC_Document_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
+    return super(LicenceAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+class InsuranceAdmin(AutoRecordName):
+  model = iC_Insurance
+  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_erase_address', '_erase_job')
+
+  list_display = ['name', 'doc_type', 'number', 'end_date', '_ic_membership']
+  search_fields = ('name', 'number', 'doc_type')
+  #list_filter = ('doc_type', 'company')
+  raw_id_fields = ('rel_address', 'rel_job',)
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('_ic_membership', '_ic_selfemployed'),
+        ('doc_type',),
+        ('company',),
+        ('number',),
+        ('price', 'price_unit'),
+        ('start_date', 'end_date'),
+        ('file',),
+        ('rel_address', '_erase_address'),
+        ('rel_job', '_erase_job'),
+        ('description',)
+      )
+    }),
+  )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'doc_type':
+      typ = iC_Document_Type.objects.get(clas='iC_Insurance')
+      kwargs['queryset'] = iC_Document_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
+    if db_field.name == 'price_unit':
+      typs = Unit_Type.objects.filter(clas__icontains='currency')
+      kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
+    return super(InsuranceAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 # Register your models here.
 
@@ -475,8 +567,11 @@ class AddressContractAdmin(AutoRecordName):
 #admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
 
+
 admin.site.register(iC_Person_Membership, PersonMembershipAdmin)
+
 admin.site.register(iC_Project_Membership, ProjectMembershipAdmin)
+
 
 #admin.site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
 admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
@@ -484,17 +579,25 @@ admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
 #admin.site.register(iC_Membership, Public_MembershipAdmin)
 admin.site.register(iC_Membership, MembershipAdmin)
 
-admin.site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
-#admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
+#admin.site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
+admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 
 admin.site.register(iC_Stallholder)
 
+
+
 #admin.site.register(iC_Document)
 admin.site.register(iC_Document_Type, MPTTModelAdmin)
+
 admin.site.register(iC_Labor_Contract)
+
 admin.site.register(iC_Address_Contract, AddressContractAdmin)
-admin.site.register(iC_Insurance)
-admin.site.register(iC_Licence)
+
+admin.site.register(iC_Insurance, InsuranceAdmin)
+
+admin.site.register(iC_Licence, LicenceAdmin)
+
+
 
 #admin.site.register(Fee, Public_FeeAdmin)
 admin.site.register(Fee, FeeAdmin)
