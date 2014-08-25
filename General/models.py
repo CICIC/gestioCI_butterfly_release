@@ -25,6 +25,12 @@ ul_tag1 = '<ul style="margin-left:-10em;">'
 ul_tag = '<ul>'
 
 str_none = '<p>ninguna</p>'
+str_remove = 'treu'
+
+def erase_id_link(field, id):
+  out = '<a class="erase_id_on_box" name="'+str(field)+','+str(id)+'" href="javascript:;">'+str_remove+'</a>'
+  print out
+  return out
 
 #   C O N C E P T S - (Conceptes...)
 
@@ -578,7 +584,7 @@ class Address(Space):  # Create own ID's
   def _jobs_list(self):
     out = ul_tag
     for jo in self.jobs.all():
-      out += '<li><b>'+jo.verb+'</b> <span class="mini">('+str(jo.id)+')</span></li>'
+      out += '<li><b>'+jo.verb+'</b> - '+erase_id_link('jobs', str(jo.id))+'</li>'
     if out == ul_tag:
       return str_none
     return out+'</ul>'

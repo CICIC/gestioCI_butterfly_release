@@ -555,7 +555,7 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
     H_jobInline,
     H_assetInline,
 
-    #Proj_personInline,
+    Proj_personInline,
     #H_personInline,
     H_projectInline,
     #H_companyInline,
@@ -730,6 +730,9 @@ class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
 #---------  S P A C E
 
 class Public_AddressAdmin(admin.ModelAdmin):
+  class Media:
+    js = ("general.js",)
+
   readonly_fields = ('_main_addr_of', '_jobs_list',)
   list_display = ['name', 'address_type', 'p_address', 'town', 'postalcode', 'region', '_main_addr_of',]
   list_filter = ('address_type', 'region',)

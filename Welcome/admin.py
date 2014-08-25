@@ -439,6 +439,7 @@ class FeeAdmin(Public_FeeAdmin):
     return self.readonly_fields
   '''
 
+
 class LearnSessionAdmin(AutoRecordName):
   model = Learn_Session
   readonly_fields = ('name', '_assistants_link', '_num_assistants',)
@@ -466,6 +467,10 @@ class LearnSessionAdmin(AutoRecordName):
       #typ = Nonmaterial_Type.objects.get(clas='ic_learn')
       typs = Nonmaterial_Type.objects.filter(parent__clas='ic_learn')
       kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
+    if db_field.name == 'facilitator':
+      job = Job.objects.filter(clas='ic_facilitate')
+      print job
+      kwargs['queryset'] = Human.objects.filter(jobs=job)
     return super(LearnSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class AddressContractAdmin(AutoRecordName):
