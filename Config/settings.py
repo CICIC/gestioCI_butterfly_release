@@ -103,7 +103,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'gestioCI_butterfly',
         'USER' : 'gestioCI',
-        'PASSWORD': 'gestioCI',
+        'PASSWORD': 'passwor',
         'HOST': 'localhost',
     }
 }
@@ -168,8 +168,8 @@ SUIT_CONFIG = {
 #public_form
 ACCOUNT_ACTIVATION_DAYS = 5
 #SITE_URL = "http://gestio.cooperativa.cat:8082"
-#SITE_URL = "http://169.254.226.5:8082"
-SITE_URL = "http://localhost:8000"
+SITE_URL = "http://169.254.226.5:8082"
+#SITE_URL = "http://localhost:8000"
 
 '''
 5 Templates
