@@ -450,6 +450,7 @@ class H_assetInline(admin.StackedInline):
 
 
 
+
 class HumanAdmin(Css_Mixin):
   list_display = ['name', 'nickname', 'email']
   search_fields = ('name','nickname','email',)
@@ -755,6 +756,7 @@ class Public_AddressAdmin(admin.ModelAdmin):
       typ = Region_Type.objects.get(clas='region') # filtrando solo Comarcas
       kwargs['queryset'] = Region.objects.filter(region_type=typ)
     return super(Public_AddressAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 class AddressAdmin(Public_AddressAdmin):
 

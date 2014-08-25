@@ -29,6 +29,7 @@ ul_tag1 = '<ul style="margin-left:-10em;">'
 ico_no = '<img src="/static/admin/img/icon-no.gif" alt="False">'
 ico_yes = '<img src="/static/admin/img/icon-yes.gif" alt="True">'
 
+
 '''
 @app.route('/update_fnk', method=["POST"])
 def update_fnk(self, **data):
