@@ -149,7 +149,7 @@ class iC_Membership(iC_Record):
   contribution = TreeForeignKey('General.Relation', blank=True, null=True, verbose_name=_(u"Tipus de contribució"))
   join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
   end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
-  join_fee = models.ForeignKey('Fee', related_name="membership", verbose_name=_(u"Cuota d'alta"))
+  join_fee = models.ForeignKey('Fee', blank=True, null=True, related_name="membership", verbose_name=_(u"Cuota d'alta"))
 
   ic_CESnum = models.CharField(max_length=8, blank=True, null=True, verbose_name=_(u"Numero al CES/iCES"))
 
@@ -162,16 +162,21 @@ class iC_Membership(iC_Record):
         return self.ic_project.nickname+' (!record_type) > '+self.human.__unicode__()
       return self.ic_CESnum+' ('+self.human.nickname+') !record_type'
     else:
-      if self.ic_CESnum is None or self.ic_CESnum == '':
-        return self.record_type.name+': '+self.human.__unicode__()
-      return self.ic_CESnum+' ('+self.human.nickname+')'
+      if self.human:
+        if self.ic_CESnum is None or self.ic_CESnum == '':
+          return self.record_type.name+': '+self.human.__unicode__()
+        return self.ic_CESnum+' ('+self.human.nickname+')'
+      else:
+        return self.record_type+': ??'
 
   class Meta:
     verbose_name = _(u"Alta de Soci CI")
     verbose_name_plural = _(u"r-> Altes de Socis CI (tots menys afins)")
 
   def _join_fee_payed(self):
-    return self.join_fee.payed
+    if self.join_fee:
+      return self.join_fee.payed
+    return None
   _join_fee_payed.boolean = True
   _join_fee_payed.short_description = _(u"Quota d'Alta Pagada?")
   joinfee_payed = property(_join_fee_payed)
@@ -180,6 +185,7 @@ class iC_Membership(iC_Record):
     if hasattr(self, 'human'):
       return self.human._selflink()
     else:
+      return str_none
       lnk1 = a_strG + "person/add/" + a_str2 + add_pers + "</a>"
       lnk2 = a_strG + "project/add/" + a_str3 + add_proj + "</a>"
       return lnk1+' / '+lnk2
@@ -190,6 +196,7 @@ class iC_Membership(iC_Record):
     if hasattr(self, 'join_fee'):
       return self.join_fee._selflink()
     else:
+      return str_none
       lnk = a_strW + "fee/add/" + a_str2 + "add Fee</a>"
       return lnk
   _joinfee_link.allow_tags = True
@@ -248,6 +255,7 @@ class iC_Person_Membership(iC_Membership):
     if hasattr(self, 'person'):
       return self.person._selflink()
     else:
+      return str_none
       lnk1 = a_strG + "person/add/" + a_str2 + add_pers + "</a>"
       return lnk1
   _person_link.allow_tags = True
@@ -284,6 +292,7 @@ class iC_Project_Membership(iC_Membership):
     if hasattr(self, 'project'):
       return self.project._selflink()
     else:
+      return str_none
       lnk1 = a_strG + "project/add/" + a_str2 + add_proj + "</a>"
       return lnk1
   _project_link.allow_tags = True

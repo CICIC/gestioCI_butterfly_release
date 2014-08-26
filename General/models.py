@@ -24,7 +24,7 @@ a_edit = '<b>Editar</b>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
 ul_tag = '<ul>'
 
-str_none = '<p>ninguna</p>'
+str_none = '(cap)'
 str_remove = 'treu'
 
 def erase_id_link(field, id):
@@ -261,6 +261,14 @@ class Project(MPTTModel, Human):
   _ref_persons.allow_tags = True
   _ref_persons.short_description = _(u"Pers.de Referència?")
 
+  def __unicode__(self):
+    if self.nickname is None or self.nickname == '':
+      if self.project_type:
+        return self.name+' ('+self.project_type.name+')'
+      else:
+        return self.name
+    else:
+      return self.nickname+' ('+self.name+')'
 
 
 class Project_Type(Being_Type):

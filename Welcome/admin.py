@@ -33,8 +33,6 @@ class AutoRecordName(admin.ModelAdmin):
 
   def save_model(self, request, obj, form, change):
     instance = form.save(commit=False)
-    #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
-    instance.name = instance.__unicode__()
     if hasattr(instance, 'ic_project') and instance.ic_project is None:
       print 'SAVE_MODEL: not ic_project! put CIC to '+instance.name
       instance.ic_project = Project.objects.get(nickname='CIC')
@@ -53,6 +51,10 @@ class AutoRecordName(admin.ModelAdmin):
 
       #print request.ic_membership
       #instance.ic_membership = request.ic_membership
+    #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
+
+    instance.name = instance.__unicode__()
+
     instance.save()
     form.save_m2m()
     return instance
@@ -184,7 +186,7 @@ class ProjectMembershipAdmin(AutoRecordName):
   fieldsets = (
     (None, {
       'fields':(
-        ('record_type',),
+        ('record_type', 'name',),
         ('ic_CESnum', 'ic_project',),
         ('project', '_project_link',),
         ('join_fee', '_joinfee_link', '_join_fee_payed'),

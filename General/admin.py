@@ -13,7 +13,7 @@ from mptt.admin import MPTTModelAdmin
 from mptt.fields import TreeForeignKey, TreeManyToManyField
 #from mptt.forms import MPTTAdminForm, TreeNodeChoiceField
 
-from django_mptt_admin.admin import DjangoMpttAdmin
+#from django_mptt_admin.admin import DjangoMpttAdmin
 
 from General.models import *  # Tree, Human, Adress, Region, Concept, Type, Being_Type
 
@@ -781,7 +781,7 @@ class AddressAdmin(Public_AddressAdmin):
 
 #---------  A R T S
 
-class RelationAdmin(DjangoMpttAdmin):
+class RelationAdmin(MPTTModelAdmin):
   model = Relation
   list_display = ['name', 'verb', 'clas']
 
@@ -1262,4 +1262,4 @@ admin.site.register(Region_Type, Type_RegionAdmin)
 # ----- CONCEPTS
 
 #admin.site.register(Concept, MPTTModelAdmin)
-#admin.site.register(Type, DjangoMpttAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
+#admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
