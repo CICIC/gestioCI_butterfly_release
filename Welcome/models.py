@@ -439,7 +439,11 @@ class iC_Self_Employed(iC_Record):
     out = ul_tag
     if addrs.count() > 0:
       for adr in addrs:
-        out += '<li>'+a_strW +'ic_address_contract/'+str(adr.id)+a_str3 + '<b>'+adr.__unicode__() +'</b></a>: '+adr.doc_type.name+'</li>'
+        if adr._is_valid():
+          ico = ico_yes
+        else:
+          ico = ico_no
+        out += '<li>'+a_strW +'ic_address_contract/'+str(adr.id)+a_str3 + '<b>'+adr.__unicode__() +'</b></a>: '+adr.doc_type.name+' &nbsp; '+ico+'</li>'
       return out + '</ul>'
     return str_none
   _rel_address_contract.allow_tags = True
@@ -455,7 +459,11 @@ class iC_Self_Employed(iC_Record):
           job = lic.rel_job.name
         if lic.rel_address:
           adr = lic.rel_address.name
-        out += '<li>'+a_strW +'ic_licence/'+str(lic.id)+a_str3 + '<b>'+lic.__unicode__() +'</b></a>: '+job+' '+adr+'</li>'
+        if lic._is_valid():
+          ico = ico_yes
+        else:
+          ico = ico_no
+        out += '<li>'+a_strW +'ic_licence/'+str(lic.id)+a_str3 + '<b>'+lic.__unicode__() +'</b></a>: '+job+' '+adr+' &nbsp; '+ico+'</li>'
       return out + '</ul>'
     return str_none
   _rel_licences.allow_tags = True
@@ -471,7 +479,11 @@ class iC_Self_Employed(iC_Record):
           job = ins.rel_job.name
         if ins.rel_address:
           adr = ins.rel_address.name
-        out += '<li>'+a_strW +'ic_insurance/'+str(ins.id)+a_str3 + '<b>'+ins.__unicode__() +'</b></a>: '+job+' '+adr+'</li>'
+        if ins._is_valid():
+          ico = ico_yes
+        else:
+          ico = ico_no
+        out += '<li>'+a_strW +'ic_insurance/'+str(ins.id)+a_str3 + '<b>'+ins.__unicode__() +'</b></a>: '+job+' '+adr+' &nbsp; '+ico+'</li>'
       return out + '</ul>'
     return str_none
   _rel_insurances.allow_tags = True
@@ -755,6 +767,16 @@ class iC_Address_Contract(iC_Document):
   _address_link.allow_tags = True
   _address_link.short_description = ''
 
+  def _is_valid(self):
+    if hasattr(self, 'address') and self.address and hasattr(self, 'company') and self.company:
+      if hasattr(self, 'price') and hasattr(self, 'price_unit'):
+        if hasattr(self, 'start_date') and self.start_date:
+          return True
+    return False
+  _is_valid.boolean = True
+  _is_valid.short_description = _(u"Valid?")
+
+
 
 class iC_Insurance(iC_Document):
   ic_document = models.OneToOneField('iC_Document', primary_key=True, parent_link=True)
@@ -792,6 +814,16 @@ class iC_Insurance(iC_Document):
   _erase_job.allow_tags = True
   _erase_job.short_description = ''
 
+  def _is_valid(self):
+    if hasattr(self, 'number') and not self.number == '':
+      if hasattr(self, 'company') and not self.company == '':
+        if hasattr(self, 'start_date') and self.start_date:
+          if hasattr(self, 'price') and hasattr(self, 'price_unit'):
+            return True
+    return False
+  _is_valid.boolean = True
+  _is_valid.short_description = _(u"Valid?")
+
 
 
 class iC_Licence(iC_Document):
@@ -827,3 +859,11 @@ class iC_Licence(iC_Document):
     return False
   _erase_job.allow_tags = True
   _erase_job.short_description = ''
+
+  def _is_valid(self):
+    if hasattr(self, 'number') and not self.number == '':
+      if hasattr(self, 'start_date') and self.start_date:
+        return True
+    return False
+  _is_valid.boolean = True
+  _is_valid.short_description = _(u"Valid?")
