@@ -10,18 +10,20 @@
       $('fieldset.welcome').first().removeClass('collapse collapsed');
 
       var assist_socialcoin = $('.field-_has_assisted_socialcoin img').attr('alt');
-      if(assist_socialcoin == 'False'){
+      var falses = $('img[alt=False]').length
+      if(assist_socialcoin == 'False' || falses){
         $('fieldset.welcome').last().find('div').remove();
       }
-      else if(assist_socialcoin == 'True'){
-        $('fieldset.welcome').last().removeClass('collapse collapsed');
-        $('fieldset.welcome').first().addClass('collapse');
+      else if(assist_socialcoin == 'True' && !falses){
+        first = $('fieldset.welcome').first().remove();
+        last = $('fieldset.welcome').last().removeClass('collapse collapsed');
+        $('fieldset.welcome').last().after(first)
       }
 
     } else {
       $('fieldset.welcome div').remove();
     }
-    //alert('assist_welcome: '+assist_welcome+' ('+typeof(assist_welcome)+')')
+    //alert('assist_welcome: '+assist_welcome+' ('+typeof(assist_welcome)+') falses:'+falses)
 
   } )
 }) (django.jQuery);

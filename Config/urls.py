@@ -45,7 +45,9 @@ url(r'^welcome/', include('Welcome.urls', namespace='Welcome')),
 url(r'^public_form/', include('public_form.urls', namespace='public_form')),
 #Default http index --> redirect to soci space
 url(r'^', include(user_admin_site.urls)),
-)
+
+#url(r'^media/',),
+) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) #+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 #MEDIA
 #Add this to serve static files like csv (config in ./settings.py)

@@ -257,7 +257,7 @@ class Project(MPTTModel, Human):
       for pr in prs:
         out += '<li>'+str(pr)+'</li>'
       return out+'</ul>'
-    return str(prs)
+    return str_none
   _ref_persons.allow_tags = True
   _ref_persons.short_description = _(u"Pers.de Referència?")
 
@@ -732,9 +732,14 @@ class Nonmaterial_Type(Artwork_Type):
 
 class Image(Nonmaterial):
   nonmaterial = models.OneToOneField('Nonmaterial', primary_key=True, parent_link=True)
-  image = models.ImageField(upload_to='files/images', blank=True, null=True, verbose_name=_(u"Imatge (jpg/png)"))
+  image = models.ImageField(upload_to='files/images', height_field='height', width_field='width',
+                          blank=True, null=True,
+                          verbose_name=_(u"Imatge (jpg/png)"))
   #footer = models.TextField(blank=True, null=True, verbose_name=_(u"Peu de foto"))
   url = models.URLField(blank=True, null=True, verbose_name=_(u"Url de la imatge"))
+  height = models.IntegerField(blank=True, null=True, verbose_name=_(u"Alçada"))
+  width = models.IntegerField(blank=True, null=True, verbose_name=_(u"Amplada"))
+
   class Meta:
     verbose_name = _(u"Imatge")
     verbose_name_plural = _(u"o- Imatges")

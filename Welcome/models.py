@@ -25,6 +25,7 @@ a_edit = '<b>Editar</b>'
 str_remove = 'treu'
 ul_tag = '<ul>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
+ul_tag_err = '<ul class="error">'
 
 ico_no = '<img src="/static/admin/img/icon-no.gif" alt="False">'
 ico_yes = '<img src="/static/admin/img/icon-yes.gif" alt="True">'
@@ -43,6 +44,17 @@ def update_fnk(self, **data):
 
 def erase_id_link(field, id):
   out = '<a class="erase_id_on_box" name="'+str(field)+','+str(id)+'" href="javascript:;">'+str_remove+'</a>'
+  return out
+
+def show_thumbnail(img):
+  print 'IMG: '+str(img)
+  #print 'HEIGHT: '+str(img.height)
+  #print 'WIDTH: '+str(img.width)
+  #for im in img:
+  #  print str(im)#+' = '#+img[im]
+
+  url = img.image
+  out = '<img src="/media/'+str(url)+'" height="50" >'
   return out
 
 # Create your models here.
@@ -202,8 +214,16 @@ class iC_Membership(iC_Record):
   _joinfee_link.allow_tags = True
   _joinfee_link.short_description = ''
 
+  def _is_selfemployed(self):
+    if hasattr(self, 'selfemployed_recs') and self.selfemployed_recs.count() > 0:
+      return True
+    return False
+  _is_selfemployed.boolean = True
+  _is_selfemployed.short_description = _(u"Autoocupat?")
+  is_selfemployed = property(_is_selfemployed)
+
   def _ic_selfemployed_list(self):
-    if hasattr(self, 'selfemployed_recs'):
+    if self._is_selfemployed():
       out = ul_tag
       for rec in self.selfemployed_recs.all():
         out += '<li>'+ a_strW + 'ic_self_employed/'+str(rec.id) + a_str3 + '<b>'+str(rec.name) + '</b></a></li>'
@@ -383,7 +403,8 @@ class iC_Self_Employed(iC_Record):
 
   def __init__(self, *args, **kwargs):
     super(iC_Self_Employed, self).__init__(*args, **kwargs)
-    self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
+    if self.record_type is None or self.record_type == '':
+      self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
 
   def _member_link(self):
     if self.id:
@@ -412,9 +433,10 @@ class iC_Self_Employed(iC_Record):
         ico = ico_no
         if fee.payed:
           ico = ico_yes
-        out += '<li>'+a_strW +'fee/'+str(fee.id)+a_str3 + '<b>'+fee.__unicode__() +'</b></a>: &nbsp; '+ ico +' </li>'
+        fee_ul = fee._min_fee_data()
+        out += '<li>'+a_strW +'fee/'+str(fee.id)+a_str3 + '<b>'+fee.__unicode__() +'</b></a>: &nbsp; '+ ico + fee_ul+' </li>'
       return out + '</ul>'
-    return False
+    return str_none
   _rel_fees.allow_tags = True
   _rel_fees.short_description = ''#_(u"contractes?")
 
@@ -489,6 +511,50 @@ class iC_Self_Employed(iC_Record):
   _rel_insurances.allow_tags = True
   _rel_insurances.short_description = ''
 
+  def _rel_images(self):
+    imgs = self.rel_images.all()
+    out = '<div class="thumb_line">'
+    if imgs.count() > 0:
+      for img in imgs:
+        out += '<div class="thumb">'+a_strG + 'image/'+str(img.id)+a_str3 + show_thumbnail(img) + '<br>'+ img.__unicode__() +'</a></div> '#+str(url)
+      return out+'</div>'
+    return str_none
+  _rel_images.allow_tags = True
+  _rel_images.short_description = ''
+
+  def _min_human_data(self):
+    hum = self.ic_membership.human
+    out = ul_tag_err
+    if hum.telephone_cell is None or hum.telephone_cell == '':
+      out += '<li>Falta el Teléfon mobil.</li>'
+    if hum.description is None or hum.description == '':
+      out += '<li>Falta alguna Descripció.</li>'
+    if hum.addresses.all().count() < 1:
+      out += '<li>Falta alguna Adreça.</li>'
+    elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
+      out += '<li>Alguna adreça ha de ser la principal.</li>'
+    else:
+      adr = hum.rel_human_addresses_set.filter(main_address=True).first().address
+      if adr.postalcode is None or adr.postalcode == '':
+        out += "<li>A l'adreça principal li falta el Codi Postal.</li>"
+      if adr.region is None or adr.region == '':
+        out += "<li>A l'adreça principal li falta la Comarca</li>"
+
+    if hasattr(hum, 'project'):
+      if hum.project.project_type is None or hum.project.project_type == '':
+        out += '<li>És projecte i falta el Tipus.</li>'
+      if hum.project._get_ref_persons().count() < 1:
+        out += '<li>Falta alguna Persona de Referencia.</li>'
+    print str(self.ic_stallholder)
+    if hasattr(self, 'ic_stallholder'):
+      if self.ic_stallholder.tent_type is None or self.ic_stallholder.tent_type == '':
+        out += '<li>És firaire i falta el tipus de carpa.</li>'
+
+    if out == ul_tag_err:
+      return ico_yes
+    return out+'<li>'+ico_no+'</li></ul>'
+  _min_human_data.allow_tags = True
+  _min_human_data.short_description = ''
 
 
 class iC_Stallholder(iC_Self_Employed):  # Firaire
@@ -499,11 +565,15 @@ class iC_Stallholder(iC_Self_Employed):  # Firaire
     ('wood',_(u"de fusta")),
     ('metal',_(u"metàlica"))
   )
-  tent_type = models.CharField(max_length=5, choices=TentType, verbose_name=_(u"Tipus de carpa"))
+  tent_type = models.CharField(max_length=5, choices=TentType, blank=True, null=True, verbose_name=_(u"Tipus de carpa"))
+
   class Meta:
     verbose_name = _(u"Alta Proj.Autoocupat Firaire")
     verbose_name_plural = _(u"- Altes Proj. Autoocupats Firaires")
 
+  def __init__(self, *args, **kwargs):
+    super(iC_Stallholder, self).__init__(*args, **kwargs)
+    self.record_type = iC_Record_Type.objects.get(clas='iC_Stallholder')
 
 
 
@@ -670,6 +740,22 @@ class Fee(iC_Record):
   _erase_account.allow_tags = True
   _erase_account.short_description = ''
 
+  def _min_fee_data(self):
+    out = ul_tag_err
+    if self.payment_type is None or self.payment_type == '':
+      out += "<li>Falta la forma de pagament.</li>"
+    if self.issue_date is None:
+      out += "<li>Falta la data d'emisió.</li>"
+    if self.deadline_date is None:
+      out += "<li>Falta la data de venciment.</li>"
+    if self.amount is None or self.amount == '':
+      out += "<li>Falta l'import.</li>"
+
+    if out == ul_tag_err:
+      return ico_yes
+    return out+'<li>'+ico_no+'</li></ul>'
+  _min_fee_data.allow_tags = True
+  _min_fee_data.short_description = ''
 
   def _selflink(self):
     if self.id:

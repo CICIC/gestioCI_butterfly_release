@@ -198,6 +198,7 @@ STATICFILES_DIRS = (
 		BASE_DIR + '/General/templates/',
 		BASE_DIR + '/Welcome/templates/',
 		BASE_DIR + '/public_form/templates/',
+    os.path.join(BASE_DIR, "media"),
 )
 
 '''

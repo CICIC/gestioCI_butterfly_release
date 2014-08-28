@@ -43,6 +43,11 @@ class AutoRecordName(admin.ModelAdmin):
       if hasattr(instance, 'person'):# and instance.person is not None:
         print 'SAVE_MODEL: not human! put person...'
         instance.human = instance.person
+
+    #if hasattr(instance, 'ic_stallholder') and hasattr(instance, 'ic_self_employed'):
+    #  print 'ERROR! '
+    #  return "El soci ja te registre d'autoocupat!"
+
     #if not hasattr(instance, 'ic_membership') or instance.ic_membership is None or instance.ic_membership == '':
     #  print 'JELOW SAVE_MODEL'
     #  print self.model
@@ -123,15 +128,15 @@ class Public_MembershipAdmin(AutoRecordName):
     if db_field.name == 'contribution':
       typ = Relation.objects.get(clas='contribute')
       kwargs['queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
-    return super(MembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+    return super(Public_MembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class MembershipAdmin(Public_MembershipAdmin):
   #model = iC_Membership
-  readonly_fields = ('_join_fee_payed', '_human_link', 'ic_project', '_joinfee_link')
+  readonly_fields = ('_join_fee_payed', '_human_link', 'ic_project', '_joinfee_link', '_is_selfemployed')
 
   search_fields = ('name', 'ic_CESnum',)
-  list_display = ['name', 'record_type', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed']
+  list_display = ['name', 'record_type', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed', '_is_selfemployed']
   #list_filter = ('record_type',)
   raw_id_fields = ('human', 'expositors',)
   fieldsets = (
@@ -260,10 +265,10 @@ class Public_SelfEmployedAdmin(AutoRecordName):
     js = ('welcome.js', 'selfemployed.js',)
 
   model = iC_Self_Employed
-  list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
+  list_display = ['name', 'ic_membership', 'join_date', 'record_type',]# '_join_fee_payed']
   form = SelfEmployedForm
 
-  readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards',
+  readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
                     '_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin')
 
   raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees',
@@ -273,13 +278,14 @@ class Public_SelfEmployedAdmin(AutoRecordName):
     (_(u"fase 1: Autoocupat"), {
       #'classes': ('collapse',),
       'fields': (
-        ('ic_membership', '_member_link', 'organic',),
+        ('ic_membership', '_member_link', '_min_human_data'),
+        ('organic',),
         ('rel_fees', '_rel_fees',),
         ('_has_assisted_welcome',)
       )
     }),
     (_(u"fase 2: Llista de tasques"), {
-      'classes': ('collapse', 'welcome',),
+      'classes': ('welcome',),
       'fields': (
           ('_rel_id_cards',),
           ('rel_address_contracts', '_rel_address_contract'),
@@ -288,7 +294,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
           ('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
     }),
     (_(u"fase 3: Alta"), {
-      'classes': ('collapse', 'welcome',),
+      'classes': ('welcome',),
       'fields': (
         ('join_date', ),
         ('assigned_vat', 'review_vat', 'last_review_date'),
@@ -326,7 +332,7 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
     js = ('welcome.js',)
 
   model = iC_Self_Employed
-  list_display = ['name', 'ic_membership', 'join_date',]# '_join_fee_payed']
+  list_display = ['name', 'ic_membership', 'join_date', 'record_type',]# '_join_fee_payed']
   #formset = SelfEmployedForm
   #readonly_fields = ('name', 'record_type', '_rel_id_cards', '_member_link', '_rel_address_contract')
   #raw_id_fields = ('rel_address_contracts', 'ic_membership',)# 'rel_fees')
@@ -364,13 +370,73 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
     #SE_relAddressContractInline,
   #]
 
+class StallholderAdmin(Public_SelfEmployedAdmin):
+  class Media:
+    css = {
+      'all': ('admin_record.css', 'selfemployed.css',)
+    }
+    js = ('welcome.js',)
+
+  model = iC_Self_Employed
+  list_display = ['name', 'ic_membership', 'join_date', 'record_type',]# '_join_fee_payed']
+  #formset = SelfEmployedForm
+  readonly_fields = Public_SelfEmployedAdmin.readonly_fields + ('_rel_images',)
+  raw_id_fields = Public_SelfEmployedAdmin.raw_id_fields + ('rel_images',)
+  fieldsets = (
+    (_(u"fase 1: Autoocupat"), {
+      #'classes': ('collapse',),
+      'fields': (
+        ('ic_membership', '_member_link', 'organic', 'tent_type'),
+        ('rel_fees', '_rel_fees',),
+        ('_has_assisted_welcome',)
+      )
+    }),
+    (_(u"fase 2: Llista de tasques"), {
+      'classes': ('collapse', 'welcome',),
+      'fields': (
+          ('_rel_id_cards',),
+          ('rel_address_contracts', '_rel_address_contract'),
+          ('rel_licences', '_rel_licences'),
+          ('rel_insurances', '_rel_insurances'),
+          ('rel_images', '_rel_images'),
+          ('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
+    }),
+    (_(u"fase 3: Alta"), {
+      'classes': ('collapse', 'welcome',),
+      'fields': (
+        ('join_date', ),
+        ('assigned_vat', 'review_vat', 'last_review_date'),
+        ('rel_accountBank',),
+        ('mentor_membership', 'mentor_comment',))
+    }),
+  )
+  #filter_horizontal = ('rel_fees',)
+  #inlines = [
+    #SE_relAddressContractInline,
+  #]
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'ic_membership':
+      #recs = iC_Self_Employed.objects.all().values('ic_membership')
+      #print 'HOL: '+str(iC_Membership.objects.filter(selfemployed_recs=None))
+      kwargs['queryset'] = iC_Membership.objects.filter(selfemployed_recs=None)
+    return super(StallholderAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+
+
 
 
 class Public_FeeAdmin(AutoRecordName):
+  class Media:
+    css = {
+      'all': ('admin_record.css', 'selfemployed.css',)
+    }
+    #js = ('welcome.js', 'selfemployed.js',)
+
   model = Fee
   readonly_fields = ('name', 'record_type', 'human', 'project',
                   'issue_date', 'deadline_date', 'payment_date',
-                  '_ic_membership', '_ic_selfemployed', '_auto_amount', '_erase_account')
+                  '_ic_membership', '_ic_selfemployed', '_auto_amount', '_erase_account', '_min_fee_data')
 
   search_fields = ('name', 'unit',)
   list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
@@ -382,7 +448,7 @@ class Public_FeeAdmin(AutoRecordName):
         #('record_type', 'project'),
         ('human', '_ic_membership', '_ic_selfemployed'),
         ('unit', 'amount', '_auto_amount'),
-        ('issue_date', 'deadline_date'),
+        ('issue_date', 'deadline_date', '_min_fee_data'),
         ('payment_type', 'payment_date'),
         ('rel_account', '_erase_account',)# 'name')
       )
@@ -405,7 +471,7 @@ class Public_FeeAdmin(AutoRecordName):
 
 class FeeAdmin(Public_FeeAdmin):
   #model = Fee
-  readonly_fields = ('name', 'project', '_ic_membership', '_ic_selfemployed', '_auto_amount', '_erase_account')
+  readonly_fields = ('name', 'project', '_ic_membership', '_ic_selfemployed', '_auto_amount', '_erase_account', '_min_fee_data')
   #editable_fields = ('unit', 'payment_type',)
 
   #search_fields = ('name', 'unit')
@@ -419,7 +485,7 @@ class FeeAdmin(Public_FeeAdmin):
         ('record_type', 'project'),
         ('human', '_ic_membership', '_ic_selfemployed'),
         ('unit', 'amount', '_auto_amount'),
-        ('issue_date', 'deadline_date'),
+        ('issue_date', 'deadline_date', '_min_fee_data'),
         ('payment_type', 'payment_date'),
         ('rel_account', '_erase_account')# 'name')
       )
@@ -589,7 +655,7 @@ admin.site.register(iC_Membership, MembershipAdmin)
 #admin.site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 
-admin.site.register(iC_Stallholder)
+admin.site.register(iC_Stallholder, StallholderAdmin)
 
 
 

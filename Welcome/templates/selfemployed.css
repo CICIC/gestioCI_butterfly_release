@@ -1,3 +1,18 @@
-div.field-box.field-_rel_fees label {
+div.field-box.field-_rel_fees label, div.field-box.field-_rel_insurances label, div.field-box.field-_rel_images label,
+div.field-box.field-_rel_licences label, div.field-box.field-_rel_address_contract label {
   display: none;
+}
+
+
+div.thumb_line {
+  margin-top: -5px;
+}
+div.thumb {
+  float: left;
+  text-align: center;
+  margin-right: 20px;
+}
+
+ul.error {
+  color: #c00;
 }
