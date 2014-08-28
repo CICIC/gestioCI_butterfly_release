@@ -44,25 +44,36 @@ class AutoRecordName(admin.ModelAdmin):
         print 'SAVE_MODEL: not human! put person...'
         instance.human = instance.person
 
-    #if hasattr(instance, 'ic_stallholder') and hasattr(instance, 'ic_self_employed'):
-    #  print 'ERROR! '
-    #  return "El soci ja te registre d'autoocupat!"
+    print instance.record_type.clas
+    if instance.record_type.clas == 'iC_Stallholder' or instance.record_type.clas == 'iC_Self_Employed':
+      if hasattr(instance.ic_membership, 'selfemployed_recs'):
+        recs = instance.ic_membership.selfemployed_recs.filter(end_date=None)
+        print 'RECS: '+str(recs)
+        if recs.count() > 1: # TODO rise a real exeption
+          print 'ERRORR!!! '
+          print "Hi ha més d'un registre d'autoocupat sense data de baixa ¿??"
+          return False
+        elif recs.count() > 0: # TODO rise a real exeption
+          print 'ERROR!! '
+          print "El soci ja te 1 registre d'autoocupat sense data de baixa!"
+          return False
 
-    #if not hasattr(instance, 'ic_membership') or instance.ic_membership is None or instance.ic_membership == '':
-    #  print 'JELOW SAVE_MODEL'
-    #  print self.model
-      #print obj.selfemployed
-      #print instance.selfemployed
+    if instance.record_type.clas == 'iC_Person_Membership' or instance.record_type.clas == 'iC_Project_Membership':
+      icms = instance.human.ic_membership_set.all()
+      #print icms
+      if icms.count() > 0:
+        print 'ERROR!! '
+        print 'Ja tenim registre alta: '+str(icms)
+        return False
 
-      #print request.ic_membership
-      #instance.ic_membership = request.ic_membership
     #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
 
-    instance.name = instance.__unicode__()
+    instance.name = instance.__unicode__() # Here the Auto Name, the unicode MUST NOT use the 'name' to build! otherwise it grows to infinity...
 
     instance.save()
     form.save_m2m()
     return instance
+
   '''
   def save_formset(self, request, form, formset, change):
     def set_relAddrContract_member(instance):
@@ -82,6 +93,10 @@ class AutoRecordName(admin.ModelAdmin):
       return formset.save()
   '''
 
+
+
+#---------  M E M B E R S H I P ' S
+
 class Public_AkinMembershipAdmin(AutoRecordName):
   model = iC_Akin_Membership
   raw_id_fields = ('person', 'ic_membership',)
@@ -93,7 +108,6 @@ class Public_AkinMembershipAdmin(AutoRecordName):
                 ('description', '_has_id_card'))
     }),
   )
-
 
 class AkinMembershipAdmin(Public_AkinMembershipAdmin):
   list_display = ['name', 'person', 'join_date', 'ic_membership', '_has_id_card',]
@@ -107,6 +121,7 @@ class AkinMembershipAdmin(Public_AkinMembershipAdmin):
                 ('description', 'name'))
     }),
   )
+
 
 
 class Public_MembershipAdmin(AutoRecordName):
@@ -130,13 +145,12 @@ class Public_MembershipAdmin(AutoRecordName):
       kwargs['queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
     return super(Public_MembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
-
 class MembershipAdmin(Public_MembershipAdmin):
   #model = iC_Membership
   readonly_fields = ('_join_fee_payed', '_human_link', 'ic_project', '_joinfee_link', '_is_selfemployed')
 
   search_fields = ('name', 'ic_CESnum',)
-  list_display = ['name', 'record_type', 'human', 'ic_CESnum', 'ic_project', '_join_fee_payed', '_is_selfemployed']
+  list_display = ['name', 'record_type', 'human', 'ic_CESnum', '_is_selfemployed', 'ic_project', '_join_fee_payed']
   #list_filter = ('record_type',)
   raw_id_fields = ('human', 'expositors',)
   fieldsets = (
@@ -256,7 +270,6 @@ class SelfEmployedForm(forms.ModelForm):
     super(SelfEmployedForm, self).__init__(*args, **kwargs)
     #print 'FORM: KWARGS: '+str(kwargs)
 
-
 class Public_SelfEmployedAdmin(AutoRecordName):
   class Media:
     css = {
@@ -323,7 +336,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
       kwargs['queryset'] = Fee.objects.filter(record_type__parent__clas='quarterly_fee')
     return super(Public_SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
-
 class SelfEmployedAdmin(Public_SelfEmployedAdmin):
   class Media:
     css = {
@@ -370,16 +382,18 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
     #SE_relAddressContractInline,
   #]
 
-class StallholderAdmin(Public_SelfEmployedAdmin):
+
+
+class Public_StallholderAdmin(Public_SelfEmployedAdmin):
   class Media:
     css = {
       'all': ('admin_record.css', 'selfemployed.css',)
     }
     js = ('welcome.js',)
 
-  model = iC_Self_Employed
+  model = iC_Stallholder
   list_display = ['name', 'ic_membership', 'join_date', 'record_type',]# '_join_fee_payed']
-  #formset = SelfEmployedForm
+
   readonly_fields = Public_SelfEmployedAdmin.readonly_fields + ('_rel_images',)
   raw_id_fields = Public_SelfEmployedAdmin.raw_id_fields + ('rel_images',)
   fieldsets = (
@@ -392,7 +406,7 @@ class StallholderAdmin(Public_SelfEmployedAdmin):
       )
     }),
     (_(u"fase 2: Llista de tasques"), {
-      'classes': ('collapse', 'welcome',),
+      'classes': ('welcome',),
       'fields': (
           ('_rel_id_cards',),
           ('rel_address_contracts', '_rel_address_contract'),
@@ -402,7 +416,7 @@ class StallholderAdmin(Public_SelfEmployedAdmin):
           ('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
     }),
     (_(u"fase 3: Alta"), {
-      'classes': ('collapse', 'welcome',),
+      'classes': ('welcome',),
       'fields': (
         ('join_date', ),
         ('assigned_vat', 'review_vat', 'last_review_date'),
@@ -410,21 +424,21 @@ class StallholderAdmin(Public_SelfEmployedAdmin):
         ('mentor_membership', 'mentor_comment',))
     }),
   )
-  #filter_horizontal = ('rel_fees',)
-  #inlines = [
-    #SE_relAddressContractInline,
-  #]
+
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     if db_field.name == 'ic_membership':
       #recs = iC_Self_Employed.objects.all().values('ic_membership')
       #print 'HOL: '+str(iC_Membership.objects.filter(selfemployed_recs=None))
       kwargs['queryset'] = iC_Membership.objects.filter(selfemployed_recs=None)
-    return super(StallholderAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+    return super(Public_StallholderAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+class StallholderAdmin(Public_StallholderAdmin):
+
+  pass
 
 
 
-
-
+#---------  F E E ' S
 
 class Public_FeeAdmin(AutoRecordName):
   class Media:
@@ -508,38 +522,8 @@ class FeeAdmin(Public_FeeAdmin):
   '''
 
 
-class LearnSessionAdmin(AutoRecordName):
-  model = Learn_Session
-  readonly_fields = ('name', '_assistants_link', '_num_assistants',)
 
-  list_display = ['name', 'nonmaterial', 'datetime', '_num_assistants', 'address', 'facilitator']
-  list_filter = ('nonmaterial', 'datetime',)
-  search_fields = ('name', 'address',)
-  raw_id_fields = ('assistants',)
-  fieldsets = (
-    (None, {
-      'fields': (
-        ('nonmaterial', 'datetime', 'duration'),
-        ('address', 'facilitator'),
-        ('assistants', '_assistants_link',),
-        ('description',),
-        ('record_type', 'name')
-      )
-    }),
-  )
-  def formfield_for_foreignkey(self, db_field, request, **kwargs):
-    if db_field.name == 'record_type':
-      typ = iC_Record_Type.objects.get(clas='Learn_Session')
-      kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
-    if db_field.name == 'nonmaterial':
-      #typ = Nonmaterial_Type.objects.get(clas='ic_learn')
-      typs = Nonmaterial_Type.objects.filter(parent__clas='ic_learn')
-      kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
-    if db_field.name == 'facilitator':
-      job = Job.objects.filter(clas='ic_facilitate')
-      print job
-      kwargs['queryset'] = Human.objects.filter(jobs=job)
-    return super(LearnSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+#---------  I C _ D O C U M E N T S
 
 class AddressContractAdmin(AutoRecordName):
   model = iC_Address_Contract
@@ -632,6 +616,43 @@ class InsuranceAdmin(AutoRecordName):
       typs = Unit_Type.objects.filter(clas__icontains='currency')
       kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
     return super(InsuranceAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+
+#---------  O T H E R   I C _ R E C O R D S
+
+class LearnSessionAdmin(AutoRecordName):
+  model = Learn_Session
+  readonly_fields = ('name', '_assistants_link', '_num_assistants',)
+
+  list_display = ['name', 'nonmaterial', 'datetime', '_num_assistants', 'address', 'facilitator']
+  list_filter = ('nonmaterial', 'datetime',)
+  search_fields = ('name', 'address',)
+  raw_id_fields = ('assistants',)
+  fieldsets = (
+    (None, {
+      'fields': (
+        ('nonmaterial', 'datetime', 'duration'),
+        ('address', 'facilitator'),
+        ('assistants', '_assistants_link',),
+        ('description',),
+        ('record_type', 'name')
+      )
+    }),
+  )
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field.name == 'record_type':
+      typ = iC_Record_Type.objects.get(clas='Learn_Session')
+      kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
+    if db_field.name == 'nonmaterial':
+      #typ = Nonmaterial_Type.objects.get(clas='ic_learn')
+      typs = Nonmaterial_Type.objects.filter(parent__clas='ic_learn')
+      kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
+    if db_field.name == 'facilitator':
+      job = Job.objects.filter(clas='ic_facilitate')
+      print job
+      kwargs['queryset'] = Human.objects.filter(jobs=job)
+    return super(LearnSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 # Register your models here.

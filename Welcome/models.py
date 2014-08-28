@@ -219,7 +219,7 @@ class iC_Membership(iC_Record):
       return True
     return False
   _is_selfemployed.boolean = True
-  _is_selfemployed.short_description = _(u"Autoocupat?")
+  _is_selfemployed.short_description = _(u"AO")
   is_selfemployed = property(_is_selfemployed)
 
   def _ic_selfemployed_list(self):
