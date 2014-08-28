@@ -900,7 +900,7 @@ DROP TABLE IF EXISTS `Welcome_ic_document`;
 CREATE TABLE `Welcome_ic_document` (
   `ic_record_id` int(11) NOT NULL,
   `doc_type_id` int(11) DEFAULT NULL,
-  `file` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `doc_file` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`ic_record_id`),
   KEY `Welcome_ic_document_ca3e294e` (`doc_type_id`),
   CONSTRAINT `doc_type_id_refs_record_type_id_697e0ecf` FOREIGN KEY (`doc_type_id`) REFERENCES `Welcome_ic_document_type` (`record_type_id`),
@@ -3392,4 +3392,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-08-28 22:24:35
+-- Dump completed on 2014-08-28 23:23:34

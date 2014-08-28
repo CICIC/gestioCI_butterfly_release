@@ -524,6 +524,7 @@ class Job(Art):    # Create own ID's (TREE)
       return self.name+' ('+self.clas+')'
 
 
+
 #rel_tit = Relation.objects.get(clas='holder')
 
 #   S P A C E S - (Regions, Espais, Adreçes...)

@@ -22,7 +22,7 @@ add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
 
-str_remove = 'treu'
+str_remove = _(u"treu")
 ul_tag = '<ul>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
 ul_tag_err = '<ul class="error">'
@@ -30,6 +30,7 @@ ul_tag_err = '<ul class="error">'
 ico_no = '<img src="/static/admin/img/icon-no.gif" alt="False">'
 ico_yes = '<img src="/static/admin/img/icon-yes.gif" alt="True">'
 
+str_addfee = "crea Quota d'alta"
 
 '''
 @app.route('/update_fnk', method=["POST"])
@@ -205,11 +206,17 @@ class iC_Membership(iC_Record):
   _human_link.short_description = ''
 
   def _joinfee_link(self):
-    if hasattr(self, 'join_fee'):
+    if hasattr(self, 'join_fee') and self.join_fee is not None:
       return self.join_fee._selflink()
     else:
-      return str_none
-      lnk = a_strW + "fee/add/" + a_str2 + "add Fee</a>"
+      #return str_none
+      if hasattr(self.human, 'project') and self.human.project is not None:
+        typ = iC_Record_Type.objects.get(clas__icontains='collective')
+        uid = typ.id
+        #unit = typ.clas.split('_')
+      elif hasattr(self.human, 'person') and self.human.person is not None:
+        uid = iC_Record_Type.objects.get(clas__icontains='individual').id
+      lnk = a_strW + "fee/add/?record_type="+str(uid) + a_str2 + str_addfee +"</a>"
       return lnk
   _joinfee_link.allow_tags = True
   _joinfee_link.short_description = ''
@@ -765,6 +772,12 @@ class Fee(iC_Record):
   _selflink.allow_tags = True
   _selflink.short_description = ''
 
+  def __init__(self, *args, **kwargs):
+    super(Fee, self).__init__(*args, **kwargs)
+    self._auto_amount()
+
+
+
 class Payment_Type(iC_Type):
   ic_type = models.OneToOneField('iC_Type', primary_key=True, parent_link=True)
   class Meta:
@@ -777,7 +790,7 @@ class iC_Document(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
   doc_type = TreeForeignKey('iC_Document_Type', blank=True, null=True, verbose_name=_(u"Tipus de document"))
   #description = models.TextField(blank=True, verbose_name=_(u"Comentari"))
-  file = models.FileField(upload_to='ic/docs', blank=True, null=True, verbose_name=_(u"Document escanejat"))
+  doc_file = models.FileField(upload_to='ic/docs', blank=True, null=True, verbose_name=_(u"Document escanejat"))
 
   def _ic_membership(self):
     if hasattr(self, 'membership') and self.membership:
