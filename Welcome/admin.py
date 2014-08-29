@@ -128,6 +128,7 @@ class AkinMembershipAdmin(Public_AkinMembershipAdmin):
 
 class Public_MembershipAdmin(AutoRecordName):
   model = iC_Membership
+  
   raw_id_fields = ('human',)
   readonly_fields = ('ic_CESnum', 'join_fee', 'join_date', 'human', '_human_link',)
   fieldsets = (
@@ -150,7 +151,7 @@ class Public_MembershipAdmin(AutoRecordName):
 class MembershipAdmin(Public_MembershipAdmin):
   #model = iC_Membership
   readonly_fields = ('_join_fee_payed', '_human_link', 'ic_project', '_joinfee_link', '_is_selfemployed')
-
+  change_list_template = "admin/Welcome/membership/change_list.html"
   search_fields = ('name', 'ic_CESnum',)
   list_display = ['name', 'record_type', 'human', 'ic_CESnum', '_is_selfemployed', 'ic_project', '_join_fee_payed']
   #list_filter = ('record_type',)
