@@ -60,8 +60,18 @@ from General.admin import Public_PersonAdmin
 class Public_PersonAdmin(Public_PersonAdmin):
 	def queryset(self, request):
 		from public_form import bots
-		return Person.objects.filter(id=bots.user_registration_bot().get_person(request.user).id)
+		if request.user.is_superuser:
+			return Person.objects.all()
+		else:
+			return Person.objects.filter(id=bots.user_registration_bot().get_person(request.user).id)
+	class Media:
+		css = {
+			'all': ('admin_record.css',)# 'selfemployed.css',)
+		}
+		js = ("general.js",)
 user_admin_site.register(Person, Public_PersonAdmin)
+from General.admin import Address
+user_admin_site.register(Address)
 
 
 from General.models import Project
