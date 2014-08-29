@@ -290,8 +290,8 @@ class bot_balance(object):
 		purchases_invoice_total = 0
 
 		if currency is None:
-			sales_invoice_total = period_close.objects.exclude(period=self.period).filter(self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
-			purchase_invoice_total = period_close.objects.exclude(period=self.period).filter(self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
+			sales_invoice_total = period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
+			purchase_invoice_total = period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
 			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
 			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
 		else:
@@ -303,8 +303,8 @@ class bot_balance(object):
 		purchase_movement_total = bot_object.get_value_or_zero(purchase_movement_total)
 		return sales_invoice_total - purchases_invoice_total + sales_movement_total - purchase_movement_total
 	def total_previous(self, currency = None):
-		sales_invoice_total = period_close.objects.exclude(period=self.period).filter(self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
-		purchase_invoice_total = period_close.objects.exclude(period=self.period).filter(self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
+		sales_invoice_total = period_close.objects.exclude(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
+		purchase_invoice_total = period_close.objects.exclude(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
 			purchases_invoice.objects.filter(cooper=self.cooper.pk).exclude(period=self.period)
 			).purchases_base
 
