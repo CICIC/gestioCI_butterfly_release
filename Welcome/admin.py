@@ -166,7 +166,9 @@ class MembershipAdmin(Public_MembershipAdmin):
         ('expositors', 'description'))
     }),
   )
-
+  # to hide change and add buttons on main page:
+  def get_model_perms(self, request): 
+    return {'view': True}
 
 
 class PersonMembershipAdmin(AutoRecordName):
