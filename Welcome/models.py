@@ -23,16 +23,17 @@ add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
 
-str_remove = _(u"treu")
+str_remove = 'treu'#_(u"treu")
 ul_tag = '<ul>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
-ul_tag_err = '<ul class="error">'
+ul_tag_err = "<ul class='error'>"
 
-ico_no = '<img src="/static/admin/img/icon-no.gif" alt="False">'
-ico_yes = '<img src="/static/admin/img/icon-yes.gif" alt="True">'
+ico_no = "<img src='/static/admin/img/icon-no.gif' alt='False'>"
+ico_yes = "<img src='/static/admin/img/icon-yes.gif' alt='True'>"
 
 str_addfee = "crea Quota d'alta"
-
+str_valid = "valida"
+str_payed = "pagada"
 
 
 
@@ -172,8 +173,11 @@ class Fee(iC_Record):
     #print 'INIT'
     #print args
     #print kwargs
-    if self.record_type.clas.startswith('(') and self.unit is not None:
-      self._auto_amount()
+    if hasattr(self, 'record_type') and self.record_type is not None:
+      if self.record_type.clas.startswith('(') and self.unit is not None:
+        pass
+        #print 'Fee INIT: has record_type, call _auto_amount()'
+        #self._auto_amount()
 
   def _auto_amount(self):
     if self.record_type.clas.startswith('(') and self.unit is not None:
@@ -226,18 +230,20 @@ class Fee(iC_Record):
 
   def _min_fee_data(self):
     out = ul_tag_err
-    if self.payment_type is None or self.payment_type == '':
+    #print 'MIN_FEE_DATA: '+str(self)
+    if not hasattr(self, 'payment_date') or self.payment_type is None or self.payment_type == '':
       out += "<li>Falta la forma de pagament.</li>"
-    if self.issue_date is None:
+    if not hasattr(self, 'issue_date') or self.issue_date is None:
       out += "<li>Falta la data d'emisió.</li>"
-    if self.deadline_date is None:
+    if not hasattr(self, 'deadline_date') or self.deadline_date is None:
       out += "<li>Falta la data de venciment.</li>"
-    if self.amount is None or self.amount == '':
+    if not hasattr(self, 'amount') or self.amount is None or self.amount == '':
       out += "<li>Falta l'import.</li>"
 
     if out == ul_tag_err:
       return ico_yes
-    return out+'<li>'+ico_no+'</li></ul>'
+    #print 'OUT: '+out
+    return out+"<li>"+ico_no+"</li></ul>"
   _min_fee_data.allow_tags = True
   _min_fee_data.short_description = ''
 
@@ -614,14 +620,22 @@ class iC_Self_Employed(iC_Record):
   def _rel_fees(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
     fees = self.rel_fees.all()
     out = ul_tag
+    #print 'N fees: '+str(fees.count())
     if fees.count() > 0:
       for fee in fees:
+        print fee
         ico = ico_no
         if fee.payed:
           ico = ico_yes
-        fee_ul = fee._min_fee_data()
-        out += '<li>'+a_strW +'fee/'+str(fee.id)+a_str3 + '<b>'+fee.__unicode__() +'</b></a>: &nbsp; '+ ico + fee_ul+' </li>'
-      return out + '</ul>'
+        fee_dat = fee._min_fee_data()
+        if "alt='False'" in fee_dat:
+          fee_val = ico_no
+        elif "alt='True'" in fee_dat:
+          fee_val = ico_yes
+        #print fee_val
+        out += "<li>"+a_strW +"fee/"+str(fee.id)+a_str3 + "<b>"+fee.__unicode__() +"</b></a>: &nbsp; "+ str_valid+": "+ fee_val +" &nbsp; "+str_payed+": "+ ico+" </li>"
+      #print out+'</ul>'
+      return out+'</ul>'
     return str_none
   _rel_fees.allow_tags = True
   _rel_fees.short_description = ''#_(u"contractes?")
@@ -647,7 +661,7 @@ class iC_Self_Employed(iC_Record):
     out = ul_tag
     if addrs.count() > 0:
       for adr in addrs:
-        if adr._is_valid():
+        if adr._min_addrcontract_data() == ico_yes:
           ico = ico_yes
         else:
           ico = ico_no
@@ -667,7 +681,7 @@ class iC_Self_Employed(iC_Record):
           job = lic.rel_job.name
         if lic.rel_address:
           adr = lic.rel_address.name
-        if lic._is_valid():
+        if lic._min_licence_data() == ico_yes:
           ico = ico_yes
         else:
           ico = ico_no
@@ -687,7 +701,7 @@ class iC_Self_Employed(iC_Record):
           job = ins.rel_job.name
         if ins.rel_address:
           adr = ins.rel_address.name
-        if ins._is_valid():
+        if ins._min_insurance_data() == ico_yes:
           ico = ico_yes
         else:
           ico = ico_no
@@ -891,15 +905,29 @@ class iC_Address_Contract(iC_Document):
   _address_link.allow_tags = True
   _address_link.short_description = ''
 
-  def _is_valid(self):
-    if hasattr(self, 'address') and self.address and hasattr(self, 'company') and self.company:
-      if hasattr(self, 'price') and hasattr(self, 'price_unit'):
-        if hasattr(self, 'start_date') and self.start_date:
-          return True
-    return False
-  _is_valid.boolean = True
-  _is_valid.short_description = _(u"Valid?")
+  #def _is_valid(self):
+  #  if hasattr(self, 'address') and self.address and hasattr(self, 'company') and self.company:
+  #    if hasattr(self, 'price') and hasattr(self, 'price_unit'):
+  #      if hasattr(self, 'start_date') and self.start_date:
+  #        return True
+  #  return False
+  #_is_valid.boolean = True
+  #_is_valid.short_description = _(u"Valid?")
 
+  def _min_addrcontract_data(self):
+    out = ul_tag_err
+    if self.address is None or self.address == '':
+      out += "<li>Falta l'adreça.</li>"
+    if self.price is None:
+      out += "<li>Falta l'import'.</li>"
+    if self.start_date is None:
+      out += "<li>Falta la data d'inici.</li>"
+
+    if out == ul_tag_err:
+      return ico_yes
+    return out+'<li>'+ico_no+'</li></ul>'
+  _min_addrcontract_data.allow_tags = True
+  _min_addrcontract_data.short_description = ''
 
 
 class iC_Insurance(iC_Document):
@@ -938,15 +966,34 @@ class iC_Insurance(iC_Document):
   _erase_job.allow_tags = True
   _erase_job.short_description = ''
 
-  def _is_valid(self):
-    if hasattr(self, 'number') and not self.number == '':
-      if hasattr(self, 'company') and not self.company == '':
-        if hasattr(self, 'start_date') and self.start_date:
-          if hasattr(self, 'price') and hasattr(self, 'price_unit'):
-            return True
-    return False
-  _is_valid.boolean = True
-  _is_valid.short_description = _(u"Valid?")
+  #def _is_valid(self):
+  #  if hasattr(self, 'number') and not self.number == '':
+  #    if hasattr(self, 'company') and not self.company == '':
+  #      if hasattr(self, 'start_date') and self.start_date:
+  #        if hasattr(self, 'price') and hasattr(self, 'price_unit'):
+  #          return True
+  #  return False
+  #_is_valid.boolean = True
+  #_is_valid.short_description = _(u"Valid?")
+
+  def _min_insurance_data(self):
+    out = ul_tag_err
+    if self.number is None or self.number == '':
+      out += "<li>Falta el número de pòlissa.</li>"
+    if self.company is None:
+      out += "<li>Falta l'Asseguradora.</li>"
+    if self.start_date is None:
+      out += "<li>Falta la data d'inici.</li>"
+    if self.price is None or self.price == '':
+      out += "<li>Falta l'import.</li>"
+    if self.price_unit is None:
+      out += "<li>Falta l'unitat.</li>"
+
+    if out == ul_tag_err:
+      return ico_yes
+    return out+'<li>'+ico_no+'</li></ul>'
+  _min_insurance_data.allow_tags = True
+  _min_insurance_data.short_description = ''
 
 
 
@@ -992,6 +1039,18 @@ class iC_Licence(iC_Document):
   _is_valid.boolean = True
   _is_valid.short_description = _(u"Valid?")
 
+  def _min_licence_data(self):
+    out = ul_tag_err
+    if self.number is None or self.number == '':
+      out += "<li>Falta el número de la licència.</li>"
+    if self.start_date is None:
+      out += "<li>Falta la data d'inici.</li>"
+
+    if out == ul_tag_err:
+      return ico_yes
+    return out+'<li>'+ico_no+'</li></ul>'
+  _min_licence_data.allow_tags = True
+  _min_licence_data.short_description = ''
 
 
 from django.db.models.signals import post_save

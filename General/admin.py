@@ -468,27 +468,11 @@ class HumanAdmin(Css_Mixin):
       #recs = instance.human.records.all()
       #ac_ces = instance.human.accountsCes.all()
 
-      if not 'rel_tit' in globals():
-        rel_tit = Relation.objects.get(clas='holder')
-      #print 'AccountsCES: '+str(instance.human.accountsCes.all())
-      #print 'Records: '+str(instance.human.records.all())
-      #print 'instance: '+str(instance)
-      #print 'rel_tit: '+str(rel_tit)
-      #new_rel, created = instance.human.records.get_or_create(accountces=instance, relation=rel_tit)
-      new_rel, created = rel_Human_Records.objects.get_or_create(human=instance.human, record=instance, relation=rel_tit)
-      print 'NEW_REL: '+str(new_rel)+' CREATED: '+str(created)
+      #if not 'rel_tit' in globals():
+      #  rel_tit = Relation.objects.get(clas='holder')
+      #new_rel, created = rel_Human_Records.objects.get_or_create(human=instance.human, record=instance, relation=rel_tit)
+      #print 'NEW_REL: '+str(new_rel)+' CREATED: '+str(created)
 
-      '''
-      print 'Fields:'
-      print [f.name for f in instance.human._meta.fields]
-      print 'M 2 M:'
-      print [f.name for f in instance.human._meta.many_to_many]
-      print 'relRecords: COL: '
-      recz = instance.human._meta.get_field('records')
-      print recz.m2m_column_name()
-      print 'relRecords: REV: '
-      print recz.m2m_reverse_name()
-      '''
 
       #if not instance.
       instance.save()
