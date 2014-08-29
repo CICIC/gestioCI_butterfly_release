@@ -59,12 +59,14 @@ class AutoRecordName(admin.ModelAdmin):
           return False
 
     if instance.record_type.clas == 'iC_Person_Membership' or instance.record_type.clas == 'iC_Project_Membership':
-      icms = instance.human.ic_membership_set.all()
-      #print icms
+      icms = instance.human.ic_membership_set.filter(end_date=None)
       if icms.count() > 0:
-        print 'ERROR!! '
-        print 'Ja tenim registre alta: '+str(icms)
-        return False
+        if icms.first().id == instance.id:
+          print 'Update! ...instance.save() '
+        else:
+          print 'ERROR!! '
+          print 'Ja tenim registre alta: '+str(icms)
+          return False
 
     #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
 
@@ -445,7 +447,7 @@ class Public_FeeAdmin(AutoRecordName):
     css = {
       'all': ('admin_record.css', 'selfemployed.css',)
     }
-    #js = ('welcome.js', 'selfemployed.js',)
+    js = ('fee.js',)
 
   model = Fee
   readonly_fields = ('name', 'record_type', 'human', 'project',

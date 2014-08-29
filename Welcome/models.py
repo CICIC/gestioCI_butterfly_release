@@ -4,6 +4,7 @@ from django.db import models
 from mptt.models import MPTTModel
 from mptt.fields import TreeForeignKey, TreeManyToManyField
 from datetime import date, timedelta
+
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from decimal import Decimal
@@ -31,6 +32,9 @@ ico_no = '<img src="/static/admin/img/icon-no.gif" alt="False">'
 ico_yes = '<img src="/static/admin/img/icon-yes.gif" alt="True">'
 
 str_addfee = "crea Quota d'alta"
+
+
+
 
 '''
 @app.route('/update_fnk', method=["POST"])
@@ -104,6 +108,155 @@ class iC_Record_Type(iC_Type):
   class Meta:
     verbose_name= _(u'Tipus de Registre CI')
     verbose_name_plural= _(u'c-> Tipus de Registres CI')
+
+
+
+
+class Fee(iC_Record):
+  ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
+  human = models.ForeignKey('General.Human', related_name='out_fees', verbose_name=_(u"Ens pagador"))
+  project = TreeForeignKey('General.Project', related_name='in_fees', verbose_name=_(u"Projecte receptor"))
+  amount = models.DecimalField(default=0, max_digits=6, decimal_places=2, verbose_name=_(u"Import"))
+  unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
+  #ic_membership = models.ForeignKey('iC_Membership', related_name='fees', blank=True, null=True, verbose_name=_(u"Registre de Soci"))
+  def _ic_membership(self):
+    #print 'ic_MEMBERSHIP'
+    #print self.membership.all()
+    if hasattr(self, 'membership') and self.membership:
+      return self.membership.first()
+    else:
+      return 'none'
+  _ic_membership.allow_tags = True
+  _ic_membership.short_description = _(u"Registre de Soci")
+  def _ic_selfemployed(self):
+    #print 'ic_SELFEMPLOYED'
+    if hasattr(self, 'selfemployed'):
+      #print self.selfemployed.all()
+      return self.selfemployed.first()
+    else:
+      return 'none'
+  _ic_selfemployed.allow_tags = True
+  _ic_selfemployed.short_description = _(u"Registre d'Autoocupat")
+
+  issue_date = models.DateField(default=datetime.today, blank=True, null=True, verbose_name=_(u"Data d'emisió"))
+  deadline_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de venciment"))
+  payment_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de pagament"))
+  payment_type = TreeForeignKey('Payment_Type', blank=True, null=True, verbose_name=_(u"Forma de pagament"))
+
+  rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
+
+  def __unicode__(self):
+    if self.record_type is None:
+      record_type = "<record:type.name>"
+    else:
+      record_type = self.record_type.name
+    return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
+
+  class Meta:
+    verbose_name = _(u"Quota")
+    verbose_name_plural = _(u"r- Quotes")
+
+  def _is_payed(self):
+    if self.payment_date is None or self.payment_date == '':
+      return False
+    else:
+      return True
+  _is_payed.boolean = True
+  _is_payed.short_description = _(u"Pagada?")
+  payed = property(_is_payed)
+
+  def __init__(self, *args, **kwargs):
+    super(Fee, self).__init__(*args, **kwargs)
+    if not hasattr(self, 'project') or self.project is None or self.project == '':
+      self.project = Project.objects.get(nickname='CIC')  # if empty, put generic ic_record_type for project membership
+    #print 'INIT'
+    #print args
+    #print kwargs
+    if self.record_type.clas.startswith('(') and self.unit is not None:
+      self._auto_amount()
+
+  def _auto_amount(self):
+    if self.record_type.clas.startswith('(') and self.unit is not None:
+
+      arr = self.record_type.clas.split(' ')[0].strip('()').split('_')
+      if arr[0].isdigit():
+        uni = Unit.objects.filter(code=arr[1])
+        if uni.count() == 1:
+          eqi = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=self.unit)
+          rate = 1
+          if eqi.count() == 0:
+            #print uni.first()
+            #print self.unit
+            if uni.first() == self.unit:
+              #print '_AUTO_AMOUNT: equal!'
+              pass
+            else:
+              print '_AUTO_AMOUNT: not equal'
+              eqi2 = UnitRatio.objects.filter(in_unit=self.unit)
+              #print '_AUTO_AMOUNT: eqi2: '+str(eqi2)
+              #print '_AUTO_AMOUNT: eqi2.first '+str(eqi2.first().out_unit.name)
+              eqi3 = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=eqi2.first().out_unit)
+              #print '_AUTO_AMOUNT: eqi3: '+str(eqi3)
+              rate2 = eqi3.first().rate
+              print '_AUTO_AMOUNT: rate2: '+str(rate2)
+              rate = (1/eqi2.first().rate)*rate2
+          elif eqi.count() == 1:
+            rate = eqi.first().rate
+          else:
+            print '_AUTO_AMOUNT: eqi ??: '+str(eqi)
+          val = float(arr[0])/float(rate)
+          setattr(self, 'amount', val)
+          #print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
+          return True
+        else:
+          print '_AUTO_AMOUNT: uni.count != 1 !!? '+str(uni)
+          return False
+      print '_AUTO_AMOUNT: arr[0] not digit! '+str(arr[0])
+      return False
+    return None
+  _auto_amount.boolean = True
+  _auto_amount.short_description = _(u"Auto import!")
+
+  def _erase_account(self):
+    if hasattr(self, 'rel_account'):
+      return erase_id_link('rel_account', self.rel_account.id)
+    return False
+  _erase_account.allow_tags = True
+  _erase_account.short_description = ''
+
+  def _min_fee_data(self):
+    out = ul_tag_err
+    if self.payment_type is None or self.payment_type == '':
+      out += "<li>Falta la forma de pagament.</li>"
+    if self.issue_date is None:
+      out += "<li>Falta la data d'emisió.</li>"
+    if self.deadline_date is None:
+      out += "<li>Falta la data de venciment.</li>"
+    if self.amount is None or self.amount == '':
+      out += "<li>Falta l'import.</li>"
+
+    if out == ul_tag_err:
+      return ico_yes
+    return out+'<li>'+ico_no+'</li></ul>'
+  _min_fee_data.allow_tags = True
+  _min_fee_data.short_description = ''
+
+  def _selflink(self):
+    if self.id:
+      return a_strW + "fee/" + str(self.id) + a_str2 + a_edit + "</a>"# % str(self.id)
+    else:
+      return "Not present"
+  _selflink.allow_tags = True
+  _selflink.short_description = ''
+
+
+
+class Payment_Type(iC_Type):
+  ic_type = models.OneToOneField('iC_Type', primary_key=True, parent_link=True)
+  class Meta:
+    verbose_name = _(u"Forma de pagament")
+    verbose_name_plural = _(u"c-> Formes de pagament")
+
 
 
 #---------  A L T E S   S O C I S
@@ -207,17 +360,16 @@ class iC_Membership(iC_Record):
 
   def _joinfee_link(self):
     if hasattr(self, 'join_fee') and self.join_fee is not None:
-      return self.join_fee._selflink()
+      if self.join_fee._min_fee_data() == ico_yes:
+        return self.join_fee._selflink()+' &nbsp; '+ico_yes
+      else:
+        return self.join_fee._selflink()+' &nbsp; '+ico_no
     else:
-      #return str_none
-      if hasattr(self.human, 'project') and self.human.project is not None:
-        typ = iC_Record_Type.objects.get(clas__icontains='collective')
-        uid = typ.id
-        #unit = typ.clas.split('_')
-      elif hasattr(self.human, 'person') and self.human.person is not None:
-        uid = iC_Record_Type.objects.get(clas__icontains='individual').id
-      lnk = a_strW + "fee/add/?record_type="+str(uid) + a_str2 + str_addfee +"</a>"
-      return lnk
+      return str_none
+      #lnk = a_strW + "fee/add/?"+args+"record_type="+str(uid)+"&human="+str(self.human.id)+'&unit='+str(eur.id)+"&amount="+arr[0] + a_str2 + str_addfee +"</a>"
+      #return lnk
+      #return self.join_fee._selflink()
+
   _joinfee_link.allow_tags = True
   _joinfee_link.short_description = ''
 
@@ -263,6 +415,33 @@ class iC_Membership(iC_Record):
     super(iC_Membership, self).__init__(*args, **kwargs)
     if not hasattr(self, 'ic_project') or self.ic_project is None:
       self.ic_project = Project.objects.get(nickname='CIC')
+    if not hasattr(self, 'join_fee') or self.join_fee is None:
+      if hasattr(self, 'record_type') and self.record_type is not None:
+        clas = self.record_type.clas
+        print 'CLAS: '+clas
+
+        if hasattr(self.human, 'person') and self.human.person is not None:
+          typ = iC_Record_Type.objects.get(clas__contains='individual')
+        elif hasattr(self.human, 'project') and self.human.project is not None:
+          print 'PROJ_TYPE: '+str(self.human.project.project_type.parent.clas)
+          if self.human.project.project_type.parent.clas == 'online':
+            typ = iC_Record_Type.objects.get(clas__contains='collective')
+          else:
+            return
+        eur = Unit.objects.get(code='€')
+        uid = typ.id
+        arr = typ.clas.split(' ')[0].strip('()').split('_')
+        #print arr
+        #print Fee
+        amo = str(arr[0])
+        fees = Fee.objects.filter(record_type=typ, human=self.human, unit=eur, amount=amo)
+        print 'TYP: '+str(typ)+' HUMAN:'+str(self.human)+' UNIT:'+str(eur)+' AMOUN:'+str(amo)
+        #print Fee.objects.get_or_create
+        newfee, created = Fee.objects.get_or_create(record_type=typ, human=self.human, unit=eur, amount=amo)
+        if created:
+          self.join_fee = newfee
+          print 'CREATED JOIN_FEE: '+str(self.join_fee)
+          self.save()
 
 
 class iC_Person_Membership(iC_Membership):
@@ -632,160 +811,6 @@ class Project_Accompaniment(iC_Record):
 
 
 
-class Fee(iC_Record):
-  ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
-  human = models.ForeignKey('General.Human', related_name='out_fees', verbose_name=_(u"Ens pagador"))
-  project = TreeForeignKey('General.Project', related_name='in_fees', verbose_name=_(u"Projecte receptor"))
-  amount = models.DecimalField(default=0, max_digits=6, decimal_places=2, verbose_name=_(u"Import"))
-  unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
-  #ic_membership = models.ForeignKey('iC_Membership', related_name='fees', blank=True, null=True, verbose_name=_(u"Registre de Soci"))
-  def _ic_membership(self):
-    #print 'ic_MEMBERSHIP'
-    #print self.membership.all()
-    if hasattr(self, 'membership') and self.membership:
-      return self.membership.first()
-    else:
-      return 'none'
-  _ic_membership.allow_tags = True
-  _ic_membership.short_description = _(u"Registre de Soci")
-  def _ic_selfemployed(self):
-    #print 'ic_SELFEMPLOYED'
-    if hasattr(self, 'selfemployed'):
-      #print self.selfemployed.all()
-      return self.selfemployed.first()
-    else:
-      return 'none'
-  _ic_selfemployed.allow_tags = True
-  _ic_selfemployed.short_description = _(u"Registre d'Autoocupat")
-
-  issue_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'emisió"))
-  deadline_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de venciment"))
-  payment_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de pagament"))
-  payment_type = TreeForeignKey('Payment_Type', blank=True, null=True, verbose_name=_(u"Forma de pagament"))
-
-  rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
-
-  def __unicode__(self):
-		if self.record_type is None:
-			record_type = "<record:type.name>"
-		else:
-			record_type = self.record_type.name
-		return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
-
-  class Meta:
-    verbose_name = _(u"Quota")
-    verbose_name_plural = _(u"r- Quotes")
-
-  def _is_payed(self):
-    if self.payment_date is None or self.payment_date == '':
-      return False
-    else:
-      return True
-  _is_payed.boolean = True
-  _is_payed.short_description = _(u"Pagada?")
-  payed = property(_is_payed)
-
-  def __init__(self, *args, **kwargs):
-    super(Fee, self).__init__(*args, **kwargs)
-    if not hasattr(self, 'project') or self.project is None or self.project == '':
-      self.project = Project.objects.get(nickname='CIC')  # if empty, put generic ic_record_type for project membership
-    #if hasattr(self, 'selfemployed') and self.selfemployed.count():
-    #  if self.membership.count() == 0:
-    #    mem = self.selfemployed.first().ic_membership
-    #    print 'FEE: TE SELFEMPLOYED ('+str(mem)+') i no te MEMBERSHIP ('+str(self.membership)+')'
-    #    self.membership.add(mem)# = self.selfemployed.first().ic_membership
-  def _auto_amount(self):
-    if self.record_type.clas.startswith('(') and self.unit is not None:
-
-      arr = self.record_type.clas.split(' ')[0].strip('()').split('_')
-      if arr[0].isdigit():
-        uni = Unit.objects.filter(code=arr[1])
-        if uni.count() == 1:
-          eqi = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=self.unit)
-          rate = 1
-          if eqi.count() == 0:
-            #print uni.first()
-            #print self.unit
-            if uni.first() == self.unit:
-              #print '_AUTO_AMOUNT: equal!'
-              pass
-            else:
-              print '_AUTO_AMOUNT: not equal'
-              eqi2 = UnitRatio.objects.filter(in_unit=self.unit)
-              #print '_AUTO_AMOUNT: eqi2: '+str(eqi2)
-              #print '_AUTO_AMOUNT: eqi2.first '+str(eqi2.first().out_unit.name)
-              eqi3 = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=eqi2.first().out_unit)
-              #print '_AUTO_AMOUNT: eqi3: '+str(eqi3)
-              rate2 = eqi3.first().rate
-              print '_AUTO_AMOUNT: rate2: '+str(rate2)
-              rate = (1/eqi2.first().rate)*rate2
-          elif eqi.count() == 1:
-            rate = eqi.first().rate
-          else:
-            print '_AUTO_AMOUNT: eqi ??: '+str(eqi)
-          val = float(arr[0])/float(rate)
-          setattr(self, 'amount', val)
-          #print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
-          return True
-        else:
-          print '_AUTO_AMOUNT: uni.count != 1 !!? '+str(uni)
-          return False
-      print '_AUTO_AMOUNT: arr[0] not digit! '+str(arr[0])
-      return False
-    return None
-  _auto_amount.boolean = True
-  _auto_amount.short_description = _(u"Auto import!")
-
-  def save(self):
-    self._auto_amount()
-    super(Fee,self).save()
-
-  def _erase_account(self):
-    if hasattr(self, 'rel_account'):
-      return erase_id_link('rel_account', self.rel_account.id)
-    return False
-  _erase_account.allow_tags = True
-  _erase_account.short_description = ''
-
-  def _min_fee_data(self):
-    out = ul_tag_err
-    if self.payment_type is None or self.payment_type == '':
-      out += "<li>Falta la forma de pagament.</li>"
-    if self.issue_date is None:
-      out += "<li>Falta la data d'emisió.</li>"
-    if self.deadline_date is None:
-      out += "<li>Falta la data de venciment.</li>"
-    if self.amount is None or self.amount == '':
-      out += "<li>Falta l'import.</li>"
-
-    if out == ul_tag_err:
-      return ico_yes
-    return out+'<li>'+ico_no+'</li></ul>'
-  _min_fee_data.allow_tags = True
-  _min_fee_data.short_description = ''
-
-  def _selflink(self):
-    if self.id:
-      return a_strW + "fee/" + str(self.id) + a_str2 + a_edit + "</a>"# % str(self.id)
-    else:
-      return "Not present"
-  _selflink.allow_tags = True
-  _selflink.short_description = ''
-
-  def __init__(self, *args, **kwargs):
-    super(Fee, self).__init__(*args, **kwargs)
-    self._auto_amount()
-
-
-
-class Payment_Type(iC_Type):
-  ic_type = models.OneToOneField('iC_Type', primary_key=True, parent_link=True)
-  class Meta:
-    verbose_name = _(u"Forma de pagament")
-    verbose_name_plural = _(u"c-> Formes de pagament")
-
-
-
 class iC_Document(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
   doc_type = TreeForeignKey('iC_Document_Type', blank=True, null=True, verbose_name=_(u"Tipus de document"))
@@ -966,3 +991,22 @@ class iC_Licence(iC_Document):
     return False
   _is_valid.boolean = True
   _is_valid.short_description = _(u"Valid?")
+
+
+
+from django.db.models.signals import post_save
+#from django.core.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Fee)
+def my_callback(sender, **kwargs):
+
+  print("Post Save!")
+  if kwargs['instance'].record_type:
+    clas = kwargs['instance'].record_type.clas
+    if 'individual' in clas:
+      print 'INDIVDUAL'
+      print sender
+
+    print kwargs['instance'].record_type.clas
+    print kwargs['instance'].id
