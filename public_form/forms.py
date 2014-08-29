@@ -139,4 +139,4 @@ class create_membership_form(forms.ModelForm):
 
 	class Meta:
 		model = Person
-		fields = ("type", "username", "email", "id_card", "name", "surnames", "nickname", "telephone_cell", 'telephone_land')
+		fields = ("type", "username", "email", "id_card", "name", "surnames", "nickname") #Do not remove!!, aleph (29/08/2014)

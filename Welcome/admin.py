@@ -131,6 +131,7 @@ class AkinMembershipAdmin(Public_AkinMembershipAdmin):
 
 class Public_MembershipAdmin(AutoRecordName):
   model = iC_Membership
+  
   raw_id_fields = ('human',)
   readonly_fields = ('ic_CESnum', 'join_fee', 'join_date', 'human', '_human_link',)
   fieldsets = (
@@ -153,7 +154,7 @@ class Public_MembershipAdmin(AutoRecordName):
 class MembershipAdmin(Public_MembershipAdmin):
   #model = iC_Membership
   readonly_fields = ('_join_fee_payed', '_human_link', 'ic_project', '_joinfee_link', '_is_selfemployed')
-
+  change_list_template = "admin/Welcome/membership/change_list.html"
   search_fields = ('name', 'ic_CESnum',)
   list_display = ['name', 'record_type', 'human', 'ic_CESnum', '_is_selfemployed', 'ic_project', '_join_fee_payed']
   #list_filter = ('record_type',)
@@ -168,7 +169,9 @@ class MembershipAdmin(Public_MembershipAdmin):
         ('expositors', 'description'))
     }),
   )
-
+  # to hide change and add buttons on main page:
+  def get_model_perms(self, request): 
+    return {'view': True}
 
 
 class PersonMembershipAdmin(AutoRecordName):
@@ -661,28 +664,25 @@ class LearnSessionAdmin(AutoRecordName):
 
 
 # Register your models here.
-
+from Cooper.admin import user_admin_site
 #admin.site.register(iC_Type, MPTTModelAdmin) # can be commented after creating 'Membership', 'Document' and 'Payment' types
 #admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
-
 
 admin.site.register(iC_Person_Membership, PersonMembershipAdmin)
 
 admin.site.register(iC_Project_Membership, ProjectMembershipAdmin)
 
-
-#admin.site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
+user_admin_site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
 admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
 
-#admin.site.register(iC_Membership, Public_MembershipAdmin)
+user_admin_site.register(iC_Membership, Public_MembershipAdmin)
 admin.site.register(iC_Membership, MembershipAdmin)
 
-#admin.site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
+user_admin_site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 
 admin.site.register(iC_Stallholder, StallholderAdmin)
-
 
 
 #admin.site.register(iC_Document)
