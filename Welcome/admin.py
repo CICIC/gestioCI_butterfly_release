@@ -658,28 +658,25 @@ class LearnSessionAdmin(AutoRecordName):
 
 
 # Register your models here.
-
+from Cooper.admin import user_admin_site
 #admin.site.register(iC_Type, MPTTModelAdmin) # can be commented after creating 'Membership', 'Document' and 'Payment' types
 #admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
-
 
 admin.site.register(iC_Person_Membership, PersonMembershipAdmin)
 
 admin.site.register(iC_Project_Membership, ProjectMembershipAdmin)
 
-
-#admin.site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
+user_admin_site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
 admin.site.register(iC_Akin_Membership, AkinMembershipAdmin)
 
-#admin.site.register(iC_Membership, Public_MembershipAdmin)
+user_admin_site.register(iC_Membership, Public_MembershipAdmin)
 admin.site.register(iC_Membership, MembershipAdmin)
 
-#admin.site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
+user_admin_site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 
 admin.site.register(iC_Stallholder, StallholderAdmin)
-
 
 
 #admin.site.register(iC_Document)
