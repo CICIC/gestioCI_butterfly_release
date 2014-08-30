@@ -44,29 +44,32 @@ class AutoRecordName(admin.ModelAdmin):
         print 'SAVE_MODEL: not human! put person...'
         instance.human = instance.person
 
-    print instance.record_type.clas
-    if instance.record_type.clas == 'iC_Stallholder' or instance.record_type.clas == 'iC_Self_Employed':
-      if hasattr(instance.ic_membership, 'selfemployed_recs'):
-        recs = instance.ic_membership.selfemployed_recs.filter(end_date=None)
-        print 'RECS: '+str(recs)
-        if recs.count() > 1: # TODO rise a real exeption
-          print 'ERRORR!!! '
-          print "Hi ha més d'un registre d'autoocupat sense data de baixa ¿??"
-          return False
-        elif recs.count() > 0: # TODO rise a real exeption
-          print 'ERROR!! '
-          print "El soci ja te 1 registre d'autoocupat sense data de baixa!"
-          return False
+    if hasattr(self, 'record_type') and self.record_type is not None:
+      print instance.record_type.clas
+      if instance.record_type.clas == 'iC_Stallholder' or instance.record_type.clas == 'iC_Self_Employed':
+        if hasattr(instance.ic_membership, 'selfemployed_recs'):
+          recs = instance.ic_membership.selfemployed_recs.filter(end_date=None)
+          print 'RECS: '+str(recs)
+          if recs.count() > 1: # TODO rise a real exeption
+            print 'ERRORR!!! '
+            print "Hi ha més d'un registre d'autoocupat sense data de baixa ¿??"
+            return False
+          elif recs.count() > 0: # TODO rise a real exeption
+            print 'ERROR!! '
+            print "El soci ja te 1 registre d'autoocupat sense data de baixa!"
+            return False
 
-    if instance.record_type.clas == 'iC_Person_Membership' or instance.record_type.clas == 'iC_Project_Membership':
-      icms = instance.human.ic_membership_set.filter(end_date=None)
-      if icms.count() > 0:
-        if icms.first().id == instance.id:
-          print 'Update! ...instance.save() '
-        else:
-          print 'ERROR!! '
-          print 'Ja tenim registre alta: '+str(icms)
-          return False
+      if instance.record_type.clas == 'iC_Person_Membership' or instance.record_type.clas == 'iC_Project_Membership':
+        icms = instance.human.ic_membership_set.filter(end_date=None)
+        if icms.count() > 0:
+          if icms.first().id == instance.id:
+            print 'Update! ...instance.save() '
+          else:
+            print 'ERROR!! '
+            print 'Ja tenim registre alta: '+str(icms)
+            return False
+    else:
+      print 'W.admin.AutoRecordName.save_model: No tenemos Record_Type!!'
 
     #if not hasattr(instance,'name') or instance.name is None or instance.name == '':
 
@@ -532,7 +535,7 @@ class FeeAdmin(Public_FeeAdmin):
 
 class AddressContractAdmin(AutoRecordName):
   model = iC_Address_Contract
-  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_address_link')
+  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_address_link', '_min_addrcontract_data')
 
   list_display = ['name', 'doc_type', 'company', 'address', '_ic_membership']
   search_fields = ('name', 'company', 'doc_type')
@@ -542,12 +545,12 @@ class AddressContractAdmin(AutoRecordName):
     (None, {
       'fields': (
         ('_ic_membership', '_ic_selfemployed'),
-        ('doc_type',),
+        ('doc_type', '_min_addrcontract_data',),
         ('address', '_address_link'),
         ('company',),
         ('price', 'price_unit'),
         ('start_date', 'end_date'),
-        ('file',),
+        ('doc_file',),
         ('description',)
       )
     }),
@@ -563,7 +566,7 @@ class AddressContractAdmin(AutoRecordName):
 
 class LicenceAdmin(AutoRecordName):
   model = iC_Licence
-  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_erase_address', '_erase_job')
+  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_erase_address', '_erase_job', '_min_licence_data')
 
   list_display = ['name', 'doc_type', 'number', 'end_date', '_ic_membership']
   search_fields = ('name', 'number', 'doc_type')
@@ -573,10 +576,10 @@ class LicenceAdmin(AutoRecordName):
     (None, {
       'fields': (
         ('_ic_membership', '_ic_selfemployed'),
-        ('doc_type',),
+        ('doc_type', '_min_licence_data',),
         ('number',),
         ('start_date', 'end_date'),
-        ('file',),
+        ('doc_file',),
         ('rel_address', '_erase_address'),
         ('rel_job', '_erase_job'),
         ('description',)
@@ -591,7 +594,7 @@ class LicenceAdmin(AutoRecordName):
 
 class InsuranceAdmin(AutoRecordName):
   model = iC_Insurance
-  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_erase_address', '_erase_job')
+  readonly_fields = ('name', '_ic_membership', '_ic_selfemployed', '_erase_address', '_erase_job', '_min_insurance_data')
 
   list_display = ['name', 'doc_type', 'number', 'end_date', '_ic_membership']
   search_fields = ('name', 'number', 'doc_type')
@@ -601,12 +604,12 @@ class InsuranceAdmin(AutoRecordName):
     (None, {
       'fields': (
         ('_ic_membership', '_ic_selfemployed'),
-        ('doc_type',),
+        ('doc_type', '_min_insurance_data',),
         ('company',),
         ('number',),
         ('price', 'price_unit'),
         ('start_date', 'end_date'),
-        ('file',),
+        ('doc_file',),
         ('rel_address', '_erase_address'),
         ('rel_job', '_erase_job'),
         ('description',)
