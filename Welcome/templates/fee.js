@@ -26,6 +26,22 @@
 		<option value="23">------ pagament en Metàl·lic</option>
 		<option value="21">------ pagament amb Hores de Treball</option>
 	*/
+	/*
+	<h3> Por Tipus de Registre </h3>
+	<ul>
+    <li><a href="?_popup=1&amp;t=id">Todo</a></li>
+    <li><a href="?_popup=1&amp;record_type__artwork_type__exact=14&amp;t=id">Equivalencia d'Unitats (UnitRatio)</a></li>
+    <li><a href="?_popup=1&amp;record_type__artwork_type__exact=58&amp;t=id">equivalencia Moneda - Temps</a></li>
+    <li><a href="?_popup=1&amp;record_type__artwork_type__exact=59&amp;t=id">equivalencia Moneda - Moneda</a></li>
+    <li><a href="?_popup=1&amp;record_type__artwork_type__exact=60&amp;t=id">equivalencia Àrea - Àrea</a></li>
+    <li><a href="?_popup=1&amp;record_type__artwork_type__exact=61&amp;t=id">equivalencia Temps - Temps</a></li>
+    <li><a href="?_popup=1&amp;record_type__artwork_type__exact=15&amp;t=id">Compte monetari</a></li>
+    <li><a href="?_popup=1&amp;record_type__artwork_type__exact=16&amp;t=id">compte CES (AccountCes)</a></li>
+    <li class="selected"><a href="?_popup=1&amp;record_type__artwork_type__exact=17&amp;t=id">compte Criptomoneda (AccountCrypto)</a></li>
+    <li><a href="?_popup=1&amp;record_type__artwork_type__exact=18&amp;t=id">compte Bancari (AccountBank)</a></li>
+    <li><a href="?_popup=1&amp;record_type__isnull=True&amp;t=id">(Nada)</a></li>
+	</ul>
+	*/
 	function manage_rel_account(){
 		$('.field-rel_account').show();
 		if ( $('#id_payment_type').val() == 22 ) { //Pagament amb criptomoneda
