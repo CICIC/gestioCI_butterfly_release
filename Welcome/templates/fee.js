@@ -30,16 +30,17 @@
 		$('.field-rel_account').show();
 		if ( $('#id_payment_type').val() == 22 ) { //Pagament amb criptomoneda
 			$('label[for="id_rel_account"]').text(gettext("@BTC on has d'enviar el pagament"));
-			foreign_key_url = "/admin/General/record/?_popup=1&record_type__artwork_type__exact=17&t=id";
+			id_type = "17";
 		} else if( $('#id_payment_type').val() == 24 || $('#id_payment_type').val() == 25 ) { //Pagament amb Transferència Bancaria or Ingrès al banc
 			$('label[for="id_rel_account"]').text(gettext("IBAN on has de fer el pagament"));
-			foreign_key_url = "/admin/General/record/?_popup=1&record_type__artwork_type__exact=18&t=id";
+			id_type = "18";
 		} else if( $('#id_payment_type').val() == 21 || $('#id_payment_type').val() == 23 || $('#id_payment_type').val() == 26  ) { // Pagament amb Hores de treball or metàl·lic or presencial
 			$('.field-rel_account').hide();
 		} else if($('#id_payment_type').val() == 20) { // Pagament Moneda Social
 			$('label[for="id_rel_account"]').text(gettext("Comte iCES"));
-			foreign_key_url = "/admin/General/record/?_popup=1&record_type__artwork_type__exact=16&t=id";
+			id_type = "16";
 		}
+		foreign_key_url = "/admin/General/record/?_popup=1&record_type__artwork_type__exact=" + id_type + "&t=id";
 		$('#lookup_id_rel_account').attr('href', foreign_key_url);
 	}
 	manage_rel_account();
