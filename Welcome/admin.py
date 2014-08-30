@@ -450,7 +450,7 @@ class Public_FeeAdmin(AutoRecordName):
     css = {
       'all': ('admin_record.css', 'selfemployed.css',)
     }
-    #js = ('fee.js',)
+    js = ('fee.js',)
 
   model = Fee
   readonly_fields = ('name', 'record_type', 'human', 'project',
