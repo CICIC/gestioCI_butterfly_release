@@ -7,6 +7,7 @@ from datetime import date, timedelta
 
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext as __
 from decimal import Decimal
 
 from General.models import *
@@ -23,7 +24,7 @@ add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
 
-str_remove = _(u"treu")
+str_remove = __(u"Tréu") #_(u"treu")
 ul_tag = '<ul>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
 ul_tag_err = '<ul class="error">'
