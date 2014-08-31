@@ -25,7 +25,7 @@ add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
 
-str_remove = __(u"Tréu") #_(u"treu")
+str_remove = __(u"treu") #_(u"treu")
 ul_tag = '<ul>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
 ul_tag_err = "<ul class='error'>"
@@ -428,7 +428,7 @@ class iC_Membership(iC_Record):
     if not hasattr(self, 'join_fee') or self.join_fee is None:
       if hasattr(self, 'record_type') and self.record_type is not None:
         clas = self.record_type.clas
-        print 'CLAS: '+clas
+        #print 'CLAS: '+clas
 
         if hasattr(self.human, 'person') and self.human.person is not None:
           typ = iC_Record_Type.objects.get(clas__contains='individual')
@@ -437,7 +437,8 @@ class iC_Membership(iC_Record):
           if self.human.project.project_type.parent.clas == 'online':
             typ = iC_Record_Type.objects.get(clas__contains='collective')
           else:
-            return
+            print 'Proyecto de un tipo que no esta en la rama clas=online, no generamos quota automàtica...'
+            return False
         eur = Unit.objects.get(code='€')
         uid = typ.id
         arr = typ.clas.split(' ')[0].strip('()').split('_')
@@ -452,6 +453,8 @@ class iC_Membership(iC_Record):
           self.join_fee = newfee
           print 'CREATED JOIN_FEE: '+str(self.join_fee)
           self.save()
+        else:
+          print "ERROR: CAN'T CREATE AUTOMATIC JOIN_FEE! human:"+str(self.human)
 
 
 class iC_Person_Membership(iC_Membership):
