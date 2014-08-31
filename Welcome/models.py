@@ -729,6 +729,8 @@ class iC_Self_Employed(iC_Record):
   def _min_human_data(self):
     hum = self.ic_membership.human
     out = ul_tag_err
+    if hum.email is None or hum.email == '':
+      out += '<li>Falta el Email.</li>'
     if hum.telephone_cell is None or hum.telephone_cell == '':
       out += '<li>Falta el Teléfon mobil.</li>'
     if hum.description is None or hum.description == '':
