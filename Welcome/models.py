@@ -20,6 +20,7 @@ a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/W
 #a_str2 = "?_popup=1&_changelist_filters=_popup=1' target='_blank' style='margin-left:-100px'>"
 a_str2 = "' target='_blank' style='margin-left:-100px'>"
 a_str3 = "' target='_blank'>"
+
 add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
@@ -145,11 +146,13 @@ class Fee(iC_Record):
   payment_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de pagament"))
   payment_type = TreeForeignKey('Payment_Type', blank=True, null=True, verbose_name=_(u"Forma de pagament"))
 
-  rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
+  rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True,
+                                  limit_choices_to={'record_type__parent__clas':'account'}, verbose_name=_(u"Compte relacionat"))
 
   def __unicode__(self):
     if self.record_type is None:
-      record_type = "<record:type.name>"
+      #record_type = "<record:type.name>"
+      return 'Fee ??: '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'
     else:
       record_type = self.record_type.name
     return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
@@ -266,7 +269,7 @@ class Payment_Type(iC_Type):
 
 
 
-#---------  A L T E S   S O C I S
+#-------  A L T E S   S O C I S
 
 class iC_Akin_Membership(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
@@ -778,7 +781,7 @@ class iC_Stallholder(iC_Self_Employed):  # Firaire
 
 
 
-#------- O T H E R   R E C O R D S
+#-------  O T H E R   R E C O R D S
 
 class Learn_Session(iC_Record):
   nonmaterial = models.ForeignKey('General.Nonmaterial', verbose_name=_(u"Formació (obra inmaterial)"))
@@ -825,6 +828,8 @@ class Project_Accompaniment(iC_Record):
     verbose_name_plural = _(u"r- Expedients P.Productius")
 
 
+
+#-------  D O C U M E N T S
 
 class iC_Document(iC_Record):
   ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
@@ -997,7 +1002,6 @@ class iC_Insurance(iC_Document):
   _min_insurance_data.short_description = ''
 
 
-
 class iC_Licence(iC_Document):
   ic_document = models.OneToOneField('iC_Document', primary_key=True, parent_link=True)
   #membership = models.ForeignKey('iC_Membership', verbose_name=_(u"Soci (registre)"))
@@ -1052,6 +1056,7 @@ class iC_Licence(iC_Document):
     return out+'<li>'+ico_no+'</li></ul>'
   _min_licence_data.allow_tags = True
   _min_licence_data.short_description = ''
+
 
 
 from django.db.models.signals import post_save
