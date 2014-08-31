@@ -749,16 +749,16 @@ class iC_Self_Employed(iC_Record):
         out += '<li>És projecte i falta el Tipus.</li>'
       if hum.project._get_ref_persons().count() < 1:
         out += '<li>Falta alguna Persona de Referencia.</li>'
-    print str(self.ic_stallholder)
+    #print str(self.ic_stallholder)
     if hasattr(self, 'ic_stallholder'):
       if self.ic_stallholder.tent_type is None or self.ic_stallholder.tent_type == '':
         out += '<li>És firaire i falta el tipus de carpa.</li>'
-
+    #print out
     if out == ul_tag_err:
       return ico_yes
     return out+'<li>'+ico_no+'</li></ul>'
   _min_human_data.allow_tags = True
-  _min_human_data.short_description = ''
+  _min_human_data.short_description = 'Dades mínimes?'
 
 
 class iC_Stallholder(iC_Self_Employed):  # Firaire
