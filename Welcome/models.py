@@ -7,6 +7,7 @@ from datetime import date, timedelta
 
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext as __
 from decimal import Decimal
 
 from General.models import *
@@ -24,7 +25,7 @@ add_pers = 'add Persona'#_(u"Nova Persona")
 add_proj = 'add Project'#_(u"Nou Projecte")
 a_edit = '<b>Editar</b>'
 
-str_remove = 'treu'#_(u"treu")
+str_remove = __(u"Tréu") #_(u"treu")
 ul_tag = '<ul>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
 ul_tag_err = "<ul class='error'>"
@@ -150,7 +151,8 @@ class Fee(iC_Record):
 
   def __unicode__(self):
     if self.record_type is None:
-      record_type = "<record:type.name>"
+      #record_type = "<record:type.name>"
+      return 'Fee ??: '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'
     else:
       record_type = self.record_type.name
     return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
