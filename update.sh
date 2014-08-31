@@ -1,25 +1,17 @@
 #!/bin/bash
 
-echo "This script needs to be executed on the local directory of the repository"
+#This script needs to be executed on the local directory of the repository
 #update from the git repo
 git pull
 input=$1
 answer="y"
 
 #detect if passed a valid file
-if [[ -r $input ]]
- then
-	echo "do you want to update mysql database with:$1"
-	echo -n "(Y/n)?"
-	read answer
-fi
 
-if [ $answer == "y" -o $answer == "yes" ]
+if [[ $input == "" ]]
   then
-	echo "yes!"
-else
-	echo "no!"
-	input=""
+    echo "Possible sql files:"
+    ls *.sql
 fi
 
 while [[ ! -r $input && $input != "q" ]]
@@ -29,7 +21,8 @@ while [[ ! -r $input && $input != "q" ]]
 done
 
 if [ $input != "q" ]
-  then	
+  then
+	echo "Going to update the database"	
 	mysql -u gestioCI -ppasswor gestioCI_butterfly < $input
 fi
 
