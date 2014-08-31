@@ -131,7 +131,7 @@ class AkinMembershipAdmin(Public_AkinMembershipAdmin):
 
 class Public_MembershipAdmin(AutoRecordName):
   model = iC_Membership
-  
+
   raw_id_fields = ('human',)
   readonly_fields = ('ic_CESnum', 'join_fee', 'join_date', 'human', '_human_link',)
   fieldsets = (
@@ -170,7 +170,7 @@ class MembershipAdmin(Public_MembershipAdmin):
     }),
   )
   # to hide change and add buttons on main page:
-  def get_model_perms(self, request): 
+  def get_model_perms(self, request):
     return {'view': True}
 
 
@@ -453,7 +453,7 @@ class Public_FeeAdmin(AutoRecordName):
     css = {
       'all': ('admin_record.css', 'selfemployed.css',)
     }
-    #js = ('fee.js',)
+    js = ('fee.js',)
 
   model = Fee
   readonly_fields = ('name', 'record_type', 'human', 'project',
