@@ -179,9 +179,9 @@ class Fee(iC_Record):
     #print kwargs
     if hasattr(self, 'record_type') and self.record_type is not None:
       if self.record_type.clas.startswith('(') and self.unit is not None:
-        pass
+        #pass
         #print 'Fee INIT: has record_type, call _auto_amount()'
-        #self._auto_amount()
+        self._auto_amount()
 
   def _auto_amount(self):
     if self.record_type.clas.startswith('(') and self.unit is not None:
@@ -215,12 +215,12 @@ class Fee(iC_Record):
           val = float(arr[0])/float(rate)
           setattr(self, 'amount', val)
           #print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
-          return True
+          return True # if bool breaks the init, put 'return' alone...
         else:
           print '_AUTO_AMOUNT: uni.count != 1 !!? '+str(uni)
-          return False
+          return None
       print '_AUTO_AMOUNT: arr[0] not digit! '+str(arr[0])
-      return False
+      return None
     return None
   _auto_amount.boolean = True
   _auto_amount.short_description = _(u"Auto import!")
