@@ -658,7 +658,7 @@ class LearnSessionAdmin(AutoRecordName):
       kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
     if db_field.name == 'facilitator':
       job = Job.objects.filter(clas='ic_facilitate')
-      print job
+      #print job
       kwargs['queryset'] = Human.objects.filter(jobs=job)
     return super(LearnSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 

@@ -438,7 +438,7 @@ class iC_Membership(iC_Record):
             typ = iC_Record_Type.objects.get(clas__contains='collective')
           else:
             print 'Proyecto de un tipo que no esta en la rama clas=online, no generamos quota automàtica...'
-            return False
+            return None
         eur = Unit.objects.get(code='€')
         uid = typ.id
         arr = typ.clas.split(' ')[0].strip('()').split('_')
@@ -582,17 +582,21 @@ class iC_Self_Employed(iC_Record):
   welcome_session = property(_has_assisted_welcome)
 
   def _has_assisted_socialcoin(self):
-    if self.ic_membership.human.assist_sessions.filter(record_type__clas='socialcoin_session').count() > 0:
-      return True
+    sess = self.ic_membership.human.assist_sessions.filter(record_type__clas='socialcoin_session')
+    if sess.count() > 0:
+      return ico_yes+' &nbsp;'+str(sess.first().datetime.date())+' ('+str(sess.first().address.name)+')'
     else:
-      return False
-  _has_assisted_socialcoin.boolean = True
+      return ico_no
+  _has_assisted_socialcoin.allow_tags = True
   _has_assisted_socialcoin.short_description = _(u"Assistencia a Moneda Social?")
   socialcoin_session = property(_has_assisted_socialcoin)
 
   def __unicode__(self):
     if self.record_type is None or self.record_type == '':
-      return self.ic_membership.ic_project.nickname+' > '+self.ic_membership.__unicode__()
+      if self.ic_membership.ic_project is None or self.ic_membership.ic_project.nickname == '':
+        return '?? > '+self.ic_membership.__unicode__()
+      else:
+        return self.ic_membership.ic_project.nickname+' > '+self.ic_membership.__unicode__()
     else:
       return self.record_type.name+': '+self.ic_membership.__unicode__()
 
@@ -604,6 +608,7 @@ class iC_Self_Employed(iC_Record):
     super(iC_Self_Employed, self).__init__(*args, **kwargs)
     if self.record_type is None or self.record_type == '':
       self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
+
 
   def _member_link(self):
     if self.id:
@@ -848,14 +853,14 @@ class iC_Document(iC_Record):
       return self.membership.first()
     elif hasattr(self, 'selfemployed') and hasattr(self.selfemployed.first(), 'ic_membership'):
       return self.selfemployed.first().ic_membership
-    return False
+    return str_none
   _ic_membership.allow_tags = True
   _ic_membership.short_description = _(u"alta Soci")
 
   def _ic_selfemployed(self):
     if hasattr(self, 'selfemployed'):
       return self.selfemployed.first()
-    return False
+    return str_none
   _ic_selfemployed.allow_tags = True
   _ic_selfemployed.short_description = _(u"Autoocupat")
 
@@ -912,7 +917,7 @@ class iC_Address_Contract(iC_Document):
   def _address_link(self):
     if hasattr(self, 'address'):
       return self.address._selflink()
-    return False
+    return str_none
   _address_link.allow_tags = True
   _address_link.short_description = ''
 
@@ -1041,13 +1046,13 @@ class iC_Licence(iC_Document):
   _erase_job.allow_tags = True
   _erase_job.short_description = ''
 
-  def _is_valid(self):
-    if hasattr(self, 'number') and not self.number == '':
-      if hasattr(self, 'start_date') and self.start_date:
-        return True
-    return False
-  _is_valid.boolean = True
-  _is_valid.short_description = _(u"Valid?")
+  #def _is_valid(self):
+  #  if hasattr(self, 'number') and not self.number == '':
+  #    if hasattr(self, 'start_date') and self.start_date:
+  #      return True
+  #  return False
+  #_is_valid.boolean = True
+  #_is_valid.short_description = _(u"Valid?")
 
   def _min_licence_data(self):
     out = ul_tag_err
