@@ -111,6 +111,7 @@
 
     function manage_rel_account(){
       $('.field-rel_account').show();
+      id_type = "0";
       if ( $('#id_payment_type').val() == 22 ) { //Pagament amb criptomoneda
         $('label[for="id_rel_account"]').text(gettext("@BTC on has d'enviar el pagament"));
         id_type = "17";
