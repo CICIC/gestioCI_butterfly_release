@@ -11,6 +11,14 @@ from django.template import RequestContext
 
 from django.utils.translation import ugettext_lazy as _
 
+def entry_page_to_gestioCI(request):
+	context = RequestContext(request)
+	return render_to_response(
+		'entry_page_to_gestioCI.html',
+		{'Profile' : None},
+		context_instance=context
+	)
+
 def create_membership(request, record_type_id=4):
 
 	from public_form.forms import create_membership_form
@@ -112,6 +120,7 @@ def wait_membership(request, user_id = 0):
 		{'RegistrationProfile' : current_registration},
 		context_instance=context
 	)
+
 
 
 def activate_membership(request, activation_key):
