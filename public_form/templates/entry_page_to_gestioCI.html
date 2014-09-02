@@ -6,17 +6,17 @@
 		<h1>{% trans "Pàgina d'entrada a gestioCI" %}</h1>
 		<h2>{% trans "Pestanya 1: Alta Projecte Autoocupat" %}</h2>
 			<ul>
-				<li>Admin: <h3>Formulari Autoocupats Presencial</h3> 
-					<a href="/Welcome"> Panel Admin</a>
-					<h4>- Altes Proj. Autoocupats
+				<li>{% trans "Admin: " %} <h3>{% trans "Formulari Autoocupats Presencial" %}</h3> 
+					<a href="/Welcome">{% trans " Panel Admin" %}</a>
+					<h4>{% trans "- Altes Proj. Autoocupats" %}
 					<a href="/admin/Welcome/ic_self_employed/add/" class="addlink">&nbsp;</a>
 					<a href="/admin/Welcome/ic_self_employed/" class="changelink">&nbsp;</a></h4>
-					<h4>- Altes Proj. Autoocupats Firaires
+					<h4>{% trans "- Altes Proj. Autoocupats Firaires" %}
 					<a href="/admin/Welcome/ic_stallholder/add/" class="addlink">&nbsp;</a>
 					<a href="/admin/Welcome/ic_stallholder/" class="changelink">&nbsp;</a></h4>
 					<br>
 				</li>
-				<li>Públic: 
+				<li>{% trans "Públic" %}: 
 					<article>
 						<header><h3>{% trans "Fase 1: Sesiones de Acogida y de Evaluación" %}</h3></header>
 						<div id="in_text"><p align="justify">{% trans "En primer lugar, debéis pedir cita para asistir a las sesiones de Acogida y de Evaluación, llamando al teléfono&nbsp;692 576 854 o bien escribiendo al correo" %} <a href="mailto:horesautoocupats@cooperativaintegral.cat" target="_blank">horesautoocupats@cooperativaintegral.cat</a>.</p>
@@ -31,34 +31,68 @@
 						 <footer>  <a itemprop="discussionUrl" href="http://cooperativa.cat/es/participa-2/quieres-hacerte-socio-autonomo/">{% trans "más info" %}...</a> </footer>
 					</article> 
 					<article>
-						<header><h3>Fase 2: Inscripció on-line a Acollida i Avaluació</h3></header>
+						<header><h3>{% trans "Fase 2: Inscripció on-line a Acollida i Avaluació" %}</h3></header>
 						<p> <a href="/admin/Welcome/learn_session">{% trans "Calendario de sesiones" %}</a></p>
 						<footer>  <a itemprop="discussionUrl" href="http://cooperativa.cat/es/participa-2/quieres-hacerte-socio-autonomo/">{% trans "más info" %}...</a> </footer>
 					</article> 
 				</li>
 			</ul>
 		<h2>{% trans "Pestanya 2: Alta Projecte Col·lectiu / Projecte Públic / Soci Individual (Cooperatiu o Afí)" %}</h2>
-			<h3>Formulari On-line...</h3>
+			<h3>{% trans "Formulari On-line..." %}</h3>
 			<ul>
 				<li>
-					<a href="/Welcome">... Panel Admin</a>
-					<h4>... Altes Socis Cooperatius Individuals CI
-					<a href="/admin/Welcome/ic_person_membership/add/" class="addlink">&nbsp;</a>
-					<a href="/admin/Welcome/ic_person_membership/" class="changelink">&nbsp;</a></h4>
-					<h4>... Altes Socis Projectes Col·lectius CI
+					<a href="/admin/Welcome">{% trans "... Panel Admin" %}</a>
+				</li>
+				<li>
+					<h4>{% trans "... Altes Socis Projectes Col·lectius CI" %}
 					<a href="/admin/Welcome/ic_project_membership/add/" class="addlink">&nbsp;</a>
 					<a href="/admin/Welcome/ic_project_membership/" class="changelink">&nbsp;</a></h4>
-					<h4>... Altes de Socis Afins CI
+				</li>
+				<li>
+					<h4>{% trans "... Altes Socis Projectes Públics CI" %}
+					<a href="/admin/Welcome/ic_project_membership/add/" class="addlink">&nbsp;</a>
+					<a href="/admin/Welcome/ic_project_membership/" class="changelink">&nbsp;</a></h4>
+				</li>
+				<li>
+					<h4>{% trans "... Altes de Socis Afins CI" %}
 					<a href="/admin/Welcome/ic_akin_membership/add/" class="addlink">&nbsp;</a>
 					<a href="/admin/Welcome/ic_akin_membership/" class="changelink">&nbsp;</a></h4>
 				</li>
-				<li><a href="/public_form">{% trans "... públic" %}</a></li>
+				<li>
+					<h4>{% trans "... Altes Socis Cooperatius Individuals CI" %}
+					<a href="/admin/Welcome/ic_person_membership/add/" class="addlink">&nbsp;</a>
+					<a href="/admin/Welcome/ic_person_membership/" class="changelink">&nbsp;</a></h4>
+				</li>
 			</ul>
-		<h2>{% trans "Pestanya 3: Facturació autoocupats" %}</h2>
-		<h3>Mòdul de Facturació del Software de GestióCI...</h3>
 			<ul>
-			<li><a href="/admin">... Panel Admin</a></li>
-			<li><a href="/cooper">... Soci Autoocupat </a></li>
+				<li>
+					<a href="/cooper/Welcome">{% trans "... Panel Altes Socis" %}</a>
+				</li>
+				<li>
+					<h4>{% trans "... Altes Socis Projectes Col·lectius CI " %}
+					<a href="/public_form/8" class="addlink">&nbsp;</a>
+				</li>
+				<li>
+					<h4>{% trans "... Altes de Socis Afins CI " %}
+					<a href="/public_form/10" class="addlink">&nbsp;</a>
+				</li>
+				<li>
+					<h4>{% trans "... Altes Socis Cooperatius Individuals CI " %}
+					<a href="/public_form/7" class="addlink">&nbsp;</a>
+				</li>
+			</ul>
+			<p><a href="/public_form">{% trans "... públic" %}</a></p>
+
+		<h2>{% trans "Pestanya 3: Facturació autoocupats" %}</h2>
+		<h3>{% trans "Mòdul de Facturació del Software de GestióCI..." %}</h3>
+			<ul>
+			<li><a href="/admin/Invoices">{% trans "... Panel Admin" %}</a></li>
+			<li><a href="/cooper/Invoices">{% trans "... Panel Soci Autoocupat " %}</a></li>
+			</ul>
+		<h2>{% trans "Pestanya 4: Assessorament projectes" %}
+			<ul>
+			<li>{% trans "Panel admin:" %} <a href="/admin/Welcome/project_accompaniment/add/" class="addlink">&nbsp;</a>
+				<a href="/admin/Welcome/project_accompaniment/" class="changelink">&nbsp;</a></li>
 			</ul>
 		<h2>{% trans "F.A.Q." %}</h2>
 		<ul><li><a href="http://cooperativa.cat/es/participa-2/quieres-hacerte-socio-autonomo/">Quiero hacerme socio, ¿cómo?</a></li></ul>
