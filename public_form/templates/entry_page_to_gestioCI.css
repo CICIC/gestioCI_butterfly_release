@@ -9,7 +9,7 @@
 .admin .menu{
 	text-shadow: 1px 1px 1px #00FF00;
 }
-.member, .admin{
+.member, .admin, .anon{
 	border: 0.1px solid;
 	border-radius: 5px;
 	box-shadow: 5px 5px 2.5px #888888;
