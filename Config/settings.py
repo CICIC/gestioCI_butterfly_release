@@ -103,7 +103,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'gestioCI_butterfly',
         'USER' : 'gestioCI',
-        'PASSWORD': 'passwor',
+        'PASSWORD': 'gestioCI',
         'HOST': 'localhost',
     }
 }
@@ -168,7 +168,7 @@ SUIT_CONFIG = {
 #public_form
 ACCOUNT_ACTIVATION_DAYS = 5
 #SITE_URL = "http://gestio.cooperativa.cat:8082"
-SITE_URL = "http://169.254.226.5:8082"
+SITE_URL = "http://169.254.226.5:8081"
 #SITE_URL = "http://localhost:8000"
 
 '''
@@ -247,5 +247,5 @@ EMAIL_USE_TLS = False
 '''
 8 @login_required decorator
 '''
-LOGIN_REDIRECT_URL='/cooper'
-LOGIN_URL='/cooper'
+LOGIN_REDIRECT_URL='/public_form/entry_page_to_gestioci/'
+LOGIN_URL='/public_form/entry_page_to_gestioci/'
