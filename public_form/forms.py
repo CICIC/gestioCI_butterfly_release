@@ -75,7 +75,7 @@ class create_membership_form(forms.ModelForm):
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 
-	project_name = forms.RegexField(regex=r'^[\w.@+-]+$',
+	project_name = forms.RegexField(regex=r'^[\w.@+- ]+$',
 								max_length=100,
 								widget=forms.TextInput(),
 								label=_("Nom del projecte"),
@@ -103,7 +103,7 @@ class create_membership_form(forms.ModelForm):
 		print 'Pers_NAME? '+str(self.cleaned_data.get("name"))
 		#print 'NAME: '+str(self.cleaned_data['name'])
 		if self.cleaned_data.get("name") is None or self.cleaned_data.get("name") == '':
-			print 'Clean_Person_Name: A N O N Y M U S ? '+str(self.cleaned_data)
+			print 'Clean_Person_Name: A N O N Y M O U S ? '+str(self.cleaned_data)
 			return "anonymous"
 		else:
 			#self.cleaned_data['name'] = self.cleaned_data.get("person_name")
@@ -113,7 +113,7 @@ class create_membership_form(forms.ModelForm):
 	def clean_project_name(self):
 		print "#Clean project_name---------------------------------------------------------------"
 		if self.cleaned_data.get("project_name") is None or self.cleaned_data.get("project_name") == '':
-			print 'Clean_Project_Name: A N O N Y M U S'
+			print 'Clean_Project_Name: A N O N Y M O U S'
 			return "anonymous"
 		return self.cleaned_data.get("project_name")
 	'''
