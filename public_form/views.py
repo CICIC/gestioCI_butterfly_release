@@ -13,9 +13,20 @@ from django.utils.translation import ugettext_lazy as _
 
 def entry_page_to_gestioCI(request):
 	context = RequestContext(request)
+	if request.user.is_anonymous():
+		profile_desc = "Anonymous"
+		profile_type = "Anon"
+	elif request.user.is_superuser:
+		profile_desc = "Administrator"
+		profile_type = "Admin"
+	else:
+		profile_desc = "Member"
+		profile_type = request.user.groups.all()[0].name
+
 	return render_to_response(
 		'entry_page_to_gestioCI.html',
-		{'Profile' : None},
+		{'profile_desc' : profile_desc,
+		 'profile_type' : profile_type},
 		context_instance=context
 	)
 
@@ -120,8 +131,6 @@ def wait_membership(request, user_id = 0):
 		{'RegistrationProfile' : current_registration},
 		context_instance=context
 	)
-
-
 
 def activate_membership(request, activation_key):
 
