@@ -26,6 +26,7 @@ url(r'^cooper/password_reset/$', 'django.contrib.auth.views.password_reset', nam
 url(r'^cooper/password_reset/done/$', 'django.contrib.auth.views.password_reset_done', name='password_reset_done'),
 url(r'^cooper/reset/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'django.contrib.auth.views.password_reset_confirm',  name='password_reset_confirm'),
 url(r'^cooper/reset/done/$', 'django.contrib.auth.views.password_reset_complete',  name='password_reset_complete'),
+url(r'^login/$', 'django.contrib.auth.views.login'),
 #Localization
 url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', js_info_dict),
 url(r'^i18n/', include('django.conf.urls.i18n')),

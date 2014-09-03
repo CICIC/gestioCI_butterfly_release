@@ -1,74 +1,68 @@
-{% extends "admin/base_site.html" %}
 {% load i18n admin_urls admin_static admin_modify %}
 
-
-{% block extrastyle %}{{ block.super }}
+	<link rel="stylesheet" type="text/css" href="{% static 'create_membership.css' %}" />
 	<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />
 	{{ form.media }}
-{% endblock %}
-
-{% block content %}
 
 	<div id="content-main">
-		<h1>{{ moment }}</h1>
+		<br>
 		{% if form.non_field_errors %}<p><strong>{{ form.non_field_errors }}</strong></p>{% endif %}
-		<label for="public_form">CAP DE PÀGINA {{ moment }}</label><br />
-		<sup>{% trans 'tag_top:' %}</sup> <p>{{ tag_top }}</p>
+		<label class="public_form" for="public_form">{% trans "Formulari On-line" %}</label><br />
+		<sup> <p>{{ tag_top }}</p>
 		<form action="{% url reverse_string %}" method="post">
-			<h3>{% trans "(1)" %}</h3>
 			<table>
 				<tr><th>{{form.type_person.label_tag}}</th><td>{{form.type_person}}</td></tr>
 			</table>
-			<div id="user_section"  style="background-color:#E0FFFF;">
-				<h3>{% trans "Dades usuari" %}</h3>
-				<table>
-					<tr><th>{{form.username.label_tag}}</th><td>{{form.username}}{{form.username.errors}}</td></tr>
-					<tr><th>{{form.email.label_tag}}</th><td>{{form.email}}{{form.email.errors}}</td></tr>
-					<tr><th>{{form.password1.label_tag}}</th><td>{{form.password1}}{{form.password1.errors}}</td></tr>
-					<tr><th>{{form.password2.label_tag}}</th><td>{{form.password2}}{{form.password2.errors}}</td></tr>
-				</table>
+			<div id="actions_section">
+				<br><br>
+				<img src="{% static moment_img %}"><br>
+				<br><br>
 			</div>
-			<div id="public_section"  style="background-color:#FFE0FF;">
-				<h3>{% trans "Dades persona" %}</h3>
-				<table>
-					<tr><th>{{form.nickname.label_tag}}</th><td>{{form.nickname}}{{form.nickname.errors}}</td></tr>
-					<tr><th>{{form.name.label_tag}}</th><td>{{form.name}}{{form.name.errors}}</td></tr>
-					<tr><th>{{form.surnames.label_tag}}</th><td>{{form.surnames}}</td></tr>
-					<tr><th>{{form.id_card.label_tag}}</th><td>{{form.id_card}}{{form.id_card.errors}}</td></tr>
-					<tr><th>{{form.telephone.label_tag}}</th><td>{{form.telephone}}{{form.telephone.errors}}</td></tr>
-				</table>
-			</div>
-			<h3>{% trans "(2)" %}</h3>
-			<table>
-				<tr><th>{{form.type.label_tag}}</th><td>{{form.type}}</td></tr>
-			</table>
-			<div id="project_section"  style="background-color:#FFE0FF;">
-				<h3>{% trans "Dades Projecte" %}</h3>
-				<table>
-					<tr><th>{{form.project_name.label_tag}}</th><td>{{form.project_name}}{{form.project_name.errors}}</td></tr>
-					<tr><th>{{form.project_website.label_tag}}</th><td>{{form.project_website}}{{form.project_website.errors}}</td></tr>
-				</table>
+			<br>
+			<div class="forms_create">
+				<div id="type_section">
+					<table>
+						<tr><th>{{form.type.label_tag}}</th><td>{{form.type}}</td></tr>
+					</table>
+				</div>
+				<div id="user_section">
+					<h3>{% trans "Dades usuari" %}</h3>
+					<table>
+						<tr><th>{{form.username.label_tag}}</th><td>{{form.username}}{{form.username.errors}}</td><td rowspan="4">{{profile_user}}</td></tr>
+						<tr><th>{{form.email.label_tag}}</th><td>{{form.email}}{{form.email.errors}}</td></tr>
+						<tr><th>{{form.password1.label_tag}}</th><td>{{form.password1}}{{form.password1.errors}}</td></tr>
+						<tr><th>{{form.password2.label_tag}}</th><td>{{form.password2}}{{form.password2.errors}}</td></tr>
+					</table>
+				</div>
+				<br>
+				<div id="public_section">
+					<h3>{% trans "Dades persona" %}</h3>
+					<table>
+						<tr><th>{{form.nickname.label_tag}}</th><td>{{form.nickname}}{{form.nickname.errors}}</td><td rowspan="6">{{profile_person}}</td></tr>
+						<tr><th>{{form.name.label_tag}}</th><td>{{form.name}}{{form.name.errors}}</td></tr>
+						<tr><th>{{form.surnames.label_tag}}</th><td>{{form.surnames}}</td></tr>
+						<tr><th>{{form.id_card.label_tag}}</th><td>{{form.id_card}}{{form.id_card.errors}}</td></tr>
+						<tr><th>{{form.telephone_land.label_tag}}</th><td>{{form.telephone_land}}{{form.telephone_land.errors}}</td></tr>
+						<tr><th>{{form.telephone_cell.label_tag}}</th><td>{{form.telephone_cell}}{{form.telephone_cell.errors}}</td></tr>
+					</table>
+				</div>
+				<br>
+				<div id="project_section" >
+					<h3>{% trans "Dades Projecte" %}</h3>
+					<table>
+						<tr><th>{{form.project_name.label_tag}}</th><td>{{form.project_name}}{{form.project_name.errors}}</td><td rowspan="2">{{profile_project}}</td></tr>
+						<tr><th>{{form.project_website.label_tag}}</th><td>{{form.project_website}}{{form.project_website.errors}}</td></tr>
+					</table>
+				</div>
+				<div id="actions_section">
+					<br>
+					<input type="submit" value="{% trans 'Envia el formulari' %}" /><br><p>{% trans tag_send %}</p>
+				</div>
+				
 			</div>
 			<br>
 			{% csrf_token %}
-			<div id="actions_section"  style="background-color:#EEEED0;">
-				<table>
-					<tr><td><label for="public_form">PEU DE PÀGINA {{ moment }}</label><br /></td></tr>
-					<tr><td>
-					<sup>{% trans 'Nota:' %}</sup> <p>{% trans tag %}</p>
-					<input type="submit" value="Enviar" />{% trans tag_send %}</td></tr>
-				</table>
-			</div>
-			<br>
-			<div style="background-color:#E0E0E0;">
-				<h4>
-					<sup>{% trans 'state:' %}</sup> {% trans moment %}
-				</h4>
-				<br>
-				<img src="{% static moment_img %}">
-			</div>
 		</form>
-
 	</div>
 
-{% endblock %}
+

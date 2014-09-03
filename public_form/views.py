@@ -10,30 +10,54 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as __
 
-def entry_page_to_gestioCI(request):
+def entry_page_to_gestioci(request, record_type_id = None):
+	user_url = ""
 	context = RequestContext(request)
 	if request.user.is_anonymous():
-		profile_desc = "Anonymous"
+		profile_desc = _(u"Usuari desconegut.")
 		profile_type = "Anon"
+		from django.contrib import messages
+		messages.add_message(request, messages.INFO, _(u"Benvinguda, logejat si ja has vingut avanç o comença el procés d'alta." ))
 	elif request.user.is_superuser:
-		profile_desc = "Administrator"
+		profile_desc = _(u"Administrator")
 		profile_type = "Admin"
 	else:
-		profile_desc = "Member"
-		profile_type = request.user.groups.all()[0].name
-
+		if request.user.is_active:
+			profile_desc = _(u"Member")
+			profile_type = request.user.groups.all()[0].name
+		else:
+			from public_form.models import RegistrationProfile
+			current_registration = get_object_or_404(RegistrationProfile, user=request.user.id)
+			from django.utils.safestring import mark_safe
+			user_url = current_registration.get_activation_url()
+			url = " O fes trampa i utilitza aquest: <a href='" + current_registration.get_activation_url() + "'>" + "Enllaç d'activació per fer trampes em comptes d'utilitzar l'enllaç que hem enviat al teu correu electrònic." + "</a>"
+			profile_desc = _(u"Usuari pendent d'activació.")
+			message_desc = _(u"Ben fet! Ara necesites activar l'usuari per tal de que poguem relacionar el teu correu electrònic. Pots utilitzar l'enllaç  que trobaràs al teu correu")
+			profile_type = request.user.groups.all()[0].name
+			from django.contrib import messages
+			messages.success(request, message_desc )
+			messages.info(request, mark_safe(url) )
+	from django.contrib.auth.forms import AuthenticationForm
+	from Cooper.admin import UserAdminAuthenticationForm
 	return render_to_response(
 		'entry_page_to_gestioCI.html',
 		{'profile_desc' : profile_desc,
-		 'profile_type' : profile_type},
+		 'profile_type' : profile_type,
+		 'user_permissions': request.user.groups,
+		 'user_url': user_url,
+		 'record_type_id': record_type_id,
+		'form_login': UserAdminAuthenticationForm(),
+		'app_path': request.get_full_path(),},
 		context_instance=context
 	)
 
 def create_membership(request, record_type_id=4):
 
 	from public_form.forms import create_membership_form
-
+	current_project = None
+	current_person = None
 	if request.POST:
 		print "#POST-------------------------------------------------------------------"
 		print "#Create form from request-----------------------------------------------"
@@ -41,7 +65,6 @@ def create_membership(request, record_type_id=4):
 		print "#Created form from request-----------------------------------------------"
 		#for fm in form:
 		#	print str(fm)
-
 		if form.is_valid():
 			record_type_id = request.POST["type"]
 			print "#Save person--------------------------------------------------------"
@@ -58,7 +81,7 @@ def create_membership(request, record_type_id=4):
 			print "#Save project--------------------------------------------------------"
 			from Welcome.models import iC_Record_Type
 
-			current_project = None
+
 			print record_type_id
 			#print iC_Record_Type.objects.get(clas="iC_Project_Membership").id
 			if str(record_type_id) == str(iC_Record_Type.objects.get(clas="iC_Project_Membership").id):
@@ -72,31 +95,39 @@ def create_membership(request, record_type_id=4):
 			from public_form.bots import user_registration_bot
 			urb = user_registration_bot()
 			current_user = urb.register(request, current_person, current_project, record_type_id,  **form.cleaned_data)
+			
+			#log user
+			from django.contrib.auth import authenticate, login
+			current_user.backend='django.contrib.auth.backends.ModelBackend'
+			login(request, current_user)
 			#Redirect and wait for user to activate key-------------------------
 			return HttpResponseRedirect(
-				reverse('public_form:wait_membership', args=(current_user.id,))
+				reverse('public_form:entry_page_to_gestioci', args=(record_type_id,))
 			)
 		else:
-			print "# CANNOT SAVE! ---------------------------------------------------------"
-			print form.errors
-			#print form.errors
+			return HttpResponseRedirect(
+				reverse('public_form:entry_page_to_gestioci', args=(record_type_id,))
+			)
 	else:
-		print 'INITIAL-----------------------------------------------------------------'
-		#Create form from default------------------------------------------------
 		form = create_membership_form(
-				initial= {
-						"type" : record_type_id ,
-						"type_person": "public"
-				}
-		)
+		initial= {
+		"type" : record_type_id ,
+		"type_person": "public"
+		}
+)
+
 	print "#Load extra data--------------------------------------------------------------"
 	extra_context = {}
 
+	extra_context['profile_user'] = request.user
+	extra_context['profile_person'] = current_person
+	extra_context['profile_project'] = current_project
+
 	extra_context['record_type'] = record_type_id
 	extra_context['moment'] = _(u"Benvinguda")
-	extra_context['moment_img'] = "welcome_flow.png"
+	extra_context['moment_img'] = "welcome_flow_FORM.png"
 	extra_context['reverse_string'] = "public_form:create_membership"
-	extra_context['tag_top'] = _(u"Missatge de benvinguda al procés d'alta. Aneu pasant...")
+	extra_context['tag_top'] = _(u"Omplir dades i fer click a Enviar formulari")
 	extra_context['tag'] = _(u"La cobertura legal és només pels usuaris públics. Els anònims no quedaran coberts legalment.")
 	extra_context['tag_send'] = _(u"Crearem un usuari i t'enviem un correu d'activació. Fes click al link del correu i ja podràs entrar amb el teu usuari/contrasenya al entorn virtual per tal de completar l'alta.")
 

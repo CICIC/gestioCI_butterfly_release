@@ -1,0 +1,39 @@
+{% load i18n admin_urls admin_static admin_modify %}
+
+<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script type="text/javascript" src="{% static 'profile_type.js' %}"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'profile_type.css' %}" />
+
+<p>{% trans "Perfil detectat:" %}</p>
+
+<p><u>{% trans "Grups dels que formes part" %}</u>:
+<ul>
+<li>{% trans "Procés d'alta" %}</li>
+{% for permission in user_permissions.all %}
+	<li>{{permission}} </li>
+{% endfor %}
+</ul></p>
+
+<h1>{{profile_desc}}</h1>
+
+	<div class="users">
+		<div class="admin user">
+			<label>{% trans "Administrador" %}</label><br>
+			<img src="{% static 'Admin_user.png' %}" width="100px">
+		</div>
+		<a href="{{user_url}}">
+			<div class="member user">
+				<label>{% trans "Group: " %}{{profile_type}}</label><br>
+				<img src="{% static 'Group_user.png' %}" width="100px">
+			</div>
+		</a>
+		<div class="anon user">
+			<label>{% trans "-" %}</label><br>
+			<img id="profile_image" src="{% static 'Anon_user.png' %}" width="100px">
+		</div>
+	</div>
+
+<input type="hidden" id="profile_type" value="{{profile_type}}">
+
