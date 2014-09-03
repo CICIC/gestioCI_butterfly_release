@@ -1,4 +1,4 @@
-#encoding=utf-8
+		#encoding=utf-8
 
 from django import forms
 #from Welcome.models import Person
@@ -68,21 +68,21 @@ class create_membership_form(forms.ModelForm):
 	password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
 								label=_("Password (again)"))
 
-	name = forms.RegexField(regex=r'^[\w.@+-]+$',
+	name = forms.RegexField(regex=r'^[\w.@+-][:space:]+$',
 								max_length=50,
 								widget=forms.TextInput(),
 								label=_("Nom real"),
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 
-	project_name = forms.RegexField(regex=r'^[\w.@+- ]+$',
+	project_name = forms.RegexField(regex=r'^[\w.@+-][:space:]+$',
 								max_length=100,
 								widget=forms.TextInput(),
 								label=_("Nom del projecte"),
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 
-	project_website = forms.RegexField(regex=r'^[\w.@+-]+$',
+	project_website = forms.RegexField(regex=r'^[\w.@+-][:space:]+$',
 								label=_("Web del projecte"),
 								max_length=100,
 								widget=forms.TextInput(),
