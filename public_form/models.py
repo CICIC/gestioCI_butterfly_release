@@ -128,6 +128,10 @@ class RegistrationProfile(models.Model):
 		from Config.settings import SITE_URL
 		return SITE_URL + reverse( 'public_form:activate_membership', args=( {self.activation_key} ) )
 
+	def get_resume_url(self):
+		from Config.settings import SITE_URL
+		return SITE_URL + reverse( 'public_form:entry_page_to_gestioci', args=( {self.user.id} ) )
+
 	def send_activation_email(self, record_type_name):
 
 		from Config.settings import ACCOUNT_ACTIVATION_DAYS, SITE_URL
@@ -135,6 +139,7 @@ class RegistrationProfile(models.Model):
 					'expiration_days': ACCOUNT_ACTIVATION_DAYS,
 					'record_type_name': record_type_name,
 					'url': self.get_activation_url(),
+					'resume_url': self.get_resume_url(),
 					}
 		subject = render_to_string('activation_email_subject.html',
 								   ctx_dict)
@@ -143,6 +148,6 @@ class RegistrationProfile(models.Model):
 
 		message = render_to_string('activation_email.html',
 								   ctx_dict)
-
+		
 		#self.user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
 		print subject + message

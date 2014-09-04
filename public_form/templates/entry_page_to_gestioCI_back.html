@@ -1,6 +1,7 @@
-
+{% extends "admin/base_site.html" %}
 {% load i18n admin_urls admin_static admin_modify %}
 
+{% block extrastyle %}{{ block.super }}
 	<link rel="stylesheet" type="text/css" href="{% static 'entry_page_to_gestioCI.css' %}" />
 	<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
 	<script type="text/javascript" src="{% static 'admin/js/jquery.js' %}"></script>
@@ -8,11 +9,12 @@
 	<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
 	<script type="text/javascript" src="{% static 'entry_page_to_gestioCI.js' %}"></script>
+{% endblock %}
 
+{% block content %}
 	<div id="content-main">
 		<div class="entry_page">
 			<h1>{% trans "Pàgina d'entrada a gestioCI" %}</h1>
-			<input type="hidden" id="profile_type" value="{{profile_type}}">
 			<div class="ui-tabs">
 				<ul class="ui-tabs-nav">
 					<li class="admin member iC_Person_Membership iC_Project_Membership iC_Akin_Membership anon"><a href="#tabs-1">{% trans "Pestanya 1: Alta Projecte Col·lectiu / Projecte Públic / Soci Individual (Cooperatiu o Afí)" %}</a></li>
@@ -54,18 +56,15 @@
 						<ul id="P2_member_menu" class="menu">
 							<li class="iC_Project_Membership">
 								{% trans "... Altes Socis Projectes Col·lectius CI " %}
-								<a id="menu_iC_Project_Membership" href="javascript:void(0);" class="addlink">&nbsp;</a>
+								<a id="menu_iC_Project_Membership" href="javascript:void();" class="addlink">&nbsp;</a>
 							</li>
 							<li class="iC_Akin_Membership">
 								{% trans "... Altes de Socis Afins CI " %}
-								<a id="menu_iC_Akin_Membership" href="javascript:void(0);" class="addlink">&nbsp;</a>
-								{% if record_type_id > 0 %}
-									<a href="/cooper/Welcome/ic_akin_membership/{{membership_id}}" class="changelink">&nbsp;</a>
-								{% endif %}
+								<a id="menu_iC_Akin_Membership" href="javascript:void();" class="addlink">&nbsp;</a>
 							</li>
 							<li class="iC_Person_Membership">
 								{% trans "... Altes Socis Cooperatius Individuals CI " %}
-								<a id="menu_iC_Person_Membership" href="javascript:void(0);" class="addlink">&nbsp;</a>
+								<a id="menu_iC_Person_Membership" href="javascript:void();" class="addlink">&nbsp;</a>
 							</li>
 						</ul>
 						<p class="menu"><a href="/public_form">{% trans "... públic" %}</a></p>
@@ -88,7 +87,6 @@
 								<a href="/admin/Welcome/ic_stallholder/" class="changelink">&nbsp;</a>
 							</li>
 						</ul>
-						<input type="hidden" id="record_type_id" value="{{record_type_id}}">
 					</div>
 					<div id="P1_member" class="member anon">
 						{% trans "Públic" %}: <h3> {% trans "Alta de Socis" %}</h3>
@@ -153,19 +151,29 @@
 					</div>
 				</div>
 			</div>
-			<p class="public_form_anchor">*</p>
-			
-			<div id="actions_section">
-				<br><br>
-				<img src="{% static moment_img %}"><br>
-				<br><br>
-			</div>
-			<input type="hidden" id="show_create_form" value="{{show_create_form}}">
-			<div class="public_form" style="display:inline-block;">
-			<br>
+			<div class="data_form" style="display:inline-block;">
+				<br><img src="{% static 'welcome_flow.png' %}">
 			</div>
 			<br>
+			<p>{% trans "El meu perfil:" %}</p>
+			<h1>{{profile_desc}}</h1>
+			<p>{% trans "Què puc veure?" %}</p>
+			<div class="users">
+				<div class="admin user">
+					<label>{% trans "Administrador" %}</label>
+					<img src="{% static 'Admin_user.png' %}" width="100px">
+				</div>
+				<div class="member user">
+					<label>{% trans "Group: " %}{{profile_type}}</label>
+					<img src="{% static 'Group_user.png' %}" width="100px">
+				</div>
+				<div class="anon user">
+					<label>{% trans "Desconegut" %}</label>
+					<img id="profile_image" src="{% static 'Anon_user.png' %}" width="100px">
+				</div>
+			</div>
+			<input type="hidden" id="profile_type" value="{{profile_type}}">
 		</div>
 
 	</div>
-
+{% endblock %}

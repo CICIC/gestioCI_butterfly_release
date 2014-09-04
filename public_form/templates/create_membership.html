@@ -1,10 +1,17 @@
+{% extends "public_base.html" %}
 {% load i18n admin_urls admin_static admin_modify %}
-
+{% block extrahead %}{{ block.super }}
+	<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+	<script type="text/javascript" src="{% static 'admin/js/jquery.js' %}"></script>
+	<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+	<script type="text/javascript" src="{% static 'create_membership.js' %}"></script>
 	<link rel="stylesheet" type="text/css" href="{% static 'create_membership.css' %}" />
-	<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />
-	{{ form.media }}
+{% endblock %}
+ {% block content_title %}{{message_desc}}{{content_title}}</i></p> </h1>{% if title %}<h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>{% endif %}{% endblock %}
+{% block content %}
 
 	<div id="content-main">
+		
 		<br>
 		{% if form.non_field_errors %}<p><strong>{{ form.non_field_errors }}</strong></p>{% endif %}
 		<label class="public_form" for="public_form">{% trans "Formulari On-line" %}</label><br />
@@ -13,11 +20,6 @@
 			<table>
 				<tr><th>{{form.type_person.label_tag}}</th><td>{{form.type_person}}</td></tr>
 			</table>
-			<div id="actions_section">
-				<br><br>
-				<img src="{% static moment_img %}"><br>
-				<br><br>
-			</div>
 			<br>
 			<div class="forms_create">
 				<div id="type_section">
@@ -25,7 +27,7 @@
 						<tr><th>{{form.type.label_tag}}</th><td>{{form.type}}</td></tr>
 					</table>
 				</div>
-				<div id="user_section">
+				<div id="user_section" class="form-row">
 					<h3>{% trans "Dades usuari" %}</h3>
 					<table>
 						<tr><th>{{form.username.label_tag}}</th><td>{{form.username}}{{form.username.errors}}</td><td rowspan="4">{{profile_user}}</td></tr>
@@ -35,7 +37,7 @@
 					</table>
 				</div>
 				<br>
-				<div id="public_section">
+				<div id="public_section" class="form-row">
 					<h3>{% trans "Dades persona" %}</h3>
 					<table>
 						<tr><th>{{form.nickname.label_tag}}</th><td>{{form.nickname}}{{form.nickname.errors}}</td><td rowspan="6">{{profile_person}}</td></tr>
@@ -47,7 +49,7 @@
 					</table>
 				</div>
 				<br>
-				<div id="project_section" >
+				<div id="project_section" class="form-row" >
 					<h3>{% trans "Dades Projecte" %}</h3>
 					<table>
 						<tr><th>{{form.project_name.label_tag}}</th><td>{{form.project_name}}{{form.project_name.errors}}</td><td rowspan="2">{{profile_project}}</td></tr>
@@ -64,5 +66,9 @@
 			{% csrf_token %}
 		</form>
 	</div>
-
-
+{% endblock %}
+{% block foot_content %}
+	{% if foot_content != "" %}
+		{% include foot_content %}
+	{% endif %}
+{% endblock %}

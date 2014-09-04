@@ -68,7 +68,7 @@ class create_membership_form(forms.ModelForm):
 	password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
 								label=_("Password (again)"))
 
-	name = forms.RegexField(regex=r'^[\w.@+-][:space:]+$',
+	name = forms.RegexField(regex=r'^[\w.@+-]+$',
 								max_length=50,
 								widget=forms.TextInput(),
 								label=_("Nom real"),

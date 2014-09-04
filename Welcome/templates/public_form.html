@@ -8,17 +8,15 @@
 
 {% block content %}
 	<div id="content-main">
-		<h1>{{ form.title }}</h1>
+		<h1>{% trans "FILTRE INICIAL" %}</h1>
 		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 		<form action="{% url 'Welcome:public_form' %}" method="post">
 		{% csrf_token %}
-			<label for="public_form">test</label><br />
+			<label for="public_form">Tipus de soci</label><br />
 			<table>
 				{{form}}
 			</table>
 			<input type="submit" value="Enviar" />
-			<p><sup>nota:</sup>{%trans "Si et vols mantenir en l'anonimat pots deixar els camps en blanc i omplir el camp de “Nom o Sobrenom”, però en aquest cas no  quedaràs cobert legalment." %}</p>
-
 		</form>
 	</div>
 {% endblock %}

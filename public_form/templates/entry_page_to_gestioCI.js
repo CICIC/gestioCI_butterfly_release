@@ -33,7 +33,9 @@
 			$( "." + $( "#profile_type" ).val() ).show();
 		}
 
+		if ($('.show_create_form').val()) {
 			membership( $( "#record_type_id" ).val() );
+		}
 
 		$( ".ui-tabs" ).tabs();
 		$( ".ui-tabs" ).show();

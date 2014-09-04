@@ -556,10 +556,9 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
 class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
   list_display = ['name', 'nickname', 'project_type', 'email', '_is_collective']#, 'ref_persons']
-  list_filter = ('project_type',)
+  list_filter = ('project_type', )
   search_fields = ('name', 'nickname', 'project_type', 'email')
-
-
+  
   inlines = [
     Proj_refPersonInline,
     H_addressInline,
