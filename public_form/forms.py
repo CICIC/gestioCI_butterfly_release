@@ -75,14 +75,14 @@ class create_membership_form(forms.ModelForm):
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 
-	project_name = forms.RegexField(regex=r'^[\w.@+-][:space:]+$',
+	project_name = forms.RegexField(regex=r'^[\w.@+-]+$',
 								max_length=100,
 								widget=forms.TextInput(),
 								label=_("Nom del projecte"),
 								required=False,
 								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 
-	project_website = forms.RegexField(regex=r'^[\w.@+-][:space:]+$',
+	project_website = forms.RegexField(regex=r'^[\w.@+-]+$',
 								label=_("Web del projecte"),
 								max_length=100,
 								widget=forms.TextInput(),

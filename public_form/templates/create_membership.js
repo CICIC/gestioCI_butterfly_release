@@ -1,7 +1,7 @@
 (function($) {
 	function showForms(){
 		if ( $('#id_type_0').filter(':checked').val() != undefined ) {
-			$("#actions_section").html("<img src='/welcome_flow_FORM_akin.png'>");
+			$("#actions_section").html("<img src='/static/welcome_flow_FORM_akin.png'>");
 		}
 		if ( $('#id_type_2').filter(':checked').val() != undefined ) {
 			$('#project_section').show();
