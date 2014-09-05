@@ -35,6 +35,7 @@ def entry_page_to_gestioci(request, user_id = None):
 	user_permissions = None
 	from public_form.models import RegistrationProfile
 	Akin_project = None
+	links = []
 
 	#USER: If there is any user_id on params retrieve object; else get logged user or anonymous...
 	from django.contrib.auth.models import User
@@ -65,13 +66,10 @@ def entry_page_to_gestioci(request, user_id = None):
 	if current_registration:
 		if current_registration.record_type:
 			type = current_registration.record_type.clas
-
 		try:
 			if type == "iC_Project_Membership":
 				qobjects = iC_Project_Membership
-				print current_registration.project.id
 				membership = qobjects.objects.get( project=current_registration.project)
-				print "sdgsd"
 			elif type == "iC_Person_Membership":
 				qobjects = iC_Person_Membership
 				membership = qobjects.objects.get( person=current_registration.person)
@@ -218,14 +216,43 @@ def entry_page_to_gestioci(request, user_id = None):
 				from Welcome.forms import iC_Akin_Membership_form
 				from Welcome.models import iC_Akin_Membership
 				form = iC_Akin_Membership_form(instance=membership)
+			elif type == "iC_Self_Employed":
+				from django.contrib.auth.models import User, Group
+
+				from Welcome.models import iC_Self_Employed
+
+				try:
+					self_groups = current_user.groups.filter(name__in=["iC_Person_Membership", "iC_Project_Membership" ])
+					membership_self= iC_Self_Employed.objects.get(ic_membership = membership_id)
+				except ObjectDoesNotExist:
+					membership_self = None
+
+				if membership_self:
+					if membership_self._has_assisted_socialcoin():
+						print "Link: Tractar Fase 2"
+						message = _(u" Anar a sessió de moneda social i d'Alta ").encode('utf8')
+						url = "/cooper/Welcome/learn_session/" + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+						print link
+					elif membership_self._has_assisted_welcome():
+						print "Link: you have to go to session coin"
+						message = __(u" Anar a sessió de moneda social i d'Alta ").encode('utf8')
+						url = "/cooper/Welcome/learn_session/" + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+					else:
+						print "Link: you have to go to sessions"
+						message = __(u" Anar a sessió d'acollida: ").encode('utf8')
+						url = "/cooper/Welcome/learn_session/" + "?next=public_form"
+						link = "<a href='%s'> %s </a>" % (url,  message)
+						links.append( mark_safe(link) )
+
 			elif type == "iC_Welcome":
 				pass
 
-
 			#COMMON BLOCK FOR MEMBERSHIP
 			action = reverse("public_form:save_form_profile")
-			#link
-			links = []
 			if not current_user.is_anonymous() and not current_user.is_active:
 				links.append( mark_safe(url) )
 
@@ -243,6 +270,12 @@ def entry_page_to_gestioci(request, user_id = None):
 				links.append (mark_safe(link))
 				url = "/admin/Welcome/ic_membership/" + "?next='public_form'"
 				link = "<a href=" + url + "> Gestionar comptes ICES </a>"
+				links.append( mark_safe(link) )
+				url = "/admin/Welcome/learn_session/" + "?next='public_form'"
+				link = "<a href=" + url + "> Manegar sessions acollida </a>"
+				links.append( mark_safe(link) )
+				url = "/admin/Welcome/learn_session/" + "?next='public_form'"
+				link = "<a href=" + url + "> Manegar sessions Moneda Social i d'Alta</a>"
 				links.append( mark_safe(link) )
 
 			if current_user.is_superuser:

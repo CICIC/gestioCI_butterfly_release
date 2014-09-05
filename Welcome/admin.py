@@ -718,6 +718,7 @@ admin.site.register(iC_Licence, LicenceAdmin)
 admin.site.register(Fee, FeeAdmin)
 
 admin.site.register(Learn_Session, LearnSessionAdmin)
+user_admin_site.register(Learn_Session, LearnSessionAdmin)
 admin.site.register(Project_Accompaniment)
 admin.site.register(Image)
 
