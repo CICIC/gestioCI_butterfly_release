@@ -13,6 +13,8 @@ from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import gettext_lazy as __
 
+from django.utils.safestring import mark_safe
+
 class Action_block(object):
 	def __init__(self, title, group, form, action, links, id):
 		self.title = title
@@ -164,7 +166,6 @@ def entry_page_to_gestioci(request, user_id = None):
 
 	if user_url:
 		from public_form.models import RegistrationProfile
-		from django.utils.safestring import mark_safe
 		url = "Activa ara el teu usuari. Consulta el teu correu o utilitza aquest <a href='" + current_registration.get_activation_url() + "'>" + "enllaç d'activació</a>."
 		profile_desc = _(u"Usuari pendent d'activació.")
 		message_desc = _(u"Ben fet! Tens un usuari creat per realitzar el procés d'alta. Activa'l amb l'enllaç rebut al teu correu!")
@@ -231,17 +232,17 @@ def entry_page_to_gestioci(request, user_id = None):
 			if membership and type.lower() != "ic_welcome":
 				url = reverse("member:Welcome_" + type.lower() + "_change",  args=[membership_id] ) + "?next=public_form"
 				link = "<a href='" + url + "'> Editar: " + membership.__str__() + "</a>"
-				from django.utils.safestring import mark_safe
 				links.append( mark_safe(link))
 
 			if group.name.lower() == "ic_welcome":
+				url = "/admin/public_form/registrationprofile/?only_membership_filter=10"
+				link = "<a href='" + url + "'> Usuaris no registrats </a>"
+				links.append( mark_safe(link))
 				url = "/admin/Welcome/fee/" + "?next='public_form'"
 				link = "<a href=" + url + "> Gestionar pagament de quotes </a>"
-				from django.utils.safestring import mark_safe
 				links.append (mark_safe(link))
 				url = "/admin/Welcome/ic_membership/" + "?next='public_form'"
 				link = "<a href=" + url + "> Gestionar comptes ICES </a>"
-				from django.utils.safestring import mark_safe
 				links.append( mark_safe(link) )
 
 			if current_user.is_superuser:
@@ -251,7 +252,6 @@ def entry_page_to_gestioci(request, user_id = None):
 				except ObjectDoesNotExist:
 					desc = group.name
 				link = "<a href=/admin/Welcome/" + type.lower() + "> _: " + desc + "</a>"
-				from django.utils.safestring import mark_safe
 				links.append( mark_safe(link) )
 				print link
 
@@ -369,7 +369,6 @@ def create_membership(request, record_type_id=4):
 	print "dsgsdgsdgsd"
 	print user_url
 	if user_url:
-		from django.utils.safestring import mark_safe
 		url = " <a href='" + current_registration.get_activation_url() + "'>" + "Enllaç d'activació" + "</a>  per fer trampes em comptes d'utilitzar l'enllaç que hem enviat al teu correu electrònic."
 		profile_desc = _(u"Usuari pendent d'activació.")
 		message_desc = _(u"Ben fet! ") + request.user.username + (u" Ara necesites activar l'usuari per tal de que poguem relacionar el teu correu electrònic. Pots utilitzar l'enllaç que trobaràs al teu correu")
