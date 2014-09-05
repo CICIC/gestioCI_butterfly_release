@@ -18,7 +18,6 @@ js_info_dict = {
 	'packages': ('Invoices.package',),
 }
 
-
 #URL PATTERNS
 urlpatterns = patterns('',
 #Password recovery management
@@ -34,7 +33,8 @@ url(r'^i18n/', include('django.conf.urls.i18n')),
 #url(r'^grappelli/', include('grappelli.urls')), # grappelli URLS
 #Our semantic entity sites
 url(r'^admin/', include(admin.site.urls)),
-url(r'^cooper/', include(user_admin_site.urls)),
+url(r'^cooper/', include(user_admin_site.urls )),
+
 #Just to be removed, add backward compatibility with gestioCIv07 where Cooper APP where called Soci.
 url(r'^soci/', include(user_admin_site.urls)),
 #Our invoicing module

@@ -24,6 +24,9 @@
 		<li>{{ membership_ices}}</li>
 	{% endif %}
 {% endif %}
+{% if profile_project %}
+	<li><label>{% trans "Canviar el projecte vinculat: "%}</label><a href="{% url 'member:General_project_change' profile_project.id %}?next='public_form'">{{profile_project}}</a></li>
+{% endif %}
 {% for permission in user_permissions %}
 	{% for link in permission.links %}
 		<li>{{ link }}</li>	
@@ -62,9 +65,6 @@
 				<img src="{% static 'Group_user.png' %}" width="100px">
 				{% if profile_person %}
 					<p><label>{% trans "Persona: "%}</label></p><p><a href="{% url 'member:General_person_change' profile_person.id %}?next='public_form'">{{profile_person}}</a></p>
-				{% endif %}
-				{% if profile_project %}
-					<p><label>{% trans "Projecte: "%}</label></p><p><a href="{% url 'member:General_project_change' profile_project.id %}?next='public_form'">{{profile_project}}</a></p>
 				{% endif %}
 			</div>
 		{% endif %}

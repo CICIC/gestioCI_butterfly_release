@@ -7,12 +7,15 @@ from django.utils.translation import ugettext_lazy as _
 class iC_Akin_Membership_form(forms.ModelForm):
 	from Welcome.models import iC_Akin_Membership
 	model = iC_Akin_Membership
+	from General.models import Project
+	ic_membership1 = forms.ModelMultipleChoiceField(queryset=Project.objects.filter(), label=_(u"Projecte vinculat: "))
 	def __init__(self, *args, **kwargs):
 		super(iC_Akin_Membership_form, self).__init__(*args, **kwargs)
 		if self.instance.id:
 			self.fields['join_date'].widget.attrs['readonly'] = True
+
 	class Meta:
-		fields = ( "ic_record", "ic_membership", "join_date")
+		fields = ( "ic_record", "ic_membership1", "join_date")
 		from Welcome.models import iC_Akin_Membership
 		model = iC_Akin_Membership
 
@@ -22,13 +25,14 @@ class iC_Person_Membership_form(forms.ModelForm):
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Person_Membership_form, self).__init__(*args, **kwargs)
-		if self.instance.ic_record.id:
+		if self.instance:
 			self.fields['join_date'].widget.attrs['readonly'] = True
 			self.fields['join_fee'].widget.attrs['disabled'] = True
 			self.fields['person'].widget.attrs['disabled'] = True
 			self.fields['ic_CESnum'].widget.attrs['readonly'] = True
-		if self.instance.join_fee.payment_type:
-			self.fields['payment_type'].widget = self.fields['payment_type'].hidden_widget()
+			if self.instance.join_fee:
+				if self.instance.join_fee.payment_type:
+					self.fields['payment_type'].widget = self.fields['payment_type'].hidden_widget()
 	class Meta:
 		fields = ( 'person', 'join_fee', 'payment_type', 'ic_CESnum', 'ic_membership', 'join_date' )
 		from Welcome.models import iC_Person_Membership
@@ -36,8 +40,17 @@ class iC_Person_Membership_form(forms.ModelForm):
 
 class iC_Project_Membership_form(forms.ModelForm):
 	from Welcome.models import Payment_Type
-	payment_type = forms.ModelMultipleChoiceField(queryset=Payment_Type.objects.all())
+	payment_type = forms.ModelMultipleChoiceField(queryset=Payment_Type.objects.all(), label=_(u"Forma de pagament: "))
 
+	def __init__(self, *args, **kwargs):
+		super(iC_Project_Membership_form, self).__init__(*args, **kwargs)
+		if self.instance:
+			self.fields['join_date'].widget.attrs['readonly'] = True
+			self.fields['join_fee'].widget.attrs['disabled'] = True
+			self.fields['ic_CESnum'].widget.attrs['readonly'] = True
+			if self.instance.join_fee:
+				if self.instance.join_fee.payment_type:
+					self.fields['payment_type'].widget = self.fields['payment_type'].hidden_widget()
 	class Meta:
 		fields = ( 'project', 'join_fee', 'payment_type', 'ic_CESnum', 'join_date' )
 		from Welcome.models import iC_Project_Membership

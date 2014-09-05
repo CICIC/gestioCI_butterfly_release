@@ -55,17 +55,23 @@
 							<li class="iC_Project_Membership">
 								{% trans "... Altes Socis Projectes Col·lectius CI " %}
 								<a id="menu_iC_Project_Membership" href="javascript:void(0);" class="addlink">&nbsp;</a>
+								{% if record_type_id == 8 %}
+								<a id="menu_iC_Project_Membership" href="javascript:void(0);" class="changelink">&nbsp;</a>
+								{% endif %}
 							</li>
 							<li class="iC_Akin_Membership">
 								{% trans "... Altes de Socis Afins CI " %}
 								<a id="menu_iC_Akin_Membership" href="javascript:void(0);" class="addlink">&nbsp;</a>
-								{% if record_type_id > 0 %}
+								{% if record_type_id == 10 %}
 									<a href="/cooper/Welcome/ic_akin_membership/{{membership_id}}" class="changelink">&nbsp;</a>
 								{% endif %}
 							</li>
 							<li class="iC_Person_Membership">
 								{% trans "... Altes Socis Cooperatius Individuals CI " %}
 								<a id="menu_iC_Person_Membership" href="javascript:void(0);" class="addlink">&nbsp;</a>
+								{% if record_type_id == 7 %}
+								<a id="menu_iC_Person_Membership" href="javascript:void(0);" class="changelink">&nbsp;</a>
+								{% endif %}
 							</li>
 						</ul>
 						<p class="menu"><a href="/public_form">{% trans "... públic" %}</a></p>
