@@ -1,4 +1,5 @@
 #encoding=utf-8
+from django.contrib import messages
 from datetime import datetime 
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -35,7 +36,7 @@ def entry_page_to_gestioci(request, user_id = None):
 	user_permissions = None
 	from public_form.models import RegistrationProfile
 	Akin_project = None
-	links = []
+
 
 	#USER: If there is any user_id on params retrieve object; else get logged user or anonymous...
 	from django.contrib.auth.models import User
@@ -136,25 +137,6 @@ def entry_page_to_gestioci(request, user_id = None):
 			moment_img = "welcome_flow.png"
 	print "wwweeeeeeeeeeeeeeeeeeeeeeeeee"
 	print membership
-	#PROFILE
-	profile_desc = _(u"Desconegut")
-	profile_type = "Anon"
-	if current_user:
-		if current_user.is_superuser:
-			profile_desc = _(u"Administrador")
-			profile_type = "Admin"
-		elif current_user.is_active:
-			if current_user.is_staff:
-				profile_desc = _(u"Logejat")
-			else:
-				profile_desc = _(u"Soci")
-			profile_type = current_user.groups.all()[0].name
-		elif current_user.is_anonymous():
-			profile_desc = _(u"Desconegut")
-			profile_type = "Anon"
-		else:
-			profile_desc = _(u"Member")
-			profile_type = current_user.groups.all()[0].name
 
 	#SPECIAL STATE: Activation pending user. Work on registration url.
 	user_url = ""
@@ -164,26 +146,56 @@ def entry_page_to_gestioci(request, user_id = None):
 
 	if user_url:
 		from public_form.models import RegistrationProfile
-		url = "Activa ara el teu usuari. Consulta el teu correu o utilitza aquest <a href='" + current_registration.get_activation_url() + "'>" + "enllaç d'activació</a>."
-		profile_desc = _(u"Usuari pendent d'activació.")
-		message_desc = _(u"Ben fet! Tens un usuari creat per realitzar el procés d'alta. Activa'l amb l'enllaç rebut al teu correu!")
-		profile_type = request.user.groups.all()[0].name
-		from django.contrib import messages
-		messages.success(request, message_desc )
-		messages.info(request, mark_safe(url) )
+		activation_label = _(u"Enllaç d'activació").encode("utf-8")
+		url = current_registration.get_activation_url()  + "?next=public_form"
+		activation_link = "<a href='%s'> %s </a>"  % (url,  activation_label)
+		activation_message = _(u"Activa ara el teu usuari. Consulta el teu correu o utilitza aquest %s").encode("utf-8")
+		activation_message = activation_message % (activation_link)
 
+		messages.info(request, mark_safe(activation_message) )
+
+		message_desc = _(u"Ben fet! Tens un usuari creat per realitzar el procés d'alta. Activa'l amb l'enllaç rebut al teu correu!")
+		messages.success(request, message_desc )
+
+		profile_desc = _(u"Usuari pendent d'activació.")
+		profile_type = request.user.groups.all()[0].name
+	#END ACTIVATION SECTION
+
+	#SPECIAL STATE, A SELF_EMPLOYED MEMBERSHIP HAS BEEN CREATED AND NO ONE HAS INCLUDED THIS USER TO iC_Self_Employed Group
+	if membership:
+		from django.contrib.auth.models import User, Group
+		try:
+			self_employed_group = current_user.groups.get(name="iC_Self_Employed")
+		except ObjectDoesNotExist:
+			self_groups = current_user.groups.filter(name__in=["iC_Person_Membership", "iC_Project_Membership" ])
+			if self_groups:
+				try:
+					from Welcome.models import iC_Self_Employed
+					membership_self= iC_Self_Employed.objects.get(ic_membership = membership_id)
+					self_employed_group = Group.objects.get(name="iC_Self_Employed")
+					self_employed_group.user_set.add(current_user)
+				except ObjectDoesNotExist:
+					membership_self = None
+	#END SPECIAL STATE, A SELF_EMPLOYED MEMBERSHIP HAS BEEN...
+	
 	#CONTEXT
 	context = RequestContext(request)
-
+	membership_self = None
 	membership_fee = None
 	membership_ices = None
 					
 	#PERMISSIONS
 	user_permissions = []
 	if current_user:
-		#form
-		form = None
+
+		if not current_user.is_anonymous() and not current_user.is_active:
+			links.append( mark_safe(activation_message) )
+
+		action = reverse("public_form:save_form_profile")
+
 		for group in current_user.groups.all():
+			form = title = None
+			links = []
 			type = group.name
 			if type == "iC_Project_Membership":
 				from Welcome.forms import iC_Project_Membership_form
@@ -228,6 +240,7 @@ def entry_page_to_gestioci(request, user_id = None):
 					membership_self = None
 
 				if membership_self:
+					print "soy"
 					if membership_self._has_assisted_socialcoin():
 						print "Link: Tractar Fase 2"
 						message = _(u" Anar a sessió de moneda social i d'Alta ").encode('utf8')
@@ -247,36 +260,44 @@ def entry_page_to_gestioci(request, user_id = None):
 						url = "/cooper/Welcome/learn_session/" + "?next=public_form"
 						link = "<a href='%s'> %s </a>" % (url,  message)
 						links.append( mark_safe(link) )
-
 			elif type == "iC_Welcome":
 				pass
-
 			#COMMON BLOCK FOR MEMBERSHIP
-			action = reverse("public_form:save_form_profile")
-			if not current_user.is_anonymous() and not current_user.is_active:
-				links.append( mark_safe(url) )
 
 			if membership and type.lower() != "ic_welcome":
-				url = reverse("member:Welcome_" + type.lower() + "_change",  args=[membership_id] ) + "?next=public_form"
-				link = "<a href='" + url + "'> Editar: " + membership.__str__() + "</a>"
-				links.append( mark_safe(link))
+				if membership and type.lower() == "ic_self_employed":
+					url = reverse("member:Welcome_" + type.lower() + "_change",  args=[membership_self.id] ) + "?next=public_form"
+					link = "<a href='" + url + "'> Accedir al teu registre d'alta: " + membership_self.__str__() + "</a>"
+					links.append( mark_safe(link))
+				else:
+					url = reverse("member:Welcome_" + type.lower() + "_change",  args=[membership_id] ) + "?next=public_form"
+					link = "<a href='" + url + "'> Accedir al teu registre d'alta: " + membership.__str__() + "</a>"
+					links.append( mark_safe(link))
 
 			if group.name.lower() == "ic_welcome":
+				label = _(u"Usuaris no registrats").encode("utf-8")
 				url = "/admin/public_form/registrationprofile/?only_membership_filter=10"
-				link = "<a href='" + url + "'> Usuaris no registrats </a>"
-				links.append( mark_safe(link))
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"Gestionar pagament de quotes").encode("utf-8")
 				url = "/admin/Welcome/fee/" + "?next='public_form'"
-				link = "<a href=" + url + "> Gestionar pagament de quotes </a>"
-				links.append (mark_safe(link))
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"Gestionar comptes ICES ").encode("utf-8")
 				url = "/admin/Welcome/ic_membership/" + "?next='public_form'"
-				link = "<a href=" + url + "> Gestionar comptes ICES </a>"
-				links.append( mark_safe(link) )
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"Manegar sessions acollida").encode("utf-8")
 				url = "/admin/Welcome/learn_session/" + "?next='public_form'"
-				link = "<a href=" + url + "> Manegar sessions acollida </a>"
-				links.append( mark_safe(link) )
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"Manegar sessions Moneda Social i d'Alta").encode("utf-8")
 				url = "/admin/Welcome/learn_session/" + "?next='public_form'"
-				link = "<a href=" + url + "> Manegar sessions Moneda Social i d'Alta</a>"
-				links.append( mark_safe(link) )
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
 
 			if current_user.is_superuser:
 				try:
@@ -288,8 +309,33 @@ def entry_page_to_gestioci(request, user_id = None):
 				links.append( mark_safe(link) )
 				print link
 
-			new_action = Action_block( group.name, group, form, action, links, membership_id)
+			print "--------------------------------------------------------------"
+			print len(links)
+			title = _(group.name).encode("utf-8")
+			new_action = Action_block( title, group, form, action, links, membership_id)
 			user_permissions.append( new_action )
+			
+
+	#SECTION PROFILE 
+	profile_desc = _(u"Desconegut")
+	profile_type = "Anon"
+	if current_user:
+		if current_user.is_superuser:
+			profile_desc = _(u"Administrador")
+			profile_type = "Admin"
+		elif current_user.is_active:
+			if current_user.is_staff:
+				profile_desc = _(u"Logejat")
+			else:
+				profile_desc = _(u"Soci")
+			profile_type = current_user.groups.all()[0].name
+		elif current_user.is_anonymous():
+			profile_desc = _(u"Desconegut")
+			profile_type = "Anon"
+		else:
+			profile_desc = _(u"Member")
+			profile_type = current_user.groups.all()[0].name
+	#EDN SECTION PROFILE 
 
 	#LOGGIN PANEL
 	from django.contrib.auth.forms import AuthenticationForm
@@ -304,6 +350,7 @@ def entry_page_to_gestioci(request, user_id = None):
 		'membership_fee': membership_fee,
 		'membership_ices': membership_ices,
 		'membership': membership,
+		'membership_self': membership_self,
 		'Akin_project': Akin_project,
 		'membership_id': membership_id,
 		'message_desc':message_desc,

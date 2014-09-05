@@ -1,32 +1,24 @@
-.member .menu{
-	text-shadow: 1px 1px 5px #FF0000;
-}
-
-.admin .menu{
-	text-shadow: 1px 1px 5px #00FF00;
-}
-
-.admin .menu{
-	text-shadow: 1px 1px 5px #00FF00;
-}
-.member, .admin, .anon{
-	border: 0.1px solid;
-	border-radius: 5px;
-	box-shadow: 5px 5px 2.5px #888888;
-	padding: 15px 15px;
-	width:800px;
-}
 
 .users{
 	display:inline;
 	position:absolute;
-	height:150px;
+	height:100%;
 }
 .user {
-	text-align:center;
+	text-align:left;
 	float: left;
-    width: 160px;
-    height: 130px;
+    width: 200px;
     margin: 5px;
 	
+}
+.user img{
+	margin-left:25px;
+	margin-top:5px;
+	height: 75px;
+	width: 75px;
+	right: 50px;
+}
+
+.user .linksection{
+	text-align:left;
 }
