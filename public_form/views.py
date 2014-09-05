@@ -1,5 +1,5 @@
 #encoding=utf-8
-
+from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404, render
@@ -12,9 +12,17 @@ from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import gettext_lazy as __
 
+class Action_block(object):
+	def __init__(self, title, group, form, action, links, id):
+		self.title = title
+		self.group = group
+		self.form = form
+		self.links = links
+		self.action = action
+		self.id = id
+
 def entry_page_to_gestioci(request, user_id = None):
 
-	current_user = None
 	current_person = None
 	current_project = None
 	current_registration = None
@@ -25,98 +33,96 @@ def entry_page_to_gestioci(request, user_id = None):
 	from public_form.models import RegistrationProfile
 	Akin_project = None
 
-	#If there is any user_id on request, we loggid if inactive
-	if user_id:
-		from django.contrib.auth.models import User
-		try:
-			current_user= User.objects.get(id=user_id)
-			if current_user.is_active:
-				current_registration = RegistrationProfile.objects.get(user=user_id)
-				record_type_id = current_registration.record_type.id
-				current_person = current_registration.person
-				current_project = current_registration.project
-			else:
-				if request.user.is_anonymous:
-					from django.contrib.auth import authenticate, login
-					current_user.backend='django.contrib.auth.backends.ModelBackend'
-					login(request, current_user )
-				try:
-					current_registration = RegistrationProfile.objects.get(user=request.user.id)
-					record_type_id = current_registration.record_type.id
-					current_person = current_registration.person
-					current_project = current_registration.project
-				except ObjectDoesNotExist:
-					pass
-		except ObjectDoesNotExist:
-			pass
-	print record_type_id
-	#If there is any user logged
-	if not current_user and not request.user.is_anonymous():
+	#USER: If there is any user_id on params retrieve object; else get logged user or anonymous...
+	from django.contrib.auth.models import User
+	try:
+		current_user = User.objects.get(id=user_id)
+	except ObjectDoesNotExist:
 		current_user = request.user
+
+	#LOGGED USER: So if [request.user is anonymous] and [user_id on paramas is inactive user] then login son can follow membership proces
+	if request.user.is_anonymous() and not current_user.is_anonymous() and not current_user.is_active:
+		from django.contrib.auth import authenticate, login
+		current_user.backend='django.contrib.auth.backends.ModelBackend'
+		login(request, current_user )
+
+	#REGISTRATION: Retrieve registration info for this user
+	try:
+		current_registration = RegistrationProfile.objects.get(user=current_user.id)
+		record_type_id = current_registration.record_type.id
+		current_person = current_registration.person
+		current_project = current_registration.project
+	except ObjectDoesNotExist:
+		pass
+
+	#TAB 1: Memberships
+	membership = None
+	from Welcome.models import iC_Membership, iC_Akin_Membership, iC_Project_Membership, iC_Person_Membership
+	qobjects = iC_Membership
+	if current_registration:
+		if current_registration.record_type:
+			type = current_registration.record_type.clas
+			if type == "iC_Project_Membership":
+				qobjects = iC_Project_Membership
+			elif type == "iC_Person_Membership":
+				qobjects = iC_Person_Membership
+			elif type == "iC_Akin_Membership":
+				qobjects = iC_Akin_Membership
+
 		try:
-			current_registration = RegistrationProfile.objects.get(user=request.user.id)
-			record_type_id = current_registration.record_type.id
-			current_person = current_registration.person
-			current_project = current_registration.project
-		except ObjectDoesNotExist:
-			pass
-	print record_type_id
-
-	#moment
-	moment_img = "welcome_flow.png"
-	from Welcome.models import iC_Akin_Membership, iC_Project_Membership, iC_Person_Membership
-	if current_user:
-		if current_registration:
-			if current_registration.record_type:
-				if current_registration.record_type.clas == "iC_Project_Membership":
-					if not current_project:
-						moment_img = "welcome_flow_FORM.png"
-					qobjects = iC_Project_Membership
-				elif current_registration.record_type.clas == "iC_Person_Membership":
-					moment_img = "welcome_flow_FORM.png"
-					qobjects = iC_Person_Membership
-				elif current_registration.record_type.clas == "iC_Akin_Membership":
-					qobjects = iC_Akin_Membership
-					moment_img = "welcome_flow_akin.png"
-
-			#membership_id
-			print moment_img
-			print current_registration.record_type.id
-
-			try:
-				membership = qobjects.objects.get(
-									person=current_registration.person,
-									record_type=current_registration.record_type
-									)
-				
-			except ObjectDoesNotExist:
-				membership = None
+			membership = qobjects.objects.get( person=current_registration.person, record_type=current_registration.record_type)
 			print membership
-			if membership:
-				print membership.record_type.clas
-				membership_id = membership.id
-				if membership.record_type.clas == "iC_Akin_Membership":
-					from Welcome.forms import iC_Akin_Membership_form
-					from Welcome.models import iC_Akin_Membership
-					membership.name = membership
-					membership.person = current_person
-					Akin_project = iC_Akin_Membership_form(instance=membership)
-					Akin_link_project = True
+			membership_id = membership.id
+			type = membership.record_type.clas
+
+			if type == "iC_Akin_Membership":
+				from Welcome.forms import iC_Akin_Membership_form
+				from Welcome.models import iC_Akin_Membership
+				Akin_project = iC_Akin_Membership_form(instance=membership)
+				Akin_link_project = True
+
+		except ObjectDoesNotExist:
+			membership = None
+
+	#STATE ROAD MAP PICTURE
+	moment_img = "welcome_flow.png"
+	can_save = True
+	if current_user.is_superuser:
+		moment_img="welcome_flow.png"
+	elif current_user.is_anonymous():
+		moment_img = "welcome_flow_FORM.png"
+	elif current_user.is_active:
+		pass
+	elif not current_person:
+		moment_img = "welcome_flow_FORM.png"
+	if current_registration:
+		if current_registration.record_type:
+			type = current_registration.record_type.clas
+			if type == "iC_Project_Membership":
+				if not current_project:
+					moment_img = "welcome_flow_FORM.png"
+			elif type == "iC_Person_Membership":
+				if not membership:
+					moment_img = "welcome_flow_FORM.png"
+				elif not membership._join_fee_payed():
+					moment_img = "welcome_flow_FEE.png"
+				elif not membership.ic_CESnum:
+					moment_img = "welcome_flow_ICES.png"
+				else:
+					moment_img = "welcome_flow_DONE.png"
+					can_save = False
+			elif type == "iC_Akin_Membership":
+				if not membership:
+					moment_img = "welcome_flow_PROJECT_akin.png"
+				elif membership.ic_membership:
 					moment_img = "welcome_flow_DONE_akin.png"
-			else:
-				moment_img = "welcome_flow_FORM_akin.png"
+					can_save = False
+				else:
+					moment_img = "welcome_flow_PROJECT_akin.png"
+		else:
+			moment_img = "welcome_flow.png"
 
-		if current_user.is_superuser:
-			moment_img="welcome_flow.png"
-		elif current_user.is_anonymous():
-			moment_img = "welcome_flow_FORM.png"
-		elif current_user.is_active:
-			pass
-		elif not current_person:
-			moment_img = "welcome_flow_FORM.png"
-
-	print moment_img
-	#profile
+	#PROFILE
 	profile_desc = _(u"Desconegut")
 	profile_type = "Anon"
 	if current_user:
@@ -124,7 +130,10 @@ def entry_page_to_gestioci(request, user_id = None):
 			profile_desc = _(u"Administrador")
 			profile_type = "Admin"
 		elif current_user.is_active:
-			profile_desc = _(u"Member")
+			if current_user.is_staff:
+				profile_desc = _(u"Logejat")
+			else:
+				profile_desc = _(u"Soci")
 			profile_type = current_user.groups.all()[0].name
 		elif current_user.is_anonymous():
 			profile_desc = _(u"Desconegut")
@@ -132,40 +141,117 @@ def entry_page_to_gestioci(request, user_id = None):
 		else:
 			profile_desc = _(u"Member")
 			profile_type = current_user.groups.all()[0].name
-	print "ww"
-	print membership_id
-	#Registration url
+
+	#SPECIAL STATE: Activation pending user. Work on registration url.
 	user_url = ""
 	message_desc = ""
 	if current_registration and not current_user.is_active:
 		user_url = current_registration.get_activation_url()
-	print "ee"
-	print membership_id
+
 	if user_url:
 		from public_form.models import RegistrationProfile
 		from django.utils.safestring import mark_safe
-		url = " O fes trampa i utilitza aquest: <a href='" + current_registration.get_activation_url() + "'>" + "Enllaç d'activació per fer trampes em comptes d'utilitzar l'enllaç que hem enviat al teu correu electrònic." + "</a>"
+		url = "Activa ara el teu usuari. Consulta el teu correu o utilitza aquest <a href='" + current_registration.get_activation_url() + "'>" + "enllaç d'activació</a>."
 		profile_desc = _(u"Usuari pendent d'activació.")
-		message_desc = _(u"Ben fet! Ara necesites activar l'usuari per tal de que poguem relacionar el teu correu electrònic. Pots utilitzar l'enllaç que trobaràs al teu correu")
+		message_desc = _(u"Ben fet! Tens un usuari creat per realitzar el procés d'alta. Activa'l amb l'enllaç rebut al teu correu!")
 		profile_type = request.user.groups.all()[0].name
 		from django.contrib import messages
 		messages.success(request, message_desc )
 		messages.info(request, mark_safe(url) )
 
-	#Form
+	#CONTEXT
 	context = RequestContext(request)
 
-	#groups
+	membership_fee = None
+	membership_ices = None
+					
+	#PERMISSIONS
+	user_permissions = []
 	if current_user:
-		user_permissions = current_user.groups
+		#form
+		form = None
+		for group in current_user.groups.all():
+			type = group.name
+			if type == "iC_Project_Membership":
+				from Welcome.forms import iC_Project_Membership_form
+				from Welcome.models import iC_Project_Membership
+				form = iC_Project_Membership_form(instance=membership)
+				if membership:
+					if not membership._join_fee_payed():
+						membership_fee = _(u"Pagar cuota.")
+					if not membership.ic_CESnum:
+						membership_ices = _(u"Esperar a que t'adjudiquin un compte ICES")
+			elif type == "iC_Person_Membership":
+				from Welcome.forms import iC_Person_Membership_form
+				from Welcome.models import iC_Person_Membership
+				form = iC_Person_Membership_form(instance=membership)
+				if membership:
+					if not membership._join_fee_payed():
+						membership_fee = _(u"Acció fora del sistema: Pagar cuota.")
+						if not membership.join_fee.payment_type:
+							membership_fee = _(u"Escollir forma de pagament")
+						else:
+							membership_fee = _(u"Acció fora del sistema: Pagar cuota => " + membership.join_fee.payment_type.name)
+					if not membership.ic_CESnum:
+						membership_ices = _(u"Esperar a que t'adjudiquin un compte ICES")
+			elif type == "iC_Akin_Membership":
+				from Welcome.forms import iC_Akin_Membership_form
+				from Welcome.models import iC_Akin_Membership
+				form = iC_Akin_Membership_form(instance=membership)
+			elif type == "iC_Welcome":
+				pass
 
+
+			#COMMON BLOCK FOR MEMBERSHIP
+			action = reverse("public_form:save_form_profile")
+			#link
+			links = []
+			if not current_user.is_anonymous() and not current_user.is_active:
+				links.append( mark_safe(url) )
+
+			if membership:
+				url = reverse("member:Welcome_" + type.lower() + "_change",  args=[membership_id] ) + "?next='public_form'"
+				link = "<a href=" + url + "> Editar: " + membership.__str__() + "</a>"
+				from django.utils.safestring import mark_safe
+				links.append( mark_safe(link))
+
+			if group.name.lower() == "ic_welcome":
+				url = "/admin/Welcome/fee/" + "?next='public_form'"
+				link = "<a href=" + url + "> Gestionar pagament de quotes </a>"
+				from django.utils.safestring import mark_safe
+				links.append (mark_safe(link))
+				url = "/admin/Welcome/ic_membership/" + "?next='public_form'"
+				link = "<a href=" + url + "> Gestionar comptes ICES </a>"
+				from django.utils.safestring import mark_safe
+				links.append( mark_safe(link) )
+
+			if current_user.is_superuser:
+				try:
+					from Welcome.models import iC_Record_Type
+					desc = iC_Record_Type.objects.get(clas=group.name).name
+				except ObjectDoesNotExist:
+					desc = group.name
+				link = "<a href=/admin/Welcome/" + type.lower() + "> _: " + desc + "</a>"
+				from django.utils.safestring import mark_safe
+				links.append( mark_safe(link) )
+				print link
+			print links
+			new_action = Action_block( group.name, group, form, action, links, membership_id)
+			user_permissions.append( new_action )
+
+	#LOGGIN PANEL
 	from django.contrib.auth.forms import AuthenticationForm
 	from Cooper.admin import UserAdminAuthenticationForm
+	form_login = UserAdminAuthenticationForm()
 
-	
+	#RENDER
 	return render_to_response(
 		'entry_page_to_gestioCI.html',
-		{
+		{ 
+		'can_save' : can_save,
+		'membership_fee': membership_fee,
+		'membership_ices': membership_ices,
+		'membership': membership,
 		'Akin_project': Akin_project,
 		'membership_id': membership_id,
 		'message_desc':message_desc,
@@ -179,7 +265,7 @@ def entry_page_to_gestioci(request, user_id = None):
 		'user_permissions': user_permissions,
 		'user_url': user_url,
 		'record_type_id': record_type_id,
-		'form_login': UserAdminAuthenticationForm(),
+		'form_login': form_login,
 		'app_path': request.get_full_path(),},
 		context_instance=context
 	)
@@ -347,7 +433,6 @@ def activate_membership(request, activation_key):
 			ic_m.save()
 			ic_m.name = ic_m
 			ic_m.save()
-			return HttpResponseRedirect( "/cooper/General/person/" + account.person.id.__str__()  )
 
 		else:
 			from Welcome.models import Record_Type
@@ -381,7 +466,7 @@ def activate_membership(request, activation_key):
 			if record_type_string == "ic_person_membership":
 
 				from Welcome.models import iC_Person_Membership
-				ic_m = iC_Person_Membership( ic_project=project, human=account.person, person=account.person, join_fee=current_fee)
+				ic_m = iC_Person_Membership( ic_project=project, human=account.person, person=account.person, join_fee=current_fee, join_date=datetime.now())
 
 				ic_m.human_id = account.person.id
 
@@ -392,7 +477,7 @@ def activate_membership(request, activation_key):
 				from Welcome.models import Relation
 
 				print 'iC_Project_Membership: ic:'+str(project)+' proj:'+str(account.project)
-				ic_m = iC_Project_Membership( ic_project=project, human=account.project, project=account.project, join_fee=current_fee)
+				ic_m = iC_Project_Membershipjoin_date=datetime.now()( ic_project=project, human=account.project, project=account.project, join_fee=current_fee)
 
 				ref_typ = Relation.objects.get(clas='reference')
 				ref_obj, created = ic_m.human.human_persons.get_or_create(person=account.person, relation=ref_typ)
@@ -411,8 +496,7 @@ def activate_membership(request, activation_key):
 		#ic_m.human_id = account.person.id
 		ic_m.save()
 
-		from Cooper.admin import *
-		return HttpResponseRedirect( "/cooper/General/person/" + account.person.id.__str__()  )
+		return HttpResponseRedirect( reverse("public_person:entry_page_to_gestioci")  )
 
 	extra_context = {}
 	extra_context['moment'] = _(u"No s'ha pogut activar res")
@@ -425,28 +509,63 @@ def activate_membership(request, activation_key):
 							  account,
 							  context_instance=context)
 
-def link_project_to_member(request):
+def save_form_profile(request):
 
-	from Welcome.forms import iC_Akin_Membership_form
-	if request.POST:
+	from Welcome.models import iC_Record
+	form_id = request.POST["form_id"]
+	print form_id
+	try:
+		membership_type = iC_Record.objects.get(id=form_id).record_type.clas
+	except ObjectDoesNotExist:
+		membership_type = None
+
+	form = None
+	if membership_type == "iC_Akin_Membership":
+		print "akin"
+		from Welcome.forms import iC_Akin_Membership_form
 		form = iC_Akin_Membership_form(request.POST)
+		from Welcome.models import iC_Akin_Membership
+		membership = iC_Akin_Membership.objects.get(id=form_id)
+		
+		from Welcome.models import iC_Membership
 		try:
-			print "3333333333333333333333333333333333333333333333"
-			print request.POST["membership_id"]
-			from Welcome.models import iC_Akin_Membership
-			membership = iC_Akin_Membership.objects.get(id=request.POST["membership_id"])
-			print "ddddddddddddddddddddddddddddddddddddddd"
-			print membership.name
-			from Welcome.models import iC_Membership
 			membership_proyect = iC_Membership.objects.get(id=request.POST["ic_membership"])
 			membership.ic_membership = membership_proyect
 			membership.save()
-			print "22222222222222222222222222222"
-			membership.save()
-
-			print membership.name
+			messages.success(request, _(u"S'ha vinculat el project correctament"))
 		except ObjectDoesNotExist:
-			pass
+			messages.error(request, _(u"No s'ha vinculat el project correctament"))
+	elif membership_type == "iC_Person_Membership":
+		print "person"
+		from Welcome.forms import iC_Person_Membership_form
+		form = iC_Person_Membership_form(request.POST)
+		from Welcome.models import iC_Person_Membership
+		membership = iC_Person_Membership.objects.get(id=form_id)
+		print request.POST["payment_type"]
+		from Welcome.models import Payment_Type
+		try:
+			pt = Payment_Type.objects.get(id=request.POST["payment_type"])
+			membership.join_fee.payment_type = pt
+			membership.join_fee.save()
+			messages.success(request, _(u"S'ha guardat el tipus de pagament. ") + pt.name)
+		except ObjectDoesNotExist:
+			print "not found"
+			messages.error(request, _(u"No s'ha guardat el tipus de pagament."))
+	elif membership_type == "iC_Project_Membership":
+		print "Project"
+		from Welcome.forms import iC_Project_Membership_form
+		form = iC_Project_Membership_form(request.POST)
+		from Welcome.models import iC_Project_Membership
+		membership = iC_Project_Membership.objects.get(id=form_id)
+		
+		from Welcome.models import Payment_Type
+		try:
+			pt = Payment_Type.objects.get(id=request.POST["payment_type"])
+			membership.join_fee.payment_type = pt
+			membership.save()
+			messages.success(request, _(u"S'ha guardat el tipus de pagament. ") + pt.name)
+		except ObjectDoesNotExist:
+			messages.error(request, _(u"No s'ha guardat el tipus de pagament."))
 	return HttpResponseRedirect(
 				reverse('public_form:entry_page_to_gestioci')
 			)

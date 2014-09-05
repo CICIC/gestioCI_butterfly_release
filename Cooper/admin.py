@@ -51,5 +51,5 @@ class UserAdmin(AdminSite):
 	def has_permission(self, request):
 		"""  Removed check for is_staff."""
 		return request.user.is_active
-user_admin_site = UserAdmin(name='usersadmin')
+user_admin_site = UserAdmin(name='member')
  

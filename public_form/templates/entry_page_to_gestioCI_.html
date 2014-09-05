@@ -15,16 +15,16 @@
 			<input type="hidden" id="profile_type" value="{{profile_type}}">
 			<div class="ui-tabs">
 				<ul class="ui-tabs-nav">
-					<li class="admin member iC_Person_Membership iC_Project_Membership iC_Akin_Membership anon"><a href="#tabs-1">{% trans "Pestanya 1: Alta Projecte Col·lectiu / Projecte Públic / Soci Individual (Cooperatiu o Afí)" %}</a></li>
-					<li class="admin member iC_Project_Membership iC_Person_Membership"><a href="#tabs-2">{% trans "Pestanya 2: Alta Projecte Autoocupat" %}</a></li>
+					<li class="admin member iC_Welcome iC_Person_Membership iC_Project_Membership iC_Akin_Membership anon"><a href="#tabs-1">{% trans "Pestanya 1: Alta Projecte Col·lectiu / Projecte Públic / Soci Individual (Cooperatiu o Afí)" %}</a></li>
+					<li class="admin member  iC_Welcome iC_Project_Membership iC_Person_Membership"><a href="#tabs-2">{% trans "Pestanya 2: Alta Projecte Autoocupat" %}</a></li>
 					<li class="admin member iC_SelfEmployed iC_Stallholder"><a href="#tabs-3">{% trans "Pestanya 3: Facturació autoocupats" %}</a></li>
-					<li class="admin"><a href="#tabs-4">{% trans "Pestanya 4: Assessorament projectes..." %}</a></li>
-					<li class="admin member anon iC_Person_Membership iC_Akin_Membership iC_Project_Membership"><a href="#tabs-5">{% trans "F.A.Q." %}</a></li>
+					<li class="admin  iC_Welcome "><a href="#tabs-4">{% trans "Pestanya 4: Assessorament projectes..." %}</a></li>
+					<li class="admin member anon iC_Welcome iC_Person_Membership iC_Akin_Membership iC_Project_Membership"><a href="#tabs-5">{% trans "F.A.Q." %}</a></li>
 				</ul>
 
 				<div id="tabs-1" class="ui-tabs-panel">
 					<h3>{% trans "Formulari On-line..." %}</h3>
-					<div id="P2_admin" class="admin">
+					<div id="P2_admin" class="admin iC_Welcome">
 						<h4 class="menu"><a href="/admin/Welcome">{% trans "... Panel Admin" %}</a></h4>
 						<ul id="P2_admin_menu" class="menu">
 							<li>
@@ -72,7 +72,7 @@
 					</div>
 				</div>
 				<div id="tabs-2" class="ui-tabs-panel">
-					<div id="P1_admin" class="admin">
+					<div id="P1_admin" class="admin iC_Welcome">
 						{% trans "Admin: " %} 
 						<h3>{% trans "Formulari Autoocupats Presencial..." %}</h3>
 						<h4 class="menu"> <a href="/Welcome">{% trans "... Panel Admin" %}</a></h4>
@@ -138,7 +138,7 @@
 						</div>
 				</div>
 				<div id="tabs-4" class="ui-tabs-panel">
-					<div id="P4_admin" class="admin">
+					<div id="P4_admin" class="admin iC_Welcome">
 						<ul id="P4_admin_menu" class="menu">
 							<li>{% trans "... Admin: Expedients P.Productius" %} <a href="/admin/Welcome/project_accompaniment/add/" class="addlink">&nbsp;</a>
 							<a href="/admin/Welcome/project_accompaniment/" class="changelink">&nbsp;</a></li>
@@ -146,14 +146,14 @@
 					</div>
 				</div>
 				<div id="tabs-5" class="ui-tabs-panel">
-					<div id="P5_member" class="member anon">
+					<div id="P5_member" class="member anon iC_Welcome">
 						<ul id="p5_member_menu" class="menu">
 							<li><a href="http://cooperativa.cat/es/participa-2/quieres-hacerte-socio-autonomo/">Quiero hacerme socio, ¿cómo?</a></li>
 						</ul>
 					</div>
 				</div>
 			</div>
-			<p class="public_form_anchor">*</p>
+			<p class="public_form_anchor">&nbsp;</p>
 			
 			<div id="actions_section">
 				<br><br>

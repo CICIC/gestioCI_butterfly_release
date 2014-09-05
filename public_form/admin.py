@@ -13,6 +13,7 @@ from itertools import chain
 from Welcome.models import iC_Akin_Membership
 from Welcome.admin import Public_AkinMembershipAdmin
 class Public_AkinMembershipAdmin(Public_AkinMembershipAdmin):
+
 	#list_editable = ("join_fee", "ic_CESnum",)
 	def queryset(self, request):
 		from public_form import bots
@@ -43,21 +44,40 @@ from Welcome.admin import Public_FeeAdmin
 class Public_FeeAdmin(Public_FeeAdmin):
 	def queryset(self, request):
 		from public_form import bots
-		ref_pro = bots.user_registration_bot().get_person(request.user).rel_humans.filter(relation__clas='reference').values('human')
-		fees = Fee.objects.filter(human=bots.user_registration_bot().get_person(request.user))
-		if fees.count() > 0:
-			# añadir al queryset los ref_projects del person TODO
+		if bots.user_registration_bot().get_person(request.user):
+			ref_pro = bots.user_registration_bot().get_person(request.user).rel_humans.filter(relation__clas='reference').values('human')
+			fees = Fee.objects.filter(human=bots.user_registration_bot().get_person(request.user))
+			if fees.count() > 0:
+				# añadir al queryset los ref_projects del person TODO
+				return fees
+			else:
+				fees = Fee.objects.filter(human__in=ref_pro)
+			#print 'FEES ok: '+str(fees)
 			return fees
-		else:
-			fees = Fee.objects.filter(human__in=ref_pro)
-		#print 'FEES ok: '+str(fees)
-		return fees
+		return Fee.objects.all()
 user_admin_site.register(Fee, Public_FeeAdmin)
 
 
 from General.models import Person
 from General.admin import Public_PersonAdmin
+
+from django.http import HttpResponseRedirect, HttpResponse
+from django.core.urlresolvers import reverse
+
 class Public_PersonAdmin(Public_PersonAdmin):
+
+	def response_change(self, request, obj):
+		""" if user clicked "edit this page", return back to main site """
+		response = super(Public_PersonAdmin, self).response_change(request, obj)
+
+		if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
+			response['location'] = reverse('public_form:entry_page_to_gestioci')
+
+		if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
+			response['location'] = reverse("member:General_person_change",  args=[obj.id] ) + "?next=public_form"
+
+		return response
+
 	def queryset(self, request):
 		from public_form import bots
 		if request.user.is_superuser:
@@ -70,8 +90,16 @@ class Public_PersonAdmin(Public_PersonAdmin):
 		}
 		js = ("general.js",)
 user_admin_site.register(Person, Public_PersonAdmin)
+
 from General.admin import Address
-user_admin_site.register(Address)
+class Public_Address(admin.ModelAdmin):
+	def queryset(self, request):
+		from public_form import bots
+		if request.user.is_superuser:
+			return Address.objects.all()
+		else:
+			return Address.objects.filter(id=bots.user_registration_bot().get_person(request.user).id)
+user_admin_site.register(Address, Public_Address)
 
 
 from General.models import Project

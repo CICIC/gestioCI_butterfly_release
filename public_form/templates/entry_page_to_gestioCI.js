@@ -21,6 +21,7 @@
 		$('#menu_iC_Person_Membership').click( function(){membership_roll(7);});
 		$('#menu_iC_Project_Membership').click( function(){membership_roll(8);});
 
+
 		if ( $( "#profile_type" ).val() == "Anon"){
 			$( ".admin" ).hide();
 			$( ".member" ).hide();

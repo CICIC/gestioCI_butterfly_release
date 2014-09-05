@@ -54,3 +54,12 @@
     margin: 5px;
 	
 }
+.user img{
+	text-align:center;
+	height: 50px;
+	width: 50px;
+}
+
+input[readonly], input[readonly="readonly"] {
+    background-color:#cccccc;
+}

@@ -6,52 +6,75 @@
 <script type="text/javascript" src="{% static 'profile_type.js' %}"></script>
 <link rel="stylesheet" type="text/css" href="{% static 'profile_type.css' %}" />
 
-
-<p>{% trans "Perfil detectat:" %}</p>
-
-<p><u>{% trans "Grups dels que formes part" %}</u>:
+<p><u>{% trans "Accions que pots fer:" %}</u>:
 <ul>
-{% for permission in user_permissions.all %}
-	<li><a href="/cooper/Welcome/{{permission|lower}}/{{membership_id}}">{% trans "Editar Alta de tipus:" %} {{permission}}</a></li>
-	{% if permission|lower == "ic_akin_membership" %}
-		<li>
-			{% trans "&nbsp;" %}<br>
-			<form action="/public_form/link_project_to_member/" method="post">
-				<table>
-					{{Akin_project}}
-				</table>
-				<input type="submit" value="{% trans 'Estableix projecte vinculat' %}" /><br><p>{% trans tag_send %}</p>
-				<input type="hidden"name="membership_id" value="{{membership_id}}" />
-				{% csrf_token %}
-			</form>
-		</li>
+{% if profile_person and user.is_active %}
+	<li><a href="{% url 'member:General_person_change' profile_person.id %}?next=public_form">{% trans "Editar dades personals" %}</a></li>
+{% else %}
+	{% if user.is_staff %}
+		<li>{% trans "Administrar molt i bé" %}</li>
+	{% else %}
+		<li>{% trans "Procés d'alta" %}</li>
+	{% endif %}
+{% endif %}
+{% if membership_fee %}
+	<li>{{ membership_fee}}</li>
+{% else %}
+	{% if membership_ices %}
+		<li>{{ membership_ices}}</li>
+	{% endif %}
+{% endif %}
+{% for permission in user_permissions %}
+	{% for link in permission.links %}
+		<li>{{ link }}</li>	
+	{% endfor %}
+	{% if permission.form  and user.is_active and membership %}
+		<li> Editar o consultar el següents camps:</li>
+		<br>
+		<form action="{{permission.action}}" method="POST">
+			<table>
+				{{permission.form}}
+			</table>
+			{% if can_save %}
+				<input type="submit" value="{% trans 'Grabar' %}">
+			{% endif %}
+			{% csrf_token %}
+			<input type="hidden" name="form_id" id="form_id" value="{{permission.id}}">
+		</form>
 	{% endif %}
 {% endfor %}
-{% if user_permissions%}
-	<li><a href="/cooper/General/person/{{profile_person.id}}">{% trans "Editar dades personals" %}</a></li>
-{% else %}
-	<li>{% trans "Procés d'alta" %}</li>
-{% endif %}
-</ul></p>
 
+</ul></p>
+<br>
 <h1>{{profile_desc}}</h1>
 
 	<div class="users">
-		<div class="admin user">
+		<div class="admin user iC_Welcome">
 			<label>{% trans "Administrador" %}</label><br>
 			<img src="{% static 'Admin_user.png' %}" width="100px">
+			<br>
+			<p><label>{% trans "Tipus: " %}{{profile_type}}</label><br></p>
 		</div>
+
 		{% if profile_type %}
-		<a href="{{user_url}}">
 			<div class="member user">
-				<label>{% trans "Group: " %}{{profile_type}}</label><br>
+				<label>{% trans "Perfil: " %}{{profile_type}}</label><br>
 				<img src="{% static 'Group_user.png' %}" width="100px">
+				{% if profile_person %}
+					<p><label>{% trans "Persona: "%}</label></p><p><a href="{% url 'member:General_person_change' profile_person.id %}?next='public_form'">{{profile_person}}</a></p>
+				{% endif %}
+				{% if profile_project %}
+					<p><label>{% trans "Projecte: "%}</label></p><p><a href="{% url 'member:General_project_change' profile_project.id %}?next='public_form'">{{profile_project}}</a></p>
+				{% endif %}
 			</div>
-		</a>
 		{% endif %}
+		
 		<div class="anon user">
 			<label>{% trans "-" %}</label><br>
 			<img id="profile_image" src="{% static 'Anon_user.png' %}" width="100px">
+			{% if profile_user %}
+				<p><label>{% trans "User: "%}</label></p><p>{{profile_user}}</p>
+			{% endif %}
 		</div>
 	</div>
 
