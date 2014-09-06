@@ -28,7 +28,7 @@
 		{% endif %}
 	{% endif %}
 	{% if profile_project.id > 0 %}
-		<li><label>{% trans "Editar dades projecte: "%}</label><a href="{% url 'member:General_project_change' profile_project.id %}?next=public_form">{{profile_project}}</a></li>
+		<li><label>{% trans "Editar dades projecte: "%}</label><a class="changelink" href="{% url 'member:General_project_change' profile_project.id %}?next=public_form">{{profile_project}}</a></li>
 	{% endif %}
 	{% if membership_fee %}
 		<li>{{ membership_fee}}</li>
@@ -74,7 +74,7 @@
 				<label>{% trans "Perfil: " %}{{profile_desc}}>{{permission.title}}</label><br>
 				<img src="{% static permission.title %}_user.png" width="100px">
 				{% if profile_person %}
-					<p><label>{% trans "Persona: "%}</label></p><p><a href="{% url 'member:General_person_change' profile_person.id %}?next=public_form">{{profile_person}}</a></p>
+					<p><label>{% trans "Persona: "%}</label></p><p><a class="changelink" href="{% url 'member:General_person_change' profile_person.id %}?next=public_form">{{profile_person}}</a></p>
 				{% endif %}
 
 				<ul class="linksection">

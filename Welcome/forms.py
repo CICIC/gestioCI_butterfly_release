@@ -21,7 +21,7 @@ class iC_Akin_Membership_form(forms.ModelForm):
 
 class iC_Person_Membership_form(forms.ModelForm):
 	from Welcome.models import Payment_Type
-	payment_type = forms.ModelMultipleChoiceField(queryset=Payment_Type.objects.all(), label=_(u"Forma de pagament "))
+	payment_type = forms.ModelMultipleChoiceField(queryset=Payment_Type.objects.all(), label=_(u"Forma de pagament"))
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Person_Membership_form, self).__init__(*args, **kwargs)
@@ -40,7 +40,7 @@ class iC_Person_Membership_form(forms.ModelForm):
 
 class iC_Project_Membership_form(forms.ModelForm):
 	from Welcome.models import Payment_Type
-	payment_type = forms.ModelMultipleChoiceField(queryset=Payment_Type.objects.all(), label=_(u"Forma de pagament: "))
+	payment_type = forms.ModelMultipleChoiceField(queryset=Payment_Type.objects.all(), label=_(u"Forma de pagament "))
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Project_Membership_form, self).__init__(*args, **kwargs)
