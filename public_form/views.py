@@ -354,7 +354,7 @@ def entry_page_to_gestioci(request, user_id = None):
 
 			if membership and type.lower() != "ic_welcome":
 				if membership and type.lower() == "ic_self_employed" or membership and type.lower() == "ic_stallholder":
-					if self.membership_self:
+					if membership_self:
 						label = _(u" Accedir al teu registre d'alta: ").encode("utf-8")
 						url = reverse("member:Welcome_" + type.lower() + "_change",  args=[membership_self.id] ) + "?next=public_form"
 						links.append( mark_safe("%s <a class='changelink' href='%s'> %s </a>" % (label, url,  membership_self.__str__())))
