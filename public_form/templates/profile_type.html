@@ -44,7 +44,7 @@
 			
 			<img id="profile_image" src="{% static 'Anon_user.png' %}" width="100px"><br>
 			<ul>
-			 {% block userlinks %} <li> 
+			 {% block userlinks %} <li> -
                 {% url 'django-admindocs-docroot' as docsroot %}
                 {% if docsroot %}
                   <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
@@ -53,7 +53,9 @@
                 {% if user.has_usable_password %}
                 <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
                 {% endif %}
-                <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a></li>
+                {% if not user.is_anonymous%}
+					<a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a></li>
+				{% endif %}
             {% endblock %}
 			{% if user.is_active  %}
             <li>{% block welcome-msg %}
