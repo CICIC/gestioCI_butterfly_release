@@ -17,13 +17,15 @@ from django.utils.translation import gettext_lazy as __
 from django.utils.safestring import mark_safe
 
 class Action_block(object):
-	def __init__(self, title, group, form, action, links, id):
+	def __init__(self, title, group, form, action, links, id, show_form, can_edit):
 		self.title = title
 		self.group = group
 		self.form = form
 		self.links = links
 		self.action = action
 		self.id = id
+		self.show_form = show_form
+		self.can_edit = can_edit
 
 def entry_page_to_gestioci(request, user_id = None):
 
@@ -90,60 +92,12 @@ def entry_page_to_gestioci(request, user_id = None):
 		except ObjectDoesNotExist:
 			membership = None
 
-	#STATE ROAD MAP PICTURE
-	moment_img = "welcome_flow.png"
-	can_save = True
-	if current_user.is_superuser:
-		moment_img="welcome_flow.png"
-	elif current_user.is_anonymous():
-		moment_img = "welcome_flow_FORM.png"
-	elif current_user.is_active:
-		pass
-	elif not current_person:
-		moment_img = "welcome_flow_FORM.png"
-	if current_registration:
-		if current_registration.record_type:
-			type = current_registration.record_type.clas
-			if type == "iC_Project_Membership":
-				if not membership:
-					moment_img = "welcome_flow_FORM.png"
-				elif not membership._join_fee_payed():
-					moment_img = "welcome_flow_FEE.png"
-				elif not membership.ic_CESnum:
-					moment_img = "welcome_flow_ICES.png"
-				else:
-					moment_img = "welcome_flow_DONE.png"
-					can_save = False
-			elif type == "iC_Person_Membership":
-				if not membership:
-					moment_img = "welcome_flow_FORM.png"
-				elif not membership._join_fee_payed():
-					moment_img = "welcome_flow_FEE.png"
-				elif not membership.ic_CESnum:
-					moment_img = "welcome_flow_ICES.png"
-				else:
-					moment_img = "welcome_flow_DONE.png"
-					can_save = False
-			elif type == "iC_Akin_Membership":
-				if not membership:
-					moment_img = "welcome_flow_PROJECT_akin.png"
-				elif membership.ic_membership:
-					from General.models import Project
-					current_project = Project.objects.get(id=membership.ic_membership.ic_project.id)
-					moment_img = "welcome_flow_DONE_akin.png"
-				else:
-					moment_img = "welcome_flow_PROJECT_akin.png"
-		else:
-			moment_img = "welcome_flow.png"
-	print "wwweeeeeeeeeeeeeeeeeeeeeeeeee"
-	print membership
-
 	#SPECIAL STATE: Activation pending user. Work on registration url.
 	user_url = ""
 	message_desc = ""
 	if current_registration and not current_user.is_active:
 		user_url = current_registration.get_activation_url()
-
+	
 	if user_url:
 		from public_form.models import RegistrationProfile
 		activation_label = _(u"Enllaç d'activació").encode("utf-8")
@@ -183,13 +137,10 @@ def entry_page_to_gestioci(request, user_id = None):
 	membership_self = None
 	membership_fee = None
 	membership_ices = None
-					
+
 	#PERMISSIONS
 	user_permissions = []
 	if current_user:
-
-		if not current_user.is_anonymous() and not current_user.is_active:
-			links.append( mark_safe(activation_message) )
 
 		action = reverse("public_form:save_form_profile")
 
@@ -197,21 +148,28 @@ def entry_page_to_gestioci(request, user_id = None):
 			form = title = None
 			links = []
 			type = group.name
+			can_edit = False
+			show_form = False
 			if type == "iC_Project_Membership":
 				from Welcome.forms import iC_Project_Membership_form
 				from Welcome.models import iC_Project_Membership
 				form = iC_Project_Membership_form(instance=membership)
-				print membership
+
 				if membership:
 					if not membership._join_fee_payed():
 						membership_fee = _(u"Acció fora del sistema: Pagar cuota.")
 						if not membership.join_fee.payment_type:
 							membership_fee = _(u"Escollir forma de pagament")
+							can_edit = show_form = True
 						else:
 							membership_fee = _(u"Acció fora del sistema: Pagar cuota => " + membership.join_fee.payment_type.name)
+							can_edit = False
+							show_form = True
 					if not membership.ic_CESnum:
 						membership_ices = _(u"Esperar a que t'adjudiquin un compte ICES")
+				
 			elif type == "iC_Person_Membership":
+
 				from Welcome.forms import iC_Person_Membership_form
 				from Welcome.models import iC_Person_Membership
 				form = iC_Person_Membership_form(instance=membership)
@@ -220,19 +178,22 @@ def entry_page_to_gestioci(request, user_id = None):
 						membership_fee = _(u"Acció fora del sistema: Pagar cuota.")
 						if not membership.join_fee.payment_type:
 							membership_fee = _(u"Escollir forma de pagament")
+							can_edit = True
+							show_form = True
 						else:
 							membership_fee = _(u"Acció fora del sistema: Pagar cuota => " + membership.join_fee.payment_type.name)
 					if not membership.ic_CESnum:
 						membership_ices = _(u"Esperar a que t'adjudiquin un compte ICES")
+				
 			elif type == "iC_Akin_Membership":
 				from Welcome.forms import iC_Akin_Membership_form
 				from Welcome.models import iC_Akin_Membership
 				form = iC_Akin_Membership_form(instance=membership)
 			elif type == "iC_Self_Employed":
 				from django.contrib.auth.models import User, Group
-
 				from Welcome.models import iC_Self_Employed
-
+				can_edit = True
+				show_form = True
 				try:
 					self_groups = current_user.groups.filter(name__in=["iC_Person_Membership", "iC_Project_Membership" ])
 					membership_self= iC_Self_Employed.objects.get(ic_membership = membership_id)
@@ -240,29 +201,117 @@ def entry_page_to_gestioci(request, user_id = None):
 					membership_self = None
 
 				if membership_self:
-					print "soy"
-					if membership_self._has_assisted_socialcoin():
-						print "Link: Tractar Fase 2"
-						message = _(u" Anar a sessió de moneda social i d'Alta ").encode('utf8')
-						url = "/cooper/Welcome/learn_session/" + "?next=public_form"
+
+					from Welcome.forms import iC_Self_Employed_form
+					form = iC_Self_Employed_form(instance=membership_self)
+					can_edit = True
+					action = reverse("public_form:save_form_self_employed")
+					if membership_self.mentor_membership:
+						message = __(u" Fer les tasquesa assignades: ").encode('utf8')
+						links.append( message )
+					else:
+						message = _(u" Afegir mentor ").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
 						link = "<a href='%s'> %s </a>"  % (url,  message)
 						links.append( mark_safe(link) )
-						print link
+
+					from General.models import str_none
+					if membership_self._rel_address_contract() != str_none: 
+						message = membership_self._rel_address_contract()
+						links.append( message )
+					else:
+						message = _(u" Tens que establir Adreça principal").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+					links.append( _(u" Lista de tareas") )
+					if membership_self._rel_address_contract() != str_none:
+						message = membership_self._rel_address_contract()
+						links.append( message )
+					else:
+						message = _(u"  Tens que establir Altres adreces").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+
+					if membership_self._rel_insurances() != str_none:
+						message = membership_self._rel_insurances()
+						links.append( message )
+					else:
+						message = _(u" Portar contractes assegurança").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+
+					if membership_self._rel_licences() != str_none:
+						message = membership_self._rel_licences()
+						links.append( message )
+					else:
+						message = _(u" Portar traspàs llicencia activitat ").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+
+					if membership_self._rel_licences() != str_none: 
+						message = membership_self._rel_licences()
+						links.append( message )
+					else:
+						message = _(u" Portar traspàs lloguer").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+
+					if membership_self._rel_licences() != str_none: 
+						message = membership_self._rel_licences()
+						links.append( message )
+					else:
+						message = _(u" Portar traspàs cessió ús").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+						links.append( _(u" Soci. Quotes") )
+
+					if membership_self._rel_fees() != str_none: 
+						message = membership_self._rel_licences()
+						links.append( message )
+					else:
+						message = _(u" Portar quota alta autoocupat").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+
+					if membership_self._rel_licences() != str_none: 
+						message = membership_self._rel_licences()
+						links.append( message )
+					else:
+						message = _(u" Portar quota 1er trimestre").encode('utf8')
+						url = "/cooper/Welcome/ic_self_employed/" + str(membership_self.id) + "?next=public_form"
+						link = "<a href='%s'> %s </a>"  % (url,  message)
+						links.append( mark_safe(link) )
+
+					if membership_self._has_assisted_socialcoin():
+						message = _(u"Acció fora del sistema. Pagar cuota.").encode('utf8')
+						links.append( message )
 					elif membership_self._has_assisted_welcome():
 						print "Link: you have to go to session coin"
-						message = __(u" Anar a sessió de moneda social i d'Alta ").encode('utf8')
+						message = _(u" Anar a sessió de moneda social i d'Alta ").encode('utf8')
 						url = "/cooper/Welcome/learn_session/" + "?next=public_form"
 						link = "<a href='%s'> %s </a>"  % (url,  message)
 						links.append( mark_safe(link) )
 					else:
 						print "Link: you have to go to sessions"
-						message = __(u" Anar a sessió d'acollida: ").encode('utf8')
+						message = _(u" Anar a sessió d'acollida: ").encode('utf8')
 						url = "/cooper/Welcome/learn_session/" + "?next=public_form"
 						link = "<a href='%s'> %s </a>" % (url,  message)
 						links.append( mark_safe(link) )
 			elif type == "iC_Welcome":
 				pass
 			#COMMON BLOCK FOR MEMBERSHIP
+
+			if not membership and not group.name == "iC_Self_Employed" and not group.name=="iC_Stallholder":
+				if not current_user.is_anonymous() and not current_user.is_active:
+					print activation_message
+					links.append( mark_safe(activation_message) )
 
 			if membership and type.lower() != "ic_welcome":
 				if membership and type.lower() == "ic_self_employed":
@@ -275,27 +324,77 @@ def entry_page_to_gestioci(request, user_id = None):
 					links.append( mark_safe(link))
 
 			if group.name.lower() == "ic_welcome":
-				label = _(u"Usuaris no registrats").encode("utf-8")
+				label = _(u"Alta socias cooperativa").encode("utf-8")
+				links.append( label )
+
+				label = _(u"Crear una persona").encode("utf-8")
+				url = "/admin/General/person/add"
+				links.append( mark_safe("<a class='addlink' href='%s'> %s </a>" % (url,  label)))
+				label = _(u"Llistar persones").encode("utf-8")
+				url = "/admin/General/person/"
+				links.append( mark_safe("<a class='changelink' href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"Crear una projecte").encode("utf-8")
+				url = "/admin/General/project/add"
+				links.append( mark_safe("<a class='addlink' href='%s'> %s </a>" % (url,  label)))
+				label = _(u"Llistar projectes").encode("utf-8")
+				url = "/admin/General/project/"
+				links.append( mark_safe("<a class='changelink' href='%s'> %s </a>" % (url,  label)))
+
+				
+				label = _(u"(0) Visitants que activen procés").encode("utf-8")
 				url = "/admin/public_form/registrationprofile/?only_membership_filter=10"
 				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
 
-				label = _(u"Gestionar pagament de quotes").encode("utf-8")
-				url = "/admin/Welcome/fee/" + "?next='public_form'"
+				label = _(u"(a) Formularis omplerts").encode("utf-8")
+				url = "/admin/Welcome/ic_membership/"
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"(b) Gestionar pagament de quotes").encode("utf-8")
+				url = "/admin/Welcome/fee/" + "?next=public_form"
 				link = "<a href='%s'> %s </a>" % (url, label)
 				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
 
-				label = _(u"Gestionar comptes ICES ").encode("utf-8")
-				url = "/admin/Welcome/ic_membership/" + "?next='public_form'"
+				label = _(u"(c) Llistats de noves socies").encode("utf-8")
+				url = "/admin/Welcome/ic_membership/" + "?next=public_form"
 				link = "<a href='%s'> %s </a>" % (url, label)
 				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
 
-				label = _(u"Manegar sessions acollida").encode("utf-8")
-				url = "/admin/Welcome/learn_session/" + "?next='public_form'"
+				label = _(u"(d) Alta ICES ").encode("utf-8")
+				url = "/admin/Welcome/ic_membership/" + "?next=public_form"
 				link = "<a href='%s'> %s </a>" % (url, label)
 				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
 
-				label = _(u"Manegar sessions Moneda Social i d'Alta").encode("utf-8")
-				url = "/admin/Welcome/learn_session/" + "?next='public_form'"
+				label = _(u"(e) Activar socia ").encode("utf-8")
+				url = "/admin/Welcome/ic_membership/" + "?next=public_form"
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"Alta socias autocupadas").encode("utf-8")
+				links.append( label )
+
+				label = _(u"(1) Acollida general grupal acollida").encode("utf-8")
+				url = "/admin/Welcome/ic_self_employed/add/?next=public_form"
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"(2) Acollida inicial individual").encode("utf-8")
+				url = "/admin/Welcome/ic_self_employed/?next=public_form"
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"(4) Inscripción sessió d'alta ").encode("utf-8")
+				url = "/admin/Welcome/learn_session/" + "?next=public_form"
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"(5) Inscripción sessió moneda solcial").encode("utf-8")
+				url = "/admin/Welcome/learn_session/" + "?next=public_form"
+				link = "<a href='%s'> %s </a>" % (url, label)
+				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
+
+				label = _(u"(6) Sessió realitzar alta").encode("utf-8")
+				url = "/admin/Welcome/ic_self_employed/?next=public_form"
 				link = "<a href='%s'> %s </a>" % (url, label)
 				links.append( mark_safe("<a href='%s'> %s </a>" % (url,  label)))
 
@@ -309,12 +408,10 @@ def entry_page_to_gestioci(request, user_id = None):
 				links.append( mark_safe(link) )
 				print link
 
-			print "--------------------------------------------------------------"
-			print len(links)
 			title = _(group.name).encode("utf-8")
-			new_action = Action_block( title, group, form, action, links, membership_id)
+
+			new_action = Action_block( title, group, form, action, links, membership_id, show_form, can_edit)
 			user_permissions.append( new_action )
-			
 
 	#SECTION PROFILE 
 	profile_desc = _(u"Desconegut")
@@ -333,20 +430,88 @@ def entry_page_to_gestioci(request, user_id = None):
 			profile_desc = _(u"Desconegut")
 			profile_type = "Anon"
 		else:
-			profile_desc = _(u"Member")
+			profile_desc = _(u"Necesita activar l'usuari")
 			profile_type = current_user.groups.all()[0].name
 	#EDN SECTION PROFILE 
 
-	#LOGGIN PANEL
+	print "Micaso________________"
+	print membership_self
+	#STATE ROAD MAP PICTURE
+	moment_img = "welcome_flow.png"
+
+	if current_user.is_superuser:
+		moment_img="welcome_flow.png"
+	elif current_user.is_anonymous():
+		moment_img = "welcome_flow_FORM.png"
+	elif current_user.is_staff:
+		moment_img = "welcome_flow_general.png"
+	elif current_user.is_active:
+		if membership_self:
+			from Welcome.models import ico_no
+			if membership_self._has_assisted_socialcoin() != ico_no:
+				print "has"
+				moment_img = "welcome_flow_self5.png"
+			elif membership_self._has_assisted_welcome() != ico_no:
+				moment_img = "welcome_flow_self4.png"
+			elif membership_self._rel_licences() != str_none:
+				moment_img = "welcome_flow_self3.png"
+			else:
+				moment_img = "welcome_flow_self2.png"
+		elif membership:
+			print "as>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			print "as>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			if current_registration:
+				if current_registration.record_type:
+					type = current_registration.record_type.clas
+					if type == "iC_Project_Membership":
+						if not membership:
+							moment_img = "welcome_flow_FORM.png"
+						elif not membership._join_fee_payed():
+							moment_img = "welcome_flow_FEE.png"
+						elif not membership.ic_CESnum:
+							moment_img = "welcome_flow_ICES.png"
+						else:
+							moment_img = "welcome_flow_DONE.png"
+
+					elif type == "iC_Person_Membership":
+						if not membership:
+							moment_img = "welcome_flow_FORM.png"
+						elif not membership._join_fee_payed():
+							print "as>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+							moment_img = "welcome_flow_FEE.png"
+						elif not membership.ic_CESnum:
+							moment_img = "welcome_flow_ICES.png"
+						else:
+							moment_img = "welcome_flow_DONE.png"
+					elif type == "iC_Akin_Membership":
+						if not membership:
+							moment_img = "welcome_flow_PROJECT_akin.png"
+						elif membership.ic_membership:
+							from General.models import Project
+							current_project = Project.objects.get(id=membership.ic_membership.ic_project.id)
+							moment_img = "welcome_flow_DONE_akin.png"
+						else:
+							moment_img = "welcome_flow_PROJECT_akin.png"
+
+	elif not current_person:
+		moment_img = "welcome_flow_FORM.png"
+	else:
+		moment_img = "welcome_flow.png"
+
+		print "wwweeeeeeeeeeeeeeeeeeeeeeeeee"
+		print membership
+	#END STATE ROAD MAP PICTURE
+	
+	#LOG IN PANEL
 	from django.contrib.auth.forms import AuthenticationForm
 	from Cooper.admin import UserAdminAuthenticationForm
 	form_login = UserAdminAuthenticationForm()
-
+	#END LOGIN PANEL
+	
 	#RENDER
 	return render_to_response(
 		'entry_page_to_gestioCI.html',
 		{ 
-		'can_save' : can_save,
 		'membership_fee': membership_fee,
 		'membership_ices': membership_ices,
 		'membership': membership,
@@ -628,7 +793,7 @@ def save_form_profile(request):
 		membership = iC_Akin_Membership.objects.get(id=form_id)
 		from General.models import Project
 		try:
-			p = Project.objects.get(id=request.POST["ic_membership1"])
+			p = Project.objects.get(id=request.POST["ic_membership"])
 			pm = iC_Membership(ic_project = p, human=membership.person)
 			pm.save()
 			membership.ic_membership = pm
@@ -678,6 +843,33 @@ def save_form_profile(request):
 		except ObjectDoesNotExist:
 			print "not found"
 			messages.error(request, _(u"No s'ha guardat."))
+	return HttpResponseRedirect(
+				reverse('public_form:entry_page_to_gestioci')
+			)
+
+
+def save_form_self_employed(request):
+	print "savinb"
+	from Welcome.models import iC_Record
+	form_id = request.POST["form_id"]
+	print form_id
+	try:
+		membership_type = iC_Record.objects.get(id=form_id).record_type.clas
+	except ObjectDoesNotExist:
+		membership_type = None
+	form = None
+	print membership_type
+	if membership_type == "iC_Self_Employed":
+		try:
+			if request.POST:
+				from Welcome.models import iC_Self_Employed
+				from Welcome.forms import iC_Self_Employed_form
+				form = iC_Self_Employed_form(request.POST)
+				#print form.errors
+				#messages.Error(request, form.errors)
+		except ObjectDoesNotExist:
+			pass
+		messages.error(request, _(u"No s'ha guardat."))
 	return HttpResponseRedirect(
 				reverse('public_form:entry_page_to_gestioci')
 			)

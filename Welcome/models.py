@@ -16,6 +16,7 @@ from General.models import *
 
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Welcome/"
+a_strWC = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/cooper/Welcome/"
 #a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
 #a_str2 = "?_popup=1&_changelist_filters=_popup=1' target='_blank' style='margin-left:-100px'>"
 a_str2 = "' target='_blank' style='margin-left:-100px'>"
@@ -524,6 +525,7 @@ class iC_Project_Membership(iC_Membership):
       return "Not present"
   _selflink.allow_tags = True
   _selflink.short_description = ''
+  
 
 
 '''
@@ -609,8 +611,9 @@ class iC_Self_Employed(iC_Record):
     if self.record_type is None or self.record_type == '':
       self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
 
-
   def _member_link(self):
+    print "sssssssssssssssssss"
+    return "dsfdsfsgg"
     if self.id:
       #print 'ID: '+str(self.id)
       slug = 'ic_membership'

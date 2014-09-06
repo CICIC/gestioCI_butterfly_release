@@ -8,65 +8,6 @@
 
 <p><u>{% trans "Accions que pots fer:" %}</u>:
 
-<ul>
-	{% if profile_person and user.is_active %}
-		<li><a href="{% url 'member:General_person_change' profile_person.id %}?next=public_form">{% trans "Editar dades personals" %}</a></li>
-	{% else %}
-		{% if user.is_staff %}
-			<li>{% trans "Administrar molt i bé" %}</li>
-		{% else %}
-			<li>{% trans "Procés d'alta" %}</li>
-		{% endif %}
-	{% endif %}
-
-	{% if membership_fee %}
-		<li>{{ membership_fee}}</li>
-	{% else %}
-		{% if membership_ices %}
-			<li>{{ membership_ices}}</li>
-		{% endif %}
-	{% endif %}
-
-	{% if profile_project %}
-		<li><label>{% trans "Canviar el projecte vinculat: "%}</label><a href="{% url 'member:General_project_change' profile_project.id %}?next='public_form'">{{profile_project}}</a></li>
-	{% endif %}
-</ul>
-	{% for permission in user_permissions %}
-		{% if profile_type %}
-			<div class="member user">
-				<label>{% trans "Perfil: " %}{{profile_desc}}>{{permission.title}}</label><br>
-				<img src="{% static permission.title %}_user.png" width="100px">
-				{% if profile_person %}
-					<p><label>{% trans "Persona: "%}</label></p><p><a href="{% url 'member:General_person_change' profile_person.id %}?next='public_form'">{{profile_person}}</a></p>
-				{% endif %}
-
-				<ul class="linksection">
-					{% for link in permission.links %}
-						<li>{{ link }}</li>	
-					{% endfor %}
-					
-					{% if permission.form  and user.is_active and membership and not membership_self %}
-						<li> Editar o consultar el següents camps:
-						<br>
-						
-						<form action="{{permission.action}}" method="POST">
-							<table>
-								{{permission.form}}
-							</table>
-							{% if can_save %}
-								<input type="submit" value="{% trans 'Grabar' %}">
-							{% endif %}
-							{% csrf_token %}
-							<input type="hidden" name="form_id" id="form_id" value="{{permission.id}}">
-						</form>
-						</li>
-					{% endif %}
-				</ul>
-			</div>
-		{% endif %}
-	{% endfor %}
-
-</p>
 <br>
 	<div class="users">
 		<div class="admin">
@@ -76,7 +17,28 @@
 			<br>
 			<p><label>{% trans "Tipus: " %}{{profile_type}}</label><br></p>
 		</div>
+<ul>
+	{% if profile_person and user.is_active %}
+		
+	{% else %}
+		{% if user.is_staff %}
+			<li>{% trans "Administrar molt i bé" %}</li>
+		{% else %}
+			<li>{% trans "Procés d'alta" %}</li>
+		{% endif %}
+	{% endif %}
+	{% if profile_project.id > 0 %}
+		<li><label>{% trans "Editar dades projecte: "%}</label><a href="{% url 'member:General_project_change' profile_project.id %}?next=public_form">{{profile_project}}</a></li>
+	{% endif %}
+	{% if membership_fee %}
+		<li>{{ membership_fee}}</li>
+	{% else %}
+		{% if membership_ices %}
+			<li>{{ membership_ices}}</li>
+		{% endif %}
+	{% endif %}
 
+</ul>
 		<div class="anon user">
 			<h4>{{profile_desc}}</h4>
 			
@@ -104,7 +66,64 @@
 			{% endif %}
         {% endif %}
 		</div>
-	</div>
+	
+
+	{% for permission in user_permissions %}
+		{% if profile_type %}
+			<div class="member user">
+				<label>{% trans "Perfil: " %}{{profile_desc}}>{{permission.title}}</label><br>
+				<img src="{% static permission.title %}_user.png" width="100px">
+				{% if profile_person %}
+					<p><label>{% trans "Persona: "%}</label></p><p><a href="{% url 'member:General_person_change' profile_person.id %}?next=public_form">{{profile_person}}</a></p>
+				{% endif %}
+
+				<ul class="linksection">
+					{% for link in permission.links %}
+						<li>{{ link }}</li>	
+					{% endfor %}
+				</ul>
+			</div>
+			<div class="forms">
+					{% if permission.form and user.is_active and membership and not membership_self and permission.show_form %}
+						<li> Editar o consultar el següents camps:
+						<br>
+						
+						<form action="{{permission.action}}" method="POST">
+							<table>
+								{{permission.form}}
+							</table>
+							{% if permission.can_edit %}
+								<input type="submit" value="{% trans 'Grabar' %}">
+							{% endif %}
+							{% csrf_token %}
+							<input type="hidden" name="form_id" id="form_id" value="{{permission.id}}">
+						</form>
+						</li>
+					{% endif %}
+					{% if membership_self and permission.show_form %}
+						<li> {{permission.title}}
+						___________________________________________________________________________
+						<form action="{{permission.action}}" method="POST">
+							<table>
+								{{permission.form}}
+								<tr><td colspan="2">
+									{% if permission.can_edit %}
+										<input type="submit" value="{% trans 'Grabar' %}">
+									{% endif %}
+								</td></tr>
+							</table>
+
+							{% csrf_token %}
+							<input type="hidden" name="form_id" id="form_id" value="{{membership_self.id}}">
+						</form>
+						</li>
+					{% endif %}
+			</div>
+		{% endif %}
+	{% endfor %}
+
+</p>
+
 
 <input type="hidden" id="profile_type" value="{{profile_type}}">
-
+</div>

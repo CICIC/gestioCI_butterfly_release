@@ -7,6 +7,7 @@ from mptt.fields import TreeForeignKey, TreeManyToManyField
 from datetime import date, timedelta
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as __
 from decimal import Decimal
 
 from itertools import chain
@@ -24,7 +25,7 @@ a_edit = '<b>Editar</b>'
 ul_tag1 = '<ul style="margin-left:-10em;">'
 ul_tag = '<ul>'
 
-str_none = '(cap)'
+str_none = __('(cap)')
 str_remove = 'treu'
 
 def erase_id_link(field, id):

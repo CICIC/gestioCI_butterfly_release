@@ -365,7 +365,7 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
 		js = ('welcome.js',)
 
 	model = iC_Self_Employed
-	list_display = ['name', 'ic_membership', 'join_date', 'record_type',]# '_join_fee_payed']
+	list_display = ['name', 'ic_membership', 'join_date', 'record_type', 'mentor_membership']# '_join_fee_payed']
 	#formset = SelfEmployedForm
 	#readonly_fields = ('name', 'record_type', '_rel_id_cards', '_member_link', '_rel_address_contract')
 	#raw_id_fields = ('rel_address_contracts', 'ic_membership',)# 'rel_fees')

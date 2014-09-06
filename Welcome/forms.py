@@ -8,20 +8,20 @@ class iC_Akin_Membership_form(forms.ModelForm):
 	from Welcome.models import iC_Akin_Membership
 	model = iC_Akin_Membership
 	from General.models import Project
-	ic_membership1 = forms.ModelMultipleChoiceField(queryset=Project.objects.filter(), label=_(u"Projecte vinculat: "))
+	ic_membership_project = forms.ModelMultipleChoiceField(queryset=Project.objects.filter(), label=_(u"Projecte vinculat "))
 	def __init__(self, *args, **kwargs):
 		super(iC_Akin_Membership_form, self).__init__(*args, **kwargs)
 		if self.instance.id:
 			self.fields['join_date'].widget.attrs['readonly'] = True
 
 	class Meta:
-		fields = ( "ic_record", "ic_membership1", "join_date")
+		fields = ( "ic_record", "ic_membership_project", "join_date")
 		from Welcome.models import iC_Akin_Membership
 		model = iC_Akin_Membership
 
 class iC_Person_Membership_form(forms.ModelForm):
 	from Welcome.models import Payment_Type
-	payment_type = forms.ModelMultipleChoiceField(queryset=Payment_Type.objects.all(), label=_(u"Forma de pagament: "))
+	payment_type = forms.ModelMultipleChoiceField(queryset=Payment_Type.objects.all(), label=_(u"Forma de pagament "))
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Person_Membership_form, self).__init__(*args, **kwargs)
@@ -55,7 +55,54 @@ class iC_Project_Membership_form(forms.ModelForm):
 		fields = ( 'project', 'join_fee', 'payment_type', 'ic_CESnum', 'join_date' )
 		from Welcome.models import iC_Project_Membership
 		model = iC_Project_Membership
+from General.models import rel_Human_Addresses, rel_Human_Persons
+from Welcome.models import iC_Membership
+class iC_Self_Employed_form(forms.ModelForm):
+	from Welcome.models import iC_Self_Employed
+	model = iC_Self_Employed
+	mentors_choice = forms.ModelMultipleChoiceField(queryset=None, label=_(u"Sòci mentor: "))
+	main_address_choice = forms.ModelMultipleChoiceField(queryset=None, label=_(u"Adreça principal: "))
+	other_address  = forms.ModelMultipleChoiceField(queryset=None, label=_(u"Altres adreçes"))
+	fee_membership  = forms.ModelMultipleChoiceField(queryset=None, label=_(u"Quota Alta"))
+	quarter_membership  = forms.ModelMultipleChoiceField(queryset=None, label=_(u"Quota trimestral"))
 
+	def __init__(self, *args, **kwargs):
+		super(iC_Self_Employed_form, self).__init__(*args, **kwargs)
+		if self.instance.id:
+			#Mentor
+			if iC_Membership:
+				self.fields['mentors_choice'].queryset = iC_Membership.objects.filter(human=self.instance.ic_membership.human)
+
+			#self.fields['join_date'].widget.attrs['readonly'] = True
+			#Main address
+			self.fields['main_address_choice'].queryset = self.instance.ic_membership.human.addresses
+			self.fields['other_address'].queryset = self.instance.ic_membership.ic_project.addresses
+			from Welcome.models import Fee, iC_Record_Type
+
+			self.fields['fee_membership'].queryset = self.instance.rel_fees
+			print "sdgsdfgsdgsdgsdgsdgsdgsdgsdg"
+			for fe in Fee.objects.all():
+				print fe.record_type.clas
+			print "ttttttttttttttttttttttttttttttttt"
+			self.fields['quarter_membership'].queryset = self.instance.rel_fees
+			try:
+				current_main_address = rel_Human_Addresses.objects.get(human=self.instance.person, main_address = True)
+				self.initial = { 'main_address_choice' : current_main_address.id }
+			except:
+				pass
+			#self.fields['join_date'].widget.attrs['readonly'] = True
+			self.fields['rel_insurances'].queryset = self.instance.rel_insurances
+			self.fields['rel_licences'].queryset = self.instance.rel_licences
+			self.fields['rel_address_contracts'].queryset = self.instance.rel_address_contracts
+			self.fields['rel_address_contracts'].queryset = self.instance.rel_address_contracts
+			#Mentor
+			rel_Human_Persons
+	class Meta:
+		#field_step1 = ('rel_fees', '_rel_fees','_rel_id_cards', 'rel_address_contracts', '_rel_address_contract', 'rel_licences', '_rel_licences',	#'rel_insurances', '_rel_insurances','_has_assisted_socialcoin','join_date','assigned_vat', 'review_vat', #'last_review_date','rel_accountBank','mentor_membership', 'mentor_comment')
+		from Welcome.models import iC_Self_Employed
+		model = iC_Self_Employed
+		fields = [ "mentors_choice", "mentor_comment", "main_address_choice", 'other_address', "rel_insurances", "rel_licences", "rel_address_contracts"]
+		
 class public_form(forms.ModelForm):
 	CHOICES_admin = (
 		('1', 'Projecte Col·lectiu',),
@@ -79,7 +126,7 @@ class public_form(forms.ModelForm):
 
 
 
-		
+
 class public_form_person(forms.ModelForm):
 	class Meta:
 		model = Person

@@ -1,5 +1,5 @@
 from django.conf.urls import *
-from public_form.views import entry_page_to_gestioci, create_membership, wait_membership, activate_membership, save_form_profile
+from public_form.views import entry_page_to_gestioci, create_membership, wait_membership, activate_membership, save_form_profile, save_form_self_employed
 
 urlpatterns = patterns('',
 	url(r'^(?P<record_type_id>\d+)/$',
@@ -23,5 +23,8 @@ urlpatterns = patterns('',
 	url(r'^save_form_profile/$',
 	   save_form_profile,
 	   name='save_form_profile'),
+	url(r'^save_form_self_employed/$',
+	   save_form_self_employed,
+	   name='save_form_self_employed'),
 	)
 
