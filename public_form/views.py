@@ -201,8 +201,12 @@ def entry_page_to_gestioci(request, user_id = None):
 				if not label:
 					label = membership_ices
 				if not label:
-					label = _(u"Has completat el procès d'alta")
-				links.append( label)
+					if not current_user.is_superuser:
+						label = _(u" Has completat el procès d'alta")
+						links.append( label)
+					else:
+						pass
+
 			elif type == "iC_Akin_Membership":
 				from Welcome.forms import iC_Akin_Membership_form
 				from Welcome.models import iC_Akin_Membership
@@ -216,7 +220,10 @@ def entry_page_to_gestioci(request, user_id = None):
 						label = _(u" Escollir projecte vinculat")
 						links.append( label)
 					else:
-						label = _(u" Has completat el procès d'alta")
+						if not current_user.is_superuser:
+							label = _(u" Has completat el procès d'alta")
+						else:
+							pass
 						links.append( label)
 			elif type == "iC_Self_Employed":
 				from django.contrib.auth.models import User, Group
@@ -470,7 +477,7 @@ def entry_page_to_gestioci(request, user_id = None):
 	moment_img = "welcome_flow.png"
 
 	if current_user.is_superuser:
-		moment_img="welcome_flow.png"
+		moment_img="welcome_flow_general.png"
 	elif current_user.is_anonymous():
 		moment_img = "welcome_flow_FORM.png"
 	elif current_user.is_staff:
