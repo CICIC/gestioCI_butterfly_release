@@ -6,6 +6,7 @@
 	<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
 	<script type="text/javascript" src="{% static 'create_membership.js' %}"></script>
 	<link rel="stylesheet" type="text/css" href="{% static 'create_membership.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'entry_page_to_gestioci.css' %}" />
 {% endblock %}
  {% block content_title %}{{message_desc}}{{content_title}}</i></p> </h1>{% if title %}<h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>{% endif %}{% endblock %}
 {% block content %}
@@ -56,11 +57,11 @@
 						<tr><th>{{form.project_website.label_tag}}</th><td>{{form.project_website}}{{form.project_website.errors}}</td></tr>
 					</table>
 				</div>
+				<input type="submit" value="{% trans 'Envia el formulari' %}" /><br><p>{% trans tag_send %}</p>
 				<div id="actions_section">
 					<br>
 
 				</div>
-				<input type="submit" value="{% trans 'Envia el formulari' %}" /><br><p>{% trans tag_send %}</p>
 			</div>
 			<br>
 			{% csrf_token %}
