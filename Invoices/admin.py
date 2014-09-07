@@ -488,6 +488,7 @@ class sales_invoice_user (invoice_admin):
 
 	def changelist_view(self, request, extra_context=None):
 		response = super(sales_invoice_user, self).changelist_view(request, extra_context)
+
 		try:
 			qs_queryset = response.context_data["cl"].query_set
 		except:

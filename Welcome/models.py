@@ -368,7 +368,7 @@ class iC_Membership(iC_Record):
       return lnk1+' / '+lnk2
   _human_link.allow_tags = True
   _human_link.short_description = ''
-
+  
   def _joinfee_link(self):
     if hasattr(self, 'join_fee') and self.join_fee is not None:
       if self.join_fee._min_fee_data() == ico_yes:

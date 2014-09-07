@@ -18,15 +18,36 @@ class sessions_tag_node(template.Node):
 			obj = self.object.resolve(context)
 			# obj now is the object you passed the tag
 
-			from Welcome.models import Learn_Session
+			current_human = None
+			current_session = None
 			from django.core.exceptions import ObjectDoesNotExist
-			try:
-				current_session = Learn_Session.objects.get( id=obj ) 
+
+			if obj.GET.has_key("learn_session_id"):
+				from Welcome.models import Learn_Session
+				current_session = Learn_Session.objects.get( id=obj.GET["learn_session_id"] ) 
 				context['current_session'] = current_session
-				from public_form.forms import learn_session_proxy_form
-				context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
-			except ObjectDoesNotExist:
-				context['current_session'] = _(u"Cap sessió seleccionada.").encode("utf-8")
+
+			if obj.GET.has_key("human_id"):
+				from General.models import Human
+				current_human = Human.objects.get( id=obj.GET["human_id"] ) 
+				context['current_human'] = current_human
+
+			if current_human and current_session:
+				if current_human in current_session.assistants.all():
+					from public_form.forms import public_form_self_admin
+					from Welcome.models import iC_Membership
+					from General.models import Project
+					try:
+						current_membership = iC_Membership( ic_project=Project.objects.get(id=current_human.id), join_date=datetime.now())
+					except ObjectDoesNotExist:
+						try:
+							current_membership = iC_Membership( human=Human.objects.get(id=current_human.id), join_date=datetime.now())
+						except ObjectDoesNotExist:
+							current_membership = None
+					context['current_sesion_form'] = public_form_self_admin(instance=current_membership)
+				else:
+					from public_form.forms import learn_session_proxy_form
+					context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
 			return ''
 
 class human_tag_node(template.Node):

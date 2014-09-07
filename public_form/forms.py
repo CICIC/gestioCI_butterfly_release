@@ -36,6 +36,12 @@ class learn_session_proxy_form(forms.ModelForm):
 		fields = ( "datetime", )
 
 
+class public_form_self_admin(forms.ModelForm):
+	description = forms.CharField( widget=forms.Textarea, label=_(u"Descripció projecte") )
+	class Meta:
+		from Welcome.models import iC_Membership
+		model = iC_Membership
+		fields = ( "description", )
 
 
 

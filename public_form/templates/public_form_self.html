@@ -59,9 +59,12 @@
       {% endif %}
 	<p>
 		{% trans "Cercador autocompletar: nom projecte / nom soci referència" %}
-		<p class="no_assistant">{% trans " Mai han vingut a una sessió" %}</p>
-		<p class="assistant">{% trans " Ja han vingut a una sessió" %}</p>
-		<p class="assistant_done">{% trans " Son socis" %}</p>
+		<br>
+		<font class="no_assistant">{% trans " Mai han vingut a una sessió" %}</font> |
+		<font class="assistant">{% trans " Ja han vingut a una sessió" %}</font> |
+		<img class="user_grid" src="{% static 'Anon_user.png' %}">{% trans "Tipus desconegut" %} |
+		<img class="user_grid" src="{% static 'Person_user.png' %}">{% trans "Persona" %} |
+		<img class="user_grid" src="{% static 'Project_user.png' %}">{% trans "Projecte" %}
 	</p>
     <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
       {% block search %}{% search_form cl %}{% endblock %}
@@ -89,22 +92,6 @@
       {% block pagination %}{% pagination cl %}{% endblock %}
       </form>
     </div>
-	 {% block object-tools %}
-      {% if has_add_permission %}
-		<br><br>
-        <ul class="object-tools">
-          {% block object-tools-items %}
-            <li>
-              {% url cl.opts|admin_urlname:'add' as add_url %}
-              <a href="{% add_preserved_filters add_url is_popup %}" class="addlink">
-				{% trans "Afegir manualment nou projecte" %}
-              </a>
-            </li>
-          {% endblock %}
-        </ul>
-      {% endif %}
-    {% endblock %}
-
   </div>
 {% endblock %}
 

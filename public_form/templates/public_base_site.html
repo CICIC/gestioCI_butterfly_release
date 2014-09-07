@@ -14,19 +14,17 @@
 {% endblock %}
 
 {% block assistant_session %}
-<br>
-<br>
 	<div id="learn_session">
 		{% load public_form_tag  %}
 		{% block session_list %}
 			{% with request.GET.learn_session_id|default:0 as current_session %}
-				{% sessions_tag current_session %}
+				{% sessions_tag request %}
 				{% with request.GET.human_id|default:0 as current_human %}
 					{% human_tag current_human %}
 						<div class="form-row">
 							<form action="/public_form/save_form_self_employed/" method="POST">
 								<table>
-									<tr><td colspan="2"><label>{% trans "Projecte: " %}<i>{{current_human}}</i></label></td></tr>
+									<tr><td colspan="2"><label>{% trans "Projecte: " %}<i>{{current_human}} {{current_human.self_link}}</i></label></td></tr>
 									<tr><td colspan="2"><label>{% trans "Sessió: " %}<i>{{current_session}}</i></label></td></tr>
 									{{current_sesion_form.as_table}}
 									{% if current_human.id and current_session.id %}

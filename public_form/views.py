@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy as __
 
 from django.utils.safestring import mark_safe
 from datetime import date, timedelta, datetime
+from General.models import Project, Human
 
 class Action_block(object):
 	def __init__(self, title, group, form, action, links, id, show_form, can_edit):
@@ -888,13 +889,14 @@ def save_form_profile(request):
 
 def save_form_self_employed(request):
 
+	current_human = None
+	current_session = None
 	if request.POST:
 		try:
 			if request.POST.has_key("public_form_action"):
 				if request.POST["public_form_action"] ==  "public_form_action_join_session":
 					try:
-						from General.models import Human
-						current_human = Human.objects.get(id=request.POST["current_human"])
+						current_human = Project.objects.get(id=request.POST["current_human"])
 					except ObjectDoesNotExist:
 						current_human = None
 						messages.warning(request, _(u"No s'ha trobat al humà") )
@@ -905,15 +907,19 @@ def save_form_self_employed(request):
 					except ObjectDoesNotExist:
 						current_session = None
 						messages.warning(request, _(u"No s'ha trobat la sessió") )
-					if current_human in current_session.assistants.all():
-						current_session.assistants.add(current_human)
-						messages.info(request, _(u" Aquest humà ja ha està afegit.") )
-					else:
+
+					if not current_human in current_session.assistants.all():
+						try:
+							current_human.assist_sessions.add(current_session)
+						except Exception as e:
+							messages.error(request, '%s (%s)' % (e.message, type(e)) )
+							messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 						try:
 							current_human.save()
-							messages.error(request, _(u"No s'ha pogut fer el save") )
-						except:
+						except Exception as e:
+							messages.error(request, '%s (%s)' % (e.message, type(e)) )
 							messages.info(request, _(u"S'ha establert l'assistència a la sessió.") )
+
 					return HttpResponseRedirect(
 						"/cooper/public_form/human_proxy/?human_id=%s&learn_session_id=%s" % (current_human.id,current_session.id))
 			else:
@@ -921,9 +927,11 @@ def save_form_self_employed(request):
 		except Exception as e:
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
 			return HttpResponseRedirect(
-						"/cooper/public_form/human_proxy/?human_id=%s&learn_session_id=%s" % (94,15) )
+						"/cooper/public_form/human_proxy/")
 	else:
 		messages.warning(request, _(u"No s'ha trobat el POST") )
+	messages.info(request, current_human  )
+	messages.info(request, current_session  )
 	return HttpResponseRedirect(
 				"/cooper/public_form/human_proxy/"
 			)
