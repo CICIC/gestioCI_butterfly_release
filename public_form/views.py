@@ -887,27 +887,43 @@ def save_form_profile(request):
 
 
 def save_form_self_employed(request):
-	print "savinb"
-	from Welcome.models import iC_Record
-	form_id = request.POST["form_id"]
-	print form_id
-	try:
-		membership_type = iC_Record.objects.get(id=form_id).record_type.clas
-	except ObjectDoesNotExist:
-		membership_type = None
-	form = None
-	print membership_type
-	if membership_type == "iC_Self_Employed":
+
+	if request.POST:
 		try:
-			if request.POST:
-				from Welcome.models import iC_Self_Employed
-				from Welcome.forms import iC_Self_Employed_form
-				form = iC_Self_Employed_form(request.POST)
-				#print form.errors
-				#messages.Error(request, form.errors)
-		except ObjectDoesNotExist:
-			pass
-		messages.error(request, _(u"No s'ha guardat."))
+			if request.POST.has_key("public_form_action"):
+				if request.POST["public_form_action"] ==  "public_form_action_join_session":
+					try:
+						from General.models import Human
+						current_human = Human.objects.get(id=request.POST["current_human"])
+					except ObjectDoesNotExist:
+						current_human = None
+						messages.warning(request, _(u"No s'ha trobat al humà") )
+
+					try:
+						from Welcome.models import Learn_Session
+						current_session = Learn_Session.objects.get(id=request.POST["current_session"])
+					except ObjectDoesNotExist:
+						current_session = None
+						messages.warning(request, _(u"No s'ha trobat la sessió") )
+					if current_human in current_session.assistants.all():
+						current_session.assistants.add(current_human)
+						messages.info(request, _(u" Aquest humà ja ha està afegit.") )
+					else:
+						try:
+							current_human.save()
+							messages.error(request, _(u"No s'ha pogut fer el save") )
+						except:
+							messages.info(request, _(u"S'ha establert l'assistència a la sessió.") )
+					return HttpResponseRedirect(
+						"/cooper/public_form/human_proxy/?human_id=%s&learn_session_id=%s" % (current_human.id,current_session.id))
+			else:
+				messages.warning(request, _(u"No s'ha trobat el hidden d'acció") )
+		except Exception as e:
+			messages.error(request, '%s (%s)' % (e.message, type(e)) )
+			return HttpResponseRedirect(
+						"/cooper/public_form/human_proxy/?human_id=%s&learn_session_id=%s" % (94,15) )
+	else:
+		messages.warning(request, _(u"No s'ha trobat el POST") )
 	return HttpResponseRedirect(
-				reverse('public_form:entry_page_to_gestioci')
+				"/cooper/public_form/human_proxy/"
 			)

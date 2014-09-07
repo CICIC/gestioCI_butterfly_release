@@ -26,10 +26,15 @@ class human_proxy_form(forms.ModelForm):
 
 class learn_session_proxy_form(forms.ModelForm):
 	datetime = forms.DateTimeField(label=_(u"Data sessió "))
+	def __init__(self, *args, **kwargs):
+		super(learn_session_proxy_form, self).__init__(*args, **kwargs)
+		if self.instance.id:
+			self.fields['datetime'].widget.attrs['readonly'] = True
 	class Meta:
 		from public_form.models import Learn_Session
 		model = Learn_Session
 		fields = ( "datetime", )
+
 
 
 

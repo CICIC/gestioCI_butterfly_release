@@ -42,7 +42,6 @@ class type_human_filter (SimpleListFilter):
 	parameter_name = 'human_id'
 
 	def lookups(self, request, model_admin):
-
 		try:
 			current_human = Human.objects.get(id=request.GET.get("human_id", -1))
 		except ObjectDoesNotExist:

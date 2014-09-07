@@ -67,12 +67,11 @@
         {{ content }}
         {% endblock %}
         {% block sidebar %}{% endblock %}
-		{% block assistant_session %} {% endblock %}
         <br class="clear" />
     </div>
     <!-- END Content -->
 
-    {% block footer %}<div id="footer"></div>{% endblock %}
+    {% block footer %}<div id="footer">{% block assistant_session %} {% endblock %}</div>{% endblock %}
 </div>
 <!-- END Container -->
 
