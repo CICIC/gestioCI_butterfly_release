@@ -198,6 +198,11 @@ STATICFILES_DIRS = (
 		BASE_DIR + '/General/templates/',
 		BASE_DIR + '/Welcome/templates/',
 		BASE_DIR + '/public_form/templates/',
+		BASE_DIR + '/public_form/templates/css',
+		BASE_DIR + '/public_form/templates/js',
+		BASE_DIR + '/public_form/templates/user_images',
+		BASE_DIR + '/public_form/templates/flow_images',
+		BASE_DIR + '/public_form/templates/js',
     os.path.join(BASE_DIR, "media"),
 )
 
