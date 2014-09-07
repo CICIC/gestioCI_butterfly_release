@@ -1,0 +1,31 @@
+{% extends "public_form_base_0.html" %}
+{% load i18n %}
+{% block title %} {% trans "CIC | Gesti&oacute; Integral de Cooperatives" %} {% endblock %}
+
+{% block branding %}
+	<h1 id="site-name"><a href="{% url 'admin:index' %}">{% trans "CIC | Gesti&oacute; Integral Cooperatives" %}</a></h1>
+	{% include 'admin/change_language.html' %} <br>	<br>
+	&nbsp;&nbsp;<a href="{% url 'public_form:entry_page_to_gestioci' %}">{% trans "Anar a la Pàgina d'entrada" %}</a>
+	<br><br>
+{% endblock %}
+
+{% block nav-global %}
+	<div id="learn_session">
+		{% load sessions_tag  %}
+		{% block session_list %}
+			{% with request.GET.learn_session_id|default:0  as request_get %}
+				{% sessions_tag request_get %}
+				{{current_session}}
+			{% endwith %}
+		{% endblock %}
+
+	</div>
+
+	<br>
+	<div id="human">
+		{% trans "Selecciona soci de referència o project; o afegeix manualment un projecte." as none_message %}
+		{{ request.GET.human|default:none_message }} 
+	</div>
+	<br>
+	<br>
+{% endblock %}

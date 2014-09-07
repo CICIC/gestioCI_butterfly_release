@@ -612,8 +612,6 @@ class iC_Self_Employed(iC_Record):
       self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
 
   def _member_link(self):
-    print "sssssssssssssssssss"
-    return "dsfdsfsgg"
     if self.id:
       #print 'ID: '+str(self.id)
       slug = 'ic_membership'

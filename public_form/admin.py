@@ -8,22 +8,63 @@ from itertools import chain
 from django.contrib.admin import ModelAdmin
 from django.contrib import admin
 
+from django.contrib.admin import SimpleListFilter
+
+class type_human_filter (SimpleListFilter):
+
+	title = _(u'Sessions Acollida i Avaluació')
+	parameter_name = 'learn_session_id'
+
+	def lookups(self, request, model_admin):
+		from General.models import Human
+		from django.db.models import Count
+		welcome_sessions = Human.objects.filter(assist_sessions__record_type__clas="welcome_session")
+		assistance_to_welcome = welcome_sessions.values("assist_sessions").annotate(total_assistants=Count("id")).order_by()
+		yFilters = ()
+
+		for loop_session in assistance_to_welcome:
+
+			if loop_session["assist_sessions"]:
+				from Welcome.models import Learn_Session
+				session = Learn_Session.objects.get(id=loop_session["assist_sessions"])
+
+				message =  _(u"%s asistents %s. ")
+				from django.utils import formats
+				date = formats.date_format(session.datetime, "SHORT_DATETIME_FORMAT")
+				message = message % (date, loop_session["total_assistants"])
+				yFilters = yFilters + ((session.id, message),)
+		return yFilters
+
+	def queryset(self, request, queryset):
+		#do nothing will be managed in jQuery and templatetags
+		return queryset
+
 from public_form.models import human_proxy
 from public_form.forms import human_proxy_form
 class human_proxy_modeladmin(ModelAdmin):
 	model = human_proxy
 
 	form = human_proxy_form
-	list_per_page = 5
-	list_display = ('name',)
-	list_display_links = ('name', )
+	list_per_page = 15
+	list_display = ('edit_link', 'email', 'website', 'telephone_land')
+	list_display_links = ('edit_link', )
 	change_list_template = 'public_form_self.html'
+	change_form_template = 'public_form_change_self.html'
 	search_fields = ('name',)
+	list_filter = (type_human_filter, )
 	def get_actions(self, request):
 		actions = super(human_proxy_modeladmin, self).get_actions(request)
 		del actions['delete_selected']
 		return actions
-
+	def edit_link(self, obj):
+		if obj is None:
+			return "(None)"
+		else:
+			url = "/cooper/public_form/human_proxy/?human=%s" % (obj.id)
+			message = obj.name
+			return "<a href='%s'>%s</a>" % (url, message)
+	edit_link.allow_tags = True
+	edit_link.short_description = _(u"Període")
 	class Media:
 		css = {
 		'all': ('public_form_self.css',)

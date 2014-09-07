@@ -206,7 +206,6 @@ class CSVImportAdmin(ModelAdmin):
 			obj.import_user = str(request.user)
 			obj.import_date = datetime.now()
 			obj.save()
-			
 
 	def filename_defaults(self, filename):
 		""" Override this method to supply filename based data """

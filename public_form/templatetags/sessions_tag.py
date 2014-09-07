@@ -1,3 +1,4 @@
+#encoding=utf-8
 from django import template
 from datetime import date, timedelta, datetime
 from django.utils.translation import ugettext_lazy as _
@@ -17,9 +18,13 @@ class sessions_tag_node(template.Node):
 			# is a string
 			obj = self.object.resolve(context)
 			# obj now is the object you passed the tag
-			
+
 			from Welcome.models import Learn_Session
-			context['sessions_list'] = Learn_Session.objects.filter(datetime__lte=datetime.now(),record_type__clas='welcome_session' )
+			from django.core.exceptions import ObjectDoesNotExist
+			try:
+				context['current_session'] = Learn_Session.objects.get( id=obj )
+			except ObjectDoesNotExist:
+				context['current_session'] = _(u"Cap sessió seleccionada.").encode("utf-8")
 			return ''
 
 @register.tag
