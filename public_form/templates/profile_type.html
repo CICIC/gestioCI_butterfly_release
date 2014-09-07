@@ -6,14 +6,15 @@
 <script type="text/javascript" src="{% static 'profile_type.js' %}"></script>
 <link rel="stylesheet" type="text/css" href="{% static 'profile_type.css' %}" />
 
-<p><u>{% trans "Accions que pots fer:" %}</u>:
+<p>
+	<u>{% trans "Accions que pots fer:" %}</u>:
 
 <br>
 	<div class="users">
 		<div class="admin">
 			<h4>{{profile_desc}}</h4>
 			<label>{% trans "Administrador" %}</label><br>
-			<img src="{% static 'Admin_user.png' %}" width="100px">
+			<img src="{% static 'Admin_user.png' %}">
 			<br>
 			<p><label>{% trans "Tipus: " %}{{profile_type}}</label><br></p>
 		</div>
@@ -37,12 +38,10 @@
 			<li>{{ membership_ices}}</li>
 		{% endif %}
 	{% endif %}
-
 </ul>
 		<div class="anon user">
-			<h4>{{profile_desc}}</h4>
-			
-			<img id="profile_image" src="{% static 'Anon_user.png' %}" width="100px"><br>
+			<h4>{% trans "Usuari: " %} {{profile_desc}}</h4>
+			<img id="profile_image" src="{% static 'Anon_user.png' %}"><br>
 			<ul>
 			 {% block userlinks %} <li> -
                 {% url 'django-admindocs-docroot' as docsroot %}
@@ -74,7 +73,7 @@
 		{% if profile_type %}
 			<div class="member user">
 				<label>{% trans "Perfil: " %}{{profile_desc}}>{{permission.title}}</label><br>
-				<img src="{% static permission.title %}_user.png" width="100px">
+				<img src="{% static permission.title %}_user.png">
 				{% if profile_person %}
 					<p><label>{% trans "Persona: "%}</label></p><p><a class="changelink" href="{% url 'member:General_person_change' profile_person.id %}?next=public_form">{{profile_person}}</a></p>
 				{% endif %}
