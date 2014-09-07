@@ -22,8 +22,14 @@ done
 
 if [ $input != "q" ]
   then
-	echo "Going to update the database"	
-	mysql -u gestioCI -ppasswor gestioCI_butterfly < $input
+    user='gestioCI'
+    password='gestioCI'
+    dbName='gestioCI_butterfly'
+    host='localhost'
+    echo "dropping all tables"
+    for i in `mysql -u$user -p$password -h $host  $dbName -e "show tables" | grep -v Tables_in` ; do mysql -u$user -p$password -h $host $dbName -e "SET FOREIGN_KEY_CHECKS = 0; drop table $i ; SET FOREIGN_KEY_CHECKS = 1" ; done
+	echo "updating the database"
+	mysql -u $user -p$password -h $host $dbName < $input
 fi
 
 echo "end of the script"
