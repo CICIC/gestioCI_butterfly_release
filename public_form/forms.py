@@ -1,7 +1,30 @@
-		#encoding=utf-8
+#encoding=utf-8
 
 from django import forms
-#from Welcome.models import Person
+from localflavor.es.forms import *
+
+class self_employed_admin_public_form(forms.ModelForm):
+
+	attrs_dict = {'class': 'required'}
+
+	name = forms.RegexField(regex=r'^[\w.@+-]+$',
+							max_length=100,
+							widget=forms.TextInput(),
+							label=_("Nom projecte"),
+							required=False,
+							error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+
+	email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Correu-e projecte"))
+	telephone_cell = ESPhoneNumberField( label=_(u"Telèfon mòbil projecte") )
+	telephone_land = ESPhoneNumberField( label=_(u"Telèfon fix projecte") )
+	project_website = forms.URLField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Web"))
+
+	class Meta:
+		from General.models import Project
+		model = Project
+		fields = [ "name", "email", "telephone_land", "telephone_cell", "project_website"]
+
+
 from Welcome.models import Person
 from django.utils.translation import ugettext_lazy as _
 attrs_dict = {'class': 'required'}
