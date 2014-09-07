@@ -1,14 +1,23 @@
 #encoding=utf-8
 from django.contrib import admin
-
 from django import forms
 from django.forms.extras import widgets
-
 from django.utils.translation import ugettext as _
-
 from Cooper.admin import user_admin_site
-
 from itertools import chain
+from django.contrib.admin import ModelAdmin
+from django.contrib import admin
+
+from public_form.models import human_proxy
+class human_proxy_modeladmin(ModelAdmin):
+	model = human_proxy
+	list_per_page = 600
+	list_display = ('name',)
+	list_display_links = ('name', )
+	change_list_template = 'public_form_self.html'
+user_admin_site.register(human_proxy, human_proxy_modeladmin)
+admin.site.register(human_proxy, human_proxy_modeladmin)
+
 
 from Welcome.models import iC_Akin_Membership
 from Welcome.admin import Public_AkinMembershipAdmin
@@ -110,7 +119,7 @@ user_admin_site.register(Project, ProjectAdmin)
 
 
 from public_form.models import RegistrationProfile
-from django.contrib import admin
+
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin import SimpleListFilter
 #Use this in like => list_filter = (onlyownedFilter,)
