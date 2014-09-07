@@ -24,7 +24,7 @@ class human_proxy_form(forms.ModelForm):
 		model = human_proxy
 		fields = ( "name", "email", "telephone_land", "telephone_cell", "website" )
 
-class learn_session_proxy(forms.ModelForm):
+class learn_session_proxy_form(forms.ModelForm):
 	datetime = forms.DateTimeField(label=_(u"Data sessió "))
 	class Meta:
 		from public_form.models import Learn_Session

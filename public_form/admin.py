@@ -7,51 +7,88 @@ from Cooper.admin import user_admin_site
 from itertools import chain
 from django.contrib.admin import ModelAdmin
 from django.contrib import admin
+from Welcome.models import Learn_Session
+from General.models import Human
+from Cooper.admin import user_admin_site
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
 
 from django.contrib.admin import SimpleListFilter
 
-class type_human_filter (SimpleListFilter):
+class type_session_filter (SimpleListFilter):
 
 	title = _(u'Sessions Acollida i Avaluació')
 	parameter_name = 'learn_session_id'
 
 	def lookups(self, request, model_admin):
-		from General.models import Human
-		from django.db.models import Count
-		welcome_sessions = Human.objects.filter(assist_sessions__record_type__clas="welcome_session")
-		assistance_to_welcome = welcome_sessions.values("assist_sessions").annotate(total_assistants=Count("id")).order_by()
+
+		welcome_sessions = Learn_Session.objects.filter(record_type__clas="welcome_session")
 		yFilters = ()
-
-		for loop_session in assistance_to_welcome:
-
-			if loop_session["assist_sessions"]:
-				from Welcome.models import Learn_Session
-				session = Learn_Session.objects.get(id=loop_session["assist_sessions"])
-
-				message =  _(u"%s asistents %s. ")
-				from django.utils import formats
-				date = formats.date_format(session.datetime, "SHORT_DATETIME_FORMAT")
-				message = message % (date, loop_session["total_assistants"])
-				yFilters = yFilters + ((session.id, message),)
+		for session in welcome_sessions:
+			message =  _(u"%s asistents %s. ")
+			from django.utils import formats
+			date = formats.date_format(session.datetime, "SHORT_DATETIME_FORMAT")
+			message = message % (date, session.assistants.count())
+			yFilters = yFilters + ((session.id, message),)
 		return yFilters
 
 	def queryset(self, request, queryset):
 		#do nothing will be managed in jQuery and templatetags
 		return queryset
 
+class type_human_filter (SimpleListFilter):
+
+	title = _(u"Registe d'assistencia")
+	parameter_name = 'human_id'
+
+	def lookups(self, request, model_admin):
+
+		try:
+			current_human = Human.objects.get(id=request.GET.get("human_id", -1))
+		except ObjectDoesNotExist:
+			current_human = None
+
+		from Welcome.models import Learn_Session
+		try:
+			current_session = Learn_Session.objects.get(id=request.GET.get("learn_session_id", -1))
+		except ObjectDoesNotExist:
+				current_session = None
+
+		if current_session and current_human:
+			welcome_sessions = Learn_Session.objects.filter(record_type__clas="welcome_session")
+			assistance_to_welcome = current_human.addresses.all()
+			self.title = _(u"Adreçes")
+		elif current_session:
+			assistance_to_welcome = current_session.assistants.all()
+			self.title = _(u"Assistents de la sessio: ") + current_session.name
+		elif current_human:
+			assistance_to_welcome = current_human.assist_sessions.all()
+			self.title = _(u"Del huma")
+		else:
+			return
+
+		yFilters = ()
+		for loop_session in assistance_to_welcome:
+			if loop_session:
+				yFilters = yFilters + ((loop_session.id, loop_session.__str__()),)
+		return yFilters
+
+	def queryset(self, request, queryset):
+		#do nothing will be managed in jQuery and templatetags
+		return queryset
 from public_form.models import human_proxy
 from public_form.forms import human_proxy_form
-class human_proxy_modeladmin(ModelAdmin):
+from public_form.admin import type_human_filter, type_session_filter
+class human_proxy_modeladmin(admin.ModelAdmin):
 	model = human_proxy
-
 	form = human_proxy_form
 	list_per_page = 15
-	list_display = ('edit_link', 'email', 'website', 'telephone_land')
+	list_display = ('edit_link', "name", "email", "telephone_land", "telephone_cell", "website")
 	list_display_links = ('edit_link', )
 	change_list_template = 'public_form_self.html'
 	change_form_template = 'public_form_change_self.html'
 	search_fields = ('name',)
-	list_filter = (type_human_filter, )
+	list_filter = (type_human_filter, type_session_filter )
 	def get_actions(self, request):
 		actions = super(human_proxy_modeladmin, self).get_actions(request)
 		del actions['delete_selected']
@@ -60,19 +97,28 @@ class human_proxy_modeladmin(ModelAdmin):
 		if obj is None:
 			return "(None)"
 		else:
-			url = "/cooper/public_form/human_proxy/?human=%s" % (obj.id)
-			message = obj.name
-			return "<a href='%s'>%s</a>" % (url, message)
+			url = "/cooper/public_form/human_proxy/?human_id=%s" % (obj.id)
+			message = obj.name 
+			_class = "class='no_assistant'"
+			if obj.assist_sessions:
+				
+				for session in obj.assist_sessions.all():
+					url = "/cooper/public_form/human_proxy/?human_id=%s" % (obj.id)
+					_class = "class='assistant'"
+					message = message + obj.name.__str__()
+			return "<a %s href='%s'>%s</a>" % (_class, url, message)
 	edit_link.allow_tags = True
-	edit_link.short_description = _(u"Període")
+	edit_link.short_description = _(u"Nom")
+
 	class Media:
 		css = {
 		'all': ('public_form_self.css',)
 		}
-
+from General.models import Human
 user_admin_site.register(human_proxy, human_proxy_modeladmin)
+from public_form.models import RegistrationProfile
+user_admin_site.register(RegistrationProfile)
 admin.site.register(human_proxy, human_proxy_modeladmin)
-
 
 from Welcome.models import iC_Akin_Membership
 from Welcome.admin import Public_AkinMembershipAdmin

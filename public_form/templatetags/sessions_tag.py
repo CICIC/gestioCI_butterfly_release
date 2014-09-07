@@ -6,7 +6,6 @@ from django.utils.translation import ugettext_lazy as _
 register = template.Library()
 
 class sessions_tag_node(template.Node):
-
 	def __init__(self, obj):
 			# saves the passed obj parameter for later use
 			# this is a template.Variable, because that way it can be resolved
@@ -22,7 +21,10 @@ class sessions_tag_node(template.Node):
 			from Welcome.models import Learn_Session
 			from django.core.exceptions import ObjectDoesNotExist
 			try:
-				context['current_session'] = Learn_Session.objects.get( id=obj )
+				current_session = Learn_Session.objects.get( id=obj ) 
+				context['current_session'] = current_session
+				from public_form.forms import learn_session_proxy_form
+				context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
 			except ObjectDoesNotExist:
 				context['current_session'] = _(u"Cap sessió seleccionada.").encode("utf-8")
 			return ''

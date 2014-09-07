@@ -1,3 +1,12 @@
-#content  {
-	width: 800px;
+
+
+.assistant {
+	text-shadow: 0px 0px 1px #BB0000;
+}
+.no_assistant {
+	text-shadow: 0px 0px 1px #00EE00;
+}
+
+.assistance_done {
+	text-shadow: 0px 0px 1px #0044FF;
 }

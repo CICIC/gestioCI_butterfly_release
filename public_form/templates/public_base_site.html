@@ -10,22 +10,41 @@
 {% endblock %}
 
 {% block nav-global %}
+	
+{% endblock %}
+
+{% block assistant_session %}
+<br>
+<br>
 	<div id="learn_session">
 		{% load sessions_tag  %}
+
 		{% block session_list %}
-			{% with request.GET.learn_session_id|default:0  as request_get %}
-				{% sessions_tag request_get %}
-				{{current_session}}
+			{% with request.GET.learn_session_id|default:0 as current_session %}
+				{% sessions_tag current_session %}
+				{% if current_session %}
+					<div class="form-row">
+						<form action="save_form_self_employed" method="POST">
+							<table>
+								<tr><td colspan="2"><label>{% trans "Sessió: " %}{{current_session}}</label></td></tr>
+								{{current_sesion_form.as_table}}
+								<tr><td colspan="2"><input type="submit" value="{% trans 'Assistència a sessio' %}"></td></tr>
+							</table>
+						</form>
+					</div>
+				{% endif %}
 			{% endwith %}
 		{% endblock %}
-
 	</div>
-
-	<br>
 	<div id="human">
+		<br>
 		{% trans "Selecciona soci de referència o project; o afegeix manualment un projecte." as none_message %}
-		{{ request.GET.human|default:none_message }} 
+		{% with request.GET.human_id|default:none_message as current_human %}
+			{% if current_human %}
+				{% include "profile_type.html" with current_human=current_human profile_type="iC_Welcome"  %}
+			{% endif %}
+		{% endwith %}
+		<br>
 	</div>
-	<br>
-	<br>
+	
 {% endblock %}
