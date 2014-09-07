@@ -1,9 +1,9 @@
 #encoding=utf-8
-
+from django.utils.translation import ugettext as _
 from django import forms
 from localflavor.es.forms import *
 
-class self_employed_admin_public_form(forms.ModelForm):
+class human_proxy_form(forms.ModelForm):
 
 	attrs_dict = {'class': 'required'}
 
@@ -17,12 +17,21 @@ class self_employed_admin_public_form(forms.ModelForm):
 	email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Correu-e projecte"))
 	telephone_cell = ESPhoneNumberField( label=_(u"Telèfon mòbil projecte") )
 	telephone_land = ESPhoneNumberField( label=_(u"Telèfon fix projecte") )
-	project_website = forms.URLField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Web"))
+	website = forms.URLField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Web"))
 
 	class Meta:
-		from General.models import Project
-		model = Project
-		fields = [ "name", "email", "telephone_land", "telephone_cell", "project_website"]
+		from public_form.models import human_proxy
+		model = human_proxy
+		fields = ( "name", "email", "telephone_land", "telephone_cell", "website" )
+
+class learn_session_proxy(forms.ModelForm):
+	datetime = forms.DateTimeField(label=_(u"Data sessió "))
+	class Meta:
+		from public_form.models import Learn_Session
+		model = Learn_Session
+		fields = ( "datetime", )
+
+
 
 
 from Welcome.models import Person

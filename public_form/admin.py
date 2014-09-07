@@ -9,12 +9,26 @@ from django.contrib.admin import ModelAdmin
 from django.contrib import admin
 
 from public_form.models import human_proxy
+from public_form.forms import human_proxy_form
 class human_proxy_modeladmin(ModelAdmin):
 	model = human_proxy
-	list_per_page = 600
+
+	form = human_proxy_form
+	list_per_page = 5
 	list_display = ('name',)
 	list_display_links = ('name', )
 	change_list_template = 'public_form_self.html'
+	search_fields = ('name',)
+	def get_actions(self, request):
+		actions = super(human_proxy_modeladmin, self).get_actions(request)
+		del actions['delete_selected']
+		return actions
+
+	class Media:
+		css = {
+		'all': ('public_form_self.css',)
+		}
+
 user_admin_site.register(human_proxy, human_proxy_modeladmin)
 admin.site.register(human_proxy, human_proxy_modeladmin)
 

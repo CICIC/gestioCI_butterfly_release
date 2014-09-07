@@ -46,26 +46,16 @@
 
 {% block content %}
   <div id="content-main">
-    {% block object-tools %}
-      {% if has_add_permission %}
-        <ul class="object-tools">
-          {% block object-tools-items %}
-            <li>
-              {% url cl.opts|admin_urlname:'add' as add_url %}
-              <a href="{% add_preserved_filters add_url is_popup %}" class="addlink">
-				{% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}                
-              </a>
-            </li>
-          {% endblock %}
-        </ul>
-      {% endif %}
-    {% endblock %}
     {% if cl.formset.errors %}
         <p class="errornote">
         {% if cl.formset.total_error_count == 1 %}{% trans "Si us plau corregeix els errors mostrats a sota." %}{% else %}{% trans "Si us plau corregeix els errors mostrats a sota." %}{% endif %}
         </p>
         {{ cl.formset.non_form_errors }}
     {% endif %}
+	<h1>Sessions Acollida i  Avaluació</h1>
+	<p>
+		{% trans "Cercador autocompletar: nom projecte / nom soci referència" %}
+	</p>
     <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
       {% block search %}{% search_form cl %}{% endblock %}
       {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
@@ -92,6 +82,21 @@
       {% block pagination %}{% pagination cl %}{% endblock %}
       </form>
     </div>
+	 {% block object-tools %}
+      {% if has_add_permission %}
+		<br><br>
+        <ul class="object-tools">
+          {% block object-tools-items %}
+            <li>
+              {% url cl.opts|admin_urlname:'add' as add_url %}
+              <a href="{% add_preserved_filters add_url is_popup %}" class="addlink">
+				{% trans "Afegir manualment nou projecte" %}
+              </a>
+            </li>
+          {% endblock %}
+        </ul>
+      {% endif %}
+    {% endblock %}
   </div>
 {% endblock %}
 

@@ -158,3 +158,10 @@ class human_proxy(Human):
 		verbose_name= _(u'FORMULARI AUTOOCUPATS PRESENCIAL')
 		verbose_name_plural= _(u'FORMULARIS AUTOOCUPATS PRESENCIAL')
 		proxy = True
+
+from Welcome.models import Learn_Session
+class learn_Session_proxy(Learn_Session):
+	class Meta:
+		verbose_name= _(u'ASSITÈNCIA SESSIÓ ACOLLIDA')
+		verbose_name_plural= _(u'ASSITÈNCIA SESSIÓ ACOLLIDA')
+		proxy = True
