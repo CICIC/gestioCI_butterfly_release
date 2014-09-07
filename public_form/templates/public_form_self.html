@@ -97,6 +97,13 @@
         </ul>
       {% endif %}
     {% endblock %}
+	{% load sessions_tag  %}
+	{% block session_list %}
+		{% sessions_tag cl.opts %}
+		{% for session in sessions_list %}
+			<br>{{session}}
+		{% endfor %}
+	{% endblock %}
   </div>
 {% endblock %}
 
