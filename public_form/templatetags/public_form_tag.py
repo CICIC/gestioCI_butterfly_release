@@ -78,7 +78,7 @@ class human_tag_node(template.Node):
 				current_session = Human.objects.get( id=obj ) 
 				context['current_human'] = current_session
 			except ObjectDoesNotExist:
-				context['current_human'] = _(u"Cap projecte seleccionat.").encode("utf-8")
+				context['current_human'] = _(u"Cap projecte seleccionat. Selecciona un projecte fent click sobre el nom en la llista.").encode("utf-8")
 			return ''
 
 			
