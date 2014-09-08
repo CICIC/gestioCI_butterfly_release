@@ -2,7 +2,7 @@
 from django import template
 from datetime import date, timedelta, datetime
 from django.utils.translation import ugettext_lazy as _
-
+from django.contrib import messages
 register = template.Library()
 
 class sessions_tag_node(template.Node):
@@ -13,42 +13,50 @@ class sessions_tag_node(template.Node):
 			self.object = template.Variable(obj)
 
 	def render(self, context):
-			# resolve allows the obj to be a variable name, otherwise everything
-			# is a string
-			obj = self.object.resolve(context)
-			# obj now is the object you passed the tag
+		# resolve allows the obj to be a variable name, otherwise everything
+		# is a string
+		obj = self.object.resolve(context)
+		# obj now is the object you passed the tag
 
-			current_human = None
-			current_session = None
-			from django.core.exceptions import ObjectDoesNotExist
+		current_human = None
+		current_session = None
+		from django.core.exceptions import ObjectDoesNotExist
 
-			if obj.GET.has_key("learn_session_id"):
-				from Welcome.models import Learn_Session
-				current_session = Learn_Session.objects.get( id=obj.GET["learn_session_id"] ) 
-				context['current_session'] = current_session
+		if obj.GET.has_key("learn_session_id"):
+			from Welcome.models import Learn_Session
+			current_session = Learn_Session.objects.get( id=obj.GET["learn_session_id"] ) 
+			context['current_session'] = current_session
 
-			if obj.GET.has_key("human_id"):
-				from General.models import Human
-				current_human = Human.objects.get( id=obj.GET["human_id"] ) 
-				context['current_human'] = current_human
+		if obj.GET.has_key("human_id"):
+			from General.models import Human, Project
+			current_human = Human.objects.get( id=obj.GET["human_id"] ) 
+			context['current_human'] = current_human
 
-			if current_human and current_session:
-				if current_human in current_session.assistants.all():
-					from public_form.forms import public_form_self_admin
-					from Welcome.models import iC_Membership
-					from General.models import Project
+		if current_human and current_session:
+			if current_human in current_session.assistants.all():
+				from public_form.forms import public_form_self_admin
+				from Welcome.models import iC_Membership
+				from General.models import Project
+				try:
+					project = Project.objects.get(id=current_human.id)
+					current_membership = iC_Membership( human=project, ic_project=project, join_date=datetime.now())
+					current_membership.name = current_membership
+					current_membership.save()
+				except ObjectDoesNotExist:
 					try:
-						current_membership = iC_Membership( ic_project=Project.objects.get(id=current_human.id), join_date=datetime.now())
+						current_membership = iC_Membership( human=Human.objects.get(id=current_human.id), join_date=datetime.now())
+						current_membership.save()
 					except ObjectDoesNotExist:
-						try:
-							current_membership = iC_Membership( human=Human.objects.get(id=current_human.id), join_date=datetime.now())
-						except ObjectDoesNotExist:
-							current_membership = None
-					context['current_sesion_form'] = public_form_self_admin(instance=current_membership)
-				else:
-					from public_form.forms import learn_session_proxy_form
-					context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
-			return ''
+						current_membership = None
+				print "Pots registar el projecte."
+				form = public_form_self_admin(instance=current_membership)
+				print form 
+				context['current_sesion_form'] = form
+			else:
+				from public_form.forms import learn_session_proxy_form
+				print "Pots confirmar asistència."
+				context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
+		return ''
 
 class human_tag_node(template.Node):
 	def __init__(self, obj):

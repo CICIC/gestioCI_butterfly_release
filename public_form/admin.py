@@ -127,6 +127,36 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 			return mark_safe("<a href='%s'><img src='%s' class='user_grid'></a> | <a %s href='%s'>%s</a>" % (img_link, img_url, _class, url, message))
 	edit_link.allow_tags = True
 	edit_link.short_description = " "
+	def make_mentor_link(self, obj):
+		if obj is None:
+			return "(None)"
+		else:
+			url = "/cooper/public_form/human_proxy/?human_id=%s" % (obj.id)
+			message = obj.name 
+			_class = "class='no_assistant'"
+			img_link = "/cooper/General/human/%s" % (obj.id)
+			img_link_next = "next=/cooper/public_form/human_proxy"
+			img_url = "/static/user_images/Anon_user.png"
+			if obj.assist_sessions:
+				for session in obj.assist_sessions.all():
+					url = "/cooper/public_form/human_proxy/?human_id=%s" % (obj.id)
+					_class = "class='assistant'"
+			try:
+				is_project = Project.objects.get(id=obj.id)
+				img_url = "/static/user_images/Project_user.png"
+				img_link = "/cooper/General/project/%s/?%s" % (obj.id, img_link_next)
+			except ObjectDoesNotExist:
+				try:
+					is_person = Person.objects.get(id=obj.id)
+					img_url = "/static/user_images/Person_user.png"
+					img_link = "/cooper/General/person/%s/?%s" % (obj.id, img_link_next)
+				except:
+					pass
+					message = message + obj.name.__str__()
+
+			return mark_safe("<a href='%s'><img src='%s' class='user_grid'></a> | <a %s href='%s'>%s</a>" % (img_link, img_url, _class, url, message))
+	edit_link.allow_tags = True
+	edit_link.short_description = " "
 
 	def changelist_view(self, request, extra_context=None):
 		response = super(human_proxy_modeladmin, self).changelist_view(request, extra_context)

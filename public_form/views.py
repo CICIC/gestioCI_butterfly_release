@@ -896,7 +896,7 @@ def save_form_self_employed(request):
 			if request.POST.has_key("public_form_action"):
 				if request.POST["public_form_action"] ==  "public_form_action_join_session":
 					try:
-						current_human = Project.objects.get(id=request.POST["current_human"])
+						current_human = Human.objects.get(id=request.POST["current_human"])
 					except ObjectDoesNotExist:
 						current_human = None
 						messages.warning(request, _(u"No s'ha trobat al humà") )
@@ -916,10 +916,12 @@ def save_form_self_employed(request):
 							messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 						try:
 							current_human.save()
+							messages.info(request, "S'ha afegit el projecte a la sessió." )
 						except Exception as e:
 							messages.error(request, '%s (%s)' % (e.message, type(e)) )
 							messages.info(request, _(u"S'ha establert l'assistència a la sessió.") )
-
+					else:
+						messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 					return HttpResponseRedirect(
 						"/cooper/public_form/human_proxy/?human_id=%s&learn_session_id=%s" % (current_human.id,current_session.id))
 			else:

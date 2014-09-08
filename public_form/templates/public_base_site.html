@@ -27,8 +27,10 @@
 									<tr><td colspan="2"><label>{% trans "Projecte: " %}<i>{{current_human}} {{current_human.self_link}}</i></label></td></tr>
 									<tr><td colspan="2"><label>{% trans "Sessió: " %}<i>{{current_session}}</i></label></td></tr>
 									{{current_sesion_form.as_table}}
-									{% if current_human.id and current_session.id %}
-									<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a la sessió' %}"{{current_session}}></td></tr>
+									{% if current_human in current_session.assistants %}
+										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a la sessió' %}"{{current_session}}></td></tr>
+									{% else %}
+										<tr><td colspan="2"><input type="submit" value="{% trans 'Actualizar dades' %}"></td></tr>
 									{% endif %}
 								</table>
 								<input type="hidden" value="public_form_action_join_session" name="public_form_action">
