@@ -185,6 +185,7 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 		css = {
 		'all': ('public_form_self.css',)
 		}
+		js = (	'public_form_self.js', )
 
 from General.models import Human
 user_admin_site.register(human_proxy, human_proxy_modeladmin)
@@ -293,15 +294,9 @@ from General.admin import ProjectAdmin
 class Public_ProjectAdmin(ProjectAdmin):
 
 	def response_change(self, request, obj):
-		print "sdddddddddddddddddddddddddddddddddddddddddddddi"
-		from django.http import HttpResponseRedirect, HttpResponse
-		from django.core.urlresolvers import reverse
-		""" if user clicked "edit this page", return back to main site """
-		response = super(Public_ProjectAdmin, self).response_change(request, obj)
 
-		print "si paso"
+		response = super(Public_ProjectAdmin, self).response_change(request, obj)
 		if request.GET.has_key('next'):
-			print "si entro"
 			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
 				if request.GET.get('next') == 'public_form':
 					response['location'] = reverse('public_form:entry_page_to_gestioci')
@@ -310,9 +305,7 @@ class Public_ProjectAdmin(ProjectAdmin):
 
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
-
-
-			return response
+		return response
 user_admin_site.register(Project, Public_ProjectAdmin)
 
 

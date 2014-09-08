@@ -35,8 +35,7 @@
 									{{current_sesion_form.as_table}}
 									{% if current_human in current_session.assistants.all %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Actualitzar dades' %}"></td></tr>
-
-									{% elif current_session %}
+									{% elif current_session and current_human.id %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a la sessió' %}"{{current_session}}></td></tr>
 									{% endif %}
 								</table>

@@ -62,6 +62,7 @@ class public_form_self_admin(forms.ModelForm):
 	tent_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=f, label=_(u"Tipus parada firaire"))
 	virtual_market = forms.BooleanField(label=_(u"Mercat Virtual"))
 	expositors = forms.ChoiceField(widget=forms.RadioSelect(), choices=(), label=_(u"Expositors"))
+
 	mentor_of_SE = forms.ChoiceField(widget=forms.RadioSelect(), choices=(), label=_(u"SOCI DE REFERÈNCIA"))
 
 	def __init__(self, *args, **kwargs):
@@ -72,7 +73,7 @@ class public_form_self_admin(forms.ModelForm):
 	class Meta:
 		from Welcome.models import iC_Membership
 		model = iC_Membership
-		fields = ( "ic_project", "description", "project_type")
+		fields = ( "description", "project_type",)
 
 
 

@@ -42,7 +42,9 @@ class sessions_tag_node(template.Node):
 					current_membership.save()
 				except ObjectDoesNotExist:
 					try:
-						current_membership = iC_Membership( human=Human.objects.get(id=current_human.id), join_date=datetime.now())
+						human = Human.objects.get(id=current_human.id)
+						project = Project.objects.get(id=current_human.id)
+						current_membership = iC_Membership( human=human, ic_project=project, join_date=datetime.now())
 						current_membership.save()
 					except ObjectDoesNotExist:
 						current_membership = None
