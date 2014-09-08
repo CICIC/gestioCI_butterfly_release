@@ -25,12 +25,10 @@ class sessions_tag_node(template.Node):
 		if obj.GET.has_key("learn_session_id"):
 			from Welcome.models import Learn_Session
 			current_session = Learn_Session.objects.get( id=obj.GET["learn_session_id"] ) 
-			context['current_session'] = current_session
 
 		if obj.GET.has_key("human_id"):
 			from General.models import Human, Project
 			current_human = Human.objects.get( id=obj.GET["human_id"] ) 
-			context['current_human'] = current_human
 
 		if current_human and current_session:
 			if current_human in current_session.assistants.all():
@@ -56,6 +54,9 @@ class sessions_tag_node(template.Node):
 				from public_form.forms import learn_session_proxy_form
 				print "Pots confirmar asistència."
 				context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
+
+		context['current_session'] = current_session
+		context['current_human'] = current_human
 		return ''
 
 class human_tag_node(template.Node):
