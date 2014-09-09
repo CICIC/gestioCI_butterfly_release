@@ -45,7 +45,7 @@ class ForeignKeyRawIdWidget(forms.TextInput):
 		A Widget for displaying ForeignKeys in the "raw_id" interface rather than
 		in a <select> box.
 		"""
-		def __init__(self, rel, admin_site, attrs=None, using=None):
+		def __init__(self, rel, admin_site, attrs=None, using=None, can_add_related=None, can_change_related=None, can_delete_related=None):
 				self.rel = rel
 				self.admin_site = admin_site
 				self.db = using
@@ -101,7 +101,7 @@ class ForeignKeyRawIdWidget(forms.TextInput):
 				except (ValueError, self.rel.to.DoesNotExist):
 						return ''
 
-class ManyToManyRawIdWidget(ForeignKeyRawIdWidget):
+class contrib_RelatedFieldWidgetWrapper(ForeignKeyRawIdWidget):
 		"""
 		A Widget for displaying ManyToMany ids in the "raw_id" interface rather than
 		in a <select multiple> box.
@@ -129,7 +129,7 @@ class ManyToManyRawIdWidget(ForeignKeyRawIdWidget):
 				if value:
 						return value.split(',')
 
-class contrib_RelatedFieldWidgetWrapper(forms.Widget):
+class DEPRECATED_contrib_RelatedFieldWidgetWrapper(forms.Widget):
 		"""
 		This class is a wrapper to a given widget to add the add icon for the
 		admin interface.
@@ -144,38 +144,38 @@ class contrib_RelatedFieldWidgetWrapper(forms.Widget):
 				# Backwards compatible check for whether a user can add related
 				# objects.
 				if can_add_related is None:
-						can_add_related = rel.to in admin_site._registry
+					can_add_related = rel.to in admin_site._registry
 				self.can_add_related = can_add_related
 				# so we can check if the related object is registered with this AdminSite
 				self.admin_site = admin_site
 
 		def __deepcopy__(self, memo):
-				obj = copy.copy(self)
-				obj.widget = copy.deepcopy(self.widget, memo)
-				obj.attrs = self.widget.attrs
-				memo[id(self)] = obj
-				return obj
+			obj = copy.copy(self)
+			obj.widget = copy.deepcopy(self.widget, memo)
+			obj.attrs = self.widget.attrs
+			memo[id(self)] = obj
+			return obj
 
 		@property
 		def media(self):
-				return self.widget.media
+			return self.widget.media
 
 		def render(self, name, value, *args, **kwargs):
-				from django.contrib.admin.views.main import TO_FIELD_VAR
-				rel_to = self.rel.to
-				info = (rel_to._meta.app_label, rel_to._meta.model_name)
-				self.widget.choices = self.choices
-				output = [self.widget.render(name, value, *args, **kwargs)]
-				if self.can_add_related:
-						related_url = reverse('admin:%s_%s_add' % info, current_app=self.admin_site.name)
-						url_params = '?%s=%s' % (TO_FIELD_VAR, self.rel.get_related_field().name)
-						# TODO: "add_id_" is hard-coded here. This should instead use the
-						# correct API to determine the ID dynamically.
-						output.append('<a href="%s%s" class="add-another" id="add_id_%s" onclick="return showAddAnotherPopup(this);"> '
-													% (related_url, url_params, name))
-						output.append('<img src="%s" width="10" height="10" alt="%s"/></a>'
-													% (static('admin/img/icon_addlink.gif'), _('Add Another')))
-				return mark_safe(''.join(output))
+			from django.contrib.admin.views.main import TO_FIELD_VAR
+			rel_to = self.rel.to
+			info = (rel_to._meta.app_label, rel_to._meta.model_name)
+			self.widget.choices = self.choices
+			output = [self.widget.render(name, value, *args, **kwargs)]
+			if self.can_add_related:
+					related_url = reverse('admin:%s_%s_add' % info, current_app=self.admin_site.name)
+					url_params = '?%s=%s' % (TO_FIELD_VAR, self.rel.get_related_field().name)
+					# TODO: "add_id_" is hard-coded here. This should instead use the
+					# correct API to determine the ID dynamically.
+					output.append('<a href="%s%s" class="add-another" id="add_id_%s" onclick="return showAddAnotherPopup(this);"> '
+												% (related_url, url_params, name))
+					output.append('<img src="%s" width="10" height="10" alt="%s"/></a>'
+												% (static('admin/img/icon_addlink.gif'), _('Add Another')))
+			return mark_safe(''.join(output))
 
 		def build_attrs(self, extra_attrs=None, **kwargs):
 				"Helper function for building an attribute dictionary."
@@ -191,75 +191,113 @@ class contrib_RelatedFieldWidgetWrapper(forms.Widget):
 from django.utils.translation import ugettext_lazy as _
 
 class RelatedFieldWidgetWrapper(contrib_RelatedFieldWidgetWrapper):
-		
-		class Media:
-				js = ("%swidgets/admin/js/related-widget-wrapper.js" % settings.STATIC_URL,)
-		
-		def __init__(self, *args, **kwargs):
-				self.can_change_related = kwargs.pop('can_change_related', None)
-				self.can_delete_related = kwargs.pop('can_delete_related', None)
-				super(RelatedFieldWidgetWrapper, self).__init__(*args, **kwargs)
-		
-		@classmethod
-		def from_contrib_wrapper(cls, wrapper, can_change_related, can_delete_related):
-				return cls(wrapper.widget, wrapper.rel, wrapper.admin_site,
-									 can_add_related=wrapper.can_add_related,
-									 can_change_related=can_change_related,
-									 can_delete_related=can_delete_related)
-		
-		def get_related_url(self, rel_to, info, action, args=[]):
-				return reverse("admin:%s_%s_%s" % (info + (action,)), current_app=self.admin_site.name, args=args)
-		
-		def render(self, name, value, attrs={}, *args, **kwargs):
-				rel_to = self.rel.to
-				info = (rel_to._meta.app_label, rel_to._meta.object_name.lower())
-				self.widget.choices = self.choices
-				attrs['class'] = ' '.join((attrs.get('class', ''), 'related-widget-wrapper'))
-				context = {'widget': self.widget.render(name, value, attrs, *args, **kwargs),
-									 'name': name,
-									 'media_prefix': settings.STATIC_URL,
-									 'can_change_related': self.can_change_related,
-									 'can_add_related': self.can_add_related,
-									 'can_delete_related': self.can_delete_related}
-				if self.can_change_related:
-						if value:
-								context['change_url'] = self.get_related_url(rel_to, info, 'change', [value])
-						template = self.get_related_url(rel_to, info, 'change', ['%s'])
-						context.update({
-														'change_url_template': template,
-														'change_help_text': _('Change related model')
-														})
-				if self.can_add_related:
-						context.update({
-														'add_url': self.get_related_url(rel_to, info, 'add'),
-														'add_help_text': _('Add Another')
-														})
-				if self.can_delete_related:
-						if value:
-								context['delete_url'] = self.get_related_url(rel_to, info, 'delete', [value])
-						template = self.get_related_url(rel_to, info, 'delete', ['%s'])
-						context.update({
-														'delete_url_template': template,
-														'delete_help_text': _('Delete related model')
-														})
-				
-				return mark_safe(render_to_string('related-widget-wrapper.html', context))
+
+	class Media:
+			js = ("%srelated-widget-wrapper.js" % settings.STATIC_URL,)
+
+	def __init__(self, *args, **kwargs):
+			self.can_add_related = kwargs.pop('can_add_related', None)
+			self.can_change_related = kwargs.pop('can_change_related', None)
+			self.can_delete_related = kwargs.pop('can_delete_related', None)
+			super(RelatedFieldWidgetWrapper, self).__init__(*args, **kwargs)
+
+	@classmethod
+	def from_contrib_wrapper(cls, wrapper, admin_site, can_add_related, can_change_related, can_delete_related):
+			return cls(wrapper.rel, admin_site, None, None,
+				 can_add_related=can_add_related,
+				 can_change_related=can_change_related,
+				 can_delete_related=can_delete_related)
+	
+	def get_related_url(self, rel_to, info, action, args=[]):
+		return reverse("admin:%s_%s_%s" % (info + (action,)), current_app=self.admin_site.name, args=args)
+
+	def render(self, name, value, attrs={}, *args, **kwargs):
+		rel_to = self.rel.to
+		if attrs is None:
+			attrs = {}
+		extra = []
+		if rel_to in self.admin_site._registry:
+			# The related object is registered with the same AdminSite
+			related_url = reverse(
+					'admin:%s_%s_changelist' % (
+							rel_to._meta.app_label,
+							rel_to._meta.model_name,
+					),
+					current_app=self.admin_site.name,
+			)
+
+			params = self.url_parameters()
+			if params:
+					url = '?' + '&amp;'.join('%s=%s' % (k, v) for k, v in params.items())
+			else:
+					url = ''
+			if "class" not in attrs:
+				attrs['class'] = 'hForeignKeyRawIdAdminField'	# The JavaScript code looks for this hook.
+				#but if you want to get original hook class it as: hForeignKeyRawIdAdminField -->ALEPH
+			# TODO: "lookup_id_" is hard-coded here. This should instead use
+			# the correct API to determine the ID dynamically.
+			extra.append('<a href="%s%s" class="related-lookup" id="lookup_id_%s" onclick="return showRelatedObjectLookupPopup(this);"> ' % (related_url, url, name))
+			extra.append('<img src="%s" width="16" height="16" alt="%s" /></a>' %
+					(static('admin/img/selector-search.gif'), _('Lookup')))
+		output = [super(ForeignKeyRawIdWidget, self).render(name, value, attrs)] + extra
+		if value:
+			output.append(self.label_for_value(value))
+		info = (rel_to._meta.app_label, rel_to._meta.object_name.lower())
+		attrs['class'] = ' '.join((attrs.get('class', ''), 'related-widget-wrapper'))
+		context = {
+		 'widget' : mark_safe(''.join(output)),
+		 'name': name,
+		 'media_prefix': settings.STATIC_URL,
+		 'can_change_related': self.can_change_related,
+		 'can_add_related': self.can_add_related,
+		 'can_delete_related': self.can_delete_related,
+		}
+		if self.can_change_related:
+				if value:
+					context['change_url'] = self.get_related_url(rel_to, info, 'change', [value])
+				template = self.get_related_url(rel_to, info, 'change', ['%s'])
+				context.update({
+				'change_url_template': template,
+				'change_help_text': _('Change related model')
+				})
+		if self.can_add_related:
+				context.update({
+				'add_url': self.get_related_url(rel_to, info, 'add'),
+				'add_help_text': _('Add Another')
+				})
+		if self.can_delete_related:
+				if value:
+					context['delete_url'] = self.get_related_url(rel_to, info, 'delete', [value])
+				template = self.get_related_url(rel_to, info, 'delete', ['%s'])
+				context.update({
+				'delete_url_template': template,
+				'delete_help_text': _('Delete related model')
+				})
+		return  mark_safe(render_to_string('related-widget-wrapper.html', context))
 
 class RelatedWidgetWrapperAdmin(admin.ModelAdmin):
 
 		def formfield_for_dbfield(self, db_field, **kwargs):
-				formfield = super(RelatedWidgetWrapperAdmin, self).formfield_for_dbfield(db_field, **kwargs)
-				if (formfield and
-						isinstance(formfield.widget, admin.widgets.RelatedFieldWidgetWrapper) and
-						not isinstance(formfield.widget.widget, SelectMultiple)):
-						request = kwargs.pop('request', None)
-						related_modeladmin = self.admin_site._registry.get(db_field.rel.to)
-						can_change_related = bool(related_modeladmin and
-																			related_modeladmin.has_change_permission(request))
-						can_delete_related = bool(related_modeladmin and
-																			related_modeladmin.has_delete_permission(request))
-						widget = RelatedFieldWidgetWrapper.from_contrib_wrapper(formfield.widget,
-																																		can_change_related,
-																																		can_delete_related)
-						formfield.widget = widget
-				return formfield
+			formfield = super(RelatedWidgetWrapperAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+			if (formfield and isinstance(formfield.widget, admin.widgets.ForeignKeyRawIdWidget)):
+				request = kwargs.pop('request', None)
+
+				related_modeladmin = self.admin_site._registry.get(db_field.rel.to)
+
+				can_add_related = bool(related_modeladmin and
+				related_modeladmin.has_add_permission(request))
+
+				can_change_related = bool(related_modeladmin and
+				related_modeladmin.has_change_permission(request))
+
+				can_delete_related = bool(related_modeladmin and
+				related_modeladmin.has_delete_permission(request))
+
+				widget = RelatedFieldWidgetWrapper.from_contrib_wrapper(
+					formfield.widget, 
+					self.admin_site, 
+					can_add_related,
+					can_change_related,
+					can_delete_related)
+				formfield.widget = widget
+			return formfield
