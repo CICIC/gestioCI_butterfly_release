@@ -5,8 +5,6 @@
 {% block branding %}
 	<h1 id="site-name"><a href="{% url 'admin:index' %}">{% trans "CIC | Gesti&oacute; Integral Cooperatives" %}</a></h1>
 	{% include 'admin/change_language.html' %} <br>	<br>
-	&nbsp;&nbsp;<a href="{% url 'public_form:entry_page_to_gestioci' %}">{% trans "Anar a la Pàgina d'entrada" %}</a>
-	<br><br>
 {% endblock %}
 
 {% block nav-global %}
