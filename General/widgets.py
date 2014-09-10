@@ -285,6 +285,7 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 		return  mark_safe(render_to_string('related-widget-wrapper.html', context))
 
 class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
+
 	def get_form(self, request, obj=None, **kwargs):
 		from functools import partial
 		kwargs['formfield_callback'] = partial(self.formfield_for_dbfield, request=request, obj=obj)
@@ -320,6 +321,15 @@ class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
 		return formfield
 
 	def response_change(self, request, obj):
+		if '_popup' in request.REQUEST:
+			pk_value = obj._get_pk_val()
+			return HttpResponse('<script type="text/javascript">opener.dismissEditRelatedPopup(window, "%s", "%s");</script>' % \
+			# escape() calls force_unicode.
+			(escape(pk_value), escapejs(obj)))
+		else:
+			return super(ForeignKeyRawIdWidgetWrapperAdmin, self).response_change(request, obj)
+
+	def response_add(self, request, obj):
 		if '_popup' in request.REQUEST:
 			pk_value = obj._get_pk_val()
 			return HttpResponse('<script type="text/javascript">opener.dismissEditRelatedPopup(window, "%s", "%s");</script>' % \

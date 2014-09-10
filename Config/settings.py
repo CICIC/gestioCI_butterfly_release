@@ -195,6 +195,7 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "templates"),
 		BASE_DIR + '/Invoices/templates/',
 		BASE_DIR + '/General/templates/',
+		BASE_DIR + '/General/templatetags/',
 		BASE_DIR + '/Welcome/templates/',
 		BASE_DIR + '/public_form/templates/',
 		BASE_DIR + '/public_form/templates/css',
