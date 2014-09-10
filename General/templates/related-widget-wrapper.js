@@ -1,17 +1,23 @@
+function dismissRelatedLookupPopup(win, chosenId) {
+    var name = windowname_to_id(win.name);
+    var elem = document.getElementById(name);
+    if (elem.className.indexOf('vManyToManyRawIdAdminField') != -1 && elem.value) {
+        elem.value += ',' + chosenId;
+    } else {
+        document.getElementById(name).value = chosenId;
+    }
+    win.close();
+}
+
 function dismissEditRelatedPopup(win, objId, newRepr) {
+
 	objId = html_unescape(objId);
 	newRepr = html_unescape(newRepr);
 	var name = windowname_to_id(win.name).replace(/^edit_/, '');;
 	var elem = document.getElementById(name);
-	if (elem) {
-		var opts = elem.options,
-				l = opts.length;
-		for (var i = 0; i < l; i++) {
-			if (opts[i] && opts[i].value == objId) {
-				opts[i].innerHTML = newRepr;
-			}
-		}
-	}
+
+	document.getElementById(name + '_desc').innerHTML = newRepr;
+	document.getElementById(name).value = objId;
 	win.close();
 };
 
@@ -25,6 +31,20 @@ if (!dismissAddAnotherPopup.original) {
 		$('#' + id).trigger('change');
 	};
 	dismissAddAnotherPopup.original = originalDismissAddAnotherPopup;
+}
+
+function showAddAnotherPopup(triggeringLink) {
+    var name = triggeringLink.id.replace(/^add_/, '');
+    name = id_to_windowname(name);
+    href = triggeringLink.href
+    if (href.indexOf('?') == -1) {
+        href += '?_popup=1';
+    } else {
+        href  += '&_popup=1';
+    }
+    var win = window.open(href, name, 'height=800,width=800,resizable=yes,scrollbars=yes');
+    win.focus();
+    return false;
 }
 
 django.jQuery(document).ready(function() {

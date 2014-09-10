@@ -18,8 +18,8 @@ from django.forms.models import BaseInlineFormSet
 from django.forms.formsets import formset_factory
 
 
-from General.widgets import RelatedWidgetWrapperAdmin
-class AutoRecordName(RelatedWidgetWrapperAdmin):
+from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
+class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 	class Media:
 		css = {
 			'all': ('admin_record.css',)

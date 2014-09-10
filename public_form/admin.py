@@ -132,7 +132,7 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 			return "(None)"
 		else:
 			url = "/cooper/public_form/human_proxy/?human_id=%s" % (obj.id)
-			message = obj.name 
+			message = _(u"Fer-lo mentor del projecte seleccionat")
 			_class = "class='no_assistant'"
 			img_link = "/cooper/General/human/%s" % (obj.id)
 			img_link_next = "next=/cooper/public_form/human_proxy"
@@ -152,18 +152,11 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 					img_link = "/cooper/General/person/%s/?%s" % (obj.id, img_link_next)
 				except:
 					pass
-					message = message + obj.name.__str__()
+					message = message
 
 			return mark_safe("<a href='%s'><img src='%s' class='user_grid'></a> | <a %s href='%s'>%s</a>" % (img_link, img_url, _class, url, message))
-	edit_link.allow_tags = True
-	edit_link.short_description = " "
-
-	def changelist_view(self, request, extra_context=None):
-		response = super(human_proxy_modeladmin, self).changelist_view(request, extra_context)
-		print request.GET.has_key('human_id')
-		print request.GET.has_key('learn_session_id')
-
-		return response
+	make_mentor_link.allow_tags = True
+	make_mentor_link.short_description = _(u"Mentor")
 
 	def save_model(self, request, obj, form, change):
 		current_project = obj
