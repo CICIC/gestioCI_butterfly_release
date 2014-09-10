@@ -1,16 +1,26 @@
 function dismissRelatedLookupPopup(win, chosenId, newRepr) {
-    dismissEditRelatedPopup(win, chosenId, newRepr);
+	var name = windowname_to_id(win.name);
+	var elem = document.getElementById(name);
+	is_many = elem.className.indexOf('vManyToManyRawIdAdminField') != -1 && elem.value
+	dismissEditRelatedPopup(win, chosenId, newRepr, is_many);
 }
 
-function dismissEditRelatedPopup(win, objId, newRepr) {
-
+function dismissEditRelatedPopup(win, objId, newRepr, is_many=-1) {
 	objId = html_unescape(objId);
 	newRepr = html_unescape(newRepr);
 	var name = windowname_to_id(win.name).replace(/^edit_/, '');;
 	var elem = document.getElementById(name);
 
-	document.getElementById(name + '_desc').innerHTML = newRepr;
-	document.getElementById(name).value = objId;
+	if ( is_many ) {
+		var ul = document.getElementById("ul_" + name);
+		var li = document.createElement("li");
+		li.appendChild(document.createTextNode(newRepre));
+	} else
+	{
+		document.getElementById(name + '_desc').innerHTML = newRepr;
+		document.getElementById(name).value = objId;
+	}
+
 	win.close();
 };
 
@@ -38,6 +48,21 @@ function showAddAnotherPopup(triggeringLink) {
     var win = window.open(href, name, 'height=800,width=800,resizable=yes,scrollbars=yes');
     win.focus();
     return false;
+}
+
+function remove_item(obj, ul_li_name, hidden_ids_inputtext_name, id_to_remove){
+
+	document.getElementById(ul_li_name).remove();
+	ids_array = document.getElementById(hidden_ids_inputtext_name).value;
+	new_ids_array = [];
+	for(var i = ids_array.length; i--;) {
+		if(ids_array[i] != id_to_remove) {
+			alert(ids_array[i]);
+			new_ids_array.push(ids_array[i]);
+		}
+	}
+	document.getElementById(hidden_ids_inputtext_name).value = new_ids_array
+
 }
 
 django.jQuery(document).ready(function() {
