@@ -78,7 +78,7 @@ class contrib_ForeignKeyRawIdWidgetWrapper(ForeignKeyRawIdWidget):
 					attrs = {}
 			if self.rel.to in self.admin_site._registry:
 					# The related object is registered with the same AdminSite
-					attrs['class'] = 'vForeignKeyRawIdWidget'
+					attrs['class'] = 'vForeignKffeyRawIdWidget'
 			if value:
 					value = ','.join(force_text(v) for v in value)
 			else:
@@ -108,7 +108,6 @@ class ManyToManyRawIdWidget(ForeignKeyRawIdWidget):
         if value:
             return value.split(',')
 
-
 class contrib_ManyToManyRawIdWidgetWrapper(ManyToManyRawIdWidget):
 
     def url_parameters(self):
@@ -120,10 +119,9 @@ class contrib_ManyToManyRawIdWidgetWrapper(ManyToManyRawIdWidget):
         value = data.get(name)
         if value:
             return value.split(',')
-
+        
 
 from django.utils.translation import ugettext_lazy as _
-
 
 class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 
@@ -170,7 +168,7 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 			else:
 				url = ''
 			if "class" not in attrs:
-				attrs['class'] = 'vForeignKeyRawIdAdminField'	# The JavaScript code looks for this hook.
+				attrs['class'] = 'vForeignKdddddeyRawIdAdminField'	# The JavaScript code looks for this hook.
 				#but if you want to get original hook class it as: hForeignKeyRawIdAdminField -->ALEPH
 			# TODO: "lookup_id_" is hard-coded here. This should instead use
 			# the correct API to determine the ID dynamically.
@@ -238,17 +236,16 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 		return reverse("admin:%s_%s_%s" % (info + (action,)), current_app=self.admin_site.name, args=args)
 
 	def manytomany_to_ul(self, field_name, manytomany_manager):
+		hidden_ids_text_name = "id_%s" % ( field_name )
+		output = '<ul id="ul_%s" name="ul_%s">' % ( hidden_ids_text_name, hidden_ids_text_name)
 		if manytomany_manager.all().count() > 0:
-			hidden_ids_text_name = "id_%s" % ( field_name )
-			output = "<ul id='ul_%s' name='ul_%s' style='width:%spx; margin-left:%spx'>" % ( hidden_ids_text_name, hidden_ids_text_name, 1740,-40)
 			for obj in manytomany_manager.all():
 				name = "manytomany_%s_%s" % ( field_name, obj.id )
 				java_remove = format_html(' onclick="remove_item(window,&#39;{0}&#39;,&#39;{1}&#39;, &#39;{2}&#39;); return false;"', name, hidden_ids_text_name, obj.id)
 				out_link = "<a %s href='javascript:void;'>%s</a>" % ( java_remove, _(u"Treu").encode("utf-8") )
 				output += "<li name='%s' id='%s' value='%s'>%s - %s</li>" % (name, name, obj.id, obj, out_link)
-			return mark_safe(output + "</ul>")
-		else:
-			return _("(Cap)")
+		return mark_safe(output + "</ul>")
+
 	def render(self, name, value, attrs={}, *args, **kwargs):
 		rel_to = self.rel.to
 		if attrs is None:
@@ -270,13 +267,15 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 			else:
 				url = ''
 			if "class" not in attrs:
-				attrs['class'] = 'vManyToManyRawIdAdminField'	# The JavaScript code looks for this hook.
+				attrs['class'] = 'vManyToManyfdhdfhRawIdAdminField'	# The JavaScript code looks for this hook.
 				#but if you want to get original hook class it as: hForeignKeyRawIdAdminField -->ALEPH
 			# TODO: "lookup_id_" is hard-coded here. This should instead use
 			# the correct API to determine the ID dynamically.
 			extra.append('<a href="%s%s" class="related-lookup" id="lookup_id_%s" onclick="return showRelatedObjectLookupPopup(this);"> ' % (related_url, url, name))
 			extra.append('<img src="%s" width="16" height="16" alt="%s" /></a>' %
 					(static('admin/img/selector-search.gif'), _('Lookup')))
+			if isinstance(value, (tuple, list)):
+				value = ','.join(str(x) for x in value)
 		output = [super(ForeignKeyRawIdWidget, self).render(name, value, attrs)] + extra
 		if value:
 			output.append(self.label_for_value(value))
@@ -313,7 +312,6 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 			'delete_help_text': _('Delete related model')
 			})
 		return  mark_safe(render_to_string('related-widget-wrapper.html', context))
-
 
 class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
 

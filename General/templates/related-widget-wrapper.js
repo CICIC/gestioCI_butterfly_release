@@ -1,9 +1,11 @@
 function dismissRelatedLookupPopup(win, chosenId, newRepr) {
 	var name = windowname_to_id(win.name);
 	var elem = document.getElementById(name);
-	is_many = elem.className.indexOf('vManyToManyRawIdAdminField') != -1 && elem.value
+	is_many = elem.className.indexOf('vManyToManyRawIdAdminField') != -1 
+
 	dismissEditRelatedPopup(win, chosenId, newRepr, is_many);
 }
+
 
 function dismissEditRelatedPopup(win, objId, newRepr, is_many=-1) {
 	objId = html_unescape(objId);
@@ -11,17 +13,41 @@ function dismissEditRelatedPopup(win, objId, newRepr, is_many=-1) {
 	var name = windowname_to_id(win.name).replace(/^edit_/, '');;
 	var elem = document.getElementById(name);
 
-	if ( is_many ) {
-		var ul = document.getElementById("ul_" + name);
-		var li = document.createElement("li");
-		li.appendChild(document.createTextNode(newRepre));
+	ids_array = elem.value.split(",");
+	for(var i = ids_array.length; i--;) {
+		if(ids_array[i] == objId ) {
+			return;
+		}
+	}
+
+	if ( !is_many ) {
+		if ( elem.value) {
+			elem.value += ',' + objId;
+		} else {
+			elem.value = objId;
+		}
+		var list = document.getElementById("ul_" + name);
+
+		var lab = document.createElement ("label");
+		li_name = "manytomany_" + name + "_" + objId;
+		java_remove = "onclick='remove_item(window, &#39;{0}&#39;,&#39;{1}&#39;,&#39;{2}&#39;); return false;'";
+		java_remove = java_remove.replace("{0}", li_name).replace("{1}", name).replace("{2}", objId);
+
+		out_link = "<a {0} href='javascript:void;'>{1}</a>";
+		out_link = out_link.replace("{0}", java_remove).replace("{1}", gettext("Treu") );
+
+		output = "<span name='{0}' id='{1}' value='{2}'>{3} - {4}</span>";
+		output = output.replace("{0}", li_name).replace("{1}", li_name).replace("{2}", objId).replace("{3}", newRepr).replace("{4}", out_link);
+		var li = document.createElement ("LI");
+		li.innerHTML = output
+		list.appendChild(li);
+		
 	} else
 	{
 		document.getElementById(name + '_desc').innerHTML = newRepr;
 		document.getElementById(name).value = objId;
 	}
-
-	win.close();
+	win.close;
 };
 
 if (!dismissAddAnotherPopup.original) {
@@ -52,12 +78,16 @@ function showAddAnotherPopup(triggeringLink) {
 
 function remove_item(obj, ul_li_name, hidden_ids_inputtext_name, id_to_remove){
 
-	document.getElementById(ul_li_name).remove();
-	ids_array = document.getElementById(hidden_ids_inputtext_name).value;
+	var elem = document.getElementById(hidden_ids_inputtext_name);
+	if ( elem.className.indexOf('vManyToManyRawIdAdminField') == -1 ) {
+		document.getElementById(ul_li_name).remove();
+	}else {
+		document.getElementById(ul_li_name).parent.remove();
+	}
+	ids_array = elem.value.split(",");
 	new_ids_array = [];
 	for(var i = ids_array.length; i--;) {
-		if(ids_array[i] != id_to_remove) {
-			alert(ids_array[i]);
+		if(ids_array[i] != id_to_remove ) {
 			new_ids_array.push(ids_array[i]);
 		}
 	}
@@ -79,7 +109,7 @@ django.jQuery(document).ready(function() {
   		siblings.each(function(){
   			var elm = $(this);
   			elm.attr('href', interpolate(elm.attr(hrefTemplateAttr), [val]));
-  		});
+		});
   	} else siblings.removeAttr('href');
   });
 	
