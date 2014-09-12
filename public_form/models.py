@@ -155,8 +155,8 @@ class RegistrationProfile(models.Model):
 from General.models import Human
 class human_proxy(Human):
 	class Meta:
-		verbose_name= _(u'Projecte | Persona')
-		verbose_name_plural= _(u'Projectes | Persones')
+		verbose_name= _(u"FORMULARI AUTOOCUPATS PRESENCIAL")
+		verbose_name_plural= _(u'FORMULARIS AUTOOCUPATS PRESENCIAL')
 		proxy = True
 
 from Welcome.models import Learn_Session
