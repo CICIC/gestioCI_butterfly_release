@@ -63,10 +63,10 @@ class ForeignKeyRawIdWidget(forms.TextInput):
 	def label_for_value(self, value):
 		key = self.rel.get_related_field().name
 		try:
-				obj = self.rel.to._default_manager.using(self.db).get(**{key: value})
-				return '&nbsp;<strong>%s</strong>' % escape(Truncator(obj).words(14, truncate='...'))
+			obj = self.rel.to._default_manager.using(self.db).get(**{key: value})
+			return '&nbsp;<strong>%s</strong>' % escape(Truncator(obj).words(14, truncate='...'))
 		except (ValueError, self.rel.to.DoesNotExist):
-				return ''
+			return ''
 
 class contrib_ForeignKeyRawIdWidgetWrapper(ForeignKeyRawIdWidget):
 		"""
@@ -126,7 +126,7 @@ from django.utils.translation import ugettext_lazy as _
 class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 
 	class Media:
-			js = ("%srelated-widget-wrapper.js" % settings.STATIC_URL,)
+		js = ("%srelated-widget-wrapper.js" % settings.STATIC_URL,)
 
 	def __init__(self, *args, **kwargs):
 		self.can_add_related = kwargs.pop('can_add_related', None)
@@ -147,11 +147,11 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 		return reverse("admin:%s_%s_%s" % (info + (action,)), current_app=self.admin_site.name, args=args)
 
 	def render(self, name, value, attrs={}, *args, **kwargs):
-		print "this renderrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
 		rel_to = self.rel.to
 		if attrs is None:
 			attrs = {}
 		extra = []
+		info = (rel_to._meta.app_label, rel_to._meta.object_name.lower())
 		if rel_to in self.admin_site._registry:
 			# The related object is registered with the same AdminSite
 			related_url = reverse(
@@ -161,55 +161,89 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 					),
 					current_app=self.admin_site.name,
 			)
-
+		
 			params = self.url_parameters()
 			if params:
 				url = '?' + '&amp;'.join('%s=%s' % (k, v) for k, v in params.items())
 			else:
 				url = ''
+
 			if "class" not in attrs:
 				attrs['class'] = 'vForeignKeyRawIdAdminField'	# The JavaScript code looks for this hook.
-				#but if you want to get original hook class it as: hForeignKeyRawIdAdminField -->ALEPH
-			# TODO: "lookup_id_" is hard-coded here. This should instead use
-			# the correct API to determine the ID dynamically.
-			extra.append('<a href="%s%s" class="related-lookup" id="lookup_id_%s" onclick="return showRelatedObjectLookupPopup(this);"> ' % (related_url, url, name))
-			extra.append('<img src="%s" width="16" height="16" alt="%s" /></a>' %
-					(static('admin/img/selector-search.gif'), _('Lookup')))
+
 		output = [super(ForeignKeyRawIdWidget, self).render(name, value, attrs)] + extra
 		if value:
 			output.append(self.label_for_value(value))
-		info = (rel_to._meta.app_label, rel_to._meta.object_name.lower())
+
 		attrs['class'] = ' '.join((attrs.get('class', ''), 'related-widget-wrapper'))
+		name_desc = name 
+		name = "%s_%s" % ( name, value )
+
+		add_url = self.get_related_url(self.rel.to, info, 'add') 
+		add_help_text = _('Add Another')
+
+		obj_desc = self.instance_obj.human.__str__()
 		context = {
 		 'widget' : mark_safe(''.join(output)),
 		 'name': name,
 		 'media_prefix': settings.STATIC_URL,
-		 'can_change_related': self.can_change_related,
 		 'can_add_related': self.can_add_related,
-		 'can_delete_related': self.can_delete_related,
-		 'obj_desc' : self.instance_obj.human.__str__()
+		 'add_link' :  "",
+		 'add_help_text' : add_help_text,
+		 'obj_desc' : self.instance_obj.human.__str__(), 
+		 'name_desc': name_desc
 		}
-		if self.can_change_related:
-				if value:
-					context['change_url'] = self.get_related_url(rel_to, info, 'change', [value])
-				template = self.get_related_url(rel_to, info, 'change', ['%s'])
+
+		output = ""
+		if value:
+			java_remove = format_html(' onclick="remove_item_foreign(&#39;id_{0}&#39;); return false;"', name_desc)
+			out_link = "<a %s href='javascript:void;'>%s</a>" % ( java_remove, _(u"Treu").encode("utf-8") )
+			obj_desc = obj_desc + " | " + out_link
+			#CRUD buttons
+			if self.can_change_related:
+				change_url = self.get_related_url(self.rel.to, info, 'change', [value]) 
+				template = self.get_related_url(self.rel.to, info, 'change', ['%s'])
+				change_url_template = template
+				change_help_text =  _('Change related model')	
+				change_link = "<a class='related-widget-wrapper-link related-widget-wrapper-change-link changelink' "
+				change_link += "id='edit_id_" + name + "' data-href-template='" + change_url_template + "'"
+				if change_url:
+					change_link += " href='" + change_url + "'"
+				change_link += " title='" + change_help_text.encode("utf-8") + "'>"  + "</a>"
+				obj_desc = obj_desc + " | " + change_link
 				context.update({
-				'change_url_template': template,
-				'change_help_text': _('Change related model')
-				})
-		if self.can_add_related:
+					'obj_desc' : mark_safe(obj_desc),
+					})
+			if self.can_add_related:
+				add_url = self.get_related_url(self.rel.to, info, 'add') 
+				add_help_text = _('Add Another')
+				add_link = "<a class='related-widget-wrapper-link related-widget-wrapper-add-link add-related addlink' href='"
+				add_link += add_url + "' id='add_id_" + name + "'  title='" +  add_help_text.encode("utf-8") + "'>"  + _(u"Afegir").encode("utf-8") + " </a>"
+				print "paso"
 				context.update({
-				'add_url': self.get_related_url(rel_to, info, 'add'),
-				'add_help_text': _('Add Another')
-				})
-		if self.can_delete_related:
-				if value:
-					context['delete_url'] = self.get_related_url(rel_to, info, 'delete', [value])
-				template = self.get_related_url(rel_to, info, 'delete', ['%s'])
+					'add_link' : mark_safe(add_link)
+					})
+			look_url = related_url + url;
+			look_link = "<a class='related-lookup related-widget-wrapper-link' href='"
+			look_img = '<img src="%s" width="16" height="16" alt="%s" /></a>' % (static('admin/img/selector-search.gif'), _('Lookup'))
+			look_link += look_url + "' id='look_id_" + name + "' > " + look_img + "</a>"
+			context.update({'look_link' : mark_safe(look_link)
+			})
+			if self.can_delete_related:
+				delete_url = self.get_related_url(self.rel.to, info, 'delete', [value]) 
+				template = self.get_related_url(self.rel.to, info, 'delete', ['%s'])
+				delete_url_template = template
+				delete_help_text =  _('Delete related model')
+				del_link = "<a class='related-widget-wrapper-link related-widget-wrapper-delete-link deletelink' id='delete_id_" 
+				del_link += name + "' data-href-template='" + delete_url_template + "'"
+				if delete_url:
+					del_link += " href='" + delete_url  + "'"
+				del_link += " title='" + delete_help_text.encode("utf-8") + "'>" + "</a>"
+				obj_desc = obj_desc + " | " + del_link 
 				context.update({
-				'delete_url_template': template,
-				'delete_help_text': _('Delete related model')
-				})
+					'obj_desc' : mark_safe(obj_desc),
+					})
+
 		return  mark_safe(render_to_string('related-widget-wrapper.html', context))
 
 class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
@@ -238,12 +272,39 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 	def manytomany_to_ul(self, field_name, manytomany_manager):
 		hidden_ids_text_name = "id_%s" % ( field_name )
 		output = '<ul id="ul_%s" name="ul_%s">' % ( hidden_ids_text_name, hidden_ids_text_name)
-		if manytomany_manager.all().count() > 0:
+
+		if not manytomany_manager:
+			pass
+		else:
+			info = (self.rel.to._meta.app_label, self.rel.to._meta.object_name.lower())
 			for obj in manytomany_manager.all():
+				#CRUD buttons
+				if self.can_change_related:
+					change_url = self.get_related_url(self.rel.to, info, 'change', [obj.id]) 
+					template = self.get_related_url(self.rel.to, info, 'change', ['%s'])
+					change_url_template = template
+					change_help_text =  _('Change related model')
+					change_link = "<a class='related-widget-wrapper-link related-widget-wrapper-change-link changelink' "
+					change_link += "id='edit_id_" + field_name + "' data-href-template='" + change_url_template + "'"
+					if change_url:
+						change_link += " href='" + change_url + "'"
+					change_link += " title='" + change_help_text.encode("utf-8") + "'>"  + "</a>"
+
+				if self.can_delete_related:
+					delete_url = self.get_related_url(self.rel.to, info, 'delete', [obj.id]) 
+					template = self.get_related_url(self.rel.to, info, 'delete', ['%s'])
+					delete_url_template = template
+					delete_help_text =  _('Delete related model')
+					del_link = "<a class='related-widget-wrapper-link related-widget-wrapper-delete-link deletelink' id='delete_id_" 
+					del_link += field_name + "' data-href-template='" + delete_url_template + "'"
+					if delete_url:
+						del_link += " href='" + delete_url  + "'"
+					del_link += " title='" + delete_help_text.encode("utf-8") + "'>" + "</a>"
 				name = "manytomany_%s_%s" % ( field_name, obj.id )
 				java_remove = format_html(' onclick="remove_item(window,&#39;{0}&#39;,&#39;{1}&#39;, &#39;{2}&#39;); return false;"', name, hidden_ids_text_name, obj.id)
 				out_link = "<a %s href='javascript:void;'>%s</a>" % ( java_remove, _(u"Treu").encode("utf-8") )
-				output += "<li name='%s' id='%s' value='%s'>%s - %s</li>" % (name, name, obj.id, obj, out_link)
+				span = "<span name='%s' id='%s' value='%s'>%s - %s|%s|%s</span>" % (name, name, obj.id, obj, out_link, change_link, del_link);
+				output += "<li> %s </li>" % (span)
 		return mark_safe(output + "</ul>")
 
 	def render(self, name, value, attrs={}, *args, **kwargs):
@@ -277,8 +338,12 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 			if isinstance(value, (tuple, list)):
 				value = ','.join(str(x) for x in value)
 		output = [super(ForeignKeyRawIdWidget, self).render(name, value, attrs)] + extra
+
+		records = None
 		if value:
 			output.append(self.label_for_value(value))
+			records = getattr(self.instance_obj, name)
+
 		info = (rel_to._meta.app_label, rel_to._meta.object_name.lower())
 		attrs['class'] = ' '.join((attrs.get('class', ''), 'related-widget-wrapper'))
 		context = {
@@ -288,30 +353,15 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 		 'can_change_related': self.can_change_related,
 		 'can_add_related': self.can_add_related,
 		 'can_delete_related': self.can_delete_related,
-		 'obj_desc' : self.manytomany_to_ul(name, getattr(self.instance_obj, name))
+		 'obj_desc' : self.manytomany_to_ul(name, records)
 		}
-		if self.can_change_related:
-			if value:
-				context['change_url'] = self.get_related_url(rel_to, info, 'change', [value])
-			template = self.get_related_url(rel_to, info, 'change', ['%s'])
-			context.update({
-			'change_url_template': template,
-			'change_help_text': _('Change related model')
-			})
 		if self.can_add_related:
 			context.update({
 			'add_url': self.get_related_url(rel_to, info, 'add'),
 			'add_help_text': _('Add Another')
-			})
-		if self.can_delete_related:
-			if value:
-				context['delete_url'] = self.get_related_url(rel_to, info, 'delete', [value])
-				template = self.get_related_url(rel_to, info, 'delete', ['%s'])
-				context.update({
-				'delete_url_template': template,
-				'delete_help_text': _('Delete related model')
-				})
-		return  mark_safe(render_to_string('related-widget-wrapper.html', context))
+		})
+
+		return  mark_safe(render_to_string('related-widget-wrapper-manytomany.html', context))
 
 class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
 
@@ -358,9 +408,10 @@ class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
 		return formfield
 
 	def response_change(self, request, obj):
-		print "ssssssssssssssssssssssssssss"
+		print "hace cahnge"
 		if '_popup' in request.REQUEST:
 			pk_value = obj._get_pk_val()
+			print "return"
 			return HttpResponse('<script type="text/javascript">opener.dismissEditRelatedPopup(window, "%s", "%s");</script>' % \
 			# escape() calls force_unicode.
 			(escape(pk_value), escapejs(obj)))
@@ -368,10 +419,19 @@ class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
 			return super(ForeignKeyRawIdWidgetWrapperAdmin, self).response_change(request, obj)
 
 	def response_add(self, request, obj):
+		print "hace add"
 		if '_popup' in request.REQUEST:
 			pk_value = obj._get_pk_val()
+			print "return"
 			return HttpResponse('<script type="text/javascript">opener.dismissEditRelatedPopup(window, "%s", "%s");</script>' % \
 			# escape() calls force_unicode.
 			(escape(pk_value), escapejs(obj)))
+		else:
+			return super(ForeignKeyRawIdWidgetWrapperAdmin, self).response_change(request, obj)
+
+	def response_delete(self, request, obj_display):
+		print "hace del " + obj_display
+		if '_popup' in request.REQUEST:
+			return HttpResponse('<script type="text/javascript">opener.dismissDeleteRelatedPopup(window, "%s");</script>' % obj_display)
 		else:
 			return super(ForeignKeyRawIdWidgetWrapperAdmin, self).response_change(request, obj)

@@ -1,18 +1,11 @@
 {% load i18n %}
-
+{{look_link}}
 {{ widget }}
-<div style="height:100%" id="id_{{name}}_desc" name="id_{{name}}_desc">{{obj_desc}}</div>
-<p>{% if can_change_related %}
-	<a class="related-widget-wrapper-link related-widget-wrapper-change-link changelink" id="edit_id_{{ name }}" data-href-template="{{ change_url_template }}"{% if change_url %} href="{{ change_url }}"{% endif %} title="{{ change_help_text }}">
-	{% trans "Edit" %}
-	</a>
-{% endif %}
+<div style="height:100%" id="id_{{name_desc}}_desc" name="id_{{name_desc}}_desc"><p>{{obj_desc}}</p></div>
+
+<p>
 {% if can_add_related %}
-	<a class="related-widget-wrapper-link related-widget-wrapper-add-link add-related addlink" href="{{ add_url }}" id="add_id_{{ name }}"  title="{{ add_help_text }}">{% trans "Afegeix" %}
-	</a>
+	{{add_link}}
 {% endif %}
-{% if can_delete_related %}
-	<a class="related-widget-wrapper-link related-widget-wrapper-delete-link deletelink" id="delete_id_{{ name }}" data-href-template="{{ delete_url_template }}"{% if delete_url %} href="{{ delete_url }}"{% endif %} title="{{ delete_help_text }}">
-		{% trans "Borra" %}
-	</a>
-{% endif %}</p>
+
+</p>
