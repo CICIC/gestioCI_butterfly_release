@@ -78,8 +78,34 @@ class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 		instance.save()
 		form.save_m2m()
 		return instance
+	def response_add(self, request, obj):
+		from django.http import HttpResponseRedirect, HttpResponse
+		from django.core.urlresolvers import reverse
+		response = super(AutoRecordName, self).response_change(request, obj)
+		if request.GET.has_key('next'):
+			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
+				if request.GET.get('next') == 'public_form':
+					response['location'] = reverse('public_form:entry_page_to_gestioci')
+				else:
+					response['location'] = request.GET.get('next') 
 
+			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
+				response['location'] = response['location'] + "?next=" + request.GET.get('next')
+		return response
+	def response_change(self, request, obj):
+		from django.http import HttpResponseRedirect, HttpResponse
+		from django.core.urlresolvers import reverse
+		response = super(AutoRecordName, self).response_change(request, obj)
+		if request.GET.has_key('next'):
+			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
+				if request.GET.get('next') == 'public_form':
+					response['location'] = reverse('public_form:entry_page_to_gestioci')
+				else:
+					response['location'] = request.GET.get('next') 
 
+			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
+				response['location'] = response['location'] + "?next=" + request.GET.get('next')
+		return response
 	'''
 	def save_formset(self, request, form, formset, change):
 		def set_relAddrContract_member(instance):
@@ -626,7 +652,7 @@ class InsuranceAdmin(AutoRecordName):
 			kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
 		return super(InsuranceAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
-
+from django.core.exceptions import ObjectDoesNotExist
 
 #---------	O T H E R	 I C _ R E C O R D S
 
@@ -650,13 +676,29 @@ class LearnSessionAdmin(AutoRecordName):
 		}),
 	)
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+
+		session_type = request.GET.get('nonmaterial', None)
+		try:
+			filter_type = iC_Type.objects.get(clas=session_type)
+			if session_type == "welcome_session":
+				nonmaterial_id = 1
+			else:
+				nonmaterial_id = 2
+		except ObjectDoesNotExist:
+			filter_type = None
+
 		if db_field.name == 'record_type':
 			typ = iC_Record_Type.objects.get(clas='Learn_Session')
 			kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
+			if filter_type:
+				kwargs['initial'] = filter_type.id
+
 		if db_field.name == 'nonmaterial':
 			#typ = Nonmaterial_Type.objects.get(clas='ic_learn')
 			typs = Nonmaterial_Type.objects.filter(parent__clas='ic_learn')
 			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
+			if filter_type:
+				kwargs['initial'] = nonmaterial_id
 		if db_field.name == 'facilitator':
 			job = Job.objects.filter(clas='ic_facilitate')
 			#print job
