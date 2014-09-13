@@ -168,7 +168,7 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 			else:
 				url = ''
 			if "class" not in attrs:
-				attrs['class'] = 'vForeignKdddddeyRawIdAdminField'	# The JavaScript code looks for this hook.
+				attrs['class'] = 'vForeignKeyRawIdAdminField'	# The JavaScript code looks for this hook.
 				#but if you want to get original hook class it as: hForeignKeyRawIdAdminField -->ALEPH
 			# TODO: "lookup_id_" is hard-coded here. This should instead use
 			# the correct API to determine the ID dynamically.
@@ -267,7 +267,7 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 			else:
 				url = ''
 			if "class" not in attrs:
-				attrs['class'] = 'vManyToManyfdhdfhRawIdAdminField'	# The JavaScript code looks for this hook.
+				attrs['class'] = 'vManyToManyRawIdAdminField'	# The JavaScript code looks for this hook.
 				#but if you want to get original hook class it as: hForeignKeyRawIdAdminField -->ALEPH
 			# TODO: "lookup_id_" is hard-coded here. This should instead use
 			# the correct API to determine the ID dynamically.
@@ -306,11 +306,11 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 		if self.can_delete_related:
 			if value:
 				context['delete_url'] = self.get_related_url(rel_to, info, 'delete', [value])
-			template = self.get_related_url(rel_to, info, 'delete', ['%s'])
-			context.update({
-			'delete_url_template': template,
-			'delete_help_text': _('Delete related model')
-			})
+				template = self.get_related_url(rel_to, info, 'delete', ['%s'])
+				context.update({
+				'delete_url_template': template,
+				'delete_help_text': _('Delete related model')
+				})
 		return  mark_safe(render_to_string('related-widget-wrapper.html', context))
 
 class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
@@ -358,6 +358,7 @@ class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
 		return formfield
 
 	def response_change(self, request, obj):
+		print "ssssssssssssssssssssssssssss"
 		if '_popup' in request.REQUEST:
 			pk_value = obj._get_pk_val()
 			return HttpResponse('<script type="text/javascript">opener.dismissEditRelatedPopup(window, "%s", "%s");</script>' % \

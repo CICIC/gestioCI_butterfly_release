@@ -1,26 +1,23 @@
 function dismissRelatedLookupPopup(win, chosenId, newRepr) {
 	var name = windowname_to_id(win.name);
 	var elem = document.getElementById(name);
-	is_many = elem.className.indexOf('vManyToManyRawIdAdminField') != -1 
-
-	dismissEditRelatedPopup(win, chosenId, newRepr, is_many);
+	dismissEditRelatedPopup(win, chosenId, newRepr);
 }
 
-
-function dismissEditRelatedPopup(win, objId, newRepr, is_many=-1) {
+function dismissEditRelatedPopup(win, objId, newRepr) {
 	objId = html_unescape(objId);
 	newRepr = html_unescape(newRepr);
 	var name = windowname_to_id(win.name).replace(/^edit_/, '');;
 	var elem = document.getElementById(name);
 
-	ids_array = elem.value.split(",");
-	for(var i = ids_array.length; i--;) {
-		if(ids_array[i] == objId ) {
-			return;
+	is_many = elem.className.indexOf('vManyToManyRawIdAdminField') != -1 
+	if ( is_many ) {
+		ids_array = elem.value.split(",");
+		for(var i = ids_array.length; i--;) {
+			if(ids_array[i] == objId ) {
+				return;
+			}
 		}
-	}
-
-	if ( !is_many ) {
 		if ( elem.value) {
 			elem.value += ',' + objId;
 		} else {
@@ -47,7 +44,8 @@ function dismissEditRelatedPopup(win, objId, newRepr, is_many=-1) {
 		document.getElementById(name + '_desc').innerHTML = newRepr;
 		document.getElementById(name).value = objId;
 	}
-	win.close;
+	win.close();
+	return false;
 };
 
 if (!dismissAddAnotherPopup.original) {
@@ -80,9 +78,9 @@ function remove_item(obj, ul_li_name, hidden_ids_inputtext_name, id_to_remove){
 
 	var elem = document.getElementById(hidden_ids_inputtext_name);
 	if ( elem.className.indexOf('vManyToManyRawIdAdminField') == -1 ) {
-		document.getElementById(ul_li_name).remove();
-	}else {
 		document.getElementById(ul_li_name).parent.remove();
+	}else {
+		document.getElementById(ul_li_name).remove();
 	}
 	ids_array = elem.value.split(",");
 	new_ids_array = [];
