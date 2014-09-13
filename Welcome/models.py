@@ -548,7 +548,7 @@ class iC_Self_Employed(iC_Record):
                                     verbose_name=_(u"Quotes trimestrals"),
                                     )#limit_choices_to={'record_type__parent__clas': 'quarterly_fee'})#human':ic_membership.human.pk})#.self_employed})
 
-  organic = models.BooleanField(verbose_name=_(u"Productes ecològics/organics?"))
+  organic = models.BooleanField(default=False, verbose_name=_(u"Productes ecològics/organics?"))
   #welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
 
   '''
