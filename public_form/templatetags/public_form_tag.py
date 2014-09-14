@@ -33,29 +33,13 @@ class sessions_tag_node(template.Node):
 		if current_human and current_session:
 			if current_human in current_session.assistants.all():
 				from public_form.forms import public_form_self_admin
-				from Welcome.models import iC_Membership
-				from General.models import Project
-				try:
-					project = Project.objects.get(id=current_human.id)
-					current_membership = iC_Membership( human=project, ic_project=project, join_date=datetime.now())
-					current_membership.name = current_membership
-					current_membership.save()
-				except ObjectDoesNotExist:
-					try:
-						human = Human.objects.get(id=current_human.id)
-						project = Project.objects.get(id=current_human.id)
-						current_membership = iC_Membership( human=human, ic_project=project, join_date=datetime.now())
-						current_membership.save()
-					except ObjectDoesNotExist:
-						current_membership = None
-				print "Pots registar el projecte."
-				form = public_form_self_admin(instance=current_membership)
-				print form 
+				form = public_form_self_admin()
 				context['current_sesion_form'] = form
+				context['public_form_action_value'] = "public_form_action_save_membership"
 			else:
 				from public_form.forms import learn_session_proxy_form
-				print "Pots confirmar asistència."
 				context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
+				context['public_form_action_value'] = "public_form_action_join_session"
 
 		context['current_session'] = current_session
 		context['current_human'] = current_human
@@ -77,13 +61,57 @@ class human_tag_node(template.Node):
 			from General.models import Human
 			from django.core.exceptions import ObjectDoesNotExist
 			try:
-				current_session = Human.objects.get( id=obj ) 
-				context['current_human'] = current_session
+				current_human = Human.objects.get( id=obj ) 
+				context['current_human'] = current_human
 			except ObjectDoesNotExist:
 				context['current_human'] = _(u"Cap projecte seleccionat. Selecciona un projecte fent click sobre el nom en la llista.").encode("utf-8")
-			return ''
+			else:
+				if current_human:
+					from Welcome.models import iC_Membership
+					from Welcome.models import iC_Akin_Membership, iC_Person_Membership, iC_Project_Membership
+					from Welcome.models import iC_Stallholder, iC_Self_Employed
 
-			
+					try:
+						ic = iC_Membership.objects.filter(ic_project=current_human)
+					except:
+						try:
+							ic = iC_Membership.objects.filter(human=current_human)
+						except ObjectDoesNotExist:
+							ic = None
+					context['current_memberships'] = ic
+
+					try:
+						icse = iC_Self_Employed.objects.filter(ic_membership__human=current_human)
+					except ObjectDoesNotExist:
+						icse = None
+					context['current_memberships_self'] = icse
+
+					try:
+						icsh = iC_Stallholder.objects.filter(ic_self_employed__ic_membership__human=current_human)
+					except ObjectDoesNotExist:
+						icsh = None
+					context['current_memberships_stallholder'] = icsh
+
+					context['dont_memberships'] = ic.count()==0 and icse.count()==0 and icsh.count()==0
+
+			return ''
+'''
+
+				try:
+					ic = iC_Membership.objects.filter(project=current_human)
+				except ObjectDoesNotExist:
+					try:
+						ic = iC_Membership.objects.filter(human=current_human)
+					except ObjectDoesNotExist:
+						ic = None
+
+						icse_s = iC_Self_Employed.objects.filter(human=current_human)
+				if icse.count>0:
+					for icse in icse_s:
+						icsh_s = iC_Self_Employed.objects.filter(self_employed = icse)
+				icproj_s = iC_Project_Membership.objects.filter(human=current_human)
+				icpers_s = iC_Person_Membership.objects.filter(human=current_human)
+'''
 @register.tag
 def sessions_tag(parser, token):
 		# token is the string extracted from the template, e.g. "box_user_loader my_object"
@@ -105,3 +133,7 @@ def human_tag(parser, token):
 		except ValueError:
 				raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
 		return human_tag_node(obj)
+
+@register.filter
+def do_something(value):
+  return "some value"

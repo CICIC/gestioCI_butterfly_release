@@ -5,17 +5,15 @@ function dismissRelatedLookupPopup(win, chosenId, newRepr) {
 }
 
 function dismissEditRelatedPopup(win, objId, newRepr) {
-	alert(win);
+
 	objId = html_unescape(objId);
 	newRepr = html_unescape(newRepr);
 	var name = windowname_to_id(win.name).replace(/^edit_/, '');;
-	alert(win.name);
-	alert(name);
+
 	var elem = document.getElementById(name);
-	alert(elem);
+
 	is_many = elem.className.indexOf('vManyToManyRawIdAdminField') != -1 && elem.value;
-	alert("elem es:");
-	alert(elem.className);
+
 	if ( is_many ) {
 
 		ids_array = elem.value.split(",");
@@ -67,26 +65,26 @@ function dismissEditRelatedPopup(win, objId, newRepr) {
 
 		java_remove = "onclick='remove_item_foreign(&#39;{0}&#39;); return false;'";
 		java_remove = java_remove.replace("{0}", name);
-		alert(java_remove);
+
 		out_link = "<a {0} href='javascript:void;'>{1}</a>";
 		out_link = out_link.replace("{0}", java_remove).replace("{1}", gettext("Treu") );
-		alert(out_link);
+
 		base_path = document.getElementById("lookup_" + name ).getAttribute("href"); 
 		change_url = base_path + objId +  "/";
 		del_url = base_path +  objId +  "/delete/";
 		java_popup = "onclick='showAddAnotherPopup(this); return false;'"
 		change_link = "<a " + java_popup + " class='related-widget-wrapper-link related-widget-wrapper-change-link changelink' ";
 		change_link += "id='edit_" + name + "' href='" + change_url + "'>"  + "</a>";
-		alert(change_link);
+
 		del_link = "<a " + java_popup + " class='related-widget-wrapper-link related-widget-wrapper-delete-link deletelink' id='delete_" ;
 		del_link += name + "' href='" + del_url + "'></a>";
-		alert(del_link);
+
 		newRepr = "<p>" + newRepr + "|" + out_link + "|" + change_link +  "|" + del_link + "</p>";
 		document.getElementById(name + '_desc').innerHTML = newRepr;
 		document.getElementById(name).value = objId;
 	}
 	win.close();
-	alert("done");
+
 };
 function dismissDeleteRelatedPopup(win, obj) {
 	name = win.name.replace("delete_", "");
@@ -114,7 +112,7 @@ if (!dismissAddAnotherPopup.original) {
 }
 
 function showAddAnotherPopup(triggeringLink) {
-	alert(triggeringLink);
+
     var name = triggeringLink.id.replace(/^add_/, '');
     name = id_to_windowname(name);
     href = triggeringLink.href
@@ -123,12 +121,10 @@ function showAddAnotherPopup(triggeringLink) {
     } else {
         href  += '&_popup=1';
     }
-	alert(name);
-	alert(href);
     var win = window.open(href, name, 'height=800,width=800,resizable=yes,scrollbars=yes');
-	alert(win);
+
     win.focus();
-	alert("focus");
+
     return false;
 }
 

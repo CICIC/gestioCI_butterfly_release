@@ -19,10 +19,31 @@
 				{% sessions_tag request %}
 				{% with request.GET.human_id|default:0 as current_human %}
 					{% human_tag current_human %}
-						<div class="form-row">
+						<div class="form-row" >
 							<form action="/public_form/save_form_self_employed/" method="POST">
 								<table>
-									<tr><td colspan="2"><label>{% trans "Projecte: " %}<i>{{current_human}} {{current_human.self_link}}</i></label></td></tr>
+									<tr><td colspan="2"><label>{% trans "Projecte: " %}<i>{{current_human}} {{current_human.self_link}}</i></label><br>
+										{% if current_memberships %}
+											{% trans "Altes del Project:" %}
+											<ul>{% for m in current_memberships %}
+													<li>{{m}}<a href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m.id}}"> - {% trans "Editar" %}</a></li>
+												{% endfor %}
+											</ul>
+										{% endif %}
+										{% if current_memberships_self %}
+											{% trans "Altes del Project Autocupat:" %}
+											<ul>{% for m in current_memberships_self %}
+													<li>{{m}}<a href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m.id}}"> - {% trans "Editar" %}</a></li>
+												{% endfor %}
+											</ul>
+										{% endif %}
+										{% if current_memberships_stallholder %}
+											{% trans "Altes del Firaire:" %}
+											<ul>{% for m in current_memberships_stallholder %}
+													<li>{{m}}<a href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m.id}}"> - {% trans "Editar" %}</a></li>
+												{% endfor %}</ul>
+										{% endif %}
+									</td></tr>
 									<tr><td colspan="2"><label>{% trans "Sessió: " %}<i>
 										{% if current_session %}
 											{{ current_session}} <a href="/cooper/Welcome/learn_session/{{ current_session.id}}/?next=/cooper/public_form/human_proxy/?learn_session_id={{current_session.id}}"> {% trans "Editar" %}</a>
@@ -30,14 +51,16 @@
 											{% trans "Cap sessió seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 										{% endif %}
 										</i></label></td></tr>
-									{{current_sesion_form.as_table}}
-									{% if current_human in current_session.assistants.all %}
+									{% if dont_memberships %}
+										{{current_sesion_form.as_table}}
+									{% endif %}
+									{% if current_human in current_session.assistants.all and dont_memberships %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Actualitzar dades' %}"></td></tr>
-									{% elif current_session and current_human.id %}
+									{% elif current_session and current_human.id and dont_memberships %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a la sessió' %}"{{current_session}}></td></tr>
 									{% endif %}
 								</table>
-								<input type="hidden" value="public_form_action_join_session" name="public_form_action">
+								<input type="hidden" value="{{public_form_action_value}}" name="public_form_action">
 								<input type="hidden" value="{{current_human.id}}" name="current_human">
 								<input type="hidden" value="{{current_session.id}}" name="current_session">
 								{% csrf_token %}

@@ -182,7 +182,14 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 		add_url = self.get_related_url(self.rel.to, info, 'add') 
 		add_help_text = _('Add Another')
 
-		obj_desc = self.instance_obj.human.__str__()
+		try:
+			obj_desc = self.instance_obj.human.__str__()
+		except:
+			try:
+				obj_desc = self.instance_obj.ic_membership.human.__str__()
+			except:
+				obj_desc = self.instance_obj.__str__()
+
 		context = {
 		 'widget' : mark_safe(''.join(output)),
 		 'name': name,
@@ -190,7 +197,7 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 		 'can_add_related': self.can_add_related,
 		 'add_link' :  "",
 		 'add_help_text' : add_help_text,
-		 'obj_desc' : self.instance_obj.human.__str__(), 
+		 'obj_desc' : obj_desc, 
 		 'name_desc': name_desc
 		}
 

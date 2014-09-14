@@ -8,6 +8,24 @@ from csvimport.models import CSVImport
 from decimal import Decimal
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+
+from General.models import Concept
+class type(Concept):	# create own ID's
+	clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200,
+													help_text=_(u"Model de django o classe python associada al Tipus CI"))
+	class Meta:
+		verbose_name = _(u"c- Tipus ")
+
+	def __unicode__(self):
+		if self.clas is None or self.clas == '':
+			if self:
+				return self.name
+			else:
+				return "iC_Type vacio"
+		else:
+			return self.name+' ('+self.clas+')'
+
+
 class currencies(models.Model):
 	name=models.CharField(verbose_name=_(u"Nom"), max_length=20, help_text=_(u"Nom del tipus de moneda"))
 	def __unicode__(self):

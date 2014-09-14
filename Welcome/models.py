@@ -1,6 +1,6 @@
 #encoding=utf-8
 from django.db import models
-
+from django.contrib import messages
 from mptt.models import MPTTModel
 from mptt.fields import TreeForeignKey, TreeManyToManyField
 from datetime import date, timedelta
@@ -427,39 +427,41 @@ class iC_Membership(iC_Record):
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Membership, self).__init__(*args, **kwargs)
-		if not hasattr(self, 'ic_project') or self.ic_project is None:
-			self.ic_project = Project.objects.get(nickname='CIC')
-		if not hasattr(self, 'join_fee') or self.join_fee is None:
-			if hasattr(self, 'record_type') and self.record_type is not None:
-				clas = self.record_type.clas
-				#print 'CLAS: '+clas
+		try:
+			if not hasattr(self, 'ic_project') or self.ic_project is None:
+				self.ic_project = Project.objects.get(nickname='CIC')
+			if not hasattr(self, 'join_fee') or self.join_fee is None:
+				if hasattr(self, 'record_type') and self.record_type is not None:
+					clas = self.record_type.clas
+					#print 'CLAS: '+clas
 
-				if hasattr(self.human, 'person') and self.human.person is not None:
-					typ = iC_Record_Type.objects.get(clas__contains='individual')
-				elif hasattr(self.human, 'project') and self.human.project is not None:
-					print 'PROJ_TYPE: '+str(self.human.project.project_type.parent.clas)
-					if self.human.project.project_type.parent.clas == 'online':
-						typ = iC_Record_Type.objects.get(clas__contains='collective')
+					if hasattr(self.human, 'person') and self.human.person is not None:
+						typ = iC_Record_Type.objects.get(clas__contains='individual')
+					elif hasattr(self.human, 'project') and self.human.project is not None:
+						print 'PROJ_TYPE: '+str(self.human.project.project_type.parent.clas)
+						if self.human.project.project_type.parent.clas == 'online':
+							typ = iC_Record_Type.objects.get(clas__contains='collective')
+						else:
+							print 'Proyecto de un tipo que no esta en la rama clas=online, no generamos quota automàtica...'
+							return None
+					eur = Unit.objects.get(code='€')
+					uid = typ.id
+					arr = typ.clas.split(' ')[0].strip('()').split('_')
+					#print arr
+					#print Fee
+					amo = str(arr[0])
+					fees = Fee.objects.filter(record_type=typ, human=self.human, unit=eur, amount=amo)
+					print 'TYP: '+str(typ)+' HUMAN:'+str(self.human)+' UNIT:'+str(eur)+' AMOUN:'+str(amo)
+					#print Fee.objects.get_or_create
+					newfee, created = Fee.objects.get_or_create(record_type=typ, human=self.human, unit=eur, amount=amo)
+					if created:
+						self.join_fee = newfee
+						print 'CREATED JOIN_FEE: '+str(self.join_fee)
+						self.save()
 					else:
-						print 'Proyecto de un tipo que no esta en la rama clas=online, no generamos quota automàtica...'
-						return None
-				eur = Unit.objects.get(code='€')
-				uid = typ.id
-				arr = typ.clas.split(' ')[0].strip('()').split('_')
-				#print arr
-				#print Fee
-				amo = str(arr[0])
-				fees = Fee.objects.filter(record_type=typ, human=self.human, unit=eur, amount=amo)
-				print 'TYP: '+str(typ)+' HUMAN:'+str(self.human)+' UNIT:'+str(eur)+' AMOUN:'+str(amo)
-				#print Fee.objects.get_or_create
-				newfee, created = Fee.objects.get_or_create(record_type=typ, human=self.human, unit=eur, amount=amo)
-				if created:
-					self.join_fee = newfee
-					print 'CREATED JOIN_FEE: '+str(self.join_fee)
-					self.save()
-				else:
-					print "ERROR: CAN'T CREATE AUTOMATIC JOIN_FEE! human:"+str(self.human)
-
+						print "ERROR: CAN'T CREATE AUTOMATIC JOIN_FEE! human:"+str(self.human)
+		except Exception as e:
+			print '%s (%s)' % (e.message, type(e)) 
 
 class iC_Person_Membership(iC_Membership):
 	ic_membership = models.OneToOneField('iC_Membership', primary_key=True, parent_link=True)

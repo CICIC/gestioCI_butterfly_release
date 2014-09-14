@@ -28,10 +28,12 @@ class human_proxy_form(forms.ModelForm):
 
 class learn_session_proxy_form(forms.ModelForm):
 	datetime = forms.DateTimeField(label=_(u"Data sessió "))
+
 	def __init__(self, *args, **kwargs):
 		super(learn_session_proxy_form, self).__init__(*args, **kwargs)
 		if self.instance.id:
 			self.fields['datetime'].widget.attrs['readonly'] = True
+
 	class Meta:
 		from public_form.models import Learn_Session
 		model = Learn_Session
@@ -42,9 +44,9 @@ class public_form_self_admin(forms.ModelForm):
 	description = forms.CharField( widget=forms.Textarea, label=_(u"Descripció projecte") )
 
 	CHOICES = (
-		('1', _(u'Autoocupat'),),
-		('2', _(u'Autoocupat Firaire'),),
-		('3', _(u'PAIC amb facturació'),),
+		('31', _(u'Autoocupat'),),
+		('32', _(u'Autoocupat Firaire'),),
+		('33', _(u'PAIC amb facturació'),),
 	)
 	CHOICES_sub = (
 		('1', _(u'Individual'),),
@@ -52,30 +54,34 @@ class public_form_self_admin(forms.ModelForm):
 	)
 	project_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES, label=_(u"Tipus de projecte"), required=True)
 	project_subtype = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES_sub, label=_(u"Tipus de projecte"), required=True)
-
-	ecommerce = forms.BooleanField(label=_(u"Comerç electronic propi") )
 	organic = forms.BooleanField(label=_(u"Productes ecològics") )
+	ecommerce = forms.BooleanField(label=_(u"Comerç electronic propi") )
 	tents = iC_Record_Type.objects.filter(parent__clas='tent_type')
 	f = ()
 	for tent in tents:
 		f = f + ((tent.id, tent),)
 	tent_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=f, label=_(u"Tipus parada firaire"))
 	virtual_market = forms.BooleanField(label=_(u"Mercat Virtual"))
-	expositors = forms.ChoiceField(widget=forms.RadioSelect(), choices=(), label=_(u"Expositors"))
-
-	mentor_of_SE = forms.ChoiceField(widget=forms.RadioSelect(), choices=(), label=_(u"SOCI DE REFERÈNCIA"))
 
 	def __init__(self, *args, **kwargs):
 		super(public_form_self_admin, self).__init__(*args, **kwargs)
 		if self.instance.id:
-			self.fields['mentor_of_SE'].queryset = self.instance.ic_project.persons.all()
-			self.fields['expositors'].queryset = self.instance.expositors.all()
+			#self.fields['mentor_of_SE'].queryset = self.instance.ic_project.persons.all()
+			#self.fields['expositors'].queryset = self.instance.expositors.all()
+			pass
 	class Meta:
 		from Welcome.models import iC_Membership
 		model = iC_Membership
 		fields = ( "description", "project_type",)
 
+'''
+	
+	
 
+	expositors = forms.ChoiceField(widget=forms.RadioSelect(), choices=(), label=_(u"Expositors"))
+
+	mentor_of_SE = forms.ChoiceField(widget=forms.RadioSelect(), choices=(), label=_(u"SOCI DE REFERÈNCIA"))
+'''
 
 from Welcome.models import Person
 from django.utils.translation import ugettext_lazy as _

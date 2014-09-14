@@ -1,7 +1,5 @@
 #encoding=utf-8
 from django.contrib import messages
-from datetime import datetime 
-from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404, render
@@ -886,54 +884,223 @@ def save_form_profile(request):
 				reverse('public_form:entry_page_to_gestioci')
 			)
 
+from Welcome.models import Record_Type
+from Welcome.models import iC_Record_Type
+from Welcome.models import Fee
+from Welcome.models import Unit
+from Welcome.models import UnitRatio
 
 def save_form_self_employed(request):
 
 	current_human = None
 	current_session = None
+
 	if request.POST:
-		try:
-			if request.POST.has_key("public_form_action"):
-				if request.POST["public_form_action"] ==  "public_form_action_join_session":
-					try:
-						current_human = Human.objects.get(id=request.POST["current_human"])
-					except ObjectDoesNotExist:
-						current_human = None
-						messages.warning(request, _(u"No s'ha trobat al humà") )
+		if request.POST.has_key("public_form_action"):
+			try:
+				current_human = Human.objects.get(id=request.POST["current_human"])
+			except ObjectDoesNotExist:
+				current_human = None
+				messages.warning(request, _(u"No s'ha trobat al humà") )
 
-					try:
-						from Welcome.models import Learn_Session
-						current_session = Learn_Session.objects.get(id=request.POST["current_session"])
-					except ObjectDoesNotExist:
-						current_session = None
-						messages.warning(request, _(u"No s'ha trobat la sessió") )
+			try:
+				from Welcome.models import Learn_Session
+				current_session = Learn_Session.objects.get(id=request.POST["current_session"])
+			except ObjectDoesNotExist:
+				current_session = None
+				messages.warning(request, _(u"No s'ha trobat la sessió") )
 
-					if not current_human in current_session.assistants.all():
-						try:
-							current_human.assist_sessions.add(current_session)
-						except Exception as e:
-							messages.error(request, '%s (%s)' % (e.message, type(e)) )
-							messages.info(request, _(u" Aquest humà ja ha està afegit.") )
-						try:
-							current_human.save()
-							messages.info(request, "S'ha afegit el projecte a la sessió." )
-						except Exception as e:
-							messages.error(request, '%s (%s)' % (e.message, type(e)) )
-							messages.info(request, _(u"S'ha establert l'assistència a la sessió.") )
-					else:
-						messages.info(request, _(u" Aquest humà ja ha està afegit.") )
-					return HttpResponseRedirect(
-						"/cooper/public_form/human_proxy/?human_id=%s&learn_session_id=%s" % (current_human.id,current_session.id))
+		if request.POST["public_form_action"] ==  "public_form_action_join_session":
+
+			if not current_human in current_session.assistants.all():
+				try:
+					current_human.assist_sessions.add(current_session)
+				except Exception as e:
+					messages.error(request, '%s (%s)' % (e.message, type(e)) )
+					messages.info(request, _(u" Aquest humà ja ha està afegit.") )
+				try:
+					current_human.save()
+					messages.info(request, "S'ha afegit el projecte a la sessió." )
+				except Exception as e:
+					messages.error(request, '%s (%s)' % (e.message, type(e)) )
+					messages.info(request, _(u"S'ha establert l'assistència a la sessió.") )
 			else:
-				messages.warning(request, _(u"No s'ha trobat el hidden d'acció") )
-		except Exception as e:
-			messages.error(request, '%s (%s)' % (e.message, type(e)) )
+				messages.info(request, _(u" Aquest humà ja ha està afegit.") )
+
 			return HttpResponseRedirect(
-						"/cooper/public_form/human_proxy/")
-	else:
-		messages.warning(request, _(u"No s'ha trobat el POST") )
-	messages.info(request, current_human  )
-	messages.info(request, current_session  )
-	return HttpResponseRedirect(
-				"/cooper/public_form/human_proxy/"
-			)
+				"/cooper/public_form/human_proxy/?human_id=%s&learn_session_id=%s" % (current_human.id,current_session.id))
+
+		if request.POST["public_form_action"] ==  "public_form_action_save_membership":
+
+			messages.info(request, "Post params: project_type: " + request.POST.get("project_type", "nada"))
+			messages.info(request, "Post params: project_subtype: " + request.POST.get("project_subtype", "nada"))
+
+			from General.models import Project, Person, Project_Type
+			from Welcome.models import iC_Project_Membership, iC_Person_Membership
+
+			try:
+				current_project = Project.objects.get(id=request.POST["current_human"])
+				current_project.record_type = request.POST.get("project_type", -1)
+				current_project.save()
+			except ObjectDoesNotExist:
+				current_project = None
+				messages.warning(request, _(u"No s'ha trobat cap project") )
+
+			try:
+				current_person = Person.objects.get(id=request.POST["current_human"])
+			except ObjectDoesNotExist:
+				messages.warning(request, _(u"No s'ha trobat cap persona") )
+				try:
+					current_person = Person()
+					current_person.name = "Persona del projecte:" + str(current_human.name)
+					current_person.telephone_land = current_human.telephone_land
+					current_person.telephone_cell = current_human.telephone_cell
+					current_person.email = current_human.email
+					current_person.save()
+				except Exception as e:
+					messages.info(request, _(u"Error al gravar persona") )
+					messages.error(request, '%s (%s)' % (e.message, type(e)) )
+
+			ic = None
+			need_to_save = False
+			if current_human:
+
+				if request.POST.get("project_subtype", -1) == "1":
+					if current_person:
+						from Welcome.models import iC_Person_Membership
+						messages.info(request, _(u"Afegir membership person") )
+						ic = iC_Person_Membership(person=current_person, human=current_human, join_date=datetime.now())
+						need_to_save = True
+
+					try:
+						current_project = Project(id= current_human.id)
+						current_project.project_type = Project_Type.objects.get(id=request.POST.get("project_type", 31))
+						if current_person:
+							current_project.name = "Projecte de la persona: " + current_person.name
+							current_project.email = current_person.email
+							current_project.telephone_land = current_person.telephone_land
+							current_project.telephone_cell = current_person.telephone_cell
+							current_project.website = current_person.website
+							current_project_record_type = request.POST.get("project_type", -1)
+						current_project.description = request.POST.get("description", "")
+						current_project.ecommerce = request.POST.get("ecommerce", "0")
+						current_project.save()
+					except Exception as e:
+						messages.info(request, _(u"Error al gravar projecte") )
+						messages.error(request, '%s (%s)' % (e.message, type(e)) )
+
+				if request.POST.get("project_subtype", -1) == "2":
+					if current_project:
+						try:
+							ic = iC_Project_Membership.objects.get(project=current_project)
+						except ObjectDoesNotExist:
+							messages.info(request, "No he trobat relació a ic_pro_memb. lacreo: " + str(current_project.id))
+							ic = iC_Project_Membership(ic_project=current_project, human=current_project, project=current_project, join_date=datetime.now())
+							need_to_save = True
+			else:
+				messages.info(request, _(u"Faig redire per falta dhuma") )
+				return HttpResponseRedirect("/cooper/public_form/human_proxy/")
+
+			if current_project and current_person is not None:
+				from General.models import rel_Human_Persons
+				try:
+					relobj, is_new= rel_Human_Persons.objects.get_or_create(human=current_project, person_id = current_person.id)
+					if is_new:
+						from General.models import Relation
+						relobj.relation = Relation.objects.get(clas="reference")
+				except Exception as e:
+					messages.info(request, _(u"Error al crear relación projecto persona") )
+					messages.error(request, '%s (%s)' % (e.message, type(e)) )
+			messages.info(request, "Es grabara? " + str(need_to_save))
+			if need_to_save:
+				fee_type = None
+				current_fee = None
+				#(60_eco) collective | (30_eco) individual
+				if request.POST.get("project_subtype", -1) == "1":
+					fee_type = iC_Record_Type.objects.get(clas__contains='individual')
+					messages.info(request, "Busco cuota 1")
+				elif request.POST.get("project_subtype", -1) == "2":
+					fee_type = iC_Record_Type.objects.get(clas__contains='collective')
+					messages.info(request, "Busco cuota 2")
+
+				if current_person:
+					human = current_person
+				elif current_project:
+					human = current_project
+				else:
+					human = current_human
+
+				if not current_project:
+					current_project = current_human
+
+				if fee_type:
+					current_fee = Fee(
+						human = human,
+						project = current_project,
+						record_type = fee_type,
+						amount = fee_type.clas.split("-")[0].replace("(", ""),
+						unit = Unit.objects.get(name="Euro"),
+						issue_date = datetime.now(),
+						deadline_date = datetime.now() + timedelta(days=5) ,
+					)
+				else:
+					messages.info(request, 'No he trobat cuota type')
+
+				try:
+					messages.info(request, '### guardant quota alta: '+str(current_fee))
+					current_fee.save()
+				except Exception as e:
+					messages.info(request, _(u"Error al gravar quota") )
+					messages.error(request, '%s (%s)' % (e.message, type(e)) )
+				else:
+					ic.join_fee = current_fee
+
+				try:
+					ic.virtual_market = request.POST.get("virtual_market", 0)
+					ic.save()
+				except Exception as e:
+					messages.info(request, _(u"Error al gravar MEMBRE") )
+					messages.error(request, '%s (%s)' % (e.message, type(e)) )
+
+				if ic:
+					try:
+						messages.info(request, _(u"Busco self_employed") )
+						from Welcome.models import iC_Self_Employed
+						ice = iC_Self_Employed.objects.get(ic_membership=ic)
+					except ObjectDoesNotExist:
+						messages.info(request, _(u"Creant registre self employed") )
+						ice = iC_Self_Employed (ic_membership=ic)
+						ice.organic = request.POST.get("organic", False)
+						try:
+							ice.save()
+						except Exception as e:
+							messages.info(request, _(u"Error al gravar AUTOCUPAT") )
+							messages.error(request, '%s (%s)' % (e.message, type(e)) )
+
+					messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
+					if ice and request.POST.get("project_type", -1) == "32":
+
+						from Welcome.models import iC_Type
+						try:
+							tent_type = iC_Type.objects.get(id=request.POST.get("tent_type", 39)).name
+						except Exception as e:
+							messages.info(request, _(u"No es troba el tipus de tenda") )
+							messages.error(request, '%s (%s)' % (e.message, type(e)) )
+
+						from Welcome.models import iC_Stallholder
+						try:
+							ich = iC_Stallholder.objects.get(ic_self_employed=ice)
+						except ObjectDoesNotExist:
+							ich = iC_Stallholder()
+							ich.organic = ice.organic
+							ich.ic_membership=ic
+							ich.ic_self_employed=ice
+							ich.tent_type=tent_type
+							try:
+								ich.save()
+							except Exception as e:
+								messages.info(request, _(u"Error al gravar FIRAIRE") )
+								messages.error(request, '%s (%s)' % (e.message, type(e)) )
+
+
+		return HttpResponseRedirect("/cooper/public_form/human_proxy/?human_id=%s&learn_session_id=%s" % (current_human.id,current_session.id))

@@ -47,7 +47,6 @@
       {% if has_add_permission %}
 		<br><br>
         <ul class="object-tools">
-
             <li>
               {% url cl.opts|admin_urlname:'add' as add_url %}
               <a href="{% add_preserved_filters add_url is_popup %}" class="addlink">
@@ -58,8 +57,7 @@
                <a href="/cooper/Welcome/learn_session/add/?nonmaterial=welcome_session&next=/cooper/public_form/human_proxy/" class="addlink">
 				{% trans "Afegir una nova sessió" %}
               </a>
-            </li>
-  
+            </li>  
         </ul>
       {% endif %}
 	<p>
