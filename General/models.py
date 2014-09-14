@@ -1,5 +1,5 @@
 #encoding=utf-8
-
+from django.utils.safestring import mark_safe
 from django.db import models
 
 from mptt.models import MPTTModel
@@ -17,7 +17,7 @@ from itertools import chain
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Welcome/"
 #a_str2 = "?_popup=1&_changelist_filters=_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
-a_str2 = "?_popup=1&t=human' target='_blank' style='margin-left:-100px'>"
+a_str2 = "?_popup=1&t=human' target='_blank' >"
 a_str3 = "?_popup=1&t=human' target='_blank'>"
 
 a_edit = '<b>Editar</b>'
@@ -121,14 +121,14 @@ class Human(Being):  # Create own ID's
   def _selflink(self):
     if self.id:
       if hasattr(self, 'person'):
-        return a_strG + "person/" + str(self.person.id) + a_str2 + a_edit + "</a>"# % str(self.id)
+        return mark_safe( a_strG + "person/" + str(self.person.id) + a_str2 + a_edit + "</a>") # % str(self.id))
       elif hasattr(self, 'project'):
-        return a_strG + "project/" + str(self.project.id) + a_str2 + a_edit + "</a>"# % str(self.id)
+        return mark_safe( a_strG + "project/" + str(self.project.id) + a_str2 + a_edit + "</a>")# % str(self.id) )
     else:
       return "Not present"
   _selflink.allow_tags = True
   _selflink.short_description = ''
-
+  self_link = property (_selflink)
   def _ic_membership(self):
     #print self.ic_membership_set.all()
     if hasattr(self, 'ic_person_membership_set'):

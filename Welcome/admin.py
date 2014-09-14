@@ -18,8 +18,8 @@ from django.forms.models import BaseInlineFormSet
 from django.forms.formsets import formset_factory
 
 
-
-class AutoRecordName(admin.ModelAdmin):
+from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
+class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 	class Media:
 		css = {
 			'all': ('admin_record.css',)
@@ -79,19 +79,7 @@ class AutoRecordName(admin.ModelAdmin):
 		form.save_m2m()
 		return instance
 
-	def response_change(self, request, obj):
-		'''every save of a model will check for a next='public_form' present on get, to redirect in save case and to pass get next parm in addanother or continue cases'''
-		
-		from django.http import HttpResponseRedirect, HttpResponse
-		from django.core.urlresolvers import reverse
-		""" if user clicked "edit this page", return back to main site """
-		response = super(AutoRecordName, self).response_change(request, obj)
 
-		if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
-			response['location'] = reverse('public_form:entry_page_to_gestioci')
-		if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
-			response['location'] = response['location'] + "?next=public_form"
-		return response
 	'''
 	def save_formset(self, request, form, formset, change):
 		def set_relAddrContract_member(instance):

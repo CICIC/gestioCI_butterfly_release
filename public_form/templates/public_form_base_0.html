@@ -35,15 +35,12 @@
                 {% url 'django-admindocs-docroot' as docsroot %}
                 {% if docsroot %}
                     <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
+					
                 {% endif %}
                 {% if user.has_usable_password %}
                 <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
                 {% endif %}
-                {% if user.is_superuser %}  
-					<a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
-				{% else %}
-					<a href="/cooper/logout/">{% trans 'Log out' %}</a>
-				{% endif %}
+                <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
             {% endblock %}
         </div>
         {% endif %}
@@ -52,10 +49,12 @@
     <!-- END Header -->
     {% block breadcrumbs %}
     <div class="breadcrumbs">
-	<a href="/admin/public_form/human_proxy">{% trans "Anar a la Pàgina d'entrada admin (acollida)" %}</a>
+	&nbsp;&nbsp;<a href="{% url 'public_form:entry_page_to_gestioci' %}">{% trans "Anar a la Pàgina d'entrada" %}</a>
     {% if title %} &rsaquo; {{ title }}{% endif %}
     </div>
     {% endblock %}
+
+
     {% endif %}
 
     {% block messages %}
@@ -68,20 +67,18 @@
 
     <!-- Content -->
     <div id="content" class="{% block coltype %}colM{% endblock %}">
-        {% block pretitle %}<p>{% trans "Què puc fer en aquesta pàgina?" %}</p>{% endblock %}
-        {% block content_title %}<p><i>{% trans "Seleccionar pestanya. Fer click als links de la creu verda (Nou) i/o del llàpis (Modificar) per accedir a les opcions.</p><p>Nota per revisadors: Les lletres en vermell son per usuaris i membres; les lletres en verd per admin." %}</i></p> </h1>{% if title %}<h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>{% endif %}{% endblock %}
+        {% block pretitle %}{% endblock %}
+        {% block content_title %}{% if title %}<h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>{% endif %}{% endblock %}
         {% block content %}
-        {% block object-tools %}{% include "entry_page_to_gestioCI_.html" %}{% endblock %}
+        {% block object-tools %}{% endblock %}
         {{ content }}
-		{% endblock %}
-		{% block foot_content %}
-		{% endblock %}
+        {% endblock %}
         {% block sidebar %}{% endblock %}
         <br class="clear" />
     </div>
     <!-- END Content -->
 
-    {% block footer %}<div id="footer"></div>{% endblock %}
+    {% block footer %}<div id="footer">{% block assistant_session %} {% endblock %}</div>{% endblock %}
 </div>
 <!-- END Container -->
 

@@ -151,3 +151,17 @@ class RegistrationProfile(models.Model):
 		
 		#self.user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
 		print subject + message
+
+from General.models import Human
+class human_proxy(Human):
+	class Meta:
+		verbose_name= _(u"FORMULARI AUTOOCUPATS PRESENCIAL")
+		verbose_name_plural= _(u'FORMULARIS AUTOOCUPATS PRESENCIAL')
+		proxy = True
+
+from Welcome.models import Learn_Session
+class learn_Session_proxy(Learn_Session):
+	class Meta:
+		verbose_name= _(u'ASSITÈNCIA SESSIÓ ACOLLIDA')
+		verbose_name_plural= _(u'ASSITÈNCIA SESSIÓ ACOLLIDA')
+		proxy = True

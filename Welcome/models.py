@@ -368,7 +368,7 @@ class iC_Membership(iC_Record):
       return lnk1+' / '+lnk2
   _human_link.allow_tags = True
   _human_link.short_description = ''
-
+  
   def _joinfee_link(self):
     if hasattr(self, 'join_fee') and self.join_fee is not None:
       if self.join_fee._min_fee_data() == ico_yes:
@@ -548,7 +548,7 @@ class iC_Self_Employed(iC_Record):
                                     verbose_name=_(u"Quotes trimestrals"),
                                     )#limit_choices_to={'record_type__parent__clas': 'quarterly_fee'})#human':ic_membership.human.pk})#.self_employed})
 
-  organic = models.BooleanField(verbose_name=_(u"Productes ecològics/organics?"))
+  organic = models.BooleanField(default=False, verbose_name=_(u"Productes ecològics/organics?"))
   #welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
 
   '''
@@ -612,8 +612,6 @@ class iC_Self_Employed(iC_Record):
       self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
 
   def _member_link(self):
-    print "sssssssssssssssssss"
-    return "dsfdsfsgg"
     if self.id:
       #print 'ID: '+str(self.id)
       slug = 'ic_membership'

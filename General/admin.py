@@ -79,8 +79,8 @@ class AutoNameMixin(admin.ModelAdmin):
     instance.save()
     form.save_m2m()
     return instance
-
-class Css_Mixin(admin.ModelAdmin):
+from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
+class Css_Mixin(ForeignKeyRawIdWidgetWrapperAdmin):
   class Media:
     css = {
       'all': ('admin_record.css',)# 'selfemployed.css',)

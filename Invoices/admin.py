@@ -206,7 +206,6 @@ class CSVImportAdmin(ModelAdmin):
 			obj.import_user = str(request.user)
 			obj.import_date = datetime.now()
 			obj.save()
-			
 
 	def filename_defaults(self, filename):
 		""" Override this method to supply filename based data """
@@ -489,6 +488,7 @@ class sales_invoice_user (invoice_admin):
 
 	def changelist_view(self, request, extra_context=None):
 		response = super(sales_invoice_user, self).changelist_view(request, extra_context)
+
 		try:
 			qs_queryset = response.context_data["cl"].query_set
 		except:

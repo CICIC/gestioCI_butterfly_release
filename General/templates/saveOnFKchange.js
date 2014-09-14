@@ -11,7 +11,7 @@
       for(var th in this){
         out += th+' = '+this[th]+'\n'
       }
-      alert(out)
+      alert("sss");
       $('input[name="_continue"]').click()
 
     };
