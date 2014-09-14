@@ -543,6 +543,7 @@ class iC_Membership_Type(iC_Record_Type):
 
 
 class iC_Self_Employed(iC_Record):
+
 	ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
 	ic_membership = models.ForeignKey('iC_Membership', related_name='selfemployed_recs', verbose_name=_(u"Registre de Soci"))
 
@@ -553,7 +554,7 @@ class iC_Self_Employed(iC_Record):
 																		verbose_name=_(u"Quotes trimestrals"),
 																		)#limit_choices_to={'record_type__parent__clas': 'quarterly_fee'})#human':ic_membership.human.pk})#.self_employed})
 
-	organic = models.BooleanField(verbose_name=_(u"Productes ecològics/organics?"))
+	organic = models.BooleanField(default=False, verbose_name=_(u"Productes ecològics/organics?"))
 	#welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
 
 	'''
@@ -795,9 +796,6 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 		super(iC_Stallholder, self).__init__(*args, **kwargs)
 		self.record_type = iC_Record_Type.objects.get(clas='iC_Stallholder')
 
-
-
-#-------	O T H E R	 R E C O R D S
 
 class Learn_Session(iC_Record):
 	nonmaterial = models.ForeignKey('General.Nonmaterial', verbose_name=_(u"Formació (obra inmaterial)"))
