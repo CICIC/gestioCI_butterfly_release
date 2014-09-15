@@ -366,7 +366,7 @@ class purchases_line (models.Model):
 
 
 class movement (models.Model):
-	cooper=models.ForeignKey(cooper, null=False, blank=False, verbose_name=_(u"nº COOP"))
+	ic_membership = models.ForeignKey(iC_Membership, null=False, blank=False, verbose_name=_(u"nº COOP"))
 	concept=models.CharField(verbose_name=_(u"Concept"), max_length=200, null=False, 
 		blank=False,)
 	execution_date=models.DateField(verbose_name=_(u"Data de realització"), null=True, blank=True, help_text=_(u"La data en que es realitza. Exemple dd/mm/aaaa"))
