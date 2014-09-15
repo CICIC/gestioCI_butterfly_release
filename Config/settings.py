@@ -60,7 +60,6 @@ INSTALLED_APPS = (
     'Welcome',   # This is the membership maker APP
     'public_form',
 	#common APPS
-    #'south', 		# This is command line BBDD helper
     'django_cron', 	# This controls scheduled EmailNotifications https://pypi.python.org/pypi/django-cron
     'csvimport', 	# This provides import CSV to Model https://pypi.python.org/pypi/django-csvimport
     'localflavor', 	# This provide NIF/NIE/CIF form field

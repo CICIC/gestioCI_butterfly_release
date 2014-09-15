@@ -172,10 +172,10 @@ class Public_MembershipAdmin(AutoRecordName):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'record_type':
 			typ = iC_Record_Type.objects.get(clas='iC_Membership')
-			kwargs['get_queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		if db_field.name == 'contribution':
 			typ = Relation.objects.get(clas='contribute')
-			kwargs['get_queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		return super(Public_MembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class MembershipAdmin(Public_MembershipAdmin):
@@ -226,7 +226,7 @@ class PersonMembershipAdmin(AutoRecordName):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'contribution':
 			typ = Relation.objects.get(clas='contribute')
-			kwargs['get_queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		return super(PersonMembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class ProjectMembershipAdmin(AutoRecordName):
@@ -253,7 +253,7 @@ class ProjectMembershipAdmin(AutoRecordName):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'contribution':
 			typ = Relation.objects.get(clas='contribute')
-			kwargs['get_queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = Relation.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		return super(ProjectMembershipAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -291,10 +291,10 @@ class SE_relAddressContractInline(admin.StackedInline):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'doc_type':
 			typ = iC_Document_Type.objects.get(clas='iC_Address_Contract')
-			kwargs['get_queryset'] = iC_Document_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = iC_Document_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		if db_field.name == 'price_unit':
 			typs = Unit_Type.objects.filter(clas__icontains='currency')
-			kwargs['get_queryset'] = Unit.objects.filter(unit_type=typs)
+			kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
 		return super(SE_relAddressContractInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -306,7 +306,7 @@ class SelfEmployedForm(forms.ModelForm):
 		#print 'FORM: KWARGS: '+str(kwargs)
 		if self.instance.id:
 			humans = []
-			for human_rel in self.instance.ic_membership.human.human_persons.select_related():
+			for human_rel in Person.objects.all():
 				humans.append(human_rel.person.id)
 			self.fields['mentor_membership'].queryset = iC_Membership.objects.filter(human__id__in=humans)
 class Public_SelfEmployedAdmin(AutoRecordName):
@@ -323,7 +323,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
 										'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin')
 
-	raw_id_fields = ('ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
+	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
 
 	fieldsets = (#MembershipAdmin.fieldsets + (
 		(_(u"fase 1: Autoocupat"), {
@@ -364,14 +364,16 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		if db_field.name == 'ic_membership':
 			print 'VALUE: '+str(db_field)
 			print 'SET: '+str(kwargs)
-			#mem = kwargs['get_queryset']
+			#mem = kwargs['queryset']
 			print 'MEM: '+self.mem
 		return super(SelfEmployedAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	'''
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
 		if db_field.name == 'rel_fees':
-			kwargs['get_queryset'] = Fee.objects.filter(record_type__parent__clas='quarterly_fee')
+			kwargs['queryset'] = Fee.objects.filter(record_type__parent__clas='quarterly_fee')
+		else:
+			print "los campos son: " + db_field.name
 		return super(Public_SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class SelfEmployedAdmin(Public_SelfEmployedAdmin):
@@ -467,7 +469,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 		if db_field.name == 'ic_membership':
 			#recs = iC_Self_Employed.objects.all().values('ic_membership')
 			#print 'HOL: '+str(iC_Membership.objects.filter(selfemployed_recs=None))
-			kwargs['get_queryset'] = iC_Membership.objects.filter(selfemployed_recs=None)
+			kwargs['queryset'] = iC_Membership.objects.filter(selfemployed_recs=None)
 		return super(Public_StallholderAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class StallholderAdmin(Public_StallholderAdmin):
@@ -509,10 +511,10 @@ class Public_FeeAdmin(AutoRecordName):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'record_type':
 			typ = iC_Record_Type.objects.get(clas='Fee')
-			kwargs['get_queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		if db_field.name == 'unit':
 			typs = Unit_Type.objects.filter(clas__icontains='currency')
-			kwargs['get_queryset'] = Unit.objects.filter(unit_type=typs)
+			kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
 		return super(Public_FeeAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def get_readonly_fields(self, request, obj=None):
@@ -547,10 +549,10 @@ class FeeAdmin(Public_FeeAdmin):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'record_type':
 			typ = iC_Record_Type.objects.get(clas='Fee')
-			kwargs['get_queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		if db_field.name == 'unit':
 			typs = Unit_Type.objects.filter(clas__icontains='currency')
-			kwargs['get_queryset'] = Unit.objects.filter(unit_type=typs)
+			kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
 		return super(FeeAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def get_readonly_fields(self, request, obj=None):
@@ -588,10 +590,10 @@ class AddressContractAdmin(AutoRecordName):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'doc_type':
 			typ = iC_Document_Type.objects.get(clas='iC_Address_Contract')
-			kwargs['get_queryset'] = iC_Document_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = iC_Document_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		if db_field.name == 'price_unit':
 			typs = Unit_Type.objects.filter(clas__icontains='currency')
-			kwargs['get_queryset'] = Unit.objects.filter(unit_type=typs)
+			kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
 		return super(AddressContractAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class LicenceAdmin(AutoRecordName):
@@ -619,7 +621,7 @@ class LicenceAdmin(AutoRecordName):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'doc_type':
 			typ = iC_Document_Type.objects.get(clas='iC_Licence')
-			kwargs['get_queryset'] = iC_Document_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = iC_Document_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
 		return super(LicenceAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class InsuranceAdmin(AutoRecordName):
@@ -649,10 +651,10 @@ class InsuranceAdmin(AutoRecordName):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'doc_type':
 			typ = iC_Document_Type.objects.get(clas='iC_Insurance')
-			kwargs['get_queryset'] = iC_Document_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = iC_Document_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
 		if db_field.name == 'price_unit':
 			typs = Unit_Type.objects.filter(clas__icontains='currency')
-			kwargs['get_queryset'] = Unit.objects.filter(unit_type=typs)
+			kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
 		return super(InsuranceAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -692,20 +694,20 @@ class LearnSessionAdmin(AutoRecordName):
 
 		if db_field.name == 'record_type':
 			typ = iC_Record_Type.objects.get(clas='Learn_Session')
-			kwargs['get_queryset'] = iC_Record_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
+			kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght, tree_id=typ.tree_id)
 			if filter_type:
 				kwargs['initial'] = filter_type.id
 
 		if db_field.name == 'nonmaterial':
 			#typ = Nonmaterial_Type.objects.get(clas='ic_learn')
 			typs = Nonmaterial_Type.objects.filter(parent__clas='ic_learn')
-			kwargs['get_queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
+			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
 			if filter_type:
 				kwargs['initial'] = nonmaterial_id
 		if db_field.name == 'facilitator':
 			job = Job.objects.filter(clas='ic_facilitate')
 			#print job
-			kwargs['get_queryset'] = Human.objects.filter(jobs=job)
+			kwargs['queryset'] = Human.objects.filter(jobs=job)
 		return super(LearnSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 

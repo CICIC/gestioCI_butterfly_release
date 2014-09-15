@@ -5,7 +5,7 @@ function dismissRelatedLookupPopup(win, chosenId, newRepr) {
 }
 
 function dismissEditRelatedPopup(win, objId, newRepr) {
-
+	alert("Dismiss Edit");
 	objId = html_unescape(objId);
 	newRepr = html_unescape(newRepr);
 	var name = windowname_to_id(win.name).replace(/^edit_/, '');;
@@ -13,9 +13,10 @@ function dismissEditRelatedPopup(win, objId, newRepr) {
 	var elem = document.getElementById(name);
 
 	is_many = elem.className.indexOf('vManyToManyRawIdAdminField') != -1 && elem.value;
+	alert("Wait for answer IS EDIT? Else error");
 
 	if ( is_many ) {
-
+		alert("ES");
 		ids_array = elem.value.split(",");
 		for(var i = ids_array.length; i--;) {
 			if(ids_array[i] == objId ) {
@@ -62,7 +63,7 @@ function dismissEditRelatedPopup(win, objId, newRepr) {
 		
 	} else
 	{
-
+		alert("no es");
 		java_remove = "onclick='remove_item_foreign(&#39;{0}&#39;); return false;'";
 		java_remove = java_remove.replace("{0}", name);
 

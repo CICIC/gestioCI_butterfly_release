@@ -78,7 +78,7 @@ class contrib_ForeignKeyRawIdWidgetWrapper(ForeignKeyRawIdWidget):
 					attrs = {}
 			if self.rel.to in self.admin_site._registry:
 					# The related object is registered with the same AdminSite
-					attrs['class'] = 'vForeignKffeyRawIdWidget'
+					attrs['class'] = 'vForeignKeyRawIdWidget'
 			if value:
 					value = ','.join(force_text(v) for v in value)
 			else:
@@ -195,10 +195,11 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 		 'name': name,
 		 'media_prefix': settings.STATIC_URL,
 		 'can_add_related': self.can_add_related,
-		 'add_link' :  "",
+		 'add_link' :  add_url,
 		 'add_help_text' : add_help_text,
 		 'obj_desc' : obj_desc, 
-		 'name_desc': name_desc
+		 'name_desc': name_desc,
+		 'look_link': ""
 		}
 
 		output = ""
@@ -221,21 +222,6 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 				context.update({
 					'obj_desc' : mark_safe(obj_desc),
 					})
-			if self.can_add_related:
-				add_url = self.get_related_url(self.rel.to, info, 'add') 
-				add_help_text = _('Add Another')
-				add_link = "<a class='related-widget-wrapper-link related-widget-wrapper-add-link add-related addlink' href='"
-				add_link += add_url + "' id='add_id_" + name + "'  title='" +  add_help_text.encode("utf-8") + "'>"  + _(u"Afegir").encode("utf-8") + " </a>"
-				print "paso"
-				context.update({
-					'add_link' : mark_safe(add_link)
-					})
-			look_url = related_url + url;
-			look_link = "<a class='related-lookup related-widget-wrapper-link' href='"
-			look_img = '<img src="%s" width="16" height="16" alt="%s" /></a>' % (static('admin/img/selector-search.gif'), _('Lookup'))
-			look_link += look_url + "' id='look_id_" + name + "' > " + look_img + "</a>"
-			context.update({'look_link' : mark_safe(look_link)
-			})
 			if self.can_delete_related:
 				delete_url = self.get_related_url(self.rel.to, info, 'delete', [value]) 
 				template = self.get_related_url(self.rel.to, info, 'delete', ['%s'])
@@ -250,8 +236,18 @@ class ForeignKeyRawIdWidgetWrapper(contrib_ForeignKeyRawIdWidgetWrapper):
 				context.update({
 					'obj_desc' : mark_safe(obj_desc),
 					})
-
+		if self.can_add_related:
+			add_url = self.get_related_url(self.rel.to, info, 'add') 
+			add_help_text = _('Add Another')
+			add_link = "<a class='related-widget-wrapper-link related-widget-wrapper-add-link add-related addlink' href='%s'>%s</a>" % (add_url, _("Afegeix").encode("utf-8"))
+			context.update({'add_link' : mark_safe(add_link)})
+		look_url = related_url + url;
+		look_link = "<a class='related-lookup related-widget-wrapper-link' href='"
+		look_img = '<img src="%s" width="16" height="16" alt="%s" /></a>' % (static('admin/img/selector-search.gif'), _('Lookup'))
+		look_link += look_url + "' id='look_id_" + name + "' > " + look_img + "</a>"
+		context.update({'look_link' : mark_safe(look_link)})
 		return  mark_safe(render_to_string('related-widget-wrapper.html', context))
+
 
 class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 
@@ -415,10 +411,11 @@ class ForeignKeyRawIdWidgetWrapperAdmin(admin.ModelAdmin):
 		return formfield
 
 	def response_change(self, request, obj):
-		print "hace cahnge"
+		print "General.widgets:response_change"
 		if '_popup' in request.REQUEST:
 			pk_value = obj._get_pk_val()
-			print "return"
+			print "This is pop redirect to" + '<script type="text/javascript">opener.dismissEditRelatedPopup(window, "%s", "%s");</script>' % \
+			(escape(pk_value), escapejs(obj))
 			return HttpResponse('<script type="text/javascript">opener.dismissEditRelatedPopup(window, "%s", "%s");</script>' % \
 			# escape() calls force_unicode.
 			(escape(pk_value), escapejs(obj)))

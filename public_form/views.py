@@ -1016,9 +1016,11 @@ def save_form_self_employed(request):
 				#(60_eco) collective | (30_eco) individual
 				if request.POST.get("project_subtype", -1) == "1":
 					fee_type = iC_Record_Type.objects.get(clas__contains='individual')
+					fee_type_quarter = iC_Record_Type.objects.get(clas__contains='quarterly_ind')
 					messages.info(request, "Busco cuota 1")
 				elif request.POST.get("project_subtype", -1) == "2":
 					fee_type = iC_Record_Type.objects.get(clas__contains='collective')
+					fee_type_quarter = iC_Record_Type.objects.get(clas__contains='quarterly_col')
 					messages.info(request, "Busco cuota 2")
 
 				if current_person:
@@ -1041,9 +1043,6 @@ def save_form_self_employed(request):
 						issue_date = datetime.now(),
 						deadline_date = datetime.now() + timedelta(days=5) ,
 					)
-				else:
-					messages.info(request, 'No he trobat cuota type')
-
 				try:
 					messages.info(request, '### guardant quota alta: '+str(current_fee))
 					current_fee.save()
@@ -1052,7 +1051,7 @@ def save_form_self_employed(request):
 					messages.error(request, '%s (%s)' % (e.message, type(e)) )
 				else:
 					ic.join_fee = current_fee
-
+					
 				try:
 					ic.virtual_market = request.POST.get("virtual_market", 0)
 					if request.POST.get("expositors", 0):
@@ -1079,7 +1078,18 @@ def save_form_self_employed(request):
 						ice = iC_Self_Employed (ic_membership=ic)
 						ice.organic = request.POST.get("organic", False)
 						try:
-							ice.name = str(ice)
+							current_fee_quarter = Fee(
+								human = human,
+								project = current_project,
+								record_type = fee_type_quarter,
+								amount = fee_type.clas.split("-")[0].replace("(", ""),
+								unit = Unit.objects.get(name="Euro"),
+								issue_date = datetime.now(),
+								deadline_date = datetime.now() + timedelta(days=5) ,
+							)
+							current_fee_quarter.save()
+							ice.save()
+							ice.rel_fees.add(current_fee_quarter)
 							ice.save()
 						except Exception as e:
 							messages.info(request, _(u"Error al gravar AUTOCUPAT") )

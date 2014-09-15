@@ -110,7 +110,6 @@ class cooper(models.Model):
 	clients = models.ManyToManyField(client, verbose_name=_(u"Clients"))
 	providers = models.ManyToManyField(provider, verbose_name=_(u"Proveïdors"))
 	membership = models.ForeignKey(iC_Membership, verbose_name=_(u"rel_to_new_system"), blank=True, null=True)
-
 	def email( self ):
 		return self.user.email
 	email.short_description=_(u"Email")
