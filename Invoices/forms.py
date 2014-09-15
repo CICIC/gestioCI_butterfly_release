@@ -231,7 +231,7 @@ class period_close_form(forms.ModelForm):
 		model = period_close
 		from Invoices.models import period_close_base_fields
 		localized_fields = period_close_base_fields
-
+		exclude = ()
 from Invoices.models import period_payment
 class period_payment_inline_form(forms.ModelForm):
 	model = period_payment

@@ -68,10 +68,13 @@ class iC_Self_Employed_form(forms.ModelForm):
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Self_Employed_form, self).__init__(*args, **kwargs)
+		print "sdgdsgds"
 		if self.instance.id:
 			#Mentor
-			if iC_Membership:
-				self.fields['mentors_choice'].queryset = iC_Membership.objects.filter(human=self.instance.ic_membership.human)
+			if self.instance.id:
+				#All related persons
+				import pdb; pdb.set_trace() 
+				self.fields['mentors_choice'].queryset = iC_Membership.objects.filter(human__in=iC_Membership.human.human_persons.get_related())
 
 			#self.fields['join_date'].widget.attrs['readonly'] = True
 			#Main address
@@ -80,10 +83,10 @@ class iC_Self_Employed_form(forms.ModelForm):
 			from Welcome.models import Fee, iC_Record_Type
 
 			self.fields['fee_membership'].queryset = self.instance.rel_fees
-			print "sdgsdfgsdgsdgsdgsdgsdgsdgsdg"
+
 			for fe in Fee.objects.all():
 				print fe.record_type.clas
-			print "ttttttttttttttttttttttttttttttttt"
+
 			self.fields['quarter_membership'].queryset = self.instance.rel_fees
 			try:
 				current_main_address = rel_Human_Addresses.objects.get(human=self.instance.person, main_address = True)
@@ -102,7 +105,7 @@ class iC_Self_Employed_form(forms.ModelForm):
 		from Welcome.models import iC_Self_Employed
 		model = iC_Self_Employed
 		fields = [ "mentors_choice", "mentor_comment", "main_address_choice", 'other_address', "rel_insurances", "rel_licences", "rel_address_contracts"]
-		
+
 class public_form(forms.ModelForm):
 	CHOICES_admin = (
 		('1', 'Projecte Col·lectiu',),
@@ -123,9 +126,6 @@ class public_form(forms.ModelForm):
 		fields = ("type_admin", "type_public")
 		from Welcome.models import iC_Membership
 		model = iC_Membership
-
-
-
 
 class public_form_person(forms.ModelForm):
 	class Meta:

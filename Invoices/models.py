@@ -107,7 +107,7 @@ class cooper(models.Model):
 	advanced_tax=models.DecimalField(verbose_name=_(u'Quota avançada (€)'), help_text=_(u"Quota que s'aplicarà el primer trimestre"), decimal_places=2, max_digits=10, default=0)
 	clients = models.ManyToManyField(client, verbose_name=_(u"Clients"))
 	providers = models.ManyToManyField(provider, verbose_name=_(u"Proveïdors"))
-	membership_id = models.ForeignKey(coop, verbose_name=_(u"rel_to_new_system"), blank=True, Null=True)
+	#membership_id = models.ForeignKey('iC_Membership', verbose_name=_(u"rel_to_new_system"), blank=True, Null=True)
 
 	def email( self ):
 		return self.user.email

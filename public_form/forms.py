@@ -9,7 +9,7 @@ class human_proxy_form(forms.ModelForm):
 
 	attrs_dict = {'class': 'required'}
 
-	name = forms.RegexField(regex=r'^[\w.@+-]+$',
+	name = forms.RegexField(regex=r'^[ \w.@+-]+$',
 							max_length=100,
 							widget=forms.TextInput(),
 							label=_("Nom projecte"),
@@ -56,13 +56,14 @@ class public_form_self_admin(forms.ModelForm):
 	project_subtype = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES_sub, label=_(u"Tipus de projecte"), required=True)
 	organic = forms.BooleanField(label=_(u"Productes ecològics") )
 	ecommerce = forms.BooleanField(label=_(u"Comerç electronic propi") )
+	expositors = forms.BooleanField(label=_(u"Expositors") )
 	tents = iC_Record_Type.objects.filter(parent__clas='tent_type')
 	f = ()
 	for tent in tents:
 		f = f + ((tent.id, tent),)
 	tent_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=f, label=_(u"Tipus parada firaire"))
 	virtual_market = forms.BooleanField(label=_(u"Mercat Virtual"))
-
+	#Agregar create_membership_form > fields{ name + surname + telephone_cell}
 	def __init__(self, *args, **kwargs):
 		super(public_form_self_admin, self).__init__(*args, **kwargs)
 		if self.instance.id:
@@ -91,7 +92,7 @@ from Welcome.models import Project
 class project_form(forms.ModelForm):
 	class Meta:
 		model = Project
-
+		exclude = ()
 class create_membership_form(forms.ModelForm):
 	'''
 	CHOICES_PERSON = (
@@ -149,7 +150,7 @@ class create_membership_form(forms.ModelForm):
 	password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
 								label=_("Password (again)"))
 
-	name = forms.RegexField(regex=r'^[\w.@+-]+$',
+	name = forms.RegexField(regex=r'^[ \w.@+-]+$',
 								max_length=50,
 								widget=forms.TextInput(),
 								label=_("Nom real"),

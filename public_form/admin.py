@@ -191,7 +191,7 @@ from Welcome.admin import Public_AkinMembershipAdmin
 class Public_AkinMembershipAdmin(Public_AkinMembershipAdmin):
 
 	#list_editable = ("join_fee", "ic_CESnum",)
-	def queryset(self, request):
+	def get_queryset(self, request):
 		from public_form import bots
 		return iC_Akin_Membership.objects.filter(person=bots.user_registration_bot().get_person(request.user))
 #user_admin_site.register(iC_Akin_Membership, Public_AkinMembershipAdmin)
@@ -200,7 +200,7 @@ class Public_AkinMembershipAdmin(Public_AkinMembershipAdmin):
 from Welcome.models import iC_Person_Membership
 from Welcome.admin import PersonMembershipAdmin
 class PersonMembershipAdmin(PersonMembershipAdmin):
-	def queryset(self, request):
+	def get_queryset(self, request):
 		from public_form import bots
 		return iC_Person_Membership.objects.filter(person=bots.user_registration_bot().get_person(request.user))
 #user_admin_site.register(iC_Person_Membership, PersonMembershipAdmin)
@@ -209,7 +209,7 @@ class PersonMembershipAdmin(PersonMembershipAdmin):
 from Welcome.models import iC_Project_Membership
 from Welcome.admin import ProjectMembershipAdmin
 class ProjectMembershipAdmin(ProjectMembershipAdmin):
-	def queryset(self, request):
+	def get_queryset(self, request):
 		from public_form import bots
 		return iC_Project_Membership.objects.filter(human_persons__human=bots.user_registration_bot().get_person(request.user))
 #user_admin_site.register(iC_Project_Membership, ProjectMembershipAdmin)
@@ -218,7 +218,7 @@ class ProjectMembershipAdmin(ProjectMembershipAdmin):
 from Welcome.models import Fee
 from Welcome.admin import Public_FeeAdmin
 class Public_FeeAdmin(Public_FeeAdmin):
-	def queryset(self, request):
+	def get_queryset(self, request):
 		from public_form import bots
 		if bots.user_registration_bot().get_person(request.user):
 			ref_pro = bots.user_registration_bot().get_person(request.user).rel_humans.filter(relation__clas='reference').values('human')
@@ -256,7 +256,7 @@ class Public_PersonAdmin(Public_PersonAdmin):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
 
-	def queryset(self, request):
+	def get_queryset(self, request):
 		from public_form import bots
 		if request.user.is_superuser:
 			return Person.objects.all()
@@ -272,7 +272,7 @@ user_admin_site.register(Person, Public_PersonAdmin)
 
 from General.admin import Address
 class Public_Address(admin.ModelAdmin):
-	def queryset(self, request):
+	def get_queryset(self, request):
 		from public_form import bots
 		if request.user.is_superuser:
 			return Address.objects.all()

@@ -404,7 +404,7 @@ class invoice_admin(ModelAdmin):
 		return obj.status()
 	status.short_description = _(u"Estat")
 
-	def queryset(self, request):
+	def get_queryset(self, request):
 		if request.user.is_superuser:
 			return self.model.objects.all()
 		else:
@@ -670,7 +670,7 @@ class period_close_user(admin.ModelAdmin):
 		super(period_close_user, self).__init__(*args, **kwargs)
 		self.list_display_links = (None, )
 
-	def queryset(self, request):
+	def get_queryset(self, request):
 		return period_close.objects.filter(cooper=bot_cooper(request.user).cooper(request))
 
 	def save_model(self, request, obj, form, change):
@@ -796,7 +796,7 @@ class period_close_admin (period_close_user):
 	edit_link.short_description = _(u"Període")
 	search_fields = ['coop_number', 'user__username', 'user__first_name']
 	list_filter = ('period',  First_Period_Filter, Closing_Filter )
-	def queryset(self, request):
+	def get_queryset(self, request):
 		return period_close.objects.all()
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
@@ -1054,7 +1054,7 @@ class cooper_companies_user(ModelAdmin):
 	list_display = ('coop_number', 'cooper_clients', 'cooper_providers')
 	list_display_links = ('coop_number',)
 
-	def queryset(self, request):
+	def get_queryset(self, request):
 		return cooper.objects.filter(user=request.user)
 	def cooper_clients(self, obj):
 		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
@@ -1080,7 +1080,7 @@ class cooper_companies_admin(cooper_companies_user):
 	list_display = ('coop_number', 'cooper_clients', 'cooper_providers')
 	list_display_links = ('coop_number',)
 
-	def queryset(self, request):
+	def get_queryset(self, request):
 		return cooper.objects.filter(user=request.user)
 	def cooper_clients(self, obj):
 		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])

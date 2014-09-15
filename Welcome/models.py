@@ -334,7 +334,7 @@ class iC_Membership(iC_Record):
 	ic_CESnum = models.CharField(max_length=8, blank=True, null=True, verbose_name=_(u"Numero al CES/iCES"))
 
 	virtual_market = models.BooleanField(default=False, verbose_name=_(u"Mercat Virtual?"))
-	expositors = models.ManyToManyField('General.Address', blank=True, null=True, verbose_name=_(u"Expositors (adreçes)"))
+	expositors = models.ManyToManyField('General.Address', blank=True, null=True, verbose_name=_(u"Expositors"))
 
 	def __unicode__(self):
 		if self.record_type is None or self.record_type == '':
@@ -578,7 +578,7 @@ class iC_Self_Employed(iC_Record):
 
 	mentor_membership = models.ForeignKey('iC_Membership', related_name='mentor_of_SE', blank=True, null=True, verbose_name=_(u"Soci Mentor"))
 	mentor_comment = models.TextField(blank=True, null=True, verbose_name=_(u"Comentaris soci mentor"))
-	extra_days=models.IntegerField(verbose_name=_(u"Dies extra"), help_text=_(u"Dies extra que pot editar el trimestre en curs."), max_length=2, default=0)
+	#extra_days=models.IntegerField(verbose_name=_(u"Dies extra"), help_text=_(u"Dies extra que pot editar el trimestre en curs."), max_length=2, default=0)
 	def _has_assisted_welcome(self):
 		sess = self.ic_membership.human.assist_sessions.filter(record_type__clas='welcome_session')
 		if sess.count() > 0:

@@ -42,7 +42,6 @@ class UserAdminAuthenticationForm(AuthenticationForm):
 			# Removed check for is_staff here!
 			elif not self.user_cache.is_active:
 				raise forms.ValidationError(message)
-		self.check_for_test_cookie()
 		return self.cleaned_data
 
 class UserAdmin(AdminSite):

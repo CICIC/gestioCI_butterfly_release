@@ -57,7 +57,7 @@
 									{% if current_human in current_session.assistants.all and dont_memberships %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Actualitzar dades' %}"></td></tr>
 									{% elif current_session and current_human.id and dont_memberships %}
-										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a la sessió' %}"{{current_session}}></td></tr>
+										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a Acollida' %}"{{current_session}}></td></tr>
 									{% endif %}
 								</table>
 								<input type="hidden" value="{{public_form_action_value}}" name="public_form_action">

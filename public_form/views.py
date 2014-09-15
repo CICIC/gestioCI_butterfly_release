@@ -731,9 +731,6 @@ def activate_membership(request, activation_key):
 			ic_m.record_type = account.record_type
 			ic_m.human_id = account.person.id
 			ic_m.save()
-			ic_m.name = ic_m
-			ic_m.save()
-
 		else:
 			from Welcome.models import Record_Type
 			from Welcome.models import iC_Record_Type
@@ -794,7 +791,6 @@ def activate_membership(request, activation_key):
 			#fee_amount = 60 #si Soci Cooperatiu Individual o Soci Afí Individual:30 ecos / 30 euros / 6 hores; si Projecte Col·lectiu: 60 ecos / 60 euros / 12hores)
 		ic_m.record_type = account.record_type
 		#ic_m.human_id = account.person.id
-		ic_m.name = ic_m
 		ic_m.save()
 
 	return HttpResponseRedirect( reverse("public_form:entry_page_to_gestioci")  )
@@ -940,7 +936,9 @@ def save_form_self_employed(request):
 
 			try:
 				current_project = Project.objects.get(id=request.POST["current_human"])
-				current_project.record_type = request.POST.get("project_type", -1)
+				current_project.project_type = Project_Type.objects.get(id=request.POST.get("project_type", -1))
+				current_project.description = request.POST.get("description", "")
+				current_project.ecommerce = request.POST.get("ecommerce", "0")
 				current_project.save()
 			except ObjectDoesNotExist:
 				current_project = None
@@ -981,7 +979,7 @@ def save_form_self_employed(request):
 							current_project.telephone_land = current_person.telephone_land
 							current_project.telephone_cell = current_person.telephone_cell
 							current_project.website = current_person.website
-							current_project_record_type = request.POST.get("project_type", -1)
+							current_project.project_type = request.POST.get("project_type", -1)
 						current_project.description = request.POST.get("description", "")
 						current_project.ecommerce = request.POST.get("ecommerce", "0")
 						current_project.save()
@@ -1002,12 +1000,12 @@ def save_form_self_employed(request):
 				return HttpResponseRedirect("/cooper/public_form/human_proxy/")
 
 			if current_project and current_person is not None:
-				from General.models import rel_Human_Persons
+				from General.models import rel_Human_Persons, Relation
 				try:
-					relobj, is_new= rel_Human_Persons.objects.get_or_create(human=current_project, person_id = current_person.id)
+					relation = Relation.objects.get(clas="reference")
+					relobj, is_new= rel_Human_Persons.objects.get_or_create(human=current_project, person_id = current_person.id, relation = relation)
 					if is_new:
-						from General.models import Relation
-						relobj.relation = Relation.objects.get(clas="reference")
+						relobj.save()
 				except Exception as e:
 					messages.info(request, _(u"Error al crear relación projecto persona") )
 					messages.error(request, '%s (%s)' % (e.message, type(e)) )
@@ -1057,6 +1055,15 @@ def save_form_self_employed(request):
 
 				try:
 					ic.virtual_market = request.POST.get("virtual_market", 0)
+					if request.POST.get("expositors", 0):
+						from General.models import rel_Human_Addresses
+						cic_address = rel_Human_Addresses.objects.filter(human__name__contains="Cooperativa Integral Catalana", main_address=True).first()
+						if cic_address:
+							ic.save()
+							ic.expositors.add(cic_address.address)
+						else:
+							messages.error(request, "Nos'ha trobat l'adreça de la CIC")
+					ic.name = str(ic)
 					ic.save()
 				except Exception as e:
 					messages.info(request, _(u"Error al gravar MEMBRE") )
@@ -1072,6 +1079,7 @@ def save_form_self_employed(request):
 						ice = iC_Self_Employed (ic_membership=ic)
 						ice.organic = request.POST.get("organic", False)
 						try:
+							ice.name = str(ice)
 							ice.save()
 						except Exception as e:
 							messages.info(request, _(u"Error al gravar AUTOCUPAT") )
@@ -1097,6 +1105,7 @@ def save_form_self_employed(request):
 							ich.ic_self_employed=ice
 							ich.tent_type=tent_type
 							try:
+								ich.name = str(ich)
 								ich.save()
 							except Exception as e:
 								messages.info(request, _(u"Error al gravar FIRAIRE") )
