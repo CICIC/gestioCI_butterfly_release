@@ -8,8 +8,10 @@ from csvimport.models import CSVImport
 from decimal import Decimal
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-
 from General.models import Concept
+from Welcome.models import iC_Membership
+
+
 class type(Concept):	# create own ID's
 	clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200,
 													help_text=_(u"Model de django o classe python associada al Tipus CI"))
@@ -107,7 +109,7 @@ class cooper(models.Model):
 	advanced_tax=models.DecimalField(verbose_name=_(u'Quota avançada (€)'), help_text=_(u"Quota que s'aplicarà el primer trimestre"), decimal_places=2, max_digits=10, default=0)
 	clients = models.ManyToManyField(client, verbose_name=_(u"Clients"))
 	providers = models.ManyToManyField(provider, verbose_name=_(u"Proveïdors"))
-	#membership_id = models.ForeignKey('iC_Membership', verbose_name=_(u"rel_to_new_system"), blank=True, Null=True)
+	membership = models.ForeignKey(iC_Membership, verbose_name=_(u"rel_to_new_system"), blank=True, null=True)
 
 	def email( self ):
 		return self.user.email
