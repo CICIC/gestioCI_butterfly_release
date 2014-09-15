@@ -1582,6 +1582,7 @@ CREATE TABLE `Welcome_ic_self_employed` (
   `last_review_date` date DEFAULT NULL,
   `mentor_membership_id` int(11) DEFAULT NULL,
   `mentor_comment` longtext COLLATE utf8_unicode_ci,
+  `extra_days` int(11) DEFAULT '0',
   PRIMARY KEY (`ic_record_id`),
   KEY `Welcome_ic_self_employed_37d462ff` (`ic_membership_id`),
   KEY `Welcome_ic_self_employed_259761f6` (`rel_accountBank_id`),
@@ -1599,7 +1600,7 @@ CREATE TABLE `Welcome_ic_self_employed` (
 
 LOCK TABLES `Welcome_ic_self_employed` WRITE;
 /*!40000 ALTER TABLE `Welcome_ic_self_employed` DISABLE KEYS */;
-INSERT INTO `Welcome_ic_self_employed` VALUES (7,4,NULL,NULL,0,NULL,18.00,0,NULL,2,''),(32,31,NULL,NULL,0,NULL,NULL,0,NULL,NULL,''),(43,41,NULL,NULL,0,NULL,NULL,0,NULL,NULL,''),(48,2,NULL,NULL,0,NULL,NULL,0,NULL,NULL,''),(124,123,NULL,NULL,0,NULL,NULL,0,NULL,NULL,''),(129,128,NULL,NULL,1,NULL,NULL,0,NULL,NULL,''),(132,131,NULL,NULL,0,NULL,NULL,0,NULL,NULL,'');
+INSERT INTO `Welcome_ic_self_employed` VALUES (7,4,NULL,NULL,0,NULL,18.00,0,NULL,2,'',0),(32,31,NULL,NULL,0,NULL,NULL,0,NULL,NULL,'',0),(43,41,NULL,NULL,0,NULL,NULL,0,NULL,NULL,'',0),(48,2,NULL,NULL,0,NULL,NULL,0,NULL,NULL,'',0),(124,123,NULL,NULL,0,NULL,NULL,0,NULL,NULL,'',0),(129,128,NULL,NULL,1,NULL,NULL,0,NULL,NULL,'',0),(132,131,NULL,NULL,0,NULL,NULL,0,NULL,NULL,'',0);
 /*!40000 ALTER TABLE `Welcome_ic_self_employed` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3434,4 +3435,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-09-15 13:36:04
+-- Dump completed on 2014-09-15 16:03:51
