@@ -1,4 +1,4 @@
-USE `migrations`;
+USE `gestioCI_butterfly_migration`;
 -- MySQL dump 10.13  Distrib 5.5.38, for debian-linux-gnu (x86_64)
 --
 -- Host: 127.0.0.1    Database: gestioCI_butterfly
