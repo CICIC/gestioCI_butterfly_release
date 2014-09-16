@@ -1,4 +1,3 @@
-USE `gestioCI_butterfly_migration`;
 -- MySQL dump 10.13  Distrib 5.5.38, for debian-linux-gnu (x86_64)
 --
 -- Host: 127.0.0.1    Database: gestioCI_butterfly
@@ -83,7 +82,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `Welcome_ic_record_type` WRITE;
 /*!40000 ALTER TABLE `Welcome_ic_record_type` DISABLE KEYS */;
-INSERT INTO `Welcome_ic_record_type` VALUES (3),(4),(5),(6),(7),(8),(9),(10),(11),(13),(14),(15),(16),(17),(18),(19),(27),(28),(29),(30),(31),(32),(33),(34),(35),(36),(37),(38);
+INSERT INTO `Welcome_ic_record_type` VALUES (3),(4),(5),(6),(7),(8),(9),(10),(11),(13),(14),(15),(16),(17),(18),(19),(27),(28),(29),(30),(31),(32),(33),(34),(35),(36),(37),(38),(41);
 /*!40000 ALTER TABLE `Welcome_ic_record_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -230,3 +229,28 @@ INSERT INTO `General_region_type` VALUES (39),(40),(41),(42),(43),(62);
 /*!40000 ALTER TABLE `General_region_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
+--
+-- Volcado de datos para la tabla `General_human`
+--
+
+LOCK TABLES `General_human` WRITE;
+/*!40000 ALTER TABLE `General_human` DISABLE KEYS */;
+INSERT INTO `General_human` (`id`, `name`, `birth_date`, `death_date`, `nickname`, `email`, `telephone_cell`, `telephone_land`, `website`, `description`) VALUES
+(1, 'Revolució Integral', NULL, NULL, 'RI', '', '', '', '', ''),
+(2, 'Xarxa de Cooperatives Integrals', NULL, NULL, 'XCI', '', '', '', '', ''),
+(3, 'Cooperativa Integral Catalana', NULL, NULL, 'CIC', '', '', '', '', '');
+/*!40000 ALTER TABLE `General_human` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Volcado de datos para la tabla `General_project`
+--
+
+LOCK TABLES `General_project` WRITE;
+/*!40000 ALTER TABLE `General_project` DISABLE KEYS */;
+INSERT INTO `General_project` (`human_id`, `project_type_id`, `parent_id`, `socialweb`, `email2`, `ecommerce`, `lft`, `rght`, `tree_id`, `level`) VALUES
+(1, 47, NULL, '', '', 0, 1, 18, 1, 0),
+(2, 47, 1, '', '', 0, 2, 13, 1, 1),
+(3, 24, 2, '', '', 0, 3, 12, 1, 2);
+/*!40000 ALTER TABLE `General_project` ENABLE KEYS */;
+UNLOCK TABLES;

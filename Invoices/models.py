@@ -363,6 +363,7 @@ class purchases_line (models.Model):
 		verbose_name=_(u'Línia de factura despesa')
 		verbose_name_plural=_(u'Línies de factura despesa')
 
+from General.models import Unit
 
 class movement (models.Model):
 	ic_membership = models.ForeignKey(iC_Membership, null=False, blank=False, verbose_name=_(u"nº COOP"))
@@ -377,13 +378,7 @@ class movement (models.Model):
 		null=False, 
 		blank=False,
 	)
-	currency=models.ForeignKey(
-		currencies, 
-		null=False, 
-		blank=False, 
-		verbose_name=_("Moneda"), 
-		help_text=_(u"Indica el tipus de moneda del moviment")
-	)
+	currency=models.IntegerField(blank=False, null=True, verbose_name=_("Moneda"), help_text=_(u"Indica el tipus de moneda del moviment"))
 	def status(self):
 		if self.execution_date is None:
 			return status_CHOICE_PENDING
