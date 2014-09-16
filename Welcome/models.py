@@ -95,8 +95,7 @@ class iC_Record(Artwork):	# create own ID's
 
 
 class iC_Type(Concept):	# create own ID's
-	clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200,
-													help_text=_(u"Model de django o classe python associada al Tipus CI"))
+	clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200, help_text=_(u"Model de django o classe python associada al Tipus CI"))
 	class Meta:
 		verbose_name = _(u"c- Tipus CI")
 
