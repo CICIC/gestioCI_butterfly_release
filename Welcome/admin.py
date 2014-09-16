@@ -699,9 +699,10 @@ class LearnSessionAdmin(AutoRecordName):
 				kwargs['initial'] = filter_type.id
 
 		if db_field.name == 'nonmaterial':
-			#typ = Nonmaterial_Type.objects.get(clas='ic_learn')
-			typs = Nonmaterial_Type.objects.filter(parent__clas='ic_learn')
-			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typs)
+			#typs = Nonmaterial_Type.objects.get(artwork_type__clas=="ic_learn")
+			from General.models import Type
+			typ = Type.objects.filter(clas='ic_learn')
+			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
 			if filter_type:
 				kwargs['initial'] = nonmaterial_id
 		if db_field.name == 'facilitator':

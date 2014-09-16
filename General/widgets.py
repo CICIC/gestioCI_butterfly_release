@@ -282,6 +282,7 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 			info = (self.rel.to._meta.app_label, self.rel.to._meta.object_name.lower())
 			for obj in manytomany_manager.all():
 				#CRUD buttons
+				change_link = None
 				if self.can_change_related:
 					change_url = self.get_related_url(self.rel.to, info, 'change', [obj.id]) 
 					template = self.get_related_url(self.rel.to, info, 'change', ['%s'])
@@ -292,7 +293,7 @@ class ManyToManyRawIdWidgetWrapper(contrib_ManyToManyRawIdWidgetWrapper):
 					if change_url:
 						change_link += " href='" + change_url + "'"
 					change_link += " title='" + change_help_text.encode("utf-8") + "'>"  + "</a>"
-
+				del_link = None
 				if self.can_delete_related:
 					delete_url = self.get_related_url(self.rel.to, info, 'delete', [obj.id]) 
 					template = self.get_related_url(self.rel.to, info, 'delete', ['%s'])

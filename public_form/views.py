@@ -1013,14 +1013,17 @@ def save_form_self_employed(request):
 			if need_to_save:
 				fee_type = None
 				current_fee = None
-				#(60_eco) collective | (30_eco) individual
+
+				#expected field clas="advanced_fee quarterly_col quarterly_ind #45 #90"
 				if request.POST.get("project_subtype", -1) == "1":
 					fee_type = iC_Record_Type.objects.get(clas__contains='individual')
 					fee_type_quarter = iC_Record_Type.objects.get(clas__contains='quarterly_ind')
+					amount_advanced_tax = fee_type_quarter.clas.split("#")[1]
 					messages.info(request, "Busco cuota 1")
 				elif request.POST.get("project_subtype", -1) == "2":
 					fee_type = iC_Record_Type.objects.get(clas__contains='collective')
 					fee_type_quarter = iC_Record_Type.objects.get(clas__contains='quarterly_col')
+					amount_advanced_tax = fee_type_quarter.clas.split("#")[2]
 					messages.info(request, "Busco cuota 2")
 
 				if current_person:
@@ -1082,7 +1085,7 @@ def save_form_self_employed(request):
 								human = human,
 								project = current_project,
 								record_type = fee_type_quarter,
-								amount = fee_type.clas.split("-")[0].replace("(", ""),
+								amount = amount_advanced_tax,
 								unit = Unit.objects.get(name="Euro"),
 								issue_date = datetime.now(),
 								deadline_date = datetime.now() + timedelta(days=5) ,

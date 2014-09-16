@@ -135,5 +135,9 @@ def human_tag(parser, token):
 		return human_tag_node(obj)
 
 @register.filter
-def do_something(value):
-  return "some value"
+def get_id(value):
+
+	if hasattr(value, "id"):
+		return str(value.id)
+	else:
+		return value
