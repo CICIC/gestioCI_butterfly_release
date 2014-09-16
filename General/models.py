@@ -983,7 +983,10 @@ class AccountBank(Record):
 		verbose_name_plural= _(u'o- Comptes Bancaris')
 
 	def __unicode__(self):
-		return '('+self.unit.code+') '+self.company.nickname+': '+self.human.nickname+' '+self.number
+		try:
+			return '('+self.unit.code+') '+self.company.nickname+': '+self.human.nickname+' '+self.number	
+		except:
+			return "<projecte buit>"
 
 class AccountCrypto(Record):
 	record = models.OneToOneField('Record', primary_key=True, parent_link=True)
