@@ -581,7 +581,7 @@ class iC_Self_Employed(iC_Record):
 	def _has_assisted_welcome(self):
 		sess = self.ic_membership.human.assist_sessions.filter(record_type__clas='welcome_session')
 		if sess.count() > 0:
-			return ico_yes+' &nbsp;'+str(sess.first().datetime.date())+' ('+str(sess.first().address.name)+')'
+			return ico_yes+' &nbsp;'+str(sess.first().datetime.date())+' ('+str(sess.first().address.name.unicode("utf-8"))+')'
 		else:
 			return ico_no
 	_has_assisted_welcome.allow_tags = True

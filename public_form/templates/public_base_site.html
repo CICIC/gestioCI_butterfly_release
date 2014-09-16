@@ -26,7 +26,7 @@
 										{% if current_memberships %}
 											{% trans "Altes del Project:" %}
 											<ul>{% for m in current_memberships %}
-													<li>{{m}}<a href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m.id}}"> - {% trans "Editar" %}</a></li>
+													<li>{{m}}<a href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans "Editar" %}</a></li>
 												{% endfor %}
 											</ul>
 										{% endif %}
