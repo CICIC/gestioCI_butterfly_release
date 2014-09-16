@@ -46,7 +46,7 @@
 									</td></tr>
 									<tr><td colspan="2"><label>{% trans "Sessió: " %}<i>
 										{% if current_session %}
-											{{ current_session}} <a href="/cooper/Welcome/learn_session/{{current_session|get_id}}/?next=/cooper/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
+											{{ current_session}} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
 										{% else %}
 											{% trans "Cap sessió seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 										{% endif %}
