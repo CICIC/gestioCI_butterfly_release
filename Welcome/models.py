@@ -580,8 +580,9 @@ class iC_Self_Employed(iC_Record):
 	extra_days=models.IntegerField(verbose_name=_(u"Dies extra"), help_text=_(u"Dies extra que pot editar el trimestre en curs."), max_length=2, default=0)
 	def _has_assisted_welcome(self):
 		sess = self.ic_membership.human.assist_sessions.filter(record_type__clas='welcome_session')
+		#import pdb; pdb.set_trace()
 		if sess.count() > 0:
-			return ico_yes+' &nbsp;'+str(sess.first().datetime.date())+' ('+str(sess.first().address.name.unicode("utf-8"))+')'
+			return ico_yes  + " " + str(sess.first().datetime.date()) + " " + str(sess.first().address)
 		else:
 			return ico_no
 	_has_assisted_welcome.allow_tags = True
