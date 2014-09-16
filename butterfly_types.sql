@@ -1,5 +1,4 @@
-CREATE DATABASE  IF NOT EXISTS `gestioCI_butterfly` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `gestioCI_butterfly`;
+USE `gestioCI_butterfly_migration`;
 -- MySQL dump 10.13  Distrib 5.5.38, for debian-linux-gnu (x86_64)
 --
 -- Host: 127.0.0.1    Database: gestioCI_butterfly
