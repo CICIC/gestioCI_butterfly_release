@@ -318,11 +318,11 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		js = ('welcome.js', 'selfemployed.js',)
 
 	model = iC_Self_Employed
-	list_display = ['name', 'ic_membership', 'join_date', 'record_type',]# '_join_fee_payed']
+	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
 	form = SelfEmployedForm
 
 	readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-										'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin')
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
 
@@ -331,8 +331,8 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			#'classes': ('collapse',),
 			'fields': (
 				('ic_membership', '_member_link', '_min_human_data'),
+				('_main_address_render'),
 				('organic',),
-				('rel_fees', '_rel_fees',),
 				('_has_assisted_welcome',)
 			)
 		}),
@@ -348,6 +348,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		(_(u"fase 3: Alta"), {
 			'classes': ('welcome',),
 			'fields': (
+				('rel_fees', '_rel_fees',),
 				('join_date', ),
 				('assigned_vat', 'review_vat', 'last_review_date'),
 				('rel_accountBank',),
@@ -373,8 +374,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
 		if db_field.name == 'rel_fees':
 			kwargs['queryset'] = Fee.objects.filter(record_type__parent__clas='quarterly_fee')
-		else:
-			print "los campos son: " + db_field.name
+
 		return super(Public_SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class SelfEmployedAdmin(Public_SelfEmployedAdmin):
