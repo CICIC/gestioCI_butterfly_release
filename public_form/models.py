@@ -152,11 +152,19 @@ class RegistrationProfile(models.Model):
 		#self.user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
 		print subject + message
 
+'''
+This is model form human_proxy ModelAdmin
+as "Self employed presencial form"
+Based on human list, a iC_learn_session object 
+will be selected by modelAdmin.filters,
+so an iC_Welcome admin can manage the pair
+human/session.
+'''
 from General.models import Human
 class human_proxy(Human):
 	class Meta:
-		verbose_name= _(u"FORMULARI AUTOOCUPATS PRESENCIAL")
-		verbose_name_plural= _(u'FORMULARIS AUTOOCUPATS PRESENCIAL')
+		verbose_name= _(u"Persona | Projecte")
+		verbose_name_plural= _(u'Persones | Projectes')
 		proxy = True
 
 from Welcome.models import Learn_Session
