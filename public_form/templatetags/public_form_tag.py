@@ -5,6 +5,29 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib import messages
 register = template.Library()
 
+'''
+@param: 
+	REQUEST
+	use:
+		GET.key("learn_session_id")
+		GET.key("human_id")
+
+@returns: 
+	context:current_sesion_form
+		can be:
+			public_form.forms.learn_session_proxy_form
+				A form for initial state to join human with session
+				Action: view(save_form_self_employed['public_form_action_join_session'])
+			public_form.forms.public_form_self_admin
+				A form for create membership
+				Action: view(save_form_self_employed['public_form_action_save_membership'])
+	context:public_form_action_value
+		a value for action stored in a hidden so the view can check wich action has to do with the posted form
+	context:current_sesion
+		learn_session object
+	context:current_human
+		human object
+'''
 class sessions_tag_node(template.Node):
 	def __init__(self, obj):
 			# saves the passed obj parameter for later use
@@ -33,18 +56,33 @@ class sessions_tag_node(template.Node):
 		if current_human and current_session:
 			if current_human in current_session.assistants.all():
 				from public_form.forms import public_form_self_admin
-				form = public_form_self_admin()
-				context['current_sesion_form'] = form
+				context['current_sesion_form'] = public_form_self_admin()
 				context['public_form_action_value'] = "public_form_action_save_membership"
 			else:
 				from public_form.forms import learn_session_proxy_form
 				context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
 				context['public_form_action_value'] = "public_form_action_join_session"
-
+		elif current_human and current_human.assist_sessions.count() > 0:
+			 current_session = current_human.assist_sessions.all()[0]
 		context['current_session'] = current_session
 		context['current_human'] = current_human
+		from public_form.views import get_url_for
 		return ''
 
+'''
+@param: 
+	REQUEST
+	use:
+		GET.key("learn_session_id")
+		GET.key("human_id")
+
+@return:
+	context['current_human']: General.model > Based on key(human_id), will be a Project or a Person or a Human
+	context['dont_memberships'] : Boolean > True meaning human does not have any membership
+	context['current_memberships']:  queryset > Welcome.ic_Membership, related object for Human
+	context['current_memberships_self']: queryset > Welcome.ic_Self_Employed, related object for Human
+	current_memberships_stallholder']: queryset > Welcome.ic_Stallholder, related object for Human
+'''
 class human_tag_node(template.Node):
 	def __init__(self, obj):
 			# saves the passed obj parameter for later use
@@ -60,6 +98,7 @@ class human_tag_node(template.Node):
 
 			from General.models import Human
 			from django.core.exceptions import ObjectDoesNotExist
+			current_human = None
 			try:
 				current_human = Human.objects.get( id=obj ) 
 				context['current_human'] = current_human
@@ -93,8 +132,84 @@ class human_tag_node(template.Node):
 					context['current_memberships_stallholder'] = icsh
 
 					context['dont_memberships'] = ic.count()==0 and icse.count()==0 and icsh.count()==0
-
+					#Try to cast type
+					from General.models import Person, Project
+					try:
+						current_entity = Project.objects.get( id=obj ) 
+					except ObjectDoesNotExist:
+						try:
+							current_entity = Person.objects.get( id=obj ) 
+						except ObjectDoesNotExist:
+							pass
+					if current_entity:
+						context['current_human'] = current_entity
 			return ''
+
+'''On a template, by loading this tag
+we can get a session_tag_node 
+havig on param an object rather than a simple type
+'''
+@register.tag
+def sessions_tag(parser, token):
+	# token is the string extracted from the template, e.g. "box_user_loader my_object"
+	# it will be splitted, and the second argument will be passed to a new
+	# constructed FooNode
+	try:
+		tag_name, obj = token.split_contents()
+	except ValueError:
+		raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+	return sessions_tag_node(obj)
+
+'''On a template, by loading this tag
+we can get a human_tag_node 
+havig on param an object rather than a simple type
+'''
+@register.tag
+def human_tag(parser, token):
+	# token is the string extracted from the template, e.g. "box_user_loader my_object"
+	# it will be splitted, and the second argument will be passed to a new
+	# constructed FooNode
+	try:
+		tag_name, obj = token.split_contents()
+	except ValueError:
+		raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+	return human_tag_node(obj)
+
+'''
+Some times, template localize id's as integers
+with point on miles. So this is to get str
+'''
+@register.filter
+def get_id(value):
+	if hasattr(value, "id"):
+		return str(value.id)
+	else:
+		return value
+
+
+'''
+Some times, template localize id's as integers
+with point on miles. So this is to get str
+'''
+@register.filter
+def get_class(value):
+	from General.models import Person, Project, Human
+	if isinstance(value,Person):
+		return _(" Persona: ")
+	elif isinstance(value,Project):
+		return _(" Project: ")
+	elif isinstance(value,Human):
+		return _(u" Humà: ")
+	else:
+		return _(" Entitat: ")
+
+@register.filter
+def get_projects(value):
+	from General. models import rel_Human_Persons
+	return rel_Human_Persons.objects.filter(person=value)
+
+
+
 '''
 
 				try:
@@ -112,32 +227,3 @@ class human_tag_node(template.Node):
 				icproj_s = iC_Project_Membership.objects.filter(human=current_human)
 				icpers_s = iC_Person_Membership.objects.filter(human=current_human)
 '''
-@register.tag
-def sessions_tag(parser, token):
-		# token is the string extracted from the template, e.g. "box_user_loader my_object"
-		# it will be splitted, and the second argument will be passed to a new
-		# constructed FooNode
-		try:
-				tag_name, obj = token.split_contents()
-		except ValueError:
-				raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
-		return sessions_tag_node(obj)
-		
-@register.tag
-def human_tag(parser, token):
-		# token is the string extracted from the template, e.g. "box_user_loader my_object"
-		# it will be splitted, and the second argument will be passed to a new
-		# constructed FooNode
-		try:
-				tag_name, obj = token.split_contents()
-		except ValueError:
-				raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
-		return human_tag_node(obj)
-
-@register.filter
-def get_id(value):
-
-	if hasattr(value, "id"):
-		return str(value.id)
-	else:
-		return value

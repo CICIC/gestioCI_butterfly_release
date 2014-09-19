@@ -18,35 +18,48 @@
 			{% with request.GET.learn_session_id|default:0 as current_session %}
 				{% sessions_tag request %}
 				{% with request.GET.human_id|default:0 as current_human %}
+
 					{% human_tag current_human %}
 						<div class="form-row" >
 							<form action="/public_form/save_form_self_employed/" method="POST">
 								<table>
-									<tr><td colspan="2"><label>{% trans "Projecte: " %}<i>{{current_human}} {{current_human.self_link}}</i></label><br>
+									<tr><td colspan="2">
+										<label>{{current_human|get_class}} {{current_human}} {{current_human.self_link}}</label><br>
+										<ul>
+										{% for project in current_human|get_projects %}
+											<li>{{project}}
+											<a onclick='return showRelatedObjectLookupPopup(this);' 
+											href="/admin/General/project/{{project.human|get_id}}/?_popup=1"> - {% trans " Editar" %}</a></li>
+										{% endfor %}
+										</ul>
+									</tr>
+									<tr><td colspan="2">
 										{% if current_memberships %}
-											{% trans "Altes del Project:" %}
 											<ul>{% for m in current_memberships %}
-													<li>{{m}}<a href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans "Editar" %}</a></li>
+												<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
+												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/?_popup=1"> - {% trans " Editar" %}</a></li>
 												{% endfor %}
 											</ul>
 										{% endif %}
 										{% if current_memberships_self %}
-											{% trans "Altes del Project Autocupat:" %}
 											<ul>{% for m in current_memberships_self %}
-													<li>{{m}}<a href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans "Editar" %}</a></li>
+													<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
+													href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/?_popup=1"> - {% trans " Editar" %}</a></li>
 												{% endfor %}
 											</ul>
 										{% endif %}
 										{% if current_memberships_stallholder %}
-											{% trans "Altes del Firaire:" %}
 											<ul>{% for m in current_memberships_stallholder %}
-													<li>{{m}}<a href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans "Editar" %}</a></li>
+													<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
+													href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/?_popup=1"> - {% trans " Editar" %}</a></li>
 												{% endfor %}</ul>
 										{% endif %}
 									</td></tr>
 									<tr><td colspan="2"><label>{% trans "Sessió: " %}<i>
 										{% if current_session %}
-											{{ current_session}} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
+											{{ current_session}} <a 
+											onclick='return showRelatedObjectLookupPopup(this);'
+											href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}/?_popup=1"> {% trans "Editar" %}</a>
 										{% else %}
 											{% trans "Cap sessió seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 										{% endif %}
@@ -57,7 +70,7 @@
 									{% if current_human in current_session.assistants.all and dont_memberships %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Actualitzar dades' %}"></td></tr>
 									{% elif current_session and current_human.id and dont_memberships %}
-										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a Acollida' %}"{{current_session}></td></tr>
+										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a Acollida' %}"{{current_session}}></td></tr>
 									{% endif %}
 								</table>
 								<input type="hidden" value="{{public_form_action_value}}" name="public_form_action">
@@ -66,6 +79,7 @@
 								{% csrf_token %}
 							</form>
 						</div>
+
 				{% endwith %}
 			{% endwith %}
 		{% endblock %}

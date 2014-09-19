@@ -76,8 +76,7 @@ class type_human_filter (SimpleListFilter):
 			assistance_to_welcome = current_session.assistants.all()
 			self.title = _(u"Assistents: ") + current_session.name
 		elif current_human:
-			assistance_to_welcome = current_human.assist_sessions.all()
-			self.title = _(u"Ha assistit a:")
+			return
 		else:
 			return
 
@@ -112,25 +111,25 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 		if obj is None:
 			return "(None)"
 		else:
-			url = "/cooper/public_form/human_proxy/?human_id=%s" % (obj.id)
+			url = "/admin/public_form/human_proxy/?human_id=%s" % (obj.id)
 			message = obj.name 
 			_class = "class='no_assistant'"
-			img_link = "/cooper/General/human/%s" % (obj.id)
-			img_link_next = "next=/cooper/public_form/human_proxy"
+			img_link = "/admin/General/human/%s" % (obj.id)
+			img_link_next = "next=/admin/public_form/human_proxy"
 			img_url = "/static/user_images/Anon_user.png"
 			if obj.assist_sessions:
 				for session in obj.assist_sessions.all():
-					url = "/cooper/public_form/human_proxy/?human_id=%s" % (obj.id)
+					url = "/admin/public_form/human_proxy/?human_id=%s" % (obj.id)
 					_class = "class='assistant'"
 			try:
 				is_project = Project.objects.get(id=obj.id)
 				img_url = "/static/user_images/Project_user.png"
-				img_link = "/cooper/General/project/%s/?%s" % (obj.id, img_link_next)
+				img_link = "/admin/General/project/%s/?%s" % (obj.id, img_link_next)
 			except ObjectDoesNotExist:
 				try:
 					is_person = Person.objects.get(id=obj.id)
 					img_url = "/static/user_images/Person_user.png"
-					img_link = "/cooper/General/person/%s/?%s" % (obj.id, img_link_next)
+					img_link = "/admin/General/person/%s/?%s" % (obj.id, img_link_next)
 				except:
 					pass
 					message = message + obj.name.__str__()
@@ -298,13 +297,14 @@ from General.admin import ProjectAdmin
 class Public_ProjectAdmin(ProjectAdmin):
 
 	def response_change(self, request, obj):
-
 		response = super(Public_ProjectAdmin, self).response_change(request, obj)
 		if request.GET.has_key('next'):
 			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
 				if request.GET.get('next') == 'public_form':
 					response['location'] = reverse('public_form:entry_page_to_gestioci')
 				else:
+					print "si paso"
+					print request.GET.get('next') + "?human_id=" + str(obj.id)
 					response['location'] = request.GET.get('next') + "?human_id=" + str(obj.id)
 
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):

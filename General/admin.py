@@ -335,7 +335,7 @@ class Proj_refPersonInline(admin.StackedInline):
   #  }),
   #)
   verbose_name = _(u"Persona de Referència")
-  verbose_name_plural = _(u"Persones de Referència")
+  verbose_name_plural = _(u"Socis de Referència")
   classes = ['collapse', 'collapsed']
 
 
