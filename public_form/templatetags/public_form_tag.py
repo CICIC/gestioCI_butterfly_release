@@ -4,7 +4,7 @@ from datetime import date, timedelta, datetime
 from django.utils.translation import ugettext_lazy as _
 from django.contrib import messages
 register = template.Library()
-
+from django.utils.safestring import mark_safe
 '''
 @param: 
 	REQUEST
@@ -195,18 +195,23 @@ with point on miles. So this is to get str
 def get_class(value):
 	from General.models import Person, Project, Human
 	if isinstance(value,Person):
-		return _(" Persona: ")
+		return mark_safe("<img class='user_grid' src='/static/user_images/Person_user.png' >") 
 	elif isinstance(value,Project):
-		return _(" Project: ")
+		return mark_safe("<img class='user_grid' src='/static/user_images/Project_user.png' >") 
 	elif isinstance(value,Human):
-		return _(u" Humà: ")
+		return mark_safe("<img class='user_grid' src='/static/user_images/Anon_user.png' >") 
 	else:
 		return _(" Entitat: ")
 
 @register.filter
 def get_projects(value):
-	from General. models import rel_Human_Persons
-	return rel_Human_Persons.objects.filter(person=value)
+	from General.models import Person
+	if isinstance(value, Person):
+		from General. models import rel_Human_Persons
+		return rel_Human_Persons.objects.filter(person=value)
+	else:
+		return None
+	
 
 
 

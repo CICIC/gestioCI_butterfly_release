@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from Welcome.forms import public_form
 from django.template import RequestContext
+from django.contrib.auth.decorators import login_required
 
 def public_form(request):
 	# Get the context from the request.
@@ -106,6 +107,41 @@ def public_view_company(request):
 	# Bad form (or form details), no form supplied...
 	# Render the form with error messages (if any).
 	return render_to_response('public_form.html', {'form': form}, context)
+
+@login_required
+def add_contract_to_address(request, person_id, address_id, id):
+
+	from General.models import Person, Address
+	try:
+		current_person = Person.objects.get(id=person_id)
+	except:
+		current_person = None
+	try:
+		current_address = Address.objects.get(id=address_id)
+	except:
+		current_address = None
+
+	if current_person and current_address:
+		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type
+		typ = iC_Document_Type.objects.get(clas='iC_Address_Contract')
+		ic_doc = iC_Document()
+		ic_doc.doc_type = typ
+		ic_doc.current_person = current_person
+		ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
+		ic_doc.save()
+		ic = iC_Address_Contract(ic_document=ic_doc, address=current_address)
+		ic.name = ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
+		ic.save()
+		if ic_doc.id:
+			return HttpResponseRedirect(
+					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id) + "/"
+			)
+		else:
+			return HttpResponseRedirect(
+					reverse('Welcome:ic_address_contract')
+			)
+	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)
+	return HttpResponseRedirect(callback_url)
 
 
 

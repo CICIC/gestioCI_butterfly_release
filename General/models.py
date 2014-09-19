@@ -586,18 +586,7 @@ class Address(Space):	# Create own ID's
 	_main_addr_of.short_description = _(u"Adreça principal de")
 	main_addr_of = property(_main_addr_of)
 
-	def _has_contracts(self):
-		return "Lista de contratos pendiente de hacer"
-	def _has_licences(self):
-		return "Lista de licencias pendietne de hacer"
-	def _get_contracts(self):
-		from Welcome.models import iC_Address_Contract
-		output = ""
-		for contract in  iC_Address_Contract.objects.filter(address=self):
-			output += contract + " - "
-		return output
-	def _get_licences(self):
-		return "Lista de licencias pendietne de hacer"
+
 	class Meta:
 		verbose_name= _(u'Adreça')
 		verbose_name_plural= _(u's- Adreces')

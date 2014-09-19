@@ -1,5 +1,5 @@
 {% extends "public_form_base_0.html" %}
-{% load i18n %}
+{% load i18n admin_urls admin_static admin_modify %}
 {% block title %} {% trans "CIC | Gesti&oacute; Integral de Cooperatives" %} {% endblock %}
 
 {% block branding %}
@@ -27,7 +27,7 @@
 										<label>{{current_human|get_class}} {{current_human}} {{current_human.self_link}}</label><br>
 										<ul>
 										{% for project in current_human|get_projects %}
-											<li>{{project}}
+											<li><img class="user_grid" src="{% static 'user_images/Project_user.png' %}"> {{project.human}}
 											<a onclick='return showRelatedObjectLookupPopup(this);' 
 											href="/admin/General/project/{{project.human|get_id}}/?_popup=1"> - {% trans " Editar" %}</a></li>
 										{% endfor %}

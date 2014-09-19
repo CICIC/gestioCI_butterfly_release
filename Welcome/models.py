@@ -12,6 +12,8 @@ from decimal import Decimal
 
 from General.models import *
 
+from django.http import HttpResponseRedirect, HttpResponse
+from django.core.urlresolvers import reverse
 #from General.models import Record, Human, Person, Project, Relation
 
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
@@ -682,6 +684,7 @@ class iC_Self_Employed(iC_Record):
 	_rel_id_cards.short_description = _(u"dni membres?")
 
 	def _main_address_render(self):
+
 		adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
 		output = "<ul>"
 		output += "<li>" + _(u"Adreça: ").encode("utf-8") + adr.p_address.encode("utf-8") + "</li>" 
@@ -690,8 +693,22 @@ class iC_Self_Employed(iC_Record):
 		output += "<li>" + _(u"Comarca: ").encode("utf-8") + adr.region.name.encode("utf-8") + "</li>" 
 		output += "<li>" + _(u"Ubicació específica: ").encode("utf-8") + str(adr) + "</li>" 
 		output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + "?" + "</li>" 
-		output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + adr._get_contracts() + "</li>" 
-		output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + adr._get_licences() + "</li>" 
+		if adr in  self.rel_address_contracts.all():
+			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + self.rel_address_contracts.objects.get(address=adr) + "</li>" 
+		else:
+			if hasattr(self.ic_membership.human, 'project'):
+				persons = self.ic_membership.human.project.persons
+				if persons.count > 0:
+					current_person = persons.first()
+			elif hasattr(self.ic_membership.human, 'person'):
+				current_person = self.ic_membership.human.person
+
+			if current_person:
+				add_button = reverse('Welcome:add_contract_to_address', args=(current_person.id, adr.id, self.id))
+
+			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + add_button + "</li>" 
+		output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + "cap" + "</li>" 
 		output += "</ul>"
 		return output
 		try:
@@ -929,7 +946,7 @@ class iC_Document_Type(iC_Record_Type):
 class iC_Labor_Contract(iC_Document):
 	ic_document = models.OneToOneField('iC_Document', primary_key=True, parent_link=True)
 	person = models.ForeignKey('General.Person', verbose_name=_(u"Persona contractada"))
-	company = models.ForeignKey('General.Company', verbose_name=_(u"Empresa contractant"))
+	company = models.ForeignKey('General.Company', verbose_name=_(u"Empresa contractant"), null=True, blank=True)
 	start_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'inici del contracte"))
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de final del contracte"))
 	rel_fees = models.ManyToManyField('Fee', blank=True, null=True, verbose_name=_(u"Quotes relacionades"))
@@ -945,7 +962,7 @@ class iC_Labor_Contract(iC_Document):
 class iC_Address_Contract(iC_Document):
 	ic_document = models.OneToOneField('iC_Document', primary_key=True, parent_link=True)
 	#ic_membership = models.ForeignKey('iC_Membership', blank=True, null=True, verbose_name=_(u"Soci (registre)"))
-	company = models.ForeignKey('General.Company', blank=True, null=True, verbose_name=_(u"Empresa titular (CI)"))
+	company = models.ForeignKey('General.Company', verbose_name=_(u"Empresa titular (CI)"), null=True, blank=True)
 	address = models.ForeignKey('General.Address', verbose_name=_(u"Adreça contractada"))
 	price = models.DecimalField(max_digits=13, decimal_places=2, blank=True, null=True, verbose_name=_(u"Import"))
 	price_unit = models.ForeignKey('General.Unit', blank=True, null=True, verbose_name=_(u"Unitat"))
@@ -953,15 +970,18 @@ class iC_Address_Contract(iC_Document):
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de final del contracte"))
 
 	def __unicode__(self):
-		if hasattr(self, 'selfemployed') and self.selfemployed.count():
-			#print 'SELFEMPLOYED! '+str(self.selfemployed.first().ic_membership.human)
-			return self.selfemployed.first().ic_membership.human.__unicode__()+': '+self.address.name
-		elif self.company:
-			return self.company.nickname+': ?? > '+self.address.name
-		#elif self.address:
-		#	return '??: ?? > '+self.address.__unicode__()
-		else:
-			return self.name
+		try:
+			if hasattr(self, 'selfemployed') and self.selfemployed.count():
+				#print 'SELFEMPLOYED! '+str(self.selfemployed.first().ic_membership.human)
+				return self.selfemployed.first().ic_membership.human.__unicode__()+': '+self.address.name
+			elif self.company:
+				return self.company.nickname+': ?? > '+self.address.name
+			#elif self.address:
+			#	return '??: ?? > '+self.address.__unicode__()
+			else:
+				return self.name
+		except:
+			return ""
 
 	class Meta:
 		verbose_name = _(u"Contracte d'Adreça CI")
