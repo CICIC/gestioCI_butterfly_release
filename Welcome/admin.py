@@ -20,6 +20,7 @@ from django.forms.formsets import formset_factory
 
 from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
 class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
+#class AutoRecordName(admin.ModelAdmin):
 	class Media:
 		css = {
 			'all': ('admin_record.css',)

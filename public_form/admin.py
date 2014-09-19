@@ -13,9 +13,21 @@ from Cooper.admin import user_admin_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django.contrib import messages
-from django.contrib.admin import SimpleListFilter
+
 from django.utils.safestring import mark_safe
 
+'''
+ Is filter for human_proxy modelAdmin. 
+ Should display welcome_session objects
+ so iC_Welcome admin can manage them in "Formulario Autocupado presencial"
+ 
+ Will not filter list but use parameter.GET.learn_session_id
+ to work on with type_human_filter.parameter.GET.human_id
+ 
+ So a human_id and a learn_session_id is managed on human_proxy
+ for an iC_Welcome.admin GET requests
+'''
+from django.contrib.admin import SimpleListFilter
 class type_session_filter (SimpleListFilter):
 
 	title = _(u'Sessions Acollida i Avaluació')
@@ -34,9 +46,8 @@ class type_session_filter (SimpleListFilter):
 		return yFilters
 
 	def queryset(self, request, queryset):
-		#do nothing will be managed in jQuery and templatetags
+		#do nothing
 		return queryset
-
 
 class type_human_filter (SimpleListFilter):
 
@@ -51,6 +62,7 @@ class type_human_filter (SimpleListFilter):
 				current_human = Human.objects.get(id=request.GET.get("human_id"))
 		except:
 			pass
+
 		from Welcome.models import Learn_Session
 		try:
 			current_session = Learn_Session.objects.get(id=request.GET.get("learn_session_id", -1))
@@ -59,13 +71,13 @@ class type_human_filter (SimpleListFilter):
 
 		if current_session and current_human:
 			assistance_to_welcome = current_session.assistants.all()
-			self.title = _(u"Assistents de la sessio: ") + current_session.name
+			self.title = _(u"Assistents: ") + current_session.name
 		elif current_session:
 			assistance_to_welcome = current_session.assistants.all()
-			self.title = _(u"Assistents de la sessio: ") + current_session.name
+			self.title = _(u"Assistents: ") + current_session.name
 		elif current_human:
 			assistance_to_welcome = current_human.assist_sessions.all()
-			self.title = _(u"Del huma")
+			self.title = _(u"Ha assistit a:")
 		else:
 			return
 
@@ -76,7 +88,6 @@ class type_human_filter (SimpleListFilter):
 		return yFilters
 
 	def queryset(self, request, queryset):
-		#do nothing will be managed in jQuery and templatetags
 		return queryset
 
 from public_form.models import human_proxy
@@ -91,7 +102,7 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 	change_list_template = 'public_form_self.html'
 	change_form_template = 'public_form_change_self.html'
 	search_fields = ('name',)
-	list_filter = (type_human_filter, type_session_filter )
+	list_filter = (type_session_filter,type_human_filter)
 	def get_actions(self, request):
 		actions = super(human_proxy_modeladmin, self).get_actions(request)
 		del actions['delete_selected']
