@@ -119,7 +119,6 @@ type = 4 => add other address
 '''
 @login_required
 def self_employed_save_item(request, person_id, address_id, id, type):
-
 	from General.models import Person, Address, Project
 	try:
 		current_person = Person.objects.get(id=person_id)
@@ -206,7 +205,7 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 			return HttpResponseRedirect(
 					reverse('Welcome:ic_license')
 			)
-	elif current_person and current_address and type=="3":
+	elif current_project and type=="3":
 		from General.models import Address, rel_Human_Addresses
 		adr = Address()
 		adr.save()
@@ -214,11 +213,8 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		adr.town = _("<introducir>")
 		adr.postalcode = _("<00000>")
 		related_address = rel_Human_Addresses(human=current_project, address=adr, main_address = True)
-
 		related_address.save()
-		return HttpResponseRedirect(
-			"/admin/General/address/" + str(adr.id) + "/"
-			)
+		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/")
 	elif current_project and type=="4":
 		from General.models import Address, rel_Human_Addresses
 		adr = Address()
@@ -228,12 +224,9 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		adr.postalcode = _("<00000>")
 		related_address = rel_Human_Addresses(human=current_project, address=adr)
 		related_address.save()
-		return HttpResponseRedirect(
-			"/admin/General/address/" + str(adr.id) + "/"
-			)
+		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/")
 	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)
 	return HttpResponseRedirect(callback_url)
-
 
 
 	'''

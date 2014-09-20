@@ -684,16 +684,19 @@ class iC_Self_Employed(iC_Record):
 	_rel_id_cards.short_description = _(u"dni membres?")
 
 	def _render_address(self, adr):
-
 		output = "<br><ul>"
 		output += "<li>" + _(u"Adreça: ").encode("utf-8") + adr.p_address.encode("utf-8") + "</li>" 
 		output += "<li>" + _(u"Població: ").encode("utf-8") + adr.town.encode("utf-8")  + "</li>" 
-		output += "<li>" + _(u"CP: ").encode("utf-8") + adr.postalcode.encode("utf-8") + "</li>" 
+		try:
+			output += "<li>" + _(u"CP: ").encode("utf-8") + adr.postalcode.encode("utf-8") + "</li>" 
+		except:
+			output += "<li>" + _(u"CP: ").encode("utf-8") + " (Cap) </li>" 
 
 		try:
 			output += "<li>" + _(u"Comarca: ").encode("utf-8") + adr.region.name.encode("utf-8") + "</li>" 
 		except:
 			output += "<li>" + _(u"Comarca: (cap) ").encode("utf-8")  + "</li>" 
+
 		output += "<li>" + _(u"Ubicació específica: ").encode("utf-8") + str(adr) + "</li>" 
 
 		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_use").count()>0:
@@ -754,7 +757,7 @@ class iC_Self_Employed(iC_Record):
 		except:
 			adr = None
 		output = ""
-		if adr:
+		if adr:	
 			output = self._render_address(adr)
 
 		if hasattr(self.ic_membership.human, 'project'):
@@ -774,16 +777,22 @@ class iC_Self_Employed(iC_Record):
 		addresses = self.ic_membership.human.rel_human_addresses_set.filter(main_address=False)
 		output = ""
 		for adr in addresses:
-			output += self._render_address(adr.address)
+			try:
+				output += self._render_address(adr.address)
+			except Exception as e:
+				output += '%s (%s)' % (e.message, type(e)) 
 
 		if hasattr(self.ic_membership.human, 'project'):
 			current_human = self.ic_membership.human.project
 		elif hasattr(self.ic_membership.human, 'person'):
 			current_human = self.ic_membership.human.person
-
+		else:
+			current_human = self.ic_membership.human
 		add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 4))
 		add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
-		return output + add_button
+		output = output + add_button
+
+		return output
 	_other_address_render.allow_tags = True
 	_other_address_render.short_description = _(u"Altres adreces")
 
