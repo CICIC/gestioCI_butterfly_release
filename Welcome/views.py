@@ -122,16 +122,20 @@ def add_contract_to_address(request, person_id, address_id, id):
 		current_address = None
 
 	if current_person and current_address:
-		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type
+		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type, iC_Self_Employed
 		typ = iC_Document_Type.objects.get(clas='iC_Address_Contract')
 		ic_doc = iC_Document()
 		ic_doc.doc_type = typ
 		ic_doc.current_person = current_person
+		
 		ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
 		ic_doc.save()
 		ic = iC_Address_Contract(ic_document=ic_doc, address=current_address)
 		ic.name = ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
 		ic.save()
+		icse= iC_Self_Employed.objects.get(id=id)
+		icse.rel_address_contracts.add(ic)
+		icse.save()
 		if ic_doc.id:
 			return HttpResponseRedirect(
 					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id) + "/"
