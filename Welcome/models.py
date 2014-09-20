@@ -746,7 +746,8 @@ class iC_Self_Employed(iC_Record):
 				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 2))
 			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
 			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + add_button + "</li>" 
-
+		link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+		output += "<li>" + link + "</li>" 
 		output += "</ul>"
 		return output
 
