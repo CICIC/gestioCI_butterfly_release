@@ -322,7 +322,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	form = SelfEmployedForm
 
 	readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render')
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
 
@@ -331,7 +331,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			#'classes': ('collapse',),
 			'fields': (
 				('ic_membership', '_member_link', '_min_human_data'),
-				('_main_address_render'),
+				('_main_address_render', '_other_address_render'),
 				('organic',),
 				('_has_assisted_welcome',)
 			)

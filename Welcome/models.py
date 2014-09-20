@@ -683,40 +683,99 @@ class iC_Self_Employed(iC_Record):
 	_rel_id_cards.allow_tags = True
 	_rel_id_cards.short_description = _(u"dni membres?")
 
-	def _main_address_render(self):
+	def _render_address(self, adr):
 
-		adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
-		output = "<ul>"
+		output = "<br><ul>"
 		output += "<li>" + _(u"Adreça: ").encode("utf-8") + adr.p_address.encode("utf-8") + "</li>" 
 		output += "<li>" + _(u"Població: ").encode("utf-8") + adr.town.encode("utf-8")  + "</li>" 
 		output += "<li>" + _(u"CP: ").encode("utf-8") + adr.postalcode.encode("utf-8") + "</li>" 
-		output += "<li>" + _(u"Comarca: ").encode("utf-8") + adr.region.name.encode("utf-8") + "</li>" 
+
+		try:
+			output += "<li>" + _(u"Comarca: ").encode("utf-8") + adr.region.name.encode("utf-8") + "</li>" 
+		except:
+			output += "<li>" + _(u"Comarca: (cap) ").encode("utf-8")  + "</li>" 
 		output += "<li>" + _(u"Ubicació específica: ").encode("utf-8") + str(adr) + "</li>" 
-		output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + "?" + "</li>" 
-		if adr in  self.rel_address_contracts.all():
-			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + self.rel_address_contracts.objects.get(address=adr) + "</li>" 
+
+		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_use").count()>0:
+			contract = self.rel_address_contracts.get(address=adr, ic_document__doc_type__clas="contract_use")
+			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+			output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + str(contract) + link + "</li>" 
 		else:
 			if hasattr(self.ic_membership.human, 'project'):
 				persons = self.ic_membership.human.project.persons
-				if persons.count > 0:
+				if persons.count() > 0:
 					current_person = persons.first()
 			elif hasattr(self.ic_membership.human, 'person'):
 				current_person = self.ic_membership.human.person
-
 			if current_person:
-				add_button = reverse('Welcome:add_contract_to_address', args=(current_person.id, adr.id, self.id))
+				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 0))
+			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+			output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + add_button + "</li>" 
 
+		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_hire").count()>0:
+			contract = self.rel_address_contracts.get(address=adr, ic_document__doc_type__clas="contract_hire")
+			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + str(contract) + link + "</li>" 
+		else:
+			if hasattr(self.ic_membership.human, 'project'):
+				persons = self.ic_membership.human.project.persons
+				if persons.count() > 0:
+					current_person = persons.first()
+			elif hasattr(self.ic_membership.human, 'person'):
+				current_person = self.ic_membership.human.person
+			if current_person:
+				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 1))
 			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
 			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + add_button + "</li>" 
-		output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + "cap" + "</li>" 
+			
+		if self.rel_licences.filter(rel_address=adr).count()>0:
+			contract = self.rel_licences.get(rel_address=adr)
+			link = " " + a_strW + "ic_licence/" + str(contract.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + str(contract) + link + "</li>" 
+		else:
+			if hasattr(self.ic_membership.human, 'project'):
+				persons = self.ic_membership.human.project.persons
+				if persons.count() > 0:
+					current_person = persons.first()
+			elif hasattr(self.ic_membership.human, 'person'):
+				current_person = self.ic_membership.human.person
+			if current_person:
+				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 2))
+			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + add_button + "</li>" 
+
 		output += "</ul>"
 		return output
-		try:
-			pass
-		except:
-			return "----"
+
+	def _main_address_render(self):
+
+		adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
+
+		output = self._render_address(adr)
+
+		return output
+
 	_main_address_render.allow_tags = True
 	_main_address_render.short_description = _(u"Adreça principal")
+
+	def _other_address_render(self):
+
+		addresses = self.ic_membership.human.rel_human_addresses_set.filter(main_address=False)
+		output = ""
+		for adr in addresses:
+			output += self._render_address(adr.address)
+
+		if hasattr(self.ic_membership.human, 'project'):
+			current_human = self.ic_membership.human.project
+		elif hasattr(self.ic_membership.human, 'person'):
+			current_human = self.ic_membership.human.person
+
+		add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 4))
+		add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+		return output + add_button
+
+	_other_address_render.allow_tags = True
+	_other_address_render.short_description = _(u"Altres adreces")
 
 	def _rel_address_contract(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
 		addrs = self.rel_address_contracts.all()
@@ -1096,10 +1155,13 @@ class iC_Licence(iC_Document):
 	rel_job = models.ForeignKey('General.Job', blank=True, null=True, verbose_name=_(u"Ofici relacionat"))
 
 	def __unicode__(self):
-		if hasattr(self, 'selfemployed') and self.selfemployed.count():
-			return self.doc_type.name+': '+self.selfemployed.first().ic_membership.__unicode__()
-		else:
-			return self.doc_type.name+': ?? '+self.number
+		try:
+			if hasattr(self, 'selfemployed') and self.selfemployed.count():
+				return self.doc_type.name+': '+self.selfemployed.first().ic_membership.__unicode__()
+			else:
+				return self.doc_type.name+': ?? '+self.number
+		except:
+			return "iC_License"
 
 	class Meta:
 		verbose_name = _(u"Llicència soci CI")
