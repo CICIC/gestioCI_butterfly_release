@@ -49,6 +49,26 @@ class type_session_filter (SimpleListFilter):
 		#do nothing
 		return queryset
 
+from django.contrib.admin import SimpleListFilter
+class type_session_filter_socialcoin (SimpleListFilter):
+
+	title = _(u'Sessions Moneda Social')
+	parameter_name = 'coin_session_id'
+
+	def lookups(self, request, model_admin):
+		welcome_sessions = Learn_Session.objects.filter(record_type__clas="socialcoin_session")
+		yFilters = ()
+		for session in welcome_sessions:
+			message =  _(u"%s asistents %s. ")
+			from django.utils import formats
+			date = formats.date_format(session.datetime, "SHORT_DATETIME_FORMAT")
+			message = message % (date, session.assistants.count())
+			yFilters = yFilters + ((session.id, message),)
+		return yFilters
+
+	def queryset(self, request, queryset):
+		#do nothing
+		return queryset
 class type_human_filter (SimpleListFilter):
 
 	title = _(u"Registe d'assistencia")
@@ -101,7 +121,7 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 	change_list_template = 'public_form_self.html'
 	change_form_template = 'public_form_change_self.html'
 	search_fields = ('name',)
-	list_filter = (type_session_filter,type_human_filter)
+	list_filter = (type_session_filter, type_session_filter_socialcoin, type_human_filter)
 	def get_actions(self, request):
 		actions = super(human_proxy_modeladmin, self).get_actions(request)
 		del actions['delete_selected']

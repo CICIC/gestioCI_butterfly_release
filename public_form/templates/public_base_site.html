@@ -72,10 +72,30 @@
 									{% elif current_session and current_human.id and dont_memberships %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a Acollida' %}"{{current_session}}></td></tr>
 									{% endif %}
+									<tr><td colspan="2"><label>{% trans "Sessió: " %}<i>
+										{% if current_coin_session %}
+											{{ current_coin_session}} <a 
+											onclick='return showRelatedObjectLookupPopup(this);'
+											href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_coin_session|get_id}}/?_popup=1"> {% trans "Editar" %}</a>
+										{% else %}
+											{% trans "Cap sessió de moneda social seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
+										{% endif %}
+									</i></label></td></tr>
+									{% if current_human.id in current_coin_session.assistants.all %}
+										si
+									{% else %}
+										{% for assistant in current_coin_session.assistants.all %}
+											{% if assistant|get_id != current_human|get_id %}
+												<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a sessió moneda social' %}"{{current_coin_session}}></td></tr>
+											{% endif %}
+										{% endfor %}
+									{% endif%}
+
 								</table>
 								<input type="hidden" value="{{public_form_action_value}}" name="public_form_action">
 								<input type="hidden" value="{{current_human|get_id}}" name="current_human">
 								<input type="hidden" value="{{current_session|get_id}}" name="current_session">
+								<input type="hidden" value="{{current_coin_session|get_id}}" name="current_coin_session">
 								{% csrf_token %}
 							</form>
 						</div>

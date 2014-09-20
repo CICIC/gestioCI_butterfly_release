@@ -902,16 +902,17 @@ def get_current_human_or_none(request):
 	except ObjectDoesNotExist:
 		current_human = None
 		messages.warning(request, _(u"No s'ha trobat al humà") )
+	return current_human
 
-def get_current_session_or_none(request):
+def get_current_session_or_none(request, type="current_session"):
 	try:
 		from Welcome.models import Learn_Session
-		current_session = Learn_Session.objects.get(id=request.POST["current_session"])
+		current_session = Learn_Session.objects.get(id=request.POST[type])
 	except ObjectDoesNotExist:
 		current_session = None
 		messages.warning(request, _(u"No s'ha trobat la sessió") )
-
-def apply_join_session(current_human, current_session):
+	return current_session
+def apply_join_session(request, current_human, current_session):
 
 	if not current_human in current_session.assistants.all():
 		try:
@@ -928,15 +929,21 @@ def apply_join_session(current_human, current_session):
 	else:
 		messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 
-def get_url_for (current_human, current_session):
+def get_url_for (current_human, current_session, current_coin_session = None):
 	callback_url = "/cooper/public_form/human_proxy/"
+	output = ""
 	if current_human and current_session:
-		return "%s?human_id=%s&learn_session_id=%s" % (callback_url, current_human.id,current_session.id)
+		output =  "%s?human_id=%s&learn_session_id=%s" % (callback_url, current_human.id,current_session.id)
 	elif current_human:
-		return "%s?human_id=%s" % (callback_url, current_human.id)
+		output =  "%s?human_id=%s" % (callback_url, current_human.id)
 	elif current_session:
-		return "%s?learn_session_id=%s" % (callback_url, current_session.id)
+		output =  "%s?learn_session_id=%s" % (callback_url, current_session.id)
 
+	if current_coin_session :
+		if output == "":
+			return "%s?coin_session_id=%s" % (callback_url, current_coin_session.id)
+		else:
+			return output + "&coin_session_id=%s" % (current_coin_session.id)
 '''
 Will try to cast param human_id on a project or a person to save it with POST data.
 
@@ -1159,8 +1166,9 @@ def save_stall_holder(ic, ice, request):
 @login_required
 def save_form_self_employed(request):
 
-	current_human = None
-	current_session = None
+	current_human = get_current_human_or_none(request)
+	current_session = get_current_session_or_none(request, "current_session")
+	current_coin_session = get_current_session_or_none(request, "current_coin_session")
 
 	if not request.POST:
 		return HttpResponseRedirect(get_url_for(current_human, current_session))
@@ -1170,8 +1178,12 @@ def save_form_self_employed(request):
 		current_session = get_current_session_or_none(request)
 
 	if request.POST["public_form_action"] == "public_form_action_join_session":
-		apply_join_session(current_human, current_session)
+		apply_join_session(request, current_human, current_session)
 		return HttpResponseRedirect(get_url_for(current_human, current_session))
+
+	if request.POST["public_form_action"] == "public_form_action_join_coin_session":
+		apply_join_session(request, current_human, current_coin_session)
+		return HttpResponseRedirect(get_url_for(current_human, current_session, current_coin_session))
 
 	if request.POST["public_form_action"] ==  "public_form_action_save_membership":
 		messages.info(request, "Post params: project_type: " + request.POST.get("project_type", "nada"))
