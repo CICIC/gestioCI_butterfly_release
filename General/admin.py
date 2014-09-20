@@ -79,6 +79,7 @@ class AutoNameMixin(admin.ModelAdmin):
     instance.save()
     form.save_m2m()
     return instance
+
 from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
 class Css_Mixin(ForeignKeyRawIdWidgetWrapperAdmin):
   class Media:

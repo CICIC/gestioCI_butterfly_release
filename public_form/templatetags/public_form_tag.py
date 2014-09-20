@@ -60,19 +60,22 @@ class sessions_tag_node(template.Node):
 
 		if current_human and current_session:
 			if current_human in current_session.assistants.all():
+				context['has_session'] = True
 				from public_form.forms import public_form_self_admin
 				context['current_sesion_form'] = public_form_self_admin()
 				context['public_form_action_value'] = "public_form_action_save_membership"
 			else:
+				context['has_session'] = False
 				from public_form.forms import learn_session_proxy_form
 				context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
 				context['public_form_action_value'] = "public_form_action_join_session"
 
 		if current_human and current_coin_session:
 			if current_human in current_coin_session.assistants.all():
-				pass
+				context['has_coin_session'] = True
 			else:
 				from public_form.forms import learn_session_proxy_form
+				context['has_coin_session'] = False
 				context['current_coin_sesion_form'] = learn_session_proxy_form(instance=current_coin_session)
 				context['public_form_action_value'] = "public_form_action_join_coin_session"
 
@@ -84,7 +87,7 @@ class sessions_tag_node(template.Node):
 		context['current_session'] = current_session
 		context['current_human'] = current_human
 		context['current_coin_session'] = current_coin_session
-		from public_form.views import get_url_for
+
 		return ''
 
 '''

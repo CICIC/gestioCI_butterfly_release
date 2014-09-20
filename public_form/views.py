@@ -908,10 +908,11 @@ def get_current_session_or_none(request, type="current_session"):
 	try:
 		from Welcome.models import Learn_Session
 		current_session = Learn_Session.objects.get(id=request.POST[type])
-	except ObjectDoesNotExist:
+	except:
 		current_session = None
 		messages.warning(request, _(u"No s'ha trobat la sessió") )
 	return current_session
+
 def apply_join_session(request, current_human, current_session):
 
 	if not current_human in current_session.assistants.all():
@@ -1028,7 +1029,8 @@ def save_current_individual(current_human, current_person, request):
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
 	return current_project, ic
 
-def save_current_collective(current_project):
+def save_current_collective(current_project, request):
+	from Welcome.models import iC_Project_Membership
 	ic = None
 	if current_project:
 		try:
@@ -1049,7 +1051,7 @@ def save_relation_project_person():
 				messages.info(request, _(u"Error al crear relación projecto persona") )
 				messages.error(request, '%s (%s)' % (e.message, type(e)) )'''
 
-def save_fee(request, current_person, current_project, current_human):
+def save_fees(request, current_person, current_project, current_human):
 	fee_type = None
 	current_fee = None
 
@@ -1113,6 +1115,7 @@ def save_other_fields(request, ic ):
 		messages.error(request, '%s (%s)' % (e.message, type(e)) )
 
 def save_self_employed(ic, request):
+	ice = None
 	try:
 		messages.info(request, _(u"Busco self_employed") )
 		from Welcome.models import iC_Self_Employed
@@ -1138,6 +1141,7 @@ def save_self_employed(ic, request):
 		except Exception as e:
 			messages.info(request, _(u"Error al gravar AUTOCUPAT") )
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
+	return ice
 
 def save_stall_holder(ic, ice, request):
 	from Welcome.models import iC_Type
@@ -1190,22 +1194,21 @@ def save_form_self_employed(request):
 		messages.info(request, "Post params: project_subtype: " + request.POST.get("project_subtype", "nada"))
 
 		current_project, current_person = save_current_human(request)
-
+		ic = None
 		if current_human:
 			if request.POST.get("project_subtype", -1) == "1":
 				current_project, ic = save_current_individual(current_human, current_person, request)
 
 			if request.POST.get("project_subtype", -1) == "2":
-				ic = save_current_collective(current_project, current_person)
+				ic = save_current_collective(current_project, request)
 		else:
 			messages.info(request, _(u"Faig redire per falta dhuma") )
 			return HttpResponseRedirect(get_url_for(current_human, current_session))
 
-		messages.info(request, "Es grabara? " + str(need_to_save))
 		if ic:
 			save_fees(request, current_person, current_project, current_human)
 			save_other_fields(request, ic )
-			save_self_employed(ic, request)
+			ice = save_self_employed(ic, request)
 			messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":
 				save_stall_holder(ic, ice, request)
