@@ -209,9 +209,12 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 	elif current_person and current_address and type=="3":
 		from General.models import Address, rel_Human_Addresses
 		adr = Address()
-		adr.main_address = True
 		adr.save()
-		related_address = rel_Human_Addresses(human=current_person, address=adr)
+		adr.p_address = _("<introducir>")
+		adr.town = _("<introducir>")
+		adr.postalcode = _("<00000>")
+		related_address = rel_Human_Addresses(human=current_project, address=adr, main_address = True)
+
 		related_address.save()
 		return HttpResponseRedirect(
 			"/admin/General/address/" + str(adr.id) + "/"

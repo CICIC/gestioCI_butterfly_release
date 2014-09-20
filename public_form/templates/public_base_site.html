@@ -84,7 +84,7 @@
 										{% endif %}
 										</i></label></td></tr>
 
-										{% if current_session and current_human and not has_coin_session%}
+										{% if current_coin_session and current_human and not has_coin_session%}
 											<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a moneda social' %}"{{current_coin_session}}></td></tr>
 										{% endif %}
 									{% endif %}

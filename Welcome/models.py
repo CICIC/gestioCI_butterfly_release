@@ -749,11 +749,22 @@ class iC_Self_Employed(iC_Record):
 
 	def _main_address_render(self):
 
-		adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
+		try:
+			adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
+		except:
+			adr = None
+		output = ""
+		if adr:
+			output = self._render_address(adr)
 
-		output = self._render_address(adr)
+		if hasattr(self.ic_membership.human, 'project'):
+			current_human = self.ic_membership.human.project
+		elif hasattr(self.ic_membership.human, 'person'):
+			current_human = self.ic_membership.human.person
+		add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 3))
+		add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+		return output + add_button
 
-		return output
 
 	_main_address_render.allow_tags = True
 	_main_address_render.short_description = _(u"Adreça principal")
@@ -773,7 +784,6 @@ class iC_Self_Employed(iC_Record):
 		add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 4))
 		add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
 		return output + add_button
-
 	_other_address_render.allow_tags = True
 	_other_address_render.short_description = _(u"Altres adreces")
 

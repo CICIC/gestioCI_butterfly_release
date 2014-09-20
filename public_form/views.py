@@ -945,6 +945,8 @@ def get_url_for (current_human, current_session, current_coin_session = None):
 			return "%s?coin_session_id=%s" % (callback_url, current_coin_session.id)
 		else:
 			return output + "&coin_session_id=%s" % (current_coin_session.id)
+	else:
+		return output
 '''
 Will try to cast param human_id on a project or a person to save it with POST data.
 
@@ -958,7 +960,7 @@ Retrieve a person by request.POST.key("current_human") id
 	Saves
 
 '''
-def save_current_human(request):
+def save_current_human(request, current_human):
 	from General.models import Project, Person, Project_Type
 	from Welcome.models import iC_Project_Membership, iC_Person_Membership
 
@@ -983,8 +985,11 @@ def save_current_human(request):
 			current_person.telephone_cell = current_human.telephone_cell
 			current_person.email = current_human.email
 			current_person.save()
-			from General.models import Relation
-			current_project.persons.add(current_person, relation = Relation.objects.get(id=11) ) #11 Referencia
+			from General.models import rel_Human_Persons, Relation
+			relation = Relation.objects.get(clas="reference")
+			relobj, is_new= rel_Human_Persons.objects.get_or_create(human=current_project, person_id = current_person.id, relation = relation)
+			if is_new:
+				relobj.save()
 		except Exception as e:
 			messages.info(request, _(u"Error al gravar persona") )
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
@@ -1051,7 +1056,7 @@ def save_relation_project_person():
 				messages.info(request, _(u"Error al crear relación projecto persona") )
 				messages.error(request, '%s (%s)' % (e.message, type(e)) )'''
 
-def save_fees(request, current_person, current_project, current_human):
+def save_fees(request, current_person, current_project, current_human, ic):
 	fee_type = None
 	current_fee = None
 
@@ -1096,6 +1101,7 @@ def save_fees(request, current_person, current_project, current_human):
 	else:
 		ic.join_fee = current_fee
 		ic.save()
+	return amount_advanced_tax, fee_type_quarter
 
 def save_other_fields(request, ic ):
 	try:
@@ -1114,8 +1120,18 @@ def save_other_fields(request, ic ):
 		messages.info(request, _(u"Error al gravar MEMBRE") )
 		messages.error(request, '%s (%s)' % (e.message, type(e)) )
 
-def save_self_employed(ic, request):
+def save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter):
 	ice = None
+	if current_person:
+		human = current_person
+	elif current_project:
+		human = current_project
+	else:
+		human = current_human
+
+	if not current_project:
+		current_project = current_human
+
 	try:
 		messages.info(request, _(u"Busco self_employed") )
 		from Welcome.models import iC_Self_Employed
@@ -1189,12 +1205,15 @@ def save_form_self_employed(request):
 		apply_join_session(request, current_human, current_coin_session)
 		return HttpResponseRedirect(get_url_for(current_human, current_session, current_coin_session))
 
+	ic = None
+	ice = None
 	if request.POST["public_form_action"] ==  "public_form_action_save_membership":
+
 		messages.info(request, "Post params: project_type: " + request.POST.get("project_type", "nada"))
 		messages.info(request, "Post params: project_subtype: " + request.POST.get("project_subtype", "nada"))
 
-		current_project, current_person = save_current_human(request)
-		ic = None
+		current_project, current_person = save_current_human(request, current_human)
+
 		if current_human:
 			if request.POST.get("project_subtype", -1) == "1":
 				current_project, ic = save_current_individual(current_human, current_person, request)
@@ -1206,10 +1225,11 @@ def save_form_self_employed(request):
 			return HttpResponseRedirect(get_url_for(current_human, current_session))
 
 		if ic:
-			save_fees(request, current_person, current_project, current_human)
-			save_other_fields(request, ic )
-			ice = save_self_employed(ic, request)
+			amount_advanced_tax, fee_type_quarter = save_fees(request, current_person, current_project, current_human, ic)
+			save_other_fields(request, ic)
+			ice = save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter)
 			messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":
 				save_stall_holder(ic, ice, request)
+
 	return HttpResponseRedirect(get_url_for(current_human, current_session))
