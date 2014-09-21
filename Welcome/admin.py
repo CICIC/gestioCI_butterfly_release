@@ -79,6 +79,11 @@ class AutoRecordName(admin.ModelAdmin):
 		instance.save()
 		form.save_m2m()
 		return instance
+
+	def response_change(self, request, obj):
+		print "autorecord:response_change"
+		response = super(AutoRecordName, self).response_change(request, obj)
+		return response
 '''
 	def response_add(self, request, obj):
 		from django.http import HttpResponseRedirect, HttpResponse
@@ -94,12 +99,8 @@ class AutoRecordName(admin.ModelAdmin):
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
-
 '''
-	def response_change(self, request, obj):
-		print "autorecord:response_change"
-		response = super(AutoRecordName, self).response_change(request, obj)
-		return response
+
 '''
 		from django.http import HttpResponseRedirect, HttpResponse
 		from django.core.urlresolvers import reverse
