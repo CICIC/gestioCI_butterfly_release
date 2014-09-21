@@ -19,8 +19,8 @@ from django.forms.formsets import formset_factory
 
 
 from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
-class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
-#class AutoRecordName(admin.ModelAdmin):
+#class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
+class AutoRecordName(admin.ModelAdmin):
 	class Media:
 		css = {
 			'all': ('admin_record.css',)
@@ -79,6 +79,7 @@ class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 		instance.save()
 		form.save_m2m()
 		return instance
+	'''
 	def response_add(self, request, obj):
 		from django.http import HttpResponseRedirect, HttpResponse
 		from django.core.urlresolvers import reverse
@@ -88,7 +89,7 @@ class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 				if request.GET.get('next') == 'public_form':
 					response['location'] = reverse('public_form:entry_page_to_gestioci')
 				else:
-					response['location'] = request.GET.get('next') 
+					response['location'] = request.GET.get('next')
 
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
@@ -102,11 +103,14 @@ class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 				if request.GET.get('next') == 'public_form':
 					response['location'] = reverse('public_form:entry_page_to_gestioci')
 				else:
-					response['location'] = request.GET.get('next') 
+					response['location'] = request.GET.get('next')
 
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
+	'''
+
+
 	'''
 	def save_formset(self, request, form, formset, change):
 		def set_relAddrContract_member(instance):
@@ -321,7 +325,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
 	form = SelfEmployedForm
 
-	readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
+	readonly_fields = ('_member_link', '_human_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
 						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
@@ -330,8 +334,8 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		(_(u"fase 1: Autoocupat"), {
 			#'classes': ('collapse',),
 			'fields': (
-				('ic_membership', '_member_link', '_min_human_data'),
-				('_main_address_render'),
+				('ic_membership', '_member_link', '_human_link'),
+				('_main_address_render', '_min_human_data'),
 				('organic',),
 				('_has_assisted_welcome',)
 			)
@@ -703,7 +707,7 @@ class LearnSessionAdmin(AutoRecordName):
 			#typs = Nonmaterial_Type.objects.get(artwork_type__clas=="ic_learn")
 			from General.models import Type
 			typ = Type.objects.filter(clas='ic_learn')
-			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
+			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type__parent=typ)
 			if filter_type:
 				kwargs['initial'] = nonmaterial_id
 		if db_field.name == 'facilitator':
