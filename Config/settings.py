@@ -100,8 +100,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'gestioCI_butterfly_migration',
-        'USER' : 'bumbum',
-        'PASSWORD': 'chancla',
+        'USER' : 'gestioCI',
+        'PASSWORD': 'gestioCI',
         'HOST': 'localhost',
     }
 }

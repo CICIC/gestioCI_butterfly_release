@@ -445,8 +445,10 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 		(_(u"fase 1: Autoocupat"), {
 			#'classes': ('collapse',),
 			'fields': (
-				('ic_membership', '_member_link', 'organic', 'tent_type'),
+				('ic_membership', '_member_link', '_human_link'),
+				('_main_address_render', '_min_human_data'),
 				('rel_fees', '_rel_fees',),
+				('organic', 'tent_type',),
 				('_has_assisted_welcome',)
 			)
 		}),

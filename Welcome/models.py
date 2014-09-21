@@ -650,7 +650,7 @@ class iC_Self_Employed(iC_Record):
 				slug = 'person'
 			else:
 				return slug+'!!'
-			link = a_strW + slug + '/' + str(self.ic_membership.human.id) + a_str3 + a_edit + '</a>'
+			link = a_strG + slug + '/' + str(self.ic_membership.human.id) + a_str3 + a_edit + '</a>'
 			out = self.ic_membership.human.__unicode__()
 			return '<strong>'+out+'</strong> &nbsp; <- '+link
 		else:
