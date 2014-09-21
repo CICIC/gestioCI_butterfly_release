@@ -55,7 +55,7 @@
 												{% endfor %}</ul>
 										{% endif %}
 									</td></tr>
-									<tr><td colspan="2"><label>{% trans "Sessió: " %}<i>
+									<tr><td colspan="2"><label>
 										{% if current_session %}
 											{{ current_session}} <a 
 											onclick='return showRelatedObjectLookupPopup(this);'
@@ -63,18 +63,17 @@
 										{% else %}
 											{% trans "Cap sessió seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 										{% endif %}
-										</i></label></td></tr>
+										</label></td></tr>
 									{% if dont_memberships %}
 										{{current_sesion_form.as_table}}
 									{% endif %}
 									{% if current_human and current_session and has_session and dont_memberships %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Actualitzar dades' %}"></td></tr>
 									{% elif current_session and current_human.id and dont_memberships %}
-										<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a Acollida' %}"{{current_session}}></td></tr>
+										<tr><td colspan="2"><input type="submit" value="{% trans "Establir que " %}{{current_human}}{% trans " ha assistit a aquesta sessió d'Acollida" %}"{{current_session}}></td></tr>
 									{% endif %}
 									{% if not dont_memberships %}
-									<tr><td colspan="2"><label>{% trans "Sessió: " %}<i>
-									
+									<tr><td colspan="2"><label>
 										{% if current_coin_session %}
 											{{ current_coin_session}} <a 
 											onclick='return showRelatedObjectLookupPopup(this);'
@@ -82,10 +81,10 @@
 										{% else %}
 											{% trans "Cap sessió de moneda social seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 										{% endif %}
-										</i></label></td></tr>
+										</label></td></tr>
 
 										{% if current_coin_session and current_human and not has_coin_session%}
-											<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a moneda social' %}"{{current_coin_session}}></td></tr>
+											<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a aquesta sessió de moneda social' %}"{{current_coin_session}}></td></tr>
 										{% endif %}
 									{% endif %}
 

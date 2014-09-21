@@ -151,11 +151,11 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		icse.save()
 		if ic_doc.id:
 			return HttpResponseRedirect(
-					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id) + "/"
+					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id) + "/?_popup=1"
 			)
 		else:
 			return HttpResponseRedirect(
-					reverse('Welcome:ic_address_contract')
+					reverse('Welcome:ic_address_contract') + "/?_popup=1"
 			)
 	elif current_person and current_address and type=="1":
 		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type, iC_Self_Employed
@@ -175,11 +175,11 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		icse.save()
 		if ic_doc.id:
 			return HttpResponseRedirect(
-					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id) + "/"
+					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id)  + "/?_popup=1"
 			)
 		else:
 			return HttpResponseRedirect(
-					reverse('Welcome:ic_address_contract')
+					reverse('Welcome:ic_address_contract') + "/?_popup=1"
 			)
 	elif current_person and current_address and type=="2":
 		from Welcome.models import iC_Licence, iC_Document, iC_Document_Type, iC_Self_Employed
@@ -199,11 +199,11 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		icse.save()
 		if ic_doc.id:
 			return HttpResponseRedirect(
-					"/admin/Welcome/ic_licence/" + str(ic_doc.id) + "/"
+					"/admin/Welcome/ic_licence/" + str(ic_doc.id) + "/?_popup=1"
 			)
 		else:
 			return HttpResponseRedirect(
-					reverse('Welcome:ic_license')
+					reverse('Welcome:ic_license')  + "/?_popup=1"
 			)
 	elif current_project and type=="3":
 		from General.models import Address, rel_Human_Addresses
@@ -214,7 +214,7 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		adr.postalcode = _("<00000>")
 		related_address = rel_Human_Addresses(human=current_project, address=adr, main_address = True)
 		related_address.save()
-		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/")
+		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/?_popup=1")
 	elif current_project and type=="4":
 		from General.models import Address, rel_Human_Addresses
 		adr = Address()
@@ -224,8 +224,8 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		adr.postalcode = _("<00000>")
 		related_address = rel_Human_Addresses(human=current_project, address=adr)
 		related_address.save()
-		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/")
-	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)
+		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) +  "/?_popup=1")
+	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)  + "/?_popup=1"
 	return HttpResponseRedirect(callback_url)
 
 

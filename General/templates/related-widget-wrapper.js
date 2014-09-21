@@ -7,10 +7,14 @@ function dismissRelatedLookupPopup(win, chosenId, newRepr) {
 function dismissEditRelatedPopup(win, objId, newRepr) {
 
 	objId = html_unescape(objId);
-
 	newRepr = html_unescape(newRepr);
 
-	var name = windowname_to_id(win.name).replace(/^edit_/, '');;
+	if ( win.name == undefined || win.name == "" ) {
+		win.close()
+		return
+	}
+
+	var name = windowname_to_id(win.name).replace(/^edit_/, '');
 
 	var elem = document.getElementById(name);
 

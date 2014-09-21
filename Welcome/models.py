@@ -701,7 +701,7 @@ class iC_Self_Employed(iC_Record):
 
 		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_use").count()>0:
 			contract = self.rel_address_contracts.get(address=adr, ic_document__doc_type__clas="contract_use")
-			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + "' >" + _("Editar").encode("utf-8") + "</a>"
 			output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + str(contract) + link + "</li>" 
 		else:
 			if hasattr(self.ic_membership.human, 'project'):
@@ -710,9 +710,10 @@ class iC_Self_Employed(iC_Record):
 					current_person = persons.first()
 			elif hasattr(self.ic_membership.human, 'person'):
 				current_person = self.ic_membership.human.person
+			add_button = ""
 			if current_person:
 				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 0))
-			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+			add_button = "<a  onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
 			output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + add_button + "</li>" 
 
 		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_hire").count()>0:
@@ -766,7 +767,7 @@ class iC_Self_Employed(iC_Record):
 		elif hasattr(self.ic_membership.human, 'person'):
 			current_human = self.ic_membership.human.person
 		add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 3))
-		add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+		add_button = "<a  onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
 		return output + add_button
 
 

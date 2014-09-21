@@ -939,14 +939,13 @@ def get_url_for (current_human, current_session, current_coin_session = None):
 		output =  "%s?human_id=%s" % (callback_url, current_human.id)
 	elif current_session:
 		output =  "%s?learn_session_id=%s" % (callback_url, current_session.id)
+		if current_coin_session :
+			if output == "":
+				output = "%s?coin_session_id=%s" % (callback_url, current_coin_session.id)
+			else:
+				output += "&coin_session_id=%s" % (current_coin_session.id)
+	return output
 
-	if current_coin_session :
-		if output == "":
-			return "%s?coin_session_id=%s" % (callback_url, current_coin_session.id)
-		else:
-			return output + "&coin_session_id=%s" % (current_coin_session.id)
-	else:
-		return output
 '''
 Will try to cast param human_id on a project or a person to save it with POST data.
 
@@ -954,11 +953,9 @@ Retrieve a project by request.POST.key("current_human") id
 	Set its type, description and ecommerce fields
 	Saves
 Otherwise, reports not found
-
 Retrieve a person by request.POST.key("current_human") id
 	Sets its name, telephones and email
 	Saves
-
 '''
 def save_current_human(request, current_human):
 	from General.models import Project, Person, Project_Type
@@ -969,6 +966,7 @@ def save_current_human(request, current_human):
 		current_project.project_type = Project_Type.objects.get(id=request.POST.get("project_type", -1))
 		current_project.description = request.POST.get("description", "")
 		current_project.ecommerce = request.POST.get("ecommerce", "0")
+		current_project.description = request.POST.get("description", "")
 		current_project.save()
 	except ObjectDoesNotExist:
 		current_project = None
@@ -1002,7 +1000,7 @@ Also will create a project which request.POST.get("project_type", 31) should be 
 otherwise return none
 '''
 def save_current_individual(current_human, current_person, request):
-
+	from General.models import Project_Type
 	ic = None
 	if current_person:
 		try:
@@ -1013,26 +1011,9 @@ def save_current_individual(current_human, current_person, request):
 								human=current_human, 
 								join_date=datetime.now()
 								)
-			try:
-				current_project = Project(id= current_human.id)
-			except ObjectDoesNotExist:
-				current_project = Project()
-
-			current_project.project_type = Project_Type.objects.get(id=request.POST.get("project_type", 31))
-			current_project.name = _("Projecte cooperatiu individual de: ") + current_person.name
-			current_project.email = current_person.email
-			current_project.telephone_land = current_person.telephone_land
-			current_project.telephone_cell = current_person.telephone_cell
-			current_project.website = current_person.website
-			current_project.description = request.POST.get("description", "")
-			current_project.ecommerce = request.POST.get("ecommerce", "0")
-			current_project.save()
-			from General.models import Relation
-			current_person.hum_projects.add(current_project, Relation.objects.get(id=5) ) #Relació persona projecte
-		except Exception as e:
-			messages.info(request, _(u"Error al gravar projecte") )
-			messages.error(request, '%s (%s)' % (e.message, type(e)) )
-	return current_project, ic
+		except:
+			pass
+	return ic
 
 def save_current_collective(current_project, request):
 	from Welcome.models import iC_Project_Membership
@@ -1216,7 +1197,7 @@ def save_form_self_employed(request):
 
 		if current_human:
 			if request.POST.get("project_subtype", -1) == "1":
-				current_project, ic = save_current_individual(current_human, current_person, request)
+				ic = save_current_individual(current_human, current_person, request)
 
 			if request.POST.get("project_subtype", -1) == "2":
 				ic = save_current_collective(current_project, request)

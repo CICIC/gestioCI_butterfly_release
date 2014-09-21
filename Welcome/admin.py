@@ -93,7 +93,12 @@ class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
+
 	def response_change(self, request, obj):
+		print "autorecord:response_change"
+		response = super(AutoRecordName, self).response_change(request, obj)
+		return response
+'''
 		from django.http import HttpResponseRedirect, HttpResponse
 		from django.core.urlresolvers import reverse
 		response = super(AutoRecordName, self).response_change(request, obj)
@@ -107,7 +112,8 @@ class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
-	'''
+'''
+'''
 	def save_formset(self, request, form, formset, change):
 		def set_relAddrContract_member(instance):
 			if not instance.ic_membership:
@@ -124,7 +130,7 @@ class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 			return instances
 		else:
 			return formset.save()
-	'''
+'''
 
 
 
