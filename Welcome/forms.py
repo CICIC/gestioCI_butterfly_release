@@ -72,8 +72,6 @@ class iC_Self_Employed_form(forms.ModelForm):
 		if self.instance.id:
 			#Mentor
 			if self.instance.id:
-				#All related persons
-				import pdb; pdb.set_trace() 
 				self.fields['mentors_choice'].queryset = iC_Membership.objects.filter(human__in=iC_Membership.human.human_persons.get_related())
 
 			#self.fields['join_date'].widget.attrs['readonly'] = True

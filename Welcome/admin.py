@@ -94,7 +94,12 @@ class AutoRecordName(admin.ModelAdmin):
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
+
 	def response_change(self, request, obj):
+		print "autorecord:response_change"
+		response = super(AutoRecordName, self).response_change(request, obj)
+		return response
+'''
 		from django.http import HttpResponseRedirect, HttpResponse
 		from django.core.urlresolvers import reverse
 		response = super(AutoRecordName, self).response_change(request, obj)
@@ -108,10 +113,7 @@ class AutoRecordName(admin.ModelAdmin):
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
-	'''
 
-
-	'''
 	def save_formset(self, request, form, formset, change):
 		def set_relAddrContract_member(instance):
 			if not instance.ic_membership:
@@ -128,7 +130,7 @@ class AutoRecordName(admin.ModelAdmin):
 			return instances
 		else:
 			return formset.save()
-	'''
+'''
 
 
 
@@ -325,8 +327,8 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
 	form = SelfEmployedForm
 
-	readonly_fields = ('_member_link', '_human_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render')
+	readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
 
@@ -334,8 +336,8 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		(_(u"fase 1: Autoocupat"), {
 			#'classes': ('collapse',),
 			'fields': (
-				('ic_membership', '_member_link', '_human_link'),
-				('_main_address_render', '_min_human_data'),
+				('ic_membership', '_member_link', '_min_human_data'),
+				('_main_address_render', '_other_address_render'),
 				('organic',),
 				('_has_assisted_welcome',)
 			)

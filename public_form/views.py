@@ -902,16 +902,18 @@ def get_current_human_or_none(request):
 	except ObjectDoesNotExist:
 		current_human = None
 		messages.warning(request, _(u"No s'ha trobat al humà") )
+	return current_human
 
-def get_current_session_or_none(request):
+def get_current_session_or_none(request, type="current_session"):
 	try:
 		from Welcome.models import Learn_Session
-		current_session = Learn_Session.objects.get(id=request.POST["current_session"])
-	except ObjectDoesNotExist:
+		current_session = Learn_Session.objects.get(id=request.POST[type])
+	except:
 		current_session = None
 		messages.warning(request, _(u"No s'ha trobat la sessió") )
+	return current_session
 
-def apply_join_session(current_human, current_session):
+def apply_join_session(request, current_human, current_session):
 
 	if not current_human in current_session.assistants.all():
 		try:
@@ -928,14 +930,21 @@ def apply_join_session(current_human, current_session):
 	else:
 		messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 
-def get_url_for (current_human, current_session):
+def get_url_for (current_human, current_session, current_coin_session = None):
 	callback_url = "/cooper/public_form/human_proxy/"
+	output = ""
 	if current_human and current_session:
-		return "%s?human_id=%s&learn_session_id=%s" % (callback_url, current_human.id,current_session.id)
+		output =  "%s?human_id=%s&learn_session_id=%s" % (callback_url, current_human.id,current_session.id)
 	elif current_human:
-		return "%s?human_id=%s" % (callback_url, current_human.id)
+		output =  "%s?human_id=%s" % (callback_url, current_human.id)
 	elif current_session:
-		return "%s?learn_session_id=%s" % (callback_url, current_session.id)
+		output =  "%s?learn_session_id=%s" % (callback_url, current_session.id)
+		if current_coin_session :
+			if output == "":
+				output = "%s?coin_session_id=%s" % (callback_url, current_coin_session.id)
+			else:
+				output += "&coin_session_id=%s" % (current_coin_session.id)
+	return output
 
 '''
 Will try to cast param human_id on a project or a person to save it with POST data.
@@ -944,13 +953,11 @@ Retrieve a project by request.POST.key("current_human") id
 	Set its type, description and ecommerce fields
 	Saves
 Otherwise, reports not found
-
 Retrieve a person by request.POST.key("current_human") id
 	Sets its name, telephones and email
 	Saves
-
 '''
-def save_current_human(request):
+def save_current_human(request, current_human):
 	from General.models import Project, Person, Project_Type
 	from Welcome.models import iC_Project_Membership, iC_Person_Membership
 
@@ -959,6 +966,7 @@ def save_current_human(request):
 		current_project.project_type = Project_Type.objects.get(id=request.POST.get("project_type", -1))
 		current_project.description = request.POST.get("description", "")
 		current_project.ecommerce = request.POST.get("ecommerce", "0")
+		current_project.description = request.POST.get("description", "")
 		current_project.save()
 	except ObjectDoesNotExist:
 		current_project = None
@@ -975,8 +983,11 @@ def save_current_human(request):
 			current_person.telephone_cell = current_human.telephone_cell
 			current_person.email = current_human.email
 			current_person.save()
-			from General.models import Relation
-			current_project.persons.add(current_person, relation = Relation.objects.get(id=11) ) #11 Referencia
+			from General.models import rel_Human_Persons, Relation
+			relation = Relation.objects.get(clas="reference")
+			relobj, is_new= rel_Human_Persons.objects.get_or_create(human=current_project, person_id = current_person.id, relation = relation)
+			if is_new:
+				relobj.save()
 		except Exception as e:
 			messages.info(request, _(u"Error al gravar persona") )
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
@@ -989,7 +1000,7 @@ Also will create a project which request.POST.get("project_type", 31) should be 
 otherwise return none
 '''
 def save_current_individual(current_human, current_person, request):
-
+	from General.models import Project_Type
 	ic = None
 	if current_person:
 		try:
@@ -1000,28 +1011,12 @@ def save_current_individual(current_human, current_person, request):
 								human=current_human, 
 								join_date=datetime.now()
 								)
-			try:
-				current_project = Project(id= current_human.id)
-			except ObjectDoesNotExist:
-				current_project = Project()
+		except:
+			pass
+	return ic
 
-			current_project.project_type = Project_Type.objects.get(id=request.POST.get("project_type", 31))
-			current_project.name = _("Projecte cooperatiu individual de: ") + current_person.name
-			current_project.email = current_person.email
-			current_project.telephone_land = current_person.telephone_land
-			current_project.telephone_cell = current_person.telephone_cell
-			current_project.website = current_person.website
-			current_project.description = request.POST.get("description", "")
-			current_project.ecommerce = request.POST.get("ecommerce", "0")
-			current_project.save()
-			from General.models import Relation
-			current_person.hum_projects.add(current_project, Relation.objects.get(id=5) ) #Relació persona projecte
-		except Exception as e:
-			messages.info(request, _(u"Error al gravar projecte") )
-			messages.error(request, '%s (%s)' % (e.message, type(e)) )
-	return current_project, ic
-
-def save_current_collective(current_project):
+def save_current_collective(current_project, request):
+	from Welcome.models import iC_Project_Membership
 	ic = None
 	if current_project:
 		try:
@@ -1042,7 +1037,7 @@ def save_relation_project_person():
 				messages.info(request, _(u"Error al crear relación projecto persona") )
 				messages.error(request, '%s (%s)' % (e.message, type(e)) )'''
 
-def save_fee(request, current_person, current_project, current_human):
+def save_fees(request, current_person, current_project, current_human, ic):
 	fee_type = None
 	current_fee = None
 
@@ -1087,6 +1082,7 @@ def save_fee(request, current_person, current_project, current_human):
 	else:
 		ic.join_fee = current_fee
 		ic.save()
+	return amount_advanced_tax, fee_type_quarter
 
 def save_other_fields(request, ic ):
 	try:
@@ -1105,7 +1101,18 @@ def save_other_fields(request, ic ):
 		messages.info(request, _(u"Error al gravar MEMBRE") )
 		messages.error(request, '%s (%s)' % (e.message, type(e)) )
 
-def save_self_employed(ic, request):
+def save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter):
+	ice = None
+	if current_person:
+		human = current_person
+	elif current_project:
+		human = current_project
+	else:
+		human = current_human
+
+	if not current_project:
+		current_project = current_human
+
 	try:
 		messages.info(request, _(u"Busco self_employed") )
 		from Welcome.models import iC_Self_Employed
@@ -1131,6 +1138,7 @@ def save_self_employed(ic, request):
 		except Exception as e:
 			messages.info(request, _(u"Error al gravar AUTOCUPAT") )
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
+	return ice
 
 def save_stall_holder(ic, ice, request):
 	from Welcome.models import iC_Type
@@ -1159,8 +1167,9 @@ def save_stall_holder(ic, ice, request):
 @login_required
 def save_form_self_employed(request):
 
-	current_human = None
-	current_session = None
+	current_human = get_current_human_or_none(request)
+	current_session = get_current_session_or_none(request, "current_session")
+	current_coin_session = get_current_session_or_none(request, "current_coin_session")
 
 	if not request.POST:
 		return HttpResponseRedirect(get_url_for(current_human, current_session))
@@ -1170,31 +1179,38 @@ def save_form_self_employed(request):
 		current_session = get_current_session_or_none(request)
 
 	if request.POST["public_form_action"] == "public_form_action_join_session":
-		apply_join_session(current_human, current_session)
+		apply_join_session(request, current_human, current_session)
 		return HttpResponseRedirect(get_url_for(current_human, current_session))
 
+	if request.POST["public_form_action"] == "public_form_action_join_coin_session":
+		apply_join_session(request, current_human, current_coin_session)
+		return HttpResponseRedirect(get_url_for(current_human, current_session, current_coin_session))
+
+	ic = None
+	ice = None
 	if request.POST["public_form_action"] ==  "public_form_action_save_membership":
+
 		messages.info(request, "Post params: project_type: " + request.POST.get("project_type", "nada"))
 		messages.info(request, "Post params: project_subtype: " + request.POST.get("project_subtype", "nada"))
 
-		current_project, current_person = save_current_human(request)
+		current_project, current_person = save_current_human(request, current_human)
 
 		if current_human:
 			if request.POST.get("project_subtype", -1) == "1":
-				current_project, ic = save_current_individual(current_human, current_person, request)
+				ic = save_current_individual(current_human, current_person, request)
 
 			if request.POST.get("project_subtype", -1) == "2":
-				ic = save_current_collective(current_project, current_person)
+				ic = save_current_collective(current_project, request)
 		else:
 			messages.info(request, _(u"Faig redire per falta dhuma") )
 			return HttpResponseRedirect(get_url_for(current_human, current_session))
 
-		messages.info(request, "Es grabara? " + str(need_to_save))
 		if ic:
-			save_fees(request, current_person, current_project, current_human)
-			save_other_fields(request, ic )
-			save_self_employed(ic, request)
+			amount_advanced_tax, fee_type_quarter = save_fees(request, current_person, current_project, current_human, ic)
+			save_other_fields(request, ic)
+			ice = save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter)
 			messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":
 				save_stall_holder(ic, ice, request)
+
 	return HttpResponseRedirect(get_url_for(current_human, current_session))

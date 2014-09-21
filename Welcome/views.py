@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from Welcome.forms import public_form
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
+from django.utils.translation import ugettext_lazy as _
 
 def public_form(request):
 	# Get the context from the request.
@@ -108,10 +109,17 @@ def public_view_company(request):
 	# Render the form with error messages (if any).
 	return render_to_response('public_form.html', {'form': form}, context)
 
-@login_required
-def add_contract_to_address(request, person_id, address_id, id):
 
-	from General.models import Person, Address
+'''
+type = 0 => address_contract ==> cessió (contract_use)
+type = 1 => address_contract ==> lloger (contract_hire)
+type = 2 => labor_contract
+type = 3 => add main address
+type = 4 => add other address
+'''
+@login_required
+def self_employed_save_item(request, person_id, address_id, id, type):
+	from General.models import Person, Address, Project
 	try:
 		current_person = Person.objects.get(id=person_id)
 	except:
@@ -120,29 +128,105 @@ def add_contract_to_address(request, person_id, address_id, id):
 		current_address = Address.objects.get(id=address_id)
 	except:
 		current_address = None
+	try:
+		current_project = Project.objects.get(id=person_id)
+	except:
+		current_project = None
 
-	if current_person and current_address:
-		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type
-		typ = iC_Document_Type.objects.get(clas='iC_Address_Contract')
+	if current_person and current_address and type=="0":
+		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type, iC_Self_Employed
+		typ = iC_Document_Type.objects.get(clas='contract_use')
 		ic_doc = iC_Document()
 		ic_doc.doc_type = typ
 		ic_doc.current_person = current_person
 		ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
 		ic_doc.save()
 		ic = iC_Address_Contract(ic_document=ic_doc, address=current_address)
-		ic.name = ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
+		ic.name = ic_doc.name
 		ic.save()
+		ic.ic_document.doc_type = ic_doc.doc_type
+		ic.ic_document.save()
+		icse= iC_Self_Employed.objects.get(id=id)
+		icse.rel_address_contracts.add(ic)
+		icse.save()
 		if ic_doc.id:
 			return HttpResponseRedirect(
-					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id) + "/"
+					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id) + "/?_popup=1"
 			)
 		else:
 			return HttpResponseRedirect(
-					reverse('Welcome:ic_address_contract')
+					reverse('Welcome:ic_address_contract') + "/?_popup=1"
 			)
-	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)
+	elif current_person and current_address and type=="1":
+		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type, iC_Self_Employed
+		typ = iC_Document_Type.objects.get(clas='contract_hire')
+		ic_doc = iC_Document()
+		ic_doc.doc_type = typ
+		ic_doc.current_person = current_person
+		ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
+		ic_doc.save()
+		ic = iC_Address_Contract(ic_document=ic_doc, address=current_address)
+		ic.name = ic_doc.name
+		ic.save()
+		ic.ic_document.doc_type = ic_doc.doc_type
+		ic.ic_document.save()
+		icse= iC_Self_Employed.objects.get(id=id)
+		icse.rel_address_contracts.add(ic)
+		icse.save()
+		if ic_doc.id:
+			return HttpResponseRedirect(
+					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id)  + "/?_popup=1"
+			)
+		else:
+			return HttpResponseRedirect(
+					reverse('Welcome:ic_address_contract') + "/?_popup=1"
+			)
+	elif current_person and current_address and type=="2":
+		from Welcome.models import iC_Licence, iC_Document, iC_Document_Type, iC_Self_Employed
+		typ = iC_Document_Type.objects.get(clas='iC_Licence')
+		ic_doc = iC_Document()
+		ic_doc.doc_type = typ
+		ic_doc.current_person = current_person
+		ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
+		ic_doc.save()
+		ic = iC_Licence(ic_document=ic_doc, rel_address = current_address)
+		ic.name = ic_doc.name 
+		ic.save()
+		ic.ic_document.doc_type = ic_doc.doc_type
+		ic.ic_document.save()
+		icse= iC_Self_Employed.objects.get(id=id)
+		icse.rel_licences.add(ic)
+		icse.save()
+		if ic_doc.id:
+			return HttpResponseRedirect(
+					"/admin/Welcome/ic_licence/" + str(ic_doc.id) + "/?_popup=1"
+			)
+		else:
+			return HttpResponseRedirect(
+					reverse('Welcome:ic_license')  + "/?_popup=1"
+			)
+	elif current_project and type=="3":
+		from General.models import Address, rel_Human_Addresses
+		adr = Address()
+		adr.save()
+		adr.p_address = _("<introducir>")
+		adr.town = _("<introducir>")
+		adr.postalcode = _("<00000>")
+		related_address = rel_Human_Addresses(human=current_project, address=adr, main_address = True)
+		related_address.save()
+		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/?_popup=1")
+	elif current_project and type=="4":
+		from General.models import Address, rel_Human_Addresses
+		adr = Address()
+		adr.save()
+		adr.p_address = _("<introducir>")
+		adr.town = _("<introducir>")
+		adr.postalcode = _("<00000>")
+		related_address = rel_Human_Addresses(human=current_project, address=adr)
+		related_address.save()
+		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) +  "/?_popup=1")
+	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)  + "/?_popup=1"
 	return HttpResponseRedirect(callback_url)
-
 
 
 	'''
