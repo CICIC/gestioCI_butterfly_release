@@ -335,7 +335,7 @@ class Proj_refPersonInline(admin.StackedInline):
   #  }),
   #)
   verbose_name = _(u"Persona de Referència")
-  verbose_name_plural = _(u"Socis de Referència")
+  verbose_name_plural = _(u"Membres de Referència")
   classes = ['collapse', 'collapsed']
 
 
@@ -454,6 +454,7 @@ class H_assetInline(admin.StackedInline):
 class HumanAdmin(Css_Mixin):
   list_display = ['name', 'nickname', 'email']
   search_fields = ('name','nickname','email',)
+  change_list_template = "admin/General/human/change_list.html"
   def save_formset(self, request, form, formset, change):
     def set_human_name(instance):
       if not instance.human:
@@ -520,6 +521,7 @@ class HumanAdmin(Css_Mixin):
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
   model = Project
   readonly_fields = ('_ref_persons', '_ic_membership', '_fees_to_pay',)
+  change_list_template = None
   fieldsets = (
     (None, {
       'fields':(('name', 'nickname', 'project_type'),
@@ -558,7 +560,7 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
   list_display = ['name', 'nickname', 'project_type', 'email', '_is_collective']#, 'ref_persons']
   list_filter = ('project_type', )
   search_fields = ('name', 'nickname', 'project_type', 'email')
-  
+
   inlines = [
     Proj_refPersonInline,
     H_addressInline,
@@ -585,6 +587,7 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 class Public_PersonAdmin(HumanAdmin):
   list_display = ['name', 'surnames', 'nickname', 'email']
   readonly_fields = ('_ic_membership', '_fees_to_pay',)
+  change_list_template = None
   fieldsets = (
     (None, {
       'fields':(('name', 'surnames', 'id_card'),
@@ -646,6 +649,7 @@ class PersonAdmin(Public_PersonAdmin):
 
 
 class Public_CompanyAdmin(HumanAdmin):
+  change_list_template = None
   fieldsets = (
     (None, {
       'fields':(('name', 'nickname', 'company_type'),

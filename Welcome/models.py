@@ -372,7 +372,7 @@ class iC_Membership(iC_Record):
 			return lnk1+' / '+lnk2
 	_human_link.allow_tags = True
 	_human_link.short_description = ''
-	
+
 	def _joinfee_link(self):
 		if hasattr(self, 'join_fee') and self.join_fee is not None:
 			if self.join_fee._min_fee_data() == ico_yes:
@@ -462,7 +462,7 @@ class iC_Membership(iC_Record):
 					else:
 						print "ERROR: CAN'T CREATE AUTOMATIC JOIN_FEE! human:"+str(self.human)
 		except Exception as e:
-			print '%s (%s)' % (e.message, type(e)) 
+			print '%s (%s)' % (e.message, type(e))
 
 class iC_Person_Membership(iC_Membership):
 	ic_membership = models.OneToOneField('iC_Membership', primary_key=True, parent_link=True)
@@ -531,7 +531,7 @@ class iC_Project_Membership(iC_Membership):
 			return "Not present"
 	_selflink.allow_tags = True
 	_selflink.short_description = ''
-	
+
 
 
 '''
@@ -620,8 +620,8 @@ class iC_Self_Employed(iC_Record):
 			self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
 
 	def _member_link(self):
-		if self.id:
-			#print 'ID: '+str(self.id)
+		if hasattr(self, 'ic_membership') and self.ic_membership.id:
+			print 'ID: '+str(self.ic_membership.id)
 			slug = 'ic_membership'
 			if hasattr(self.ic_membership.human, 'project'):
 				#print 'PROJECT! '+str(self.ic_membership.human.project)
@@ -631,12 +631,32 @@ class iC_Self_Employed(iC_Record):
 				slug = 'ic_person_membership'
 			else:
 				return slug+'!!'
-			#print str(self.ic_membership.human.project)
-
+			out = a_strW + slug + '/' + str(self.ic_membership.id) + a_str2 + a_edit + '</a>'
+			return out
 		else:
 			return "Not present"
 	_member_link.allow_tags = True
 	_member_link.short_description = ''
+
+	def _human_link(self):
+		if hasattr(self.ic_membership, 'human') and self.ic_membership.human.id:
+			#print 'HUMAN ID: '+str(self.ic_membership.human.id)
+			slug = 'human'
+			if hasattr(self.ic_membership.human, 'project'):
+				#print 'PROJECT! '+str(self.ic_membership.human.project)
+				slug = 'project'
+			elif hasattr(self.ic_membership.human, 'person'):
+				#print 'PERSON! '+str(self.ic_membership.human.person)
+				slug = 'person'
+			else:
+				return slug+'!!'
+			link = a_strW + slug + '/' + str(self.ic_membership.human.id) + a_str3 + a_edit + '</a>'
+			out = self.ic_membership.human.__unicode__()
+			return '<strong>'+out+'</strong> &nbsp; <- '+link
+		else:
+			return "Not present"
+	_human_link.allow_tags = True
+	_human_link.short_description = 'Soci'
 
 	def _rel_fees(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
 		fees = self.rel_fees.all()
@@ -667,13 +687,13 @@ class iC_Self_Employed(iC_Record):
 		if rels.count() > 0:
 			for rel in rels:
 				if hasattr(rel, 'person'):
-					fields = "[%s] [%s] [%s] [%s]" % ( 	rel.person.id_card, 
-						rel.person.email, 
-						str(rel.person.telephone_cell), 
+					fields = "[%s] [%s] [%s] [%s]" % ( 	rel.person.id_card,
+						rel.person.email,
+						str(rel.person.telephone_cell),
 						str(rel.person.telephone_land)
 					)
 					out += a_strG +'person/'+str(rel.person.id)+a_str3 + '<b>'+str(rel.person) + '</b></a> ' + fields
-					
+
 				else:
 					print '_REL_ID_CARDS: rel has not Person! '+str(rel)
 			return out
@@ -687,14 +707,14 @@ class iC_Self_Employed(iC_Record):
 
 		adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
 		output = "<ul>"
-		output += "<li>" + _(u"Adreça: ").encode("utf-8") + adr.p_address.encode("utf-8") + "</li>" 
-		output += "<li>" + _(u"Població: ").encode("utf-8") + adr.town.encode("utf-8")  + "</li>" 
-		output += "<li>" + _(u"CP: ").encode("utf-8") + adr.postalcode.encode("utf-8") + "</li>" 
-		output += "<li>" + _(u"Comarca: ").encode("utf-8") + adr.region.name.encode("utf-8") + "</li>" 
-		output += "<li>" + _(u"Ubicació específica: ").encode("utf-8") + str(adr) + "</li>" 
-		output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + "?" + "</li>" 
+		output += "<li>" + _(u"Adreça: ").encode("utf-8") + adr.p_address.encode("utf-8") + "</li>"
+		output += "<li>" + _(u"Població: ").encode("utf-8") + adr.town.encode("utf-8")  + "</li>"
+		output += "<li>" + _(u"CP: ").encode("utf-8") + adr.postalcode.encode("utf-8") + "</li>"
+		output += "<li>" + _(u"Comarca: ").encode("utf-8") + adr.region.name.encode("utf-8") + "</li>"
+		output += "<li>" + _(u"Ubicació específica: ").encode("utf-8") + str(adr) + "</li>"
+		#output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + "?" + "</li>"
 		if adr in  self.rel_address_contracts.all():
-			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + self.rel_address_contracts.objects.get(address=adr) + "</li>" 
+			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + self.rel_address_contracts.objects.get(address=adr) + "</li>"
 		else:
 			if hasattr(self.ic_membership.human, 'project'):
 				persons = self.ic_membership.human.project.persons
@@ -707,8 +727,8 @@ class iC_Self_Employed(iC_Record):
 				add_button = reverse('Welcome:add_contract_to_address', args=(current_person.id, adr.id, self.id))
 
 			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
-			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + add_button + "</li>" 
-		output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + "cap" + "</li>" 
+			#output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + add_button + "</li>"
+		#output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + "cap" + "</li>"
 		output += "</ul>"
 		return output
 		try:
@@ -787,7 +807,7 @@ class iC_Self_Employed(iC_Record):
 	def _min_human_data(self):
 		hum = self.ic_membership.human
 		out = ul_tag_err
-		
+
 		if hasattr(self.ic_membership.human, 'project'):
 			#print 'PROJECT! '+str(self.ic_membership.human.project)
 			slug = 'project/'
@@ -799,26 +819,26 @@ class iC_Self_Employed(iC_Record):
 
 		if hum.email is None or hum.email == '':
 			out += '<li>Falta el Email. ' + hum.self_link + '</li>'
-		if hum.telephone_cell is None or hum.telephone_cell == '':
-			out += '<li>Falta el Teléfon mobil. ' + hum.self_link + '</li>'
-		if hum.description is None or hum.description == '':
-			out += '<li>Falta alguna Descripció. ' + hum.self_link + '</li>'
-		if hum.addresses.all().count() < 1:
-			out += '<li>Falta alguna Adreça. ' + hum.self_link + '</li>'
-		elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
-			address = hum.rel_human_addresses_set.filter(main_address=True).first().address
-			if address:
-				link = a_strG + "address/" + address.id + "'>" + _("Editar").encode("utf-8") + "</a>"
-				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
-			else:
-				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
-		else:
-			adr = hum.rel_human_addresses_set.filter(main_address=True).first().address
-			link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
-			if adr.postalcode is None or adr.postalcode == '':
-				out += "<li>A l'adreça principal li falta el Codi Postal. " + link + "</li>"
-			if adr.region is None or adr.region == '':
-				out += "<li>A l'adreça principal li falta la Comarca " + link + "</li>"
+		#if hum.telephone_cell is None or hum.telephone_cell == '':
+		#	out += '<li>Falta el Teléfon mobil. ' + hum.self_link + '</li>'
+		#if hum.description is None or hum.description == '':
+		#	out += '<li>Falta alguna Descripció. ' + hum.self_link + '</li>'
+		#if hum.addresses.all().count() < 1:
+		#	out += '<li>Falta alguna Adreça. ' + hum.self_link + '</li>'
+		#elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
+		#	address = hum.rel_human_addresses_set.filter(main_address=True).first().address
+		#	if address:
+		#		link = a_strG + "address/" + address.id + "'>" + _("Editar").encode("utf-8") + "</a>"
+		#		out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
+		#	else:
+		#		out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
+		#else:
+		#	adr = hum.rel_human_addresses_set.filter(main_address=True).first().address
+		#	link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+		#	if adr.postalcode is None or adr.postalcode == '':
+		#		out += "<li>A l'adreça principal li falta el Codi Postal. " + link + "</li>"
+		#	if adr.region is None or adr.region == '':
+		#		out += "<li>A l'adreça principal li falta la Comarca " + link + "</li>"
 
 		if hasattr(hum, 'project'):
 			if hum.project.project_type is None or hum.project.project_type == '':
@@ -859,14 +879,23 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 class Learn_Session(iC_Record):
 	nonmaterial = models.ForeignKey('General.Nonmaterial', verbose_name=_(u"Formació (obra inmaterial)"))
 	assistants = models.ManyToManyField('General.Human', related_name='assist_sessions', blank=True, null=True,
-						verbose_name=_(u"Assistents"), help_text=_(u"buscar"))
+						verbose_name=_(u"Assistents"), help_text=_(u"Quan escullis cada entitat assistent, desa el formulari per veure el seu nom aquí"))
 	facilitator = models.ForeignKey('General.Human', related_name='facilitate_sessions', blank=True, null=True, verbose_name=_(u"Facilitador"))
 	datetime = models.DateTimeField(blank=True, null=True, verbose_name=_(u"Dia i Hora"))
 	duration = models.TimeField(default='01:00', verbose_name=_(u"Duració"))
 	address = models.ForeignKey('General.Address', blank=True, null=True, verbose_name=_(u"Adreça"))
 	def __unicode__(self):
 		try:
-			return self.nonmaterial.name+': '+str(self.datetime.date())+' ('+self.facilitator.name+') '+self.address.name
+			if not hasattr(self, 'facilitator') or self.facilitator is None:
+				if not hasattr(self, 'nonmaterial') or self.nonmaterial is None:
+					if not hasattr(self, 'address') or self.address is None:
+						return '??: (??)'
+					else:
+						return '??: '+str(self.datetime.date())+' (??) '+self.address.name
+				else:
+					return self.nonmaterial.name+': '+str(self.datetime.date())+' (??) '+self.address.name
+			else:
+				return self.nonmaterial.name+': '+str(self.datetime.date())+' ('+self.facilitator.name+') '+self.address.name
 		except Exception as e:
 			print e.message
 
@@ -875,18 +904,18 @@ class Learn_Session(iC_Record):
 		verbose_name_plural = _(u"r- Sessions formatives")
 
 	def _assistants_link(self):
-		try:
-			assis = self.assistants.all()
-			if assis.count() > 0:
-				out = ul_tag
-				for ass in assis:
-					slug = 'person'
-					if hasattr(ass, 'project'):
-						slug = 'project'
-						out += '<li>'+a_strG+ slug+'/'+str(ass.id)+ a_str3+ '<b>'+ass.__unicode__()+'</b></a> - '+erase_id_link('assistants', ass.id)
-				return out+'</ul>'
-		except Exception as e:
-			print e
+		#try:
+		assis = self.assistants.all()
+		if assis.count() > 0:
+			out = ul_tag
+			for ass in assis:
+				slug = 'person'
+				if hasattr(ass, 'project'):
+					slug = 'project'
+				out += '<li>'+a_strG+ slug+'/'+str(ass.id)+ a_str3+ '<b>'+ass.__unicode__()+'</b></a> - '+erase_id_link('assistants', ass.id)
+			return out+'</ul>'
+		#except Exception as e:
+		#	print e
 		return str_none
 	_assistants_link.allow_tags = True
 	_assistants_link.short_description = ''
@@ -971,15 +1000,18 @@ class iC_Address_Contract(iC_Document):
 
 	def __unicode__(self):
 		try:
-			if hasattr(self, 'selfemployed') and self.selfemployed.count():
+			if hasattr(self, 'selfemployed') and self.selfemployed.count() > 0:
 				#print 'SELFEMPLOYED! '+str(self.selfemployed.first().ic_membership.human)
-				return self.selfemployed.first().ic_membership.human.__unicode__()+': '+self.address.name
+				if hasattr(self.selfemployed.first(), 'ic_membership') and self.selfemployed.first().ic_membership is not None:
+					return self.selfemployed.first().ic_membership.human.__unicode__()+': '+self.address.name
+				else:
+					return self.selfemployed.first().__unicode__()+' ??: '+self.address.name
 			elif self.company:
 				return self.company.nickname+': ?? > '+self.address.name
-			#elif self.address:
-			#	return '??: ?? > '+self.address.__unicode__()
+			elif self.address:
+				return '??: ?? > '+self.address.__unicode__()
 			else:
-				return self.name
+				return '¿no name?!' #self.name
 		except:
 			return ""
 
