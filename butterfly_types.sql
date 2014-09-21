@@ -184,7 +184,7 @@ UNLOCK TABLES;
 --
 
 LOCK TABLES `General_address_type` WRITE;
-/*!40000 ALTER TABLE `General_address_type` DISABLE KEYS */;ac
+/*!40000 ALTER TABLE `General_address_type` DISABLE KEYS */;
 INSERT INTO `General_address_type` VALUES (44),(45),(46);
 /*!40000 ALTER TABLE `General_address_type` ENABLE KEYS */;
 UNLOCK TABLES;
