@@ -237,7 +237,7 @@ def print_task_list(request, icse):
 		obj.quarter_fee = current_icse.rel_fees.all()[0]
 	from django.conf.urls.static import static
 	html = render_to_string( 'task_list.html', {'obj': obj})
-	return render_pdf(html)
+	return render_pdf(html.encode("utf-8"))
 
 
 import ho.pisa as pisa
