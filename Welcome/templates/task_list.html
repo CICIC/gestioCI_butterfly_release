@@ -14,7 +14,7 @@
 <table border=1>
 <tr><td>{% trans "Activitat"%}</td><td>{% trans "Comentaris"%}</td></tr>
 {% for insurance in obj.insurances.all%}
-	<tr><td>{{insurance}}</td><td>&nbsp;</td></tr>
+	<tr><td>{{insurance}}</td><td>_________________________________________________________</td></tr>
 {% endfor %}
 <table>
 
@@ -23,11 +23,11 @@
 <tr><td>{% trans "Tipus"%}</td><td>{% trans "Adreça"%}</td><td>{% trans "Comentaris"%}</td></tr>
 {% for contract in obj.address_contracts.all%}
 	{{contract}}
-	<tr><td>{{contract.ic_document.doc_type}}</td><td>{{contract.address}}</td><td>&nbsp;</td></tr>
+	<tr><td>{{contract.ic_document.doc_type}}</td><td>{{contract.address}}</td><td>_________________________________________________________</td></tr>
 {% endfor %}
 {% for license in obj.licences.all%}
 	{{license}}
-	<tr><td>{{ license.ic_document.doc_type}}</td><td>{{license.rel_address}}</td><td>&nbsp;</td></tr>
+	<tr><td>{{ license.ic_document.doc_type}}</td><td>{{license.rel_address}}</td><td>_________________________________________________________</td></tr>
 {% endfor %}
 {% trans "LA = Llicència d'activitat, LL = Lloguer, C = Cessió d'ús." %}
 {% trans "Haureu d'aportar el document corresponent a cada traspàs." %}
