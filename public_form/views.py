@@ -989,7 +989,7 @@ def save_current_human(request, current_human):
 			if is_new:
 				relobj.save()
 		except Exception as e:
-			messages.info(request, _(u"Error al gravar persona") )
+			messages.info(request, _(u"Error al grabar persona") )
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
 
 	return current_project, current_person
@@ -1077,7 +1077,7 @@ def save_fees(request, current_person, current_project, current_human, ic):
 		messages.info(request, '### guardant quota alta: '+str(current_fee))
 		current_fee.save()
 	except Exception as e:
-		messages.info(request, _(u"Error al gravar quota") )
+		messages.info(request, _(u"Error al grabar quota") )
 		messages.error(request, '%s (%s)' % (e.message, type(e)) )
 	else:
 		ic.join_fee = current_fee
@@ -1098,7 +1098,7 @@ def save_other_fields(request, ic ):
 		ic.name = str(ic)
 		ic.save()
 	except Exception as e:
-		messages.info(request, _(u"Error al gravar MEMBRE") )
+		messages.info(request, _(u"Error al grabar MEMBRE") )
 		messages.error(request, '%s (%s)' % (e.message, type(e)) )
 
 def save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter):
@@ -1136,7 +1136,7 @@ def save_self_employed(current_person, current_project, current_human, ic, reque
 			ice.rel_fees.add(current_fee_quarter)
 			ice.save()
 		except Exception as e:
-			messages.info(request, _(u"Error al gravar AUTOCUPAT") )
+			messages.info(request, _(u"Error al grabar AUTOCUPAT") )
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
 	return ice
 
@@ -1161,7 +1161,7 @@ def save_stall_holder(ic, ice, request):
 			ich.name = str(ich)
 			ich.save()
 		except Exception as e:
-			messages.info(request, _(u"Error al gravar FIRAIRE") )
+			messages.info(request, _(u"Error al grabar FIRAIRE") )
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
 
 @login_required

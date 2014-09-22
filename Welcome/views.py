@@ -149,14 +149,7 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		icse= iC_Self_Employed.objects.get(id=id)
 		icse.rel_address_contracts.add(ic)
 		icse.save()
-		if ic_doc.id:
-			return HttpResponseRedirect(
-					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id) + "/?_popup=1"
-			)
-		else:
-			return HttpResponseRedirect(
-					reverse('Welcome:ic_address_contract') + "/?_popup=1"
-			)
+
 	elif current_person and current_address and type=="1":
 		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type, iC_Self_Employed
 		typ = iC_Document_Type.objects.get(clas='contract_hire')
@@ -173,14 +166,7 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		icse= iC_Self_Employed.objects.get(id=id)
 		icse.rel_address_contracts.add(ic)
 		icse.save()
-		if ic_doc.id:
-			return HttpResponseRedirect(
-					"/admin/Welcome/ic_address_contract/" + str(ic_doc.id)  + "/?_popup=1"
-			)
-		else:
-			return HttpResponseRedirect(
-					reverse('Welcome:ic_address_contract') + "/?_popup=1"
-			)
+
 	elif current_person and current_address and type=="2":
 		from Welcome.models import iC_Licence, iC_Document, iC_Document_Type, iC_Self_Employed
 		typ = iC_Document_Type.objects.get(clas='iC_Licence')
@@ -190,6 +176,7 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		ic_doc.name = typ.name.encode("utf-8") + " " + str(current_person) + " " + str(current_address)
 		ic_doc.save()
 		ic = iC_Licence(ic_document=ic_doc, rel_address = current_address)
+		ic.rel_address = current_address
 		ic.name = ic_doc.name 
 		ic.save()
 		ic.ic_document.doc_type = ic_doc.doc_type
@@ -197,14 +184,7 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		icse= iC_Self_Employed.objects.get(id=id)
 		icse.rel_licences.add(ic)
 		icse.save()
-		if ic_doc.id:
-			return HttpResponseRedirect(
-					"/admin/Welcome/ic_licence/" + str(ic_doc.id) + "/?_popup=1"
-			)
-		else:
-			return HttpResponseRedirect(
-					reverse('Welcome:ic_license')  + "/?_popup=1"
-			)
+
 	elif current_project and type=="3":
 		from General.models import Address, rel_Human_Addresses
 		adr = Address()
@@ -225,9 +205,57 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		related_address = rel_Human_Addresses(human=current_project, address=adr)
 		related_address.save()
 		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) +  "/?_popup=1")
-	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)  + "/?_popup=1"
+	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)  + "/"
 	return HttpResponseRedirect(callback_url)
 
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.contrib.auth.decorators import login_required
+
+class render_obj(object):
+	pass
+
+@login_required
+def print_task_list(request, icse):
+
+	try:
+		from Welcome.models import iC_Self_Employed
+		current_icse = iC_Self_Employed.objects.get(id=icse)
+	except:
+		return "No encontrado"
+	obj = render_obj()
+	obj.current_project= current_icse.ic_membership.human
+	obj.current_admin = request.user
+
+	obj.insurances = current_icse.rel_insurances
+	obj.address_contracts =  current_icse.rel_address_contracts
+	obj.licences = current_icse.rel_licences
+
+	obj.fee =  current_icse.ic_membership.join_fee
+
+	if current_icse.rel_fees.all().count()>0:
+		obj.quarter_fee = current_icse.rel_fees.all()[0]
+	from django.conf.urls.static import static
+	html = render_to_string( 'task_list.html', {'obj': obj})
+	return render_pdf(html)
+
+
+import ho.pisa as pisa
+import cStringIO as StringIO
+import cgi
+from django.template import RequestContext
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+
+def render_pdf(html):
+	print html
+	return HttpResponse(html)
+	result = StringIO.StringIO()
+	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result)
+	if not pdf.err:
+		print result.getvalue()
+		return HttpResponse(result.getvalue(), mimetype='application/pdf')
+	return HttpResponse(_(u'Error al generar el PDF: %s') % cgi.escape(html))
 
 	'''
 			if human.id:

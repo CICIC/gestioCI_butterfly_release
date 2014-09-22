@@ -11,6 +11,7 @@ function dismissEditRelatedPopup(win, objId, newRepr) {
 
 	if ( win.name == undefined || win.name == "" ) {
 		win.close()
+		alert(gettext("Tens que grabar per veure els canvis"));
 		return
 	}
 
@@ -95,13 +96,14 @@ function dismissDeleteRelatedPopup(win, obj) {
 	name = win.name.replace("delete_", "");
 	var elem = document.getElementById(name);
 
+	win.close();
 	if (elem.className.indexOf('vManyToManyRawIdAdminField') != -1) {
-		alert("quitar del url");
+		alert("Tens que recargar la pagina");
 	} else {
 		document.getElementById(name + '_desc').innerHTML = "";
 		document.getElementById(name).value = "";
 	}
-	win.close();
+
 }
 
 if (!dismissAddAnotherPopup.original) {

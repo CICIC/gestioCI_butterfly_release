@@ -2,7 +2,7 @@
 
 from django.conf.urls import patterns, include, url
 from Welcome import views
-from Welcome.views import self_employed_save_item
+from Welcome.views import self_employed_save_item, print_task_list
 
 urlpatterns = patterns('',
 	url(r'^public_form/$', views.public_form, name='public_form'),
@@ -12,4 +12,5 @@ urlpatterns = patterns('',
 	url(r'^self_employed_save_item/(?P<person_id>\d+)/(?P<address_id>\d+)/(?P<id>\d+)/(?P<type>\d+)/$',
 	   self_employed_save_item,
 	   name='self_employed_save_item'),
+	url(r'^print_task_list/(?P<icse>\d+)/$', views.print_task_list, name='print_task_list'),
 )

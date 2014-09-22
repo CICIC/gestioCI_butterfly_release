@@ -733,7 +733,7 @@ class iC_Self_Employed(iC_Record):
 			add_button = ""
 			if current_person:
 				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 0))
-			add_button = "<a  onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+			add_button = "<a  href='%s' > %s </a>" % (add_button, _("Afegeix").encode("utf-8") )
 			output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + add_button + "</li>" 
 
 		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_hire").count()>0:
@@ -749,7 +749,7 @@ class iC_Self_Employed(iC_Record):
 				current_person = self.ic_membership.human.person
 			if current_person:
 				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 1))
-			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+			add_button = "<a href='%s'> %s </a>" % (add_button,  _("Afegeix").encode("utf-8") )
 			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + add_button + "</li>" 
 			
 		if self.rel_licences.filter(rel_address=adr).count()>0:
@@ -765,7 +765,7 @@ class iC_Self_Employed(iC_Record):
 				current_person = self.ic_membership.human.person
 			if current_person:
 				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 2))
-			add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+			add_button = "<a href='%s'> %s </a>" % (add_button,  _("Afegeix").encode("utf-8") )
 			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + add_button + "</li>" 
 		link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
 		output += "<li>" + link + "</li>" 
@@ -936,6 +936,11 @@ class iC_Self_Employed(iC_Record):
 	_min_human_data.allow_tags = True
 	_min_human_data.short_description = 'Dades mínimes?'
 
+	def print_task_list(self):
+		url = reverse("Welcome:print_task_list", args=(self.id,))
+		text = _("Imprimir llista de tasques").encode("utf-8")
+		link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
+		return link
 
 class iC_Stallholder(iC_Self_Employed):	# Firaire
 	ic_self_employed = models.OneToOneField('iC_Self_Employed', primary_key=True, parent_link=True)
@@ -1134,7 +1139,7 @@ class iC_Address_Contract(iC_Document):
 class iC_Insurance(iC_Document):
 	ic_document = models.OneToOneField('iC_Document', primary_key=True, parent_link=True)
 	#membership = models.ForeignKey('iC_Membership', verbose_name=_(u"Soci (registre)"))
-	company = models.ForeignKey('General.Company', verbose_name=_(u"Empresa asseguradora"))
+	company = models.ForeignKey('General.Company', verbose_name=_(u"Empresa asseguradora"), blank=True, null=True)
 	number = models.CharField(max_length=30, blank=True, null=True, verbose_name=_(u"Número de Pòlissa"))
 	price = models.DecimalField(max_digits=13, decimal_places=2, blank=True, null=True, verbose_name=_(u"Import"))
 	price_unit = models.ForeignKey('General.Unit', blank=True, null=True, verbose_name=_(u"Unitat"))
@@ -1145,7 +1150,10 @@ class iC_Insurance(iC_Document):
 
 	def __unicode__(self):
 		if hasattr(self, 'selfemployed') and self.selfemployed.count():
-			return self.company.nickname+': '+self.selfemployed.first().ic_membership.__unicode__()
+			if self.company:
+				return self.company.nickname+': '+self.selfemployed.first().ic_membership.__unicode__()
+			else:
+				return self.selfemployed.first().ic_membership.__unicode__()
 		else:
 			return self.doc_type.name+': ?? '+self.number
 

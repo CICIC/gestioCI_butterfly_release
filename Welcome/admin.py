@@ -19,8 +19,8 @@ from django.forms.formsets import formset_factory
 
 
 from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
-#class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
-class AutoRecordName(admin.ModelAdmin):
+class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
+#class AutoRecordName(admin.ModelAdmin):
 	class Media:
 		css = {
 			'all': ('admin_record.css',)
@@ -330,7 +330,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	form = SelfEmployedForm
 
 	readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render')
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
 
@@ -339,7 +339,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			#'classes': ('collapse',),
 			'fields': (
 				('ic_membership', '_member_link', '_min_human_data'),
-				('_main_address_render', '_other_address_render'),
 				('organic',),
 				('_has_assisted_welcome',)
 			)
@@ -348,9 +347,11 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			'classes': ('welcome',),
 			'fields': (
 					('_rel_id_cards',),
+					('_main_address_render', '_other_address_render'),
 					('rel_address_contracts', '_rel_address_contract'),
 					('rel_licences', '_rel_licences'),
 					('rel_insurances', '_rel_insurances'),
+					('print_task_list'),
 					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
 		}),
 		(_(u"fase 3: Alta"), {
