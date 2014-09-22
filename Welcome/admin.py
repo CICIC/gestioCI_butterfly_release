@@ -19,8 +19,8 @@ from django.forms.formsets import formset_factory
 
 
 from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
-class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
-#class AutoRecordName(admin.ModelAdmin):
+#class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
+class AutoRecordName(admin.ModelAdmin):
 	class Media:
 		css = {
 			'all': ('admin_record.css',)
@@ -348,9 +348,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			'fields': (
 					('_rel_id_cards',),
 					('_main_address_render', '_other_address_render'),
-					('rel_address_contracts', '_rel_address_contract'),
-					('rel_licences', '_rel_licences'),
-					('rel_insurances', '_rel_insurances'),
 					('print_task_list'),
 					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
 		}),
@@ -420,9 +417,6 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
 			'classes': ('collapse', 'welcome',),
 			'fields': (
 					('_rel_id_cards',),
-					('rel_address_contracts', '_rel_address_contract'),
-					('rel_licences', '_rel_licences'),
-					('rel_insurances', '_rel_insurances'),
 					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
 		}),
 	)
@@ -714,7 +708,7 @@ class LearnSessionAdmin(AutoRecordName):
 			#typs = Nonmaterial_Type.objects.get(artwork_type__clas=="ic_learn")
 			from General.models import Type
 			typ = Type.objects.filter(clas='ic_learn')
-			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type__parent=typ)
+			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
 			if filter_type:
 				kwargs['initial'] = nonmaterial_id
 		if db_field.name == 'facilitator':

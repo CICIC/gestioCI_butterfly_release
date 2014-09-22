@@ -722,11 +722,11 @@ class iC_Self_Employed(iC_Record):
 		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_use").count()>0:
 			contract = self.rel_address_contracts.get(address=adr, ic_document__doc_type__clas="contract_use")
 			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + "' >" + _("Editar").encode("utf-8") + "</a>"
-			output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + str(contract) + link + "</li>" 
+			output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + str(contract.ic_document) + link + "</li>" 
 		else:
 			if hasattr(self.ic_membership.human, 'project'):
 				persons = self.ic_membership.human.project.persons
-				if persons.count() > 0:
+				if persons.count() > 0:	
 					current_person = persons.first()
 			elif hasattr(self.ic_membership.human, 'person'):
 				current_person = self.ic_membership.human.person
@@ -739,7 +739,7 @@ class iC_Self_Employed(iC_Record):
 		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_hire").count()>0:
 			contract = self.rel_address_contracts.get(address=adr, ic_document__doc_type__clas="contract_hire")
 			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
-			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + str(contract) + link + "</li>" 
+			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + str(contract.ic_document.name) + link + "</li>" 
 		else:
 			if hasattr(self.ic_membership.human, 'project'):
 				persons = self.ic_membership.human.project.persons
@@ -755,7 +755,7 @@ class iC_Self_Employed(iC_Record):
 		if self.rel_licences.filter(rel_address=adr).count()>0:
 			contract = self.rel_licences.get(rel_address=adr)
 			link = " " + a_strW + "ic_licence/" + str(contract.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
-			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + str(contract) + link + "</li>" 
+			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + str(contract.ic_document) + link + "</li>" 
 		else:
 			if hasattr(self.ic_membership.human, 'project'):
 				persons = self.ic_membership.human.project.persons
@@ -767,7 +767,7 @@ class iC_Self_Employed(iC_Record):
 				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 2))
 			add_button = "<a href='%s'> %s </a>" % (add_button,  _("Afegeix").encode("utf-8") )
 			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + add_button + "</li>" 
-		link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+		link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar aquesta adreca").encode("utf-8") + "</a>"
 		output += "<li>" + link + "</li>" 
 		output += "</ul>"
 		return output
@@ -786,9 +786,12 @@ class iC_Self_Employed(iC_Record):
 			current_human = self.ic_membership.human.project
 		elif hasattr(self.ic_membership.human, 'person'):
 			current_human = self.ic_membership.human.person
-		add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 3))
-		add_button = "<a  onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
-		return output + add_button
+		if adr:
+			return output
+		else:
+			add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 3))
+			add_button = "<a  onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix adreca principal").encode("utf-8") )
+			return output + add_button
 
 
 	_main_address_render.allow_tags = True
@@ -811,7 +814,7 @@ class iC_Self_Employed(iC_Record):
 		else:
 			current_human = self.ic_membership.human
 		add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 4))
-		add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix").encode("utf-8") )
+		add_button = "<a onclick='return showRelatedObjectLookupPopup(this);' href='%s' %s %s </a>" % (add_button, a_str3, _("Afegeix una altra adreca").encode("utf-8") )
 		output = output + add_button
 
 		return output
@@ -941,6 +944,7 @@ class iC_Self_Employed(iC_Record):
 		text = _("Imprimir llista de tasques").encode("utf-8")
 		link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
 		return link
+	print_task_list.short_description="PDF"
 
 class iC_Stallholder(iC_Self_Employed):	# Firaire
 	ic_self_employed = models.OneToOneField('iC_Self_Employed', primary_key=True, parent_link=True)

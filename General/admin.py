@@ -81,7 +81,8 @@ class AutoNameMixin(admin.ModelAdmin):
     return instance
 
 from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
-class Css_Mixin(ForeignKeyRawIdWidgetWrapperAdmin):
+#class Css_Mixin(ForeignKeyRawIdWidgetWrapperAdmin):
+class Css_Mixin(admin.ModelAdmin):
   class Media:
     css = {
       'all': ('admin_record.css',)# 'selfemployed.css',)
