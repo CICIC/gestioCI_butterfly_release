@@ -18,8 +18,8 @@ class human_proxy_form(forms.ModelForm):
 
 	email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Correu-e projecte"))
 	telephone_cell = ESPhoneNumberField( label=_(u"Telèfon mòbil projecte") )
-	telephone_land = ESPhoneNumberField( label=_(u"Telèfon fix projecte") )
-	website = forms.URLField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Web"))
+	telephone_land = ESPhoneNumberField( label=_(u"Telèfon fix projecte"), required=False )
+	website = forms.URLField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), required=False, label=_("Web"))
 
 	class Meta:
 		from public_form.models import human_proxy

@@ -899,26 +899,26 @@ class iC_Self_Employed(iC_Record):
 
 		if hum.email is None or hum.email == '':
 			out += '<li>Falta el Email. ' + hum.self_link + '</li>'
-		#if hum.telephone_cell is None or hum.telephone_cell == '':
-		#	out += '<li>Falta el Teléfon mobil. ' + hum.self_link + '</li>'
-		#if hum.description is None or hum.description == '':
-		#	out += '<li>Falta alguna Descripció. ' + hum.self_link + '</li>'
-		#if hum.addresses.all().count() < 1:
-		#	out += '<li>Falta alguna Adreça. ' + hum.self_link + '</li>'
-		#elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
-		#	address = hum.rel_human_addresses_set.filter(main_address=True).first().address
-		#	if address:
-		#		link = a_strG + "address/" + address.id + "'>" + _("Editar").encode("utf-8") + "</a>"
-		#		out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
-		#	else:
-		#		out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
-		#else:
-		#	adr = hum.rel_human_addresses_set.filter(main_address=True).first().address
-		#	link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
-		#	if adr.postalcode is None or adr.postalcode == '':
-		#		out += "<li>A l'adreça principal li falta el Codi Postal. " + link + "</li>"
-		#	if adr.region is None or adr.region == '':
-		#		out += "<li>A l'adreça principal li falta la Comarca " + link + "</li>"
+		if hum.telephone_cell is None or hum.telephone_cell == '':
+			out += '<li>Falta el Teléfon mobil. ' + hum.self_link + '</li>'
+		if hum.description is None or hum.description == '':
+			out += '<li>Falta alguna Descripció. ' + hum.self_link + '</li>'
+		if hum.addresses.all().count() < 1:
+			out += '<li>Falta alguna Adreça. ' + hum.self_link + '</li>'
+		elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
+			address = hum.rel_human_addresses_set.filter(main_address=True).first().address
+			if address:
+				link = a_strG + "address/" + address.id + "'>" + _("Editar").encode("utf-8") + "</a>"
+				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
+			else:
+				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
+		else:
+			adr = hum.rel_human_addresses_set.filter(main_address=True).first().address
+			link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+			if adr.postalcode is None or adr.postalcode == '':
+				out += "<li>A l'adreça principal li falta el Codi Postal. " + link + "</li>"
+			if adr.region is None or adr.region == '':
+				out += "<li>A l'adreça principal li falta la Comarca " + link + "</li>"
 
 		if hasattr(hum, 'project'):
 			if hum.project.project_type is None or hum.project.project_type == '':

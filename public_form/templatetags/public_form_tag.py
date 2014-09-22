@@ -44,6 +44,7 @@ class sessions_tag_node(template.Node):
 		current_human = None
 		current_session = None
 		current_coin_session = None
+
 		from django.core.exceptions import ObjectDoesNotExist
 		from Welcome.models import Learn_Session
 
@@ -57,7 +58,18 @@ class sessions_tag_node(template.Node):
 		if obj.GET.has_key("coin_session_id"):
 			from General.models import Human, Project
 			current_coin_session = Learn_Session.objects.get( id=obj.GET["coin_session_id"] ) 
+		#import pdb; pdb.set_trace()
+		#If we don't have param session, search for human sessions
+		if not current_session:
+			if current_human and current_human.assist_sessions.filter(nonmaterial__id = 1).count()>0:
+				current_session = current_human.assist_sessions.filter(nonmaterial__id = 1).first()
 
+		if not current_coin_session:
+			if current_human and current_human.assist_sessions.filter(nonmaterial__id = 2).count() > 0:
+				current_coin_session = current_human.assist_sessions.filter(nonmaterial__id = 2).first()
+
+		context['has_coin_session'] = False
+		context['has_session'] = False
 		if current_human and current_session:
 			if current_human in current_session.assistants.all():
 				context['has_session'] = True
@@ -65,7 +77,6 @@ class sessions_tag_node(template.Node):
 				context['current_sesion_form'] = public_form_self_admin()
 				context['public_form_action_value'] = "public_form_action_save_membership"
 			else:
-				context['has_session'] = False
 				from public_form.forms import learn_session_proxy_form
 				context['current_sesion_form'] = learn_session_proxy_form(instance=current_session)
 				context['public_form_action_value'] = "public_form_action_join_session"
@@ -75,17 +86,11 @@ class sessions_tag_node(template.Node):
 				context['has_coin_session'] = True
 			else:
 				from public_form.forms import learn_session_proxy_form
-				context['has_coin_session'] = False
 				context['current_coin_sesion_form'] = learn_session_proxy_form(instance=current_coin_session)
 				context['public_form_action_value'] = "public_form_action_join_coin_session"
 
-		if current_human and current_human.assist_sessions.count() > 0:
-			current_session = current_human.assist_sessions.all()[0]
-			if current_human.assist_sessions.count() > 1:
-				current_coin_session = current_human.assist_sessions.all()[1]
-
-		context['current_session'] = current_session
 		context['current_human'] = current_human
+		context['current_session'] = current_session
 		context['current_coin_session'] = current_coin_session
 
 		return ''
