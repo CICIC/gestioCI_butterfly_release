@@ -26,14 +26,30 @@
 									<tr><td colspan="2">
 										<label>{{current_human|get_class}} {{current_human}} {{current_human.self_link}}</label><br>
 										<ul>
+											{% for person in current_project_referents %}
+											<li><img class="user_grid" src="{% static 'user_images/Person_user.png' %}"> {{person.person}}
+											<a onclick='return showRelatedObjectLookupPopup(this);' 
+											href="/admin/General/person/{{person.person|get_id}}/?_popup=1"> - {% trans " Editar" %}</a>
+											</li>
+											{% endfor %}
+										</ul>
+										<ul>
 										{% for project in current_human|get_projects %}
 											<li><img class="user_grid" src="{% static 'user_images/Project_user.png' %}"> {{project.human}}
 											<a onclick='return showRelatedObjectLookupPopup(this);' 
-											href="/admin/General/project/{{project.human|get_id}}/?_popup=1"> - {% trans " Editar" %}</a></li>
+											href="/admin/General/project/{{project.human|get_id}}/?_popup=1"> - {% trans " Editard" %}</a>
+											</li>
 										{% endfor %}
 										</ul>
 									</tr>
 									<tr><td colspan="2">
+										{% if current_memberships_person %}
+											<ul>{% for m in current_memberships_person %}
+												<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
+												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/?_popup=1"> - {% trans " Editar" %}</a></li>
+												{% endfor %}
+											</ul>
+										{% endif %}
 										{% if current_memberships %}
 											<ul>{% for m in current_memberships %}
 												<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
@@ -41,6 +57,7 @@
 												{% endfor %}
 											</ul>
 										{% endif %}
+										
 										{% if current_memberships_self %}
 											<ul>{% for m in current_memberships_self %}
 													<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'

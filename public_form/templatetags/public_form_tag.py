@@ -139,11 +139,13 @@ class human_tag_node(template.Node):
 					try:
 						ic = iC_Membership.objects.filter(ic_project=current_human)
 					except:
-						try:
-							ic = iC_Membership.objects.filter(human=current_human)
-						except ObjectDoesNotExist:
-							ic = None
+						ic = None
 					context['current_memberships'] = ic
+					try:
+						icp = iC_Membership.objects.filter(human=current_human)
+					except ObjectDoesNotExist:
+						icp = None
+					context['current_memberships_person'] = icp
 
 					try:
 						icse = iC_Self_Employed.objects.filter(ic_membership__human=current_human)
@@ -162,6 +164,8 @@ class human_tag_node(template.Node):
 					from General.models import Person, Project
 					try:
 						current_entity = Project.objects.get( id=obj ) 
+						from General.models import Relation
+						context['current_project_referents'] = current_entity.human_persons.filter(relation=Relation.objects.get(clas='reference'))
 					except ObjectDoesNotExist:
 						try:
 							current_entity = Person.objects.get( id=obj ) 

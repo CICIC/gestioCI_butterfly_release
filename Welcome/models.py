@@ -1066,7 +1066,11 @@ class iC_Labor_Contract(iC_Document):
 	rel_fees = models.ManyToManyField('Fee', blank=True, null=True, verbose_name=_(u"Quotes relacionades"))
 
 	def __unicode__(self):
-		return self.company.nickname+': '+self.person.name+' '+self.person.surnames+' ('+self.person.id_card+')'
+
+		if self.company:
+			return self.company.nickname+': '+self.person.name+' '+self.person.surnames+' ('+self.person.id_card+')'
+		else:
+			return self.person.name+' '+self.person.surnames+' ('+self.person.id_card+')'
 
 	class Meta:
 		verbose_name = _(u"Contracte Laboral CI")
