@@ -43,7 +43,7 @@
 										</ul>
 									</tr>
 									<tr><td colspan="2">
-										{% if current_memberships_person %}
+										{% if current_memberships_person and not current_memberships%}
 											<ul>{% for m in current_memberships_person %}
 												<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
 												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/?_popup=1"> - {% trans " Editar" %}</a></li>
