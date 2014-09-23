@@ -75,8 +75,10 @@ class Being(models.Model):	# Abstract
 	class Meta:
 		abstract = True
 
+	def name(self):
+		return self.name.encode("utf-8")
 	def __unicode__(self):
-		return self.name
+		return self.name.encode("utf-8")
 
 class Being_Type(Type):
 	typ = models.OneToOneField('Type', primary_key=True, parent_link=True)
