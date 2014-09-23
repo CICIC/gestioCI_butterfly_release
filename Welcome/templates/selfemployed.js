@@ -15,9 +15,9 @@
         $('fieldset.welcome').last().find('div').remove();
       }
       else if(assist_socialcoin == 'True' && !falses){
-        first = $('fieldset.welcome').first().remove();
-        last = $('fieldset.welcome').last().removeClass('collapse collapsed');
-        $('fieldset.welcome').last().after(first)
+        //first = $('fieldset.welcome').first().remove();
+        $('fieldset.welcome').last().removeClass('collapse collapsed');
+        //$('fieldset.welcome').last().after(first)
       }
 
     } else {
