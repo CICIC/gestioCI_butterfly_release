@@ -314,10 +314,9 @@ class SelfEmployedForm(forms.ModelForm):
 		super(SelfEmployedForm, self).__init__(*args, **kwargs)
 		#print 'FORM: KWARGS: '+str(kwargs)
 		if self.instance.id:
-			humans = []
-			for human_rel in Person.objects.all():
-				humans.append(human_rel.person.id)
-			self.fields['mentor_membership'].queryset = iC_Membership.objects.filter(human__id__in=humans)
+			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances
+			pass
+
 class Public_SelfEmployedAdmin(AutoRecordName):
 	class Media:
 		css = {
@@ -326,13 +325,13 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		js = ('welcome.js', 'selfemployed.js',)
 
 	model = iC_Self_Employed
-	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
+	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type', 'rel_fees']# '_join_fee_payed']
 	form = SelfEmployedForm
 
-	readonly_fields = ('_member_link', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
+	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
 						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list')
 
-	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
+	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences')
 
 	fieldsets = (#MembershipAdmin.fieldsets + (
 		(_(u"fase 1: Autoocupat"), {
@@ -344,19 +343,21 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			)
 		}),
 		(_(u"fase 2: Llista de tasques"), {
-			'classes': ('welcome',),
+			'classes': ('welcome_2',),
 			'fields': (
 					('_rel_id_cards',),
 					('_main_address_render', '_other_address_render'),
 					('print_task_list'),
-					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
+					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
 		}),
 		(_(u"fase 3: Alta"), {
-			'classes': ('welcome',),
+			'classes': ('welcome_3',),
 			'fields': (
-				('rel_fees', '_rel_fees',),
+				('_join_fee'),
+				('_rel_fees',),
 				('join_date', ),
-				('assigned_vat', 'review_vat', 'last_review_date'),
+				('assigned_vat', 'review_vat', 'last_review_date', 'extra_days',),
+				('rel_insurances', '_rel_insurances' ),
 				('rel_accountBank',),
 				('mentor_membership', 'mentor_comment',))
 		}),
@@ -498,7 +499,7 @@ class Public_FeeAdmin(AutoRecordName):
 									'issue_date', 'deadline_date', 'payment_date',
 									'_ic_membership', '_ic_selfemployed', '_auto_amount', '_erase_account', '_min_fee_data')
 
-	search_fields = ('name', 'unit',)
+	search_fields = ('name', 'human__name')
 	list_display = ['name', 'human', 'amount', 'unit', 'payment_type', 'deadline_date', '_is_payed']
 	list_filter = ('unit',)
 	raw_id_fields = ('human', 'rel_account')

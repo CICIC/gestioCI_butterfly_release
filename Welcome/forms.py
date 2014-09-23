@@ -68,7 +68,7 @@ class iC_Self_Employed_form(forms.ModelForm):
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Self_Employed_form, self).__init__(*args, **kwargs)
-		print "sdgdsgds"
+		import pdb; pdb.set_trace()
 		if self.instance.id:
 			#Mentor
 			if self.instance.id:
@@ -102,7 +102,7 @@ class iC_Self_Employed_form(forms.ModelForm):
 		#field_step1 = ('rel_fees', '_rel_fees','_rel_id_cards', 'rel_address_contracts', '_rel_address_contract', 'rel_licences', '_rel_licences',	#'rel_insurances', '_rel_insurances','_has_assisted_socialcoin','join_date','assigned_vat', 'review_vat', #'last_review_date','rel_accountBank','mentor_membership', 'mentor_comment')
 		from Welcome.models import iC_Self_Employed
 		model = iC_Self_Employed
-		fields = [ "mentors_choice", "mentor_comment", "main_address_choice", 'other_address', "rel_insurances", "rel_licences", "rel_address_contracts"]
+		fields = [ "mentors_choice", "mentor_comment", "main_address_choice", 'other_address', "rel_insurances", "rel_licences", "rel_address_contracts", 	"fee_membership"]
 
 class public_form(forms.ModelForm):
 	CHOICES_admin = (

@@ -551,9 +551,7 @@ class iC_Self_Employed(iC_Record):
 	join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta autoocupat"))
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa autoocupat"))
 
-	rel_fees = models.ManyToManyField('Fee', related_name='selfemployed', blank=True, null=True,
-																		verbose_name=_(u"Quotes trimestrals"),
-																		)#limit_choices_to={'record_type__parent__clas': 'quarterly_fee'})#human':ic_membership.human.pk})#.self_employed})
+	rel_fees = models.ManyToManyField('Fee', related_name='selfemployed', blank=True, null=True,verbose_name=_(u"Quotes trimestrals"))#limit_choices_to={'record_type__parent__clas': 'quarterly_fee'})#human':ic_membership.human.pk})#.self_employed})
 
 	organic = models.BooleanField(default=False, verbose_name=_(u"Productes ecològics/organics?"))
 	#welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
@@ -680,6 +678,25 @@ class iC_Self_Employed(iC_Record):
 		return str_none
 	_rel_fees.allow_tags = True
 	_rel_fees.short_description = ''#_(u"contractes?")
+
+	def _join_fee(self): 
+		fee = self.ic_membership.join_fee
+		out = ul_tag
+		if fee:
+			ico = ico_no
+			if fee.payed:
+				ico = ico_yes
+			fee_dat = fee._min_fee_data()
+			if "alt='False'" in fee_dat:
+				fee_val = ico_no
+			elif "alt='True'" in fee_dat:
+				fee_val = ico_yes
+			out += "<li>"+a_strW +"fee/"+str(fee.id)+a_str3 + "<b>"+fee.__unicode__() +"</b></a>: &nbsp; "+ str_valid+": "+ fee_val +" &nbsp; "+str_payed+": "+ ico+" </li>"
+
+			return out+'</ul>'
+		return str_none
+	_join_fee.allow_tags = True
+	_join_fee.short_description = ''
 
 	def _rel_id_cards(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
 		rels = rel_Human_Persons.objects.filter(human=self.ic_membership.human)
@@ -870,7 +887,7 @@ class iC_Self_Employed(iC_Record):
 					ico = ico_yes
 				else:
 					ico = ico_no
-				out += '<li>'+a_strW +'ic_insurance/'+str(ins.id)+a_str3 + '<b>'+ins.__unicode__() +'</b></a>: '+job+' '+adr+' &nbsp; '+ico+'</li>'
+				out += '<li>'+a_strW +'ic_insurance/'+str(ins.id)+a_str3 + '<b>'+ins.ic_document.__unicode__() +'</b></a>: '+job+' '+adr+' &nbsp; '+ico+'</li>'
 			return out + '</ul>'
 		return str_none
 	_rel_insurances.allow_tags = True
