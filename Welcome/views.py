@@ -283,7 +283,12 @@ def print_certificate(request, icse, type):
 		for license in icse.rel_licences.all():
 			obj.jobs += license.rel_job.name
 		template = 'certificate_services.html'
-
+	elif type=="2":
+		obj = None
+		template = 'invoice.html'
+	elif type=="3":
+		obj = None
+		template = 'cif.html'
 	html = render_to_string( template, {'obj': obj})
 	return render_pdf(html.encode("utf-8"))
 

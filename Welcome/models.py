@@ -966,10 +966,19 @@ class iC_Self_Employed(iC_Record):
 		url = reverse("Welcome:print_certificate", args=(self.id, 0))
 		text = _("Imprimir certificat local").encode("utf-8")
 		link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
-		
+
 		url = reverse("Welcome:print_certificate", args=(self.id, 1))
 		text = _("Imprimir certificat d'activitat").encode("utf-8")
 		link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+		url = reverse("Welcome:print_certificate", args=(self.id, 2))
+		text = _("Imprimir model de factura").encode("utf-8")
+		link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+		url = reverse("Welcome:print_certificate", args=(self.id, 3))
+		text = _("Imprimir CIF").encode("utf-8")
+		link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
 		return link
 	print_certificate.short_description="PDF"
 class iC_Stallholder(iC_Self_Employed):	# Firaire
