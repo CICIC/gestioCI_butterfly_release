@@ -261,32 +261,24 @@ def print_certificate(request, icse, type):
 	obj.member_name = ""
 	obj.member_card = ""
 	template = ''
+	obj.persons = "<ul>"
+	for rel in rels:
+		obj.persons += "<li>"
+		if hasattr(rel, 'person'):
+			obj.persons +=  rel.person.name.encode("utf-8") + _(" amb DNI: ").encode("utf-8") +rel.person.id_card
+		else:
+			obj.persons +=   icse.ic_membership.human.person.name + _(" amb DNI: ").encode("utf-8") + icse.ic_membership.human.person.id_card
+		obj.persons += "</li>"
+	obj.persons += "</ul>"
+	obj.persons = mark_safe(obj.persons)
 	if type == "0":
-		for rel in rels:
-			if hasattr(rel, 'person'):
-				obj.member_name +=  rel.person.name.encode("utf-8")
-				obj.member_card += rel.person.id_card
-			else:
-				obj.member_name +=  icse.ic_membership.human.person.name
-				obj.member_card += icse.ic_membership.human.person.id_card
-
-			obj.address = ""
-			obj.job = ""
-			for license in icse.rel_licences.all():
-				obj.job += license.rel_job.name
-				obj.address += license.rel_address.p_address
+		obj.address = ""
+		obj.job = ""
+		for license in icse.rel_licences.all():
+			obj.job += license.rel_job.name
+			obj.address += str(license.rel_address)
 		template = 'certificate.html'
 	elif type=="1":
-		obj.persons = "<ul>"
-		for rel in rels:
-			obj.persons += "<li>"
-			if hasattr(rel, 'person'):
-				obj.persons +=  rel.person.name.encode("utf-8") + _(" amb DNI: ").encode("utf-8") +rel.person.id_card
-			else:
-				obj.persons +=   icse.ic_membership.human.person.name + _(" amb DNI: ").encode("utf-8") + icse.ic_membership.human.person.id_card
-			obj.persons += "</li>"
-		obj.persons += "</ul>"
-		obj.persons = mark_safe(obj.persons)
 		obj.jobs = ""
 		for license in icse.rel_licences.all():
 			obj.jobs += license.rel_job.name
