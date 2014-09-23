@@ -575,7 +575,7 @@ class iC_Self_Employed(iC_Record):
 	review_vat = models.BooleanField(default=False, verbose_name=_(u"IVA en revisió?"))
 	last_review_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data última revisió IVA"))
 
-	mentor_membership = models.ForeignKey('iC_Membership', related_name='mentor_of_SE', blank=True, null=True, verbose_name=_(u"Soci Mentor"))
+	mentor_membership = models.ForeignKey('iC_Membership', related_name='mentor_of_SE', blank=True, null=True, verbose_name=_(u"Mentor projecte"))
 	mentor_comment = models.TextField(blank=True, null=True, verbose_name=_(u"Comentaris soci mentor"))
 	extra_days=models.IntegerField(verbose_name=_(u"Dies extra"), help_text=_(u"Dies extra que pot editar el trimestre en curs."), max_length=2, default=0)
 	def _has_assisted_welcome(self):
@@ -981,6 +981,21 @@ class iC_Self_Employed(iC_Record):
 
 		return link
 	print_certificate.short_description="PDF"
+	def _user_member(self):
+		from django.core.exceptions import ObjectDoesNotExist
+		from public_form.models import RegistrationProfile, RegistrationManager
+
+		rt_id = self.record_type.id
+		current_person = self.ic_membership.human.persons.first()
+		current_project = self.ic_membership.ic_project
+		try:
+			current_registration = RegistrationProfile.objects.get(person=current_person, project = current_project, record_type = rt_id)
+			from Welcome.admin import global_PASSWORD
+			return  _(" Usuari: ").encode("utf-8") + current_registration.user.username + " " + _(" Contrasenya:").encode("utf-8") + current_registration.user.username + global_PASSWORD
+		except ObjectDoesNotExist:
+			return _("Encara no s'ha creat.")
+	_user_member.short_description = "Usuari per entrar al entorno virtual"
+
 class iC_Stallholder(iC_Self_Employed):	# Firaire
 	ic_self_employed = models.OneToOneField('iC_Self_Employed', primary_key=True, parent_link=True)
 	#req_photos = models.SmallIntegerField(default=1, verbose_name=_(u"Requereix fotos?"))

@@ -45,6 +45,16 @@ class RegistrationManager(models.Manager):
 				return user
 		return False
 
+	def create_active_user(self, username, email, password,
+							 site, person, project, record_type):
+
+		new_user = User.objects.create_user(username, email, password)
+		new_user.is_active = False
+		new_user.save()
+		registration_profile = self.create_profile(new_user, person, project, record_type , True)
+		return new_user
+	create_active_user = transaction.atomic (create_active_user)
+
 	def create_inactive_user(self, username, email, password,
 							 site, person, project, record_type, send_email=True):
 
@@ -59,18 +69,25 @@ class RegistrationManager(models.Manager):
 		return new_user
 	create_inactive_user = transaction.atomic (create_inactive_user)
 
-	def create_profile(self, user, person, project, record_type):
+	def create_profile(self, user, person, project, record_type, already_activated=False):
 
 		salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
 		username = user.username
 		if isinstance(username, unicode):
 			username = username.encode('utf-8')
-		activation_key = hashlib.sha1(salt+username).hexdigest()
+		if already_activated:
+			activation_key = "ALREADY_ACTIVATED"
+		else:
+			activation_key = hashlib.sha1(salt+username).hexdigest()
 
-		create_user = self.create(user=user,
-						   activation_key=activation_key, person = person, project=project, record_type = record_type )
+		create_user = self.create(user=user,activation_key=activation_key, person = person, project=project, record_type = record_type )
+		if already_activated:
+			user.is_active = True
+			user.is_staff = True
+			user.save()
+
 		from django.contrib.auth.models import Group
-		print record_type.name
+
 		try:
 			g = Group.objects.get(name=record_type.clas)
 		except:

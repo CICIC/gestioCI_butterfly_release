@@ -19,6 +19,8 @@ from django.forms.formsets import formset_factory
 
 
 from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
+
+global_PASSWORD = "54@Ww"
 #class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 class AutoRecordName(admin.ModelAdmin):
 	class Media:
@@ -309,12 +311,13 @@ class SE_relAddressContractInline(admin.StackedInline):
 
 
 class SelfEmployedForm(forms.ModelForm):
+	ic_CESnum = forms.CharField(widget=forms.TextInput(attrs=dict(max_length=8)),label=_(u"Número COOP soci"), required=False)
 	def __init__(self, *args, **kwargs):
 		self.request = kwargs.pop('request', None)
 		super(SelfEmployedForm, self).__init__(*args, **kwargs)
 		#print 'FORM: KWARGS: '+str(kwargs)
 		if self.instance.id:
-			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances
+			self.fields['ic_CESnum'].initial = self.instance.ic_membership.ic_CESnum
 			pass
 
 class Public_SelfEmployedAdmin(AutoRecordName):
@@ -329,7 +332,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	form = SelfEmployedForm
 
 	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate')
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences')
 
@@ -353,20 +356,44 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		(_(u"fase 3: Alta"), {
 			'classes': ('welcome_3',),
 			'fields': (
+				('rel_insurances', '_rel_insurances' ),
 				('_join_fee'),
 				('_rel_fees',),
-				('join_date', ),
-				('assigned_vat', 'review_vat', 'last_review_date', 'extra_days',),
-				('rel_insurances', '_rel_insurances' ),
-				('rel_accountBank',),
 				('mentor_membership', 'mentor_comment',),
-				('print_certificate',) 
+				('ic_CESnum',),
+				('join_date', ),
+				('assigned_vat', 'extra_days',),
+				('print_certificate',),
+				('_user_member')
 			)}),
 	)
-	#filter_horizontal = ('rel_fees',)# 'rel_address_contracts')
-	#inlines = [
-		#SE_relAddressContractInline,
-	#]
+	def save_model(self, request, obj, form, change):
+		if form.is_valid():
+
+			if obj.ic_membership and form.cleaned_data.get("ic_CESnum"):
+				obj.ic_membership.ic_CESnum = form.cleaned_data.get("ic_CESnum")
+				obj.ic_membership.save()
+
+			if change and form.cleaned_data.get("join_date"):
+				from django.core.exceptions import ObjectDoesNotExist
+				from public_form.models import RegistrationProfile
+
+				current_person = obj.ic_membership.human.persons.first()
+				current_project = obj.ic_membership.ic_project
+				try:
+					current_registration = RegistrationProfile.objects.get(person=current_person, project = current_project, record_type = obj.record_type)
+				except ObjectDoesNotExist:
+					from public_form.models import RegistrationProfile
+					user = RegistrationProfile.objects.create_active_user( 
+								obj.ic_membership.ic_CESnum, 
+								current_person.email, 
+								obj.ic_membership.ic_CESnum + global_PASSWORD,
+								admin,
+								current_person, 
+								current_project, 
+								obj.record_type)
+			obj.save()
+
 
 	'''
 	mem = 'none'
