@@ -709,7 +709,7 @@ class iC_Self_Employed(iC_Record):
 						str(rel.person.telephone_cell),
 						str(rel.person.telephone_land)
 					)
-					out += a_strG +'person/'+str(rel.person.id)+a_str3 + '<b>'+str(rel.person) + '</b></a> ' + fields
+					out += a_strG +'person/'+str(rel.person.id)+a_str3 + '<b>'+str(rel.person.name.encode("utf-8")) + '</b></a> ' + fields
 
 				else:
 					print '_REL_ID_CARDS: rel has not Person! '+str(rel)
@@ -962,7 +962,16 @@ class iC_Self_Employed(iC_Record):
 		link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
 		return link
 	print_task_list.short_description="PDF"
-
+	def print_certificate(self):
+		url = reverse("Welcome:print_certificate", args=(self.id, 0))
+		text = _("Imprimir certificat local").encode("utf-8")
+		link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
+		
+		url = reverse("Welcome:print_certificate", args=(self.id, 1))
+		text = _("Imprimir certificat d'activitat").encode("utf-8")
+		link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+		return link
+	print_certificate.short_description="PDF"
 class iC_Stallholder(iC_Self_Employed):	# Firaire
 	ic_self_employed = models.OneToOneField('iC_Self_Employed', primary_key=True, parent_link=True)
 	#req_photos = models.SmallIntegerField(default=1, verbose_name=_(u"Requereix fotos?"))

@@ -739,8 +739,6 @@ def activate_membership(request, activation_key):
 			from Welcome.models import Unit
 			from Welcome.models import UnitRatio
 
-			
-
 			if record_type_string == "ic_person_membership":
 				fee_type = iC_Record_Type.objects.get(clas__contains='individual')
 				lohuman = account.person
@@ -779,9 +777,6 @@ def activate_membership(request, activation_key):
 
 				ref_typ = Relation.objects.get(clas='reference')
 				ref_obj, created = ic_m.human.human_persons.get_or_create(person=account.person, relation=ref_typ)
-				print 'iC_Project_Membership: ref created? '+str(created)+' obj: '+str(ref_obj)
-				print 'iC_Project_Membership: _get_ref_persons: '+str(ic_m.project._get_ref_persons())
-				print 'iC_Project_Membership: join_fee: '+str(ic_m.join_fee)
 				ic_m.human_id = account.project.id
 
 			else:

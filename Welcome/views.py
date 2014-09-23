@@ -7,7 +7,7 @@ from Welcome.forms import public_form
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import ugettext_lazy as _
-
+from django.utils.safestring import mark_safe
 def public_form(request):
 	# Get the context from the request.
 	context = RequestContext(request)
@@ -239,6 +239,61 @@ def print_task_list(request, icse):
 	html = render_to_string( 'task_list.html', {'obj': obj})
 	return render_pdf(html.encode("utf-8"))
 
+@login_required
+def print_certificate(request, icse, type):
+
+	try:
+		from Welcome.models import iC_Self_Employed
+		icse = iC_Self_Employed.objects.get(id=icse)
+	except:
+		icse = None
+		return "No encontrado"
+
+	obj = render_obj()
+
+	obj.project = icse.ic_membership.human
+	from datetime import datetime
+	obj.date = datetime.now()
+	from General.models import Relation
+	ref_typ = Relation.objects.get(clas='reference')
+	from General.models import rel_Human_Persons
+	rels = icse.ic_membership.human.human_persons.filter(relation=ref_typ)
+	obj.member_name = ""
+	obj.member_card = ""
+	template = ''
+	if type == "0":
+		for rel in rels:
+			if hasattr(rel, 'person'):
+				obj.member_name +=  rel.person.name.encode("utf-8")
+				obj.member_card += rel.person.id_card
+			else:
+				obj.member_name +=  icse.ic_membership.human.person.name
+				obj.member_card += icse.ic_membership.human.person.id_card
+
+			obj.address = ""
+			obj.job = ""
+			for license in icse.rel_licences.all():
+				obj.job += license.rel_job.name
+				obj.address += license.rel_address.p_address
+		template = 'certificate.html'
+	elif type=="1":
+		obj.persons = "<ul>"
+		for rel in rels:
+			obj.persons += "<li>"
+			if hasattr(rel, 'person'):
+				obj.persons +=  rel.person.name.encode("utf-8") + _(" amb DNI: ").encode("utf-8") +rel.person.id_card
+			else:
+				obj.persons +=   icse.ic_membership.human.person.name + _(" amb DNI: ").encode("utf-8") + icse.ic_membership.human.person.id_card
+			obj.persons += "</li>"
+		obj.persons += "</ul>"
+		obj.persons = mark_safe(obj.persons)
+		obj.jobs = ""
+		for license in icse.rel_licences.all():
+			obj.jobs += license.rel_job.name
+		template = 'certificate_services.html'
+
+	html = render_to_string( template, {'obj': obj})
+	return render_pdf(html.encode("utf-8"))
 
 import ho.pisa as pisa
 import cStringIO as StringIO

@@ -1,0 +1,19 @@
+{% load admin_static %}
+
+<p>Barcelona, {{obj.date}}</p>
+
+<p>Joan Josep Mart&iacute;nez Solana, amb DNI 36937731F com a secretari del Consell Rector de Xarxa Integral de Professionals i Usu&agrave;ries SCCL amb CIF F65343287,  certifica que {{obj.member_name}} amb DNI {{obj.member_card}} &eacute;s s&ograve;cia de la cooperativa.</p>
+
+<p>Aix&iacute; mateix, certifica que est&agrave; autoritzada per prestar serveis de  {{obj.job}} 
+en representaci&oacute; d'aquesta cooperativa, en local situat al carrer  {{obj.address}} com a part del projecte e {{obj.project}}, en qualitat de s&ograve;cia  
+volunt&agrave;ria, aix&iacute; com participar en qualsevol activitat d'acord amb els seus 
+estatuts.</p>
+
+<p>I perqu&egrave; aix&iacute; consti, es lliura la present certificaci&oacute;,</p>
+
+<img width="400" src="{% static 'signature.jpg' %}">
+
+<p>Joan Josep Mart&iacute;nez Solana
+Secretari Consell Rector
+Xarxa Integral de Professionals i Usu&agrave;ries, SCCL</p>
+

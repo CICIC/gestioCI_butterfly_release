@@ -13,5 +13,5 @@ urlpatterns = patterns('',
 	   self_employed_save_item,
 	   name='self_employed_save_item'),
 	url(r'^print_task_list/(?P<icse>\d+)/$', views.print_task_list, name='print_task_list'),
-	url(r'^print_certificate/(?P<icse>\d+)/$', views.print_certificate, name='print_certificate'),
+	url(r'^print_certificate/(?P<icse>\d+)/(?P<type>\d+)/$', views.print_certificate, name='print_certificate'),
 )

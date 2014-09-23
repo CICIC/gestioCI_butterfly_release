@@ -329,7 +329,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	form = SelfEmployedForm
 
 	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list')
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences')
 
@@ -359,8 +359,9 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 				('assigned_vat', 'review_vat', 'last_review_date', 'extra_days',),
 				('rel_insurances', '_rel_insurances' ),
 				('rel_accountBank',),
-				('mentor_membership', 'mentor_comment',))
-		}),
+				('mentor_membership', 'mentor_comment',),
+				('print_certificate',) 
+			)}),
 	)
 	#filter_horizontal = ('rel_fees',)# 'rel_address_contracts')
 	#inlines = [
