@@ -120,6 +120,7 @@ type = 4 => add other address
 @login_required
 def self_employed_save_item(request, person_id, address_id, id, type):
 	from General.models import Person, Address, Project
+	from Welcome.models import iC_Stallholder, iC_Self_Employed
 	try:
 		current_person = Person.objects.get(id=person_id)
 	except:
@@ -133,8 +134,19 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 	except:
 		current_project = None
 
+	try:
+		membership = iC_Stallholder.objects.get(id=id)
+		callback_clas = "ic_stallholder"
+	except:
+		try:
+			membership= iC_Self_Employed.objects.get(id=id)
+			callback_clas = "ic_self_employed"
+		except:
+			membership = None
+			callback_clas = "ic_self_employed"
+
 	if current_person and current_address and type=="0":
-		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type, iC_Self_Employed
+		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type
 		typ = iC_Document_Type.objects.get(clas='contract_use')
 		ic_doc = iC_Document()
 		ic_doc.doc_type = typ
@@ -146,12 +158,11 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		ic.save()
 		ic.ic_document.doc_type = ic_doc.doc_type
 		ic.ic_document.save()
-		icse= iC_Self_Employed.objects.get(id=id)
-		icse.rel_address_contracts.add(ic)
-		icse.save()
+		membership.rel_address_contracts.add(ic)
+		membership.save()
 
 	elif current_person and current_address and type=="1":
-		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type, iC_Self_Employed
+		from Welcome.models import iC_Address_Contract, iC_Document, iC_Document_Type
 		typ = iC_Document_Type.objects.get(clas='contract_hire')
 		ic_doc = iC_Document()
 		ic_doc.doc_type = typ
@@ -163,12 +174,11 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		ic.save()
 		ic.ic_document.doc_type = ic_doc.doc_type
 		ic.ic_document.save()
-		icse= iC_Self_Employed.objects.get(id=id)
-		icse.rel_address_contracts.add(ic)
-		icse.save()
+		membership.rel_address_contracts.add(ic)
+		membership.save()
 
 	elif current_person and current_address and type=="2":
-		from Welcome.models import iC_Licence, iC_Document, iC_Document_Type, iC_Self_Employed
+		from Welcome.models import iC_Licence, iC_Document, iC_Document_Type
 		typ = iC_Document_Type.objects.get(clas='iC_Licence')
 		ic_doc = iC_Document()
 		ic_doc.doc_type = typ
@@ -181,9 +191,8 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		ic.save()
 		ic.ic_document.doc_type = ic_doc.doc_type
 		ic.ic_document.save()
-		icse= iC_Self_Employed.objects.get(id=id)
-		icse.rel_licences.add(ic)
-		icse.save()
+		membership.rel_licences.add(ic)
+		membership.save()
 
 	elif current_project and type=="3":
 		from General.models import Address, rel_Human_Addresses
@@ -205,7 +214,7 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		related_address = rel_Human_Addresses(human=current_project, address=adr)
 		related_address.save()
 		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) +  "/?_popup=1")
-	callback_url = "/admin/Welcome/ic_self_employed/" + str(id)  + "/"
+	callback_url = "/admin/Welcome/" + callback_clas + "/" + str(id)  + "/"
 	return HttpResponseRedirect(callback_url)
 
 from django.http import HttpResponse

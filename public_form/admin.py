@@ -190,7 +190,6 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 					img_link = "/admin/General/person/%s/?%s" % (obj.id, img_link_next)
 				except:
 					pass
-					message = message + obj.name.unicode("utf-8").__str__()
 
 			return mark_safe("<a href='%s'><img src='%s' class='user_grid'></a> | <a %s href='%s'>%s</a>" % (img_link, img_url, _class, url, message))
 	edit_link.allow_tags = True

@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _
 from mptt.admin import MPTTModelAdmin
 from mptt.fields import TreeForeignKey, TreeManyToManyField
 from mptt.forms import MPTTAdminForm, TreeNodeChoiceField
-
+from django.utils.html import escape, escapejs
 from Welcome.models import *
 from General.models import Image
 
@@ -82,10 +82,7 @@ class AutoRecordName(admin.ModelAdmin):
 		form.save_m2m()
 		return instance
 
-	def response_change(self, request, obj):
-		print "autorecord:response_change"
-		response = super(AutoRecordName, self).response_change(request, obj)
-		return response
+
 '''
 	def response_add(self, request, obj):
 		from django.http import HttpResponseRedirect, HttpResponse
@@ -346,19 +343,19 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			)
 		}),
 		(_(u"fase 2: Llista de tasques"), {
-			'classes': ('welcome_2',),
+			'classes': ('welcome',),
 			'fields': (
 					('_rel_id_cards',),
 					('_main_address_render', '_other_address_render'),
+					('rel_insurances', '_rel_insurances' ),
+					('_join_fee'),
+					('_rel_fees',),
 					('print_task_list'),
 					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
 		}),
 		(_(u"fase 3: Alta"), {
-			'classes': ('welcome_3',),
+			'classes': ('welcome',),
 			'fields': (
-				('rel_insurances', '_rel_insurances' ),
-				('_join_fee'),
-				('_rel_fees',),
 				('mentor_membership', 'mentor_comment',),
 				('ic_CESnum',),
 				('join_date', ),
@@ -427,7 +424,7 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
 	'''
 	fieldsets = (#MembershipAdmin.fieldsets + (
 		(_(u"fase 1: Autoocupat"), {
-			#'classes': ('collapse',),
+			#,
 			'fields': (
 				('ic_membership', '_member_link', 'organic',),
 				('rel_fees', '_rel_fees',),
@@ -458,11 +455,17 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
 
 
 class Public_StallholderAdmin(Public_SelfEmployedAdmin):
+	class Media:
+		css = {
+			'all': ('admin_record.css', 'selfemployed.css',)
+		}
+		js = ('welcome.js', 'selfemployed.js',)
+
 	model = iC_Stallholder
 	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
 	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
 						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_rel_images')
-	fieldsets = (#MembershipAdmin.fieldsets + (
+	fieldsets = (
 		(_(u"fase 1: Autoocupat"), {
 			#'classes': ('collapse',),
 			'fields': (
@@ -472,20 +475,20 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 			)
 		}),
 		(_(u"fase 2: Llista de tasques"), {
-			'classes': ('welcome_2',),
+			'classes': ('welcome',),
 			'fields': (
 					('_rel_id_cards',),
 					('_main_address_render', '_other_address_render'),
+					('rel_insurances', '_rel_insurances' ),
+					('_join_fee'),
+					('_rel_fees',),
 					('print_task_list'),
-					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
+					('_has_assisted_socialcoin',))
 		}),
 		(_(u"fase 3: Alta"), {
-			'classes': ('welcome_3',),
+			'classes': ('welcome',),
 			'fields': (
 				('rel_images', '_rel_images' ),
-				('rel_insurances', '_rel_insurances' ),
-				('_join_fee'),
-				('_rel_fees',),
 				('mentor_membership', 'mentor_comment',),
 				('ic_CESnum',),
 				('join_date', ),
