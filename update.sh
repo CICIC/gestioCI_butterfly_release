@@ -12,7 +12,7 @@
     python manage.py syncdb
     python manage.py migrate
     echo "updating the database"
-	mysql -u $user -p$password -h $host $dbName < butterfly_types.sql
-    mysql -u $user -p$password $dbName < gestioCi_butterfly_contacic.sql
+	mysql -u $user -p$password -h $host $dbName < GeneralWelcome_base24-9-14.sql
+    mysql -u $user -p$password $dbName < bdgestiociProduccio.sql
 
 echo "end of the script"
