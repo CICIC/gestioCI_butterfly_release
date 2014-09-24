@@ -877,11 +877,7 @@ def save_form_profile(request):
 				reverse('public_form:entry_page_to_gestioci')
 			)
 
-from Welcome.models import Record_Type
-from Welcome.models import iC_Record_Type
-from Welcome.models import Fee
-from Welcome.models import Unit
-from Welcome.models import UnitRatio
+from Welcome.models import Record_Type, iC_Record_Type, Fee, Unit, UnitRatio
 
 '''
 	request.POST.key["public_form_action"] value should be in:
@@ -894,7 +890,7 @@ from Welcome.models import UnitRatio
 def get_current_human_or_none(request):
 	try:
 		current_human = Human.objects.get(id=request.POST["current_human"])
-	except ObjectDoesNotExist:
+	except:
 		current_human = None
 		messages.warning(request, _(u"No s'ha trobat al humà") )
 	return current_human
@@ -1114,7 +1110,8 @@ def save_self_employed(current_person, current_project, current_human, ic, reque
 		ice = iC_Self_Employed.objects.get(ic_membership=ic)
 	except ObjectDoesNotExist:
 		messages.info(request, _(u"Creant registre self employed") )
-		ice = iC_Self_Employed (ic_membership=ic)
+		ice = iC_Self_Employed ()
+		ice.ic_membership = ic
 		ice.organic = request.POST.get("organic", False)
 		try:
 			current_fee_quarter = Fee(
@@ -1136,28 +1133,22 @@ def save_self_employed(current_person, current_project, current_human, ic, reque
 	return ice
 
 def save_stall_holder(ic, ice, request):
-	from Welcome.models import iC_Type
-	try:
-		tent_type = iC_Type.objects.get(id=request.POST.get("tent_type", 39)).name
-	except Exception as e:
-		messages.info(request, _(u"No es troba el tipus de tenda") )
-		messages.error(request, '%s (%s)' % (e.message, type(e)) )
 
 	from Welcome.models import iC_Stallholder
 	try:
 		ich = iC_Stallholder.objects.get(ic_self_employed=ice)
 	except ObjectDoesNotExist:
 		ich = iC_Stallholder()
-		ich.organic = ice.organic
-		ich.ic_membership=ic
 		ich.ic_self_employed=ice
-		ich.tent_type=tent_type
+		ich.ic_membership= ic
+		ich.tent_type=request.POST.get("tent_type", "none")
 		try:
 			ich.name = str(ich)
 			ich.save()
 		except Exception as e:
 			messages.info(request, _(u"Error al grabar FIRAIRE") )
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
+	return ich
 
 @login_required
 def save_form_self_employed(request):
@@ -1183,6 +1174,7 @@ def save_form_self_employed(request):
 
 	ic = None
 	ice = None
+
 	if request.POST["public_form_action"] ==  "public_form_action_save_membership":
 
 		messages.info(request, "Post params: project_type: " + request.POST.get("project_type", "nada"))
@@ -1206,6 +1198,6 @@ def save_form_self_employed(request):
 			ice = save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter)
 			messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":
-				save_stall_holder(ic, ice, request)
+				icsh = save_stall_holder(ic, ice, request)
 
 	return HttpResponseRedirect(get_url_for(current_human, current_session))

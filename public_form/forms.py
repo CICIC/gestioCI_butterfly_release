@@ -57,11 +57,13 @@ class public_form_self_admin(forms.ModelForm):
 	organic = forms.BooleanField(label=_(u"Productes ecològics") )
 	ecommerce = forms.BooleanField(label=_(u"Comerç electronic propi") )
 	expositors = forms.BooleanField(label=_(u"Expositors") )
-	tents = iC_Record_Type.objects.filter(parent__clas='tent_type')
-	f = ()
-	for tent in tents:
-		f = f + ((tent.id, tent),)
-	tent_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=f, label=_(u"Tipus parada firaire"))
+
+	TentType = (
+		('none',_(u"Sense Carpa")),
+		('wood',_(u"Carpa de fusta")),
+		('metal',_(u"Carpa metàlica"))
+	)
+	tent_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=TentType, label=_(u"Tipus parada firaire"))
 	virtual_market = forms.BooleanField(label=_(u"Mercat Virtual"))
 	#Agregar create_membership_form > fields{ name + surname + telephone_cell}
 	def __init__(self, *args, **kwargs):

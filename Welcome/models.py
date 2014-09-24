@@ -709,7 +709,7 @@ class iC_Self_Employed(iC_Record):
 						str(rel.person.telephone_cell),
 						str(rel.person.telephone_land)
 					)
-					out += a_strG +'person/'+str(rel.person.id)+a_str3 + '<b>'+str(rel.person.name.encode("utf-8")) + '</b></a> ' + fields
+					out += a_strG +'person/'+str(rel.person.id)+a_str3 + '<b>'+str(rel.person.name.encode("utf-8")) + '</b></a> ' + fields + "<br>"
 
 				else:
 					print '_REL_ID_CARDS: rel has not Person! '+str(rel)

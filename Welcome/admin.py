@@ -458,54 +458,42 @@ class SelfEmployedAdmin(Public_SelfEmployedAdmin):
 
 
 class Public_StallholderAdmin(Public_SelfEmployedAdmin):
-	class Media:
-		css = {
-			'all': ('admin_record.css', 'selfemployed.css',)
-		}
-		js = ('welcome.js',)
-
 	model = iC_Stallholder
-	list_display = ['name', 'ic_membership', 'join_date', 'record_type',]# '_join_fee_payed']
-
-	readonly_fields = Public_SelfEmployedAdmin.readonly_fields + ('_rel_images',)
-	raw_id_fields = Public_SelfEmployedAdmin.raw_id_fields + ('rel_images',)
-	fieldsets = (
+	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
+	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_rel_images')
+	fieldsets = (#MembershipAdmin.fieldsets + (
 		(_(u"fase 1: Autoocupat"), {
 			#'classes': ('collapse',),
 			'fields': (
-				('ic_membership', '_member_link', '_human_link'),
-				('_main_address_render', '_min_human_data'),
-				('rel_fees', '_rel_fees',),
-				('organic', 'tent_type',),
+				('ic_membership', '_member_link', '_min_human_data'),
+				('organic',),
 				('_has_assisted_welcome',)
 			)
 		}),
 		(_(u"fase 2: Llista de tasques"), {
-			'classes': ('welcome',),
+			'classes': ('welcome_2',),
 			'fields': (
 					('_rel_id_cards',),
-					('rel_address_contracts', '_rel_address_contract'),
-					('rel_licences', '_rel_licences'),
-					('rel_insurances', '_rel_insurances'),
-					('rel_images', '_rel_images'),
-					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', 'rel_images'))
+					('_main_address_render', '_other_address_render'),
+					('print_task_list'),
+					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
 		}),
 		(_(u"fase 3: Alta"), {
-			'classes': ('welcome',),
+			'classes': ('welcome_3',),
 			'fields': (
+				('rel_images', '_rel_images' ),
+				('rel_insurances', '_rel_insurances' ),
+				('_join_fee'),
+				('_rel_fees',),
+				('mentor_membership', 'mentor_comment',),
+				('ic_CESnum',),
 				('join_date', ),
-				('assigned_vat', 'review_vat', 'last_review_date'),
-				('rel_accountBank',),
-				('mentor_membership', 'mentor_comment',))
-		}),
+				('assigned_vat', 'extra_days',),
+				('print_certificate',),
+				('_user_member')
+			)}),
 	)
-
-	def formfield_for_foreignkey(self, db_field, request, **kwargs):
-		if db_field.name == 'ic_membership':
-			#recs = iC_Self_Employed.objects.all().values('ic_membership')
-			#print 'HOL: '+str(iC_Membership.objects.filter(selfemployed_recs=None))
-			kwargs['queryset'] = iC_Membership.objects.filter(selfemployed_recs=None)
-		return super(Public_StallholderAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class StallholderAdmin(Public_StallholderAdmin):
 
@@ -721,9 +709,9 @@ class LearnSessionAdmin(AutoRecordName):
 		try:
 			filter_type = iC_Type.objects.get(clas=session_type)
 			if session_type == "welcome_session":
-				nonmaterial_id = 1
+				nonmaterial_id = "1"
 			else:
-				nonmaterial_id = 2
+				nonmaterial_id = "2"
 		except ObjectDoesNotExist:
 			filter_type = None
 
@@ -734,12 +722,15 @@ class LearnSessionAdmin(AutoRecordName):
 				kwargs['initial'] = filter_type.id
 
 		if db_field.name == 'nonmaterial':
-			#typs = Nonmaterial_Type.objects.get(artwork_type__clas=="ic_learn")
 			from General.models import Type
 			typ = Type.objects.filter(clas='ic_learn')
 			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
-			if filter_type:
-				kwargs['initial'] = nonmaterial_id
+			try:
+				nonmat = Nonmaterial.objects.get(id=nonmaterial_id)
+				if nonmaterial_id:
+					kwargs['initial'] = nonmat
+			except:
+				pass
 		if db_field.name == 'facilitator':
 			job = Job.objects.filter(clas='ic_facilitate')
 			#print job

@@ -58,15 +58,12 @@ class sessions_tag_node(template.Node):
 		if obj.GET.has_key("coin_session_id"):
 			from General.models import Human, Project
 			current_coin_session = Learn_Session.objects.get( id=obj.GET["coin_session_id"] ) 
-		#import pdb; pdb.set_trace()
-		#If we don't have param session, search for human sessions
-		if not current_session:
-			if current_human and current_human.assist_sessions.filter(nonmaterial__id = 1).count()>0:
-				current_session = current_human.assist_sessions.filter(nonmaterial__id = 1).first()
 
-		if not current_coin_session:
-			if current_human and current_human.assist_sessions.filter(nonmaterial__id = 2).count() > 0:
-				current_coin_session = current_human.assist_sessions.filter(nonmaterial__id = 2).first()
+		if current_human and current_human.assist_sessions.filter(nonmaterial__id = 1).count()>0:
+			current_session = current_human.assist_sessions.filter(nonmaterial__id = 1).first()
+
+		if current_human and current_human.assist_sessions.filter(nonmaterial__id = 2).count() > 0:
+			current_coin_session = current_human.assist_sessions.filter(nonmaterial__id = 2).first()
 
 		context['has_coin_session'] = False
 		context['has_session'] = False
@@ -153,13 +150,13 @@ class human_tag_node(template.Node):
 						icse = None
 					context['current_memberships_self'] = icse
 
-					try:
-						icsh = iC_Stallholder.objects.filter(ic_self_employed__ic_membership__human=current_human)
-					except ObjectDoesNotExist:
-						icsh = None
-					context['current_memberships_stallholder'] = icsh
+					#try:
+					#	icsh = iC_Stallholder.objects.filter(ic_self_employed__ic_membership__human=current_human)
+					#except ObjectDoesNotExist:
+					#	icsh = None
+					context['current_memberships_stallholder'] = None
 
-					context['dont_memberships'] = ic.count()==0 and icse.count()==0 and icsh.count()==0
+					context['dont_memberships'] = ic.count()==0 and icse.count()==0 #and icsh.count()==0
 					#Try to cast type
 					from General.models import Person, Project
 					try:

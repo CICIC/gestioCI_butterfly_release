@@ -71,7 +71,7 @@ class type_session_filter_socialcoin (SimpleListFilter):
 		return queryset
 class type_human_filter (SimpleListFilter):
 
-	title = _(u"Registe d'assistencia")
+	title = _(u"Registe d'assistencia Acollida")
 	parameter_name = 'human_id'
 
 	def lookups(self, request, model_admin):
@@ -108,7 +108,45 @@ class type_human_filter (SimpleListFilter):
 
 	def queryset(self, request, queryset):
 		return queryset
+class type_human_filter_coin (SimpleListFilter):
 
+	title = _(u"Registe d'assistencia Moneda Social")
+	parameter_name = 'human_id'
+
+	def lookups(self, request, model_admin):
+
+		try:
+			current_human = None
+			if request.GET.has_key("human_id"):
+				current_human = Human.objects.get(id=request.GET.get("human_id"))
+		except:
+			pass
+
+		from Welcome.models import Learn_Session
+		try:
+			current_session = Learn_Session.objects.get(id=request.GET.get("coin_session_id", -1))
+		except ObjectDoesNotExist:
+				current_session = None
+
+		if current_session and current_human:
+			assistance_to_coin = current_session.assistants.all()
+			self.title = _(u"Assistents: ") + current_session.name
+		elif current_session:
+			assistance_to_coin  = current_session.assistants.all()
+			self.title = _(u"Assistents: ") + current_session.name
+		elif current_human:
+			return
+		else:
+			return
+
+		yFilters = ()
+		for loop_session in assistance_to_coin :
+			if loop_session:
+				yFilters = yFilters + ((loop_session.id, loop_session.__str__()),)
+		return yFilters
+
+	def queryset(self, request, queryset):
+		return queryset
 from public_form.models import human_proxy
 from public_form.forms import human_proxy_form
 from public_form.admin import type_human_filter, type_session_filter
@@ -121,7 +159,7 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 	change_list_template = 'public_form_self.html'
 	change_form_template = 'public_form_change_self.html'
 	search_fields = ('name',)
-	list_filter = (type_session_filter, type_session_filter_socialcoin, type_human_filter)
+	list_filter = (type_session_filter, type_human_filter, type_session_filter_socialcoin, type_human_filter_coin)
 	def get_actions(self, request):
 		actions = super(human_proxy_modeladmin, self).get_actions(request)
 		del actions['delete_selected']
