@@ -727,7 +727,7 @@ class LearnSessionAdmin(AutoRecordName):
 		if db_field.name == 'nonmaterial':
 			from General.models import Type
 			typ = Type.objects.filter(clas='ic_learn')
-			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
+			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type__parent=typ)
 			try:
 				nonmat = Nonmaterial.objects.get(id=nonmaterial_id)
 				if nonmaterial_id:
