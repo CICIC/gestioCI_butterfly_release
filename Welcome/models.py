@@ -1205,7 +1205,7 @@ class iC_Insurance(iC_Document):
 	rel_address = models.ForeignKey('General.Address', blank=True, null=True, verbose_name=_(u"Adreça assegurada"))
 	rel_job = models.ForeignKey('General.Job', blank=True, null=True, verbose_name=_(u"Ofici assegurat"))
  	payed_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data pagament de l'assegurança"))
-    description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció assegurança"))
+    	description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció assegurança"))
     
 	def __unicode__(self):
 		if hasattr(self, 'selfemployed') and self.selfemployed.count():
