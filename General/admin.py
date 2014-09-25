@@ -1251,4 +1251,4 @@ admin.site.register(Region_Type, Type_RegionAdmin)
 # ----- CONCEPTS
 
 #admin.site.register(Concept, MPTTModelAdmin)
-#admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
+admin.site.register(Type, MPTTModelAdmin) # Comment this line whenever you don't need to edit the main whole Types tree
