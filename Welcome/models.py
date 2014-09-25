@@ -1196,7 +1196,6 @@ class iC_Address_Contract(iC_Document):
 
 class iC_Insurance(iC_Document):
 	ic_document = models.OneToOneField('iC_Document', primary_key=True, parent_link=True)
-	#membership = models.ForeignKey('iC_Membership', verbose_name=_(u"Soci (registre)"))
 	company = models.ForeignKey('General.Company', verbose_name=_(u"Empresa asseguradora"), blank=True, null=True)
 	number = models.CharField(max_length=30, blank=True, null=True, verbose_name=_(u"Número de Pòlissa"))
 	price = models.DecimalField(max_digits=13, decimal_places=2, blank=True, null=True, verbose_name=_(u"Import"))
@@ -1206,7 +1205,8 @@ class iC_Insurance(iC_Document):
 	rel_address = models.ForeignKey('General.Address', blank=True, null=True, verbose_name=_(u"Adreça assegurada"))
 	rel_job = models.ForeignKey('General.Job', blank=True, null=True, verbose_name=_(u"Ofici assegurat"))
  	payed_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data pagament de l'assegurança"))
-
+    description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció assegurança"))
+    
 	def __unicode__(self):
 		if hasattr(self, 'selfemployed') and self.selfemployed.count():
 			if self.company:
