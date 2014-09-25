@@ -311,10 +311,13 @@ class rel_Human_Jobs(models.Model):
 		verbose_name = _(u"H_ofi")
 		verbose_name_plural = _(u"Oficis de l'entitat")
 	def __unicode__(self):
-		if self.relation.gerund is None or self.relation.gerund == '':
-			return self.job.__unicode__()
+		if self.relation:
+			if self.relation.gerund is None or self.relation.gerund == '':
+				return self.job.__unicode__()
+			else:
+				return self.relation.gerund+' > '+self.job.__unicode__()
 		else:
-			return self.relation.gerund+' > '+self.job.__unicode__()
+			return self.job.__unicode__()
 
 class rel_Human_Addresses(models.Model):
 	human = models.ForeignKey('Human')

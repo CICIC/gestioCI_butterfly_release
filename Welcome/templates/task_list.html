@@ -7,14 +7,14 @@
 
 <table>
 <tr><td>{% trans "Codi Projecte" %}</td><td>{% trans "Responsable d'Avaluació" %}</td><td>{% trans "Correu de contacte" %}</td></tr>
-<tr><td>{{obj.current_project}}</td><td>{{obj.current_admin}}</td><td>{{obj.current_project.email}}</td></tr>
+<tr><td>{{obj.current_project}}</td><td>{{obj.current_admin}}</td><td>{{obj.current_admin.email}}</td></tr>
 </table>
 
 <h3>{% trans "Assegurances" %}</h3>
 <table border=1>
 <tr><td>{% trans "Activitat"%}</td><td>{% trans "Comentaris"%}</td></tr>
 {% for insurance in obj.insurances.all%}
-	<tr><td>{{insurance}}</td><td>{{insurance.description|default:""}}</td></tr>
+	<tr><td>{{insurance.rel_job|default:""}}</td><td>{{insurance.description|default:""}}</td></tr>
 {% endfor %}
 <table>
 
