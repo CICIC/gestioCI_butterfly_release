@@ -381,13 +381,13 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					current_registration = RegistrationProfile.objects.get(person=current_person, project = current_project, record_type = obj.record_type)
 				except ObjectDoesNotExist:
 					from public_form.models import RegistrationProfile
-					user = RegistrationProfile.objects.create_active_user( 
-								obj.ic_membership.ic_CESnum, 
-								current_person.email, 
+					user = RegistrationProfile.objects.create_active_user(
+								obj.ic_membership.ic_CESnum,
+								current_person.email,
 								obj.ic_membership.ic_CESnum + global_PASSWORD,
 								admin,
-								current_person, 
-								current_project, 
+								current_person,
+								current_project,
 								obj.record_type)
 			obj.save()
 
@@ -743,7 +743,7 @@ class LearnSessionAdmin(AutoRecordName):
 
 # Register your models here.
 from Cooper.admin import user_admin_site
-#admin.site.register(iC_Type, MPTTModelAdmin) # can be commented after creating 'Membership', 'Document' and 'Payment' types
+admin.site.register(iC_Type, MPTTModelAdmin) # can be commented after creating 'Membership', 'Document' and 'Payment' types
 #admin.site.register(iC_Record) # can be commented
 admin.site.register(iC_Record_Type, MPTTModelAdmin) # can be commented
 
