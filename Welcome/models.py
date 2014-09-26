@@ -620,18 +620,15 @@ class iC_Self_Employed(iC_Record):
 			self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
 
 	def _member_link(self):
+		if self.id:
+			id = str(self.id) + "/"
+		else:
+			id = ""
+		next_url = "?next=/admin/Welcome/%s/%s" %  (self.record_type.clas.lower(), id)
+		next_url = next_url.encode("utf-8")
 		if hasattr(self, 'ic_membership') and self.ic_membership.id:
-			print 'ID: '+str(self.ic_membership.id)
-			slug = 'ic_membership'
-			if hasattr(self.ic_membership.human, 'project'):
-				#print 'PROJECT! '+str(self.ic_membership.human.project)
-				slug = 'ic_project_membership'
-			elif hasattr(self.ic_membership.human, 'person'):
-				#print 'PERSON! '+str(self.ic_membership.human.person)
-				slug = 'ic_person_membership'
-			else:
-				return slug+'!!'
-			out = a_strW + slug + '/' + str(self.ic_membership.id) + a_str2 + a_edit + '</a>'
+			slug = self.ic_membership.record_type.clas.lower()
+			out = "<a href='/admin/Welcome/" + slug + '/' + str(self.ic_membership.id) + next_url + "'>" + a_edit + '</a>'
 			return out
 		else:
 			return "Not present"
@@ -639,6 +636,7 @@ class iC_Self_Employed(iC_Record):
 	_member_link.short_description = ''
 
 	def _human_link(self):
+
 		if hasattr(self.ic_membership, 'human') and self.ic_membership.human.id:
 			#print 'HUMAN ID: '+str(self.ic_membership.human.id)
 			slug = 'human'
