@@ -718,7 +718,8 @@ class iC_Self_Employed(iC_Record):
 						print '_REL_ID_CARDS: rel has not Person! '+str(rel)
 		else:
 			out = _("(Cap)")
-		add_button = "/admin/Welcome/ic_akin_membership/add/?next=/admin/Welcome/ic_self_employed/" + str(self.id) + "/"
+		import pdb; pdb.set_trace()
+		add_button = "/admin/Welcome/ic_akin_membership/add/?next=/admin/Welcome/" + self.record_type.clas.lower() + "/" + str(self.id) + "/"
 		add_button = "<a href='%s' > %s </a>" % (add_button, _(u"Afegeix soci afí").encode("utf-8") )
 		return out.encode("utf-8") + "<br>" + add_button
 	_akin_members.allow_tags = True
