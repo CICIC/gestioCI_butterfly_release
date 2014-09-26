@@ -726,9 +726,9 @@ class iC_Self_Employed(iC_Record):
 					else:
 						print '_REL_ID_CARDS: rel has not Person! '+str(rel)
 		else:
-			out = _("(Cap)")
+			out = _(u"(Cap)").encode("utf-8")
 		add_button = "/admin/Welcome/ic_akin_membership/add/?next=/admin/Welcome/" + self.record_type.clas.lower() + "/" + str(self.id) + "/"
-		add_button = "<a href='%s' > %s </a>" % (add_button, _(u"Afegeix soci afí").encode("utf-8") )
+		add_button = "<a href='%s' > %s </a>" % (add_button.encode("utf-8"), _(u"Afegeix soci afí").encode("utf-8") )
 		return out.encode("utf-8") + "<br>" + add_button
 	_akin_members.allow_tags = True
 	_akin_members.short_description = _(u"Socis afins")
@@ -772,7 +772,7 @@ class iC_Self_Employed(iC_Record):
 		try:
 			output += "<li>" + _(u"CP: ").encode("utf-8") + adr.postalcode.encode("utf-8") + "</li>"
 		except:
-			output += "<li>" + _(u"CP: ").encode("utf-8") + " (Cap) </li>"
+			output += "<li>" + _(u"CP: ").encode("utf-8") + _(u"(Cap)").encode("utf-8") + "</li>"
 
 		try:
 			output += "<li>" + _(u"Comarca: ").encode("utf-8") + adr.region.name.encode("utf-8") + "</li>"
