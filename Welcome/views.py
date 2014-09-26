@@ -293,8 +293,7 @@ def print_certificate(request, icse, type):
 			obj.jobs += license.rel_job.name
 		template = 'certificate_services.html'
 	elif type=="2":
-		obj = None
-		template = 'invoice.html'
+		pass
 	elif type=="3":
 		obj = None
 		template = 'cif.html'

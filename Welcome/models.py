@@ -1029,7 +1029,7 @@ class iC_Self_Employed(iC_Record):
 			text = _("Imprimir certificat d'activitat").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
-			url = reverse("Welcome:print_certificate", args=(self.id, 2))
+			url = "/media/invoice.xls"
 			text = _("Imprimir model de factura").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
