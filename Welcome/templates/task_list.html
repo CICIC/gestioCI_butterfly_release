@@ -4,45 +4,43 @@
 <h1>{% trans 'LLISTA DE TASQUES PENDENTS - ALTA SOCIS AUTOOCUPATS' %}</h1>
 <h2>{% trans '- Cooperativa Integral Catalana -' %}</h2>
 <p>{% trans "A continuació, us indiquem la llista de tasques que heu de realitzar. Per qualsevol dubte disposeu de la Web de la CIC (http://cooperativa.cat/participa/vols-fer-ten-soci-autonom/). En cas necessari, també podeu acudir al responsable amb qui heu fet la sessió d'Avaluació. Quan tingueu totes aquestes tasques completades haureu de demanar hora amb aquest responsable per venir un altra dia -les mateixes persones- a completar el procés d'alta del vostre projecte. IMPORTANT: si no aporteu tota la documentació i tasques demanades en aquesta llista no podrem completar el procés encara que vingueu a una sessió d'Alta i l'haureu de repetir un altre dia." %} </p>
-
-<table>
+<br>
+<table border=1>
 <tr><td>{% trans "Codi Projecte" %}</td><td>{% trans "Responsable d'Avaluació" %}</td><td>{% trans "Correu de contacte" %}</td></tr>
 <tr><td>{{obj.current_project}}</td><td>{{obj.current_admin}}</td><td>{{obj.current_admin.email}}</td></tr>
 </table>
-
+<br>
 <h3>{% trans "Assegurances" %}</h3>
 <table border=1>
 <tr><td>{% trans "Activitat"%}</td><td>{% trans "Comentaris"%}</td></tr>
 {% for insurance in obj.insurances.all%}
 	<tr><td>{{insurance.rel_job|default:""}}</td><td>{{insurance.description|default:""}}</td></tr>
 {% endfor %}
+<tr><td colspan="2">{% trans "Haureu d'aportar el document corresponent a cada assegurança (rebut vigent i certificat de cobertura si cal)." %}</td></tr>
 <table>
-
+<br>
 <h3>{% trans "Traspassos" %}</h3>
 <table border=1>
 <tr><td>{% trans "Tipus"%}</td><td>{% trans "Adreça"%}</td><td>{% trans "Comentaris"%}</td></tr>
 {% for contract in obj.address_contracts.all%}
-	{{contract}}
-	<tr><td>{{contract.ic_document.doc_type}}</td><td>{{contract.address}}</td><td>{{contract.description|default:""}}</td></tr>
+	<tr><td>{{contract.ic_document.doc_type.name}}</td><td>{{contract.address}}</td><td>{{contract.description|default:""}}</td></tr>
 {% endfor %}
 {% for license in obj.licences.all%}
-	{{license}}
-	<tr><td>{{ license.ic_document.doc_type}}</td><td>{{license.rel_address}}</td><td>{{license.description|default:""}}</td></tr>
+	<tr><td>{{ license.ic_document.doc_type.name}}</td><td>{{license.rel_address}}</td><td>{{license.description|default:""}}</td></tr>
 {% endfor %}
-{% trans "LA = Llicència d'activitat, LL = Lloguer, C = Cessió d'ús." %}
-{% trans "Haureu d'aportar el document corresponent a cada traspàs." %}
-<table>
-
+<tr><td colspan="3">{% trans "Haureu d'aportar el document corresponent a cada traspàs." %}</td></tr>
+</table>
+<br>
 <h3>{% trans "Quota alta soci CIC" %}</h3>
 {{obj.fee}}<br>
 {% trans "Si les quotes es paguen en moneda social caldrà portar el número d'un compte CES que ja tingueu." %}
-
+<br>
 <h3>{% trans "Avançament quota trimestral" %}</h3>
 {{obj.quarter_fee}}<br>
 {% trans "Si les quotes es paguen en moneda social caldrà portar el número d'un compte CES que ja tingueu." %}
-
+<br>
 <h3>{% trans "DNI socis afins" %}</h3>
-{% trans "Portar apuntats els noms i el número de DNI de tots socis afins del projecte" %}
+{% trans "Portar apuntats els noms i el número de DNI de tots socis afins del projecte" %}<br>
 {% trans " Són afins tots els socis de referència i també els membres que vulguin rebre cobertura legal de la CIC." %}
 </div>
 {% endblock %}
