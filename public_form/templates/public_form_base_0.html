@@ -67,8 +67,8 @@
 
     <!-- Content -->
     <div id="content" class="{% block coltype %}colM{% endblock %}">
-		{% block pretitle %} {% trans "Formulari autoocupats presencial" %}{% endblock %}
-        {% block content_title %}{% if title %}<h1>{% trans "Sessions Acollida i Avaluació" %}</h1>{% endif %}{% endblock %}
+		{% block pretitle %} {% endblock %}
+        {% block content_title %}{% if title %}<h1>{% trans "Formulari autoocupats presencial" %}</h1>{% endif %}{% endblock %}
 		<div id="footer">{% block assistant_session %} {% endblock %}</div>
         {% block content %}
         {% block object-tools %}{% endblock %}

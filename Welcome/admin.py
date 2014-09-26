@@ -330,6 +330,7 @@ class SelfEmployedForm(forms.ModelForm):
 		#print 'FORM: KWARGS: '+str(kwargs)
 		if self.instance.id:
 			self.fields['ic_CESnum'].initial = self.instance.ic_membership.ic_CESnum
+			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances.all() | self.instance.rel_insurances.all()
 			pass
 
 class Public_SelfEmployedAdmin(AutoRecordName):
@@ -746,7 +747,10 @@ class LearnSessionAdmin(AutoRecordName):
 			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
 			try:
 				nonmat = Nonmaterial.objects.get(id=nonmaterial_id)
-				if nonmaterial_id:
+				print nonmat
+				if nonmat:
+					print nonmat.id
+					kwargs['queryset'] = Nonmaterial.objects.filter(id=nonmaterial_id)
 					kwargs['initial'] = nonmat
 			except:
 				pass
