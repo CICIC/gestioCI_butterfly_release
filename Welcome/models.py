@@ -698,6 +698,31 @@ class iC_Self_Employed(iC_Record):
 	_join_fee.allow_tags = True
 	_join_fee.short_description = ''
 
+	def _akin_members(self):
+		return "dbafb"
+		from Welcome.models import iC_Akin_Membership
+		out = ""
+		if self.id:
+			current_memberships = iC_Akin_Membership.objects.filter(ic_membership=self.id)
+			if current_memberships.count() > 0:
+				for rel in current_memberships:
+					if hasattr(rel, 'person'):
+						fields = "[%s] [%s] [%s] [%s]" % ( 	rel.person.id_card,
+							rel.person.email,
+							str(rel.person.telephone_cell),
+							str(rel.person.telephone_land)
+						)
+						out += a_strG + 'person/'+ str(rel.person.id) + a_str3 + '<b>'+str(rel.person.name.encode("utf-8")) + '</b></a> ' + fields + "<br>"
+					else:
+						print '_REL_ID_CARDS: rel has not Person! '+str(rel)
+		else:
+			out = _("(Cap)")
+		add_button = a_strW + "ic_akin_membership/add'"
+		add_button = "%s > %s </a>" % (add_button, _(u"Afegeix soci afí").encode("utf-8") )
+		return out + "<br>" + add_button
+	_akin_members.allow_tags = True
+	_akin_members.short_description = _(u"Socis afins")
+
 	def _rel_id_cards(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
 		rels = rel_Human_Persons.objects.filter(human=self.ic_membership.human)
 		out = ''
@@ -718,9 +743,10 @@ class iC_Self_Employed(iC_Record):
 			out = a_strG +'person/'+str(self.ic_membership.human.id)+a_str3+ str(self.ic_membership.human)+'</a> ['+str(self.ic_membership.human.person.id_card) + "]"
 			return out
 	_rel_id_cards.allow_tags = True
-	_rel_id_cards.short_description = _(u"dni membres?")
+	_rel_id_cards.short_description = _(u"Socis de referència")
 
 	def _render_address(self, adr):
+
 		output = "<br><ul>"
 		output += "<li>" + _(u"Adreça: ").encode("utf-8") + adr.p_address.encode("utf-8") + "</li>"
 		output += "<li>" + _(u"Població: ").encode("utf-8") + adr.town.encode("utf-8")  + "</li>"
@@ -758,7 +784,7 @@ class iC_Self_Employed(iC_Record):
 		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_hire").count()>0:
 			contract = self.rel_address_contracts.get(address=adr, ic_document__doc_type__clas="contract_hire")
 			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
-			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + str(contract.ic_document.name) + link + "</li>"
+			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + contract.ic_document.name.encode("utf-8") + link + "</li>"
 		else:
 			if hasattr(self.ic_membership.human, 'project'):
 				persons = self.ic_membership.human.project.persons
