@@ -81,24 +81,39 @@ class AutoRecordName(admin.ModelAdmin):
 		instance.save()
 		form.save_m2m()
 		return instance
-
-
-'''
 	def response_add(self, request, obj):
 		from django.http import HttpResponseRedirect, HttpResponse
 		from django.core.urlresolvers import reverse
 		response = super(AutoRecordName, self).response_change(request, obj)
 		if request.GET.has_key('next'):
 			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
-				if request.GET.get('next') == 'public_form':
-					response['location'] = reverse('public_form:entry_page_to_gestioci')
-				else:
-					response['location'] = request.GET.get('next')
+				response['location'] = request.GET.get('next')
 
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
-'''
+	def response_change(self, request, obj):
+		from django.http import HttpResponseRedirect, HttpResponse
+		from django.core.urlresolvers import reverse
+		response = super(AutoRecordName, self).response_change(request, obj)
+		if request.GET.has_key('next'):
+			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
+				response['location'] = request.GET.get('next')
+
+			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
+				response['location'] = response['location'] + "?next=" + request.GET.get('next')
+		return response
+	def response_delete(self, request, obj_display):
+		from django.http import HttpResponseRedirect, HttpResponse
+		from django.core.urlresolvers import reverse
+		response = super(AutoRecordName, self).response_change(request, obj)
+		if request.GET.has_key('next'):
+			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
+				response['location'] = request.GET.get('next')
+
+			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
+				response['location'] = response['location'] + "?next=" + request.GET.get('next')
+		return response
 
 '''
 		from django.http import HttpResponseRedirect, HttpResponse
@@ -329,7 +344,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	form = SelfEmployedForm
 
 	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member')
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_akin_members')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences')
 
@@ -348,6 +363,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					('_rel_id_cards',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
+					('_akin_members'),
 					('_join_fee'),
 					('_rel_fees',),
 					('print_task_list'),

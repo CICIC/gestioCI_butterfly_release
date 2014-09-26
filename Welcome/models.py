@@ -699,11 +699,12 @@ class iC_Self_Employed(iC_Record):
 	_join_fee.short_description = ''
 
 	def _akin_members(self):
-		return "dbafb"
+
 		from Welcome.models import iC_Akin_Membership
 		out = ""
 		if self.id:
-			current_memberships = iC_Akin_Membership.objects.filter(ic_membership=self.id)
+			current_memberships = iC_Akin_Membership.objects.filter(ic_membership=self.ic_membership)
+
 			if current_memberships.count() > 0:
 				for rel in current_memberships:
 					if hasattr(rel, 'person'):
@@ -717,9 +718,9 @@ class iC_Self_Employed(iC_Record):
 						print '_REL_ID_CARDS: rel has not Person! '+str(rel)
 		else:
 			out = _("(Cap)")
-		add_button = a_strW + "ic_akin_membership/add'"
-		add_button = "%s > %s </a>" % (add_button, _(u"Afegeix soci afí").encode("utf-8") )
-		return out + "<br>" + add_button
+		add_button = "/admin/Welcome/ic_akin_membership/add/?next=/admin/Welcome/ic_self_employed/" + str(self.id) + "/"
+		add_button = "<a href='%s' > %s </a>" % (add_button, _(u"Afegeix soci afí").encode("utf-8") )
+		return out.encode("utf-8") + "<br>" + add_button
 	_akin_members.allow_tags = True
 	_akin_members.short_description = _(u"Socis afins")
 
