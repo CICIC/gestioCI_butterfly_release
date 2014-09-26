@@ -113,18 +113,18 @@
       $('.field-rel_account').show();
       id_type = "0";
       if ( $('#id_payment_type').val() == 22 ) { //Pagament amb criptomoneda
-        $('label[for="id_rel_account"]').text(gettext("@BTC on has d'enviar el pagament"));
-        id_type = "17";
+        $('label[for="id_rel_account"]').text(gettext("@BTC on s'ha d'enviar el pagament"));
+        type = "accountcrypto";
       } else if( $('#id_payment_type').val() == 24 || $('#id_payment_type').val() == 25 ) { //Pagament amb Transferència Bancaria or Ingrès al banc
-        $('label[for="id_rel_account"]').text(gettext("IBAN on has de fer el pagament"));
-        id_type = "18";
+        $('label[for="id_rel_account"]').text(gettext("IBAN on s'ha de fer el pagament"));
+        type = "accountbank";
       } else if( $('#id_payment_type').val() == 21 || $('#id_payment_type').val() == 23 || $('#id_payment_type').val() == 26 ) { // Pagament amb Hores de treball or metàl·lic or presencial
         $('.field-rel_account').hide();
       } else if($('#id_payment_type').val() == 20) { // Pagament Moneda Social
-        $('label[for="id_rel_account"]').text(gettext("Comte iCES"));
-        id_type = "16";
+        $('label[for="id_rel_account"]').text(gettext("Comte iCES emisor del pagament"));
+        type = "accountces";
       }
-      foreign_key_url = "/admin/General/record/?_popup=1&record_type__artwork_type__exact=" + id_type + "&t=id";
+      foreign_key_url = "/admin/General/" + type + "/?_to_field=id";
       $('#lookup_id_rel_account').attr('href', foreign_key_url);
     }
     //manage_rel_account();

@@ -151,8 +151,7 @@ class Fee(iC_Record):
 	payment_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de pagament"))
 	payment_type = TreeForeignKey('Payment_Type', blank=True, null=True, verbose_name=_(u"Forma de pagament"))
 
-	rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True,
-																	limit_choices_to={'record_type__parent__clas':'account'}, verbose_name=_(u"Compte relacionat"))
+	rel_account = models.ForeignKey('General.Record', related_name='rel_fees', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
 
 	def __unicode__(self):
 		if self.record_type is None:
@@ -204,15 +203,18 @@ class Fee(iC_Record):
 							#print '_AUTO_AMOUNT: equal!'
 							pass
 						else:
-							print '_AUTO_AMOUNT: not equal'
-							eqi2 = UnitRatio.objects.filter(in_unit=self.unit)
-							#print '_AUTO_AMOUNT: eqi2: '+str(eqi2)
-							#print '_AUTO_AMOUNT: eqi2.first '+str(eqi2.first().out_unit.name)
-							eqi3 = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=eqi2.first().out_unit)
-							#print '_AUTO_AMOUNT: eqi3: '+str(eqi3)
-							rate2 = eqi3.first().rate
-							print '_AUTO_AMOUNT: rate2: '+str(rate2)
-							rate = (1/eqi2.first().rate)*rate2
+							try:
+								print '_AUTO_AMOUNT: not equal'
+								eqi2 = UnitRatio.objects.filter(in_unit=self.unit)
+								#print '_AUTO_AMOUNT: eqi2: '+str(eqi2)
+								#print '_AUTO_AMOUNT: eqi2.first '+str(eqi2.first().out_unit.name)
+								eqi3 = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=eqi2.first().out_unit)
+								#print '_AUTO_AMOUNT: eqi3: '+str(eqi3)
+								rate2 = eqi3.first().rate
+								print '_AUTO_AMOUNT: rate2: '+str(rate2)
+								rate = (1/eqi2.first().rate)*rate2
+							except:
+								return None
 					elif eqi.count() == 1:
 						rate = eqi.first().rate
 					else:
@@ -672,7 +674,11 @@ class iC_Self_Employed(iC_Record):
 				elif "alt='True'" in fee_dat:
 					fee_val = ico_yes
 				#print fee_val
-				out += "<li>"+a_strW +"fee/"+str(fee.id)+a_str3 + "<b>"+fee.__unicode__() +"</b></a>: &nbsp; "+ str_valid+": "+ fee_val +" &nbsp; "+str_payed+": "+ ico+" </li>"
+				if self.id:
+					id = str(self.id) + "/"
+				else:
+					id = ""
+				out += "<li> <a href='/admin/Welcome/fee/%s/?next=/admin/Welcome/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (str(fee.id), self.record_type.clas.lower(), id, fee.__unicode__(), str_valid, fee_val, str_payed, ico)
 			#print out+'</ul>'
 			return out+'</ul>'
 		return str_none
@@ -691,8 +697,11 @@ class iC_Self_Employed(iC_Record):
 				fee_val = ico_no
 			elif "alt='True'" in fee_dat:
 				fee_val = ico_yes
-			out += "<li>"+a_strW +"fee/"+str(fee.id)+a_str3 + "<b>"+fee.__unicode__() +"</b></a>: &nbsp; "+ str_valid+": "+ fee_val +" &nbsp; "+str_payed+": "+ ico+" </li>"
-
+			if self.id:
+				id = str(self.id) + "/"
+			else:
+				id = ""
+			out += "<li> <a href='/admin/Welcome/fee/%s/?next=/admin/Welcome/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (str(fee.id), self.record_type.clas.lower(), id, fee.__unicode__(), str_valid, fee_val, str_payed, ico)
 			return out+'</ul>'
 		return str_none
 	_join_fee.allow_tags = True
@@ -718,7 +727,6 @@ class iC_Self_Employed(iC_Record):
 						print '_REL_ID_CARDS: rel has not Person! '+str(rel)
 		else:
 			out = _("(Cap)")
-		import pdb; pdb.set_trace()
 		add_button = "/admin/Welcome/ic_akin_membership/add/?next=/admin/Welcome/" + self.record_type.clas.lower() + "/" + str(self.id) + "/"
 		add_button = "<a href='%s' > %s </a>" % (add_button, _(u"Afegeix soci afí").encode("utf-8") )
 		return out.encode("utf-8") + "<br>" + add_button
