@@ -670,7 +670,7 @@ INSERT INTO `Welcome_ic_type` (`id`, `name`, `description`, `parent_id`, `lft`, 
 (34, 'reg Sessió MonedaSocial', '', 32, 71, 72, 1, 2, 'socialcoin_session'),
 (35, 'quota alta Individual', '', 18, 34, 35, 1, 3, '(30_euro) individual'),
 (36, 'quota alta Col·lectiva', '', 18, 36, 37, 1, 3, '(60_euro) collective'),
-(41, 'Quota Avançada', '', 17, 57, 66, 1, 2, '(45_eco) advanced_fee'),
+(41, 'Quota Avançada', '', 17, 57, 66, 1, 2, '(45_eco) advanced_fee');
 
 /*!40000 ALTER TABLE `Welcome_ic_type` ENABLE KEYS */;
 UNLOCK TABLES;
