@@ -242,6 +242,8 @@ def print_task_list(request, icse):
 
 	obj.fee =  current_icse.ic_membership.join_fee
 
+	obj.is_stall_holder = current_icse.record_type.clas == "iC_Stallholder"
+
 	if current_icse.rel_fees.all().count()>0:
 		obj.quarter_fee = current_icse.rel_fees.all()[0]
 	from django.conf.urls.static import static
