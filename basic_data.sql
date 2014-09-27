@@ -126,7 +126,7 @@ UNLOCK TABLES;
 LOCK TABLES `General_address` WRITE;
 /*!40000 ALTER TABLE `General_address` DISABLE KEYS */;
 INSERT INTO `General_address` (`id`, `name`, `address_type_id`, `p_address`, `town`, `postalcode`, `region_id`, `ic_larder`, `size`, `size_unit_id`, `longitude`, `latitude`, `description`) VALUES
-(1, 'AureaSocial', 44, 'Sardenya 261-263', 'Barcelona', '08013', 1999999999, 0, NULL, NULL, NULL, NULL, '');
+(1, 'AureaSocial', 44, 'Sardenya 261-263', 'Barcelona', '08013', 19, 0, NULL, NULL, NULL, NULL, '');
 /*!40000 ALTER TABLE `General_address` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -221,7 +221,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `General_company` WRITE;
 /*!40000 ALTER TABLE `General_company` DISABLE KEYS */;
-INSERT INTO `General_company` (`human_id`, `legal_name`, `vat_number`, `company_type_id`) VALUES (6,'','',20);
+INSERT INTO `General_company` (`human_id`, `legal_name`, `vat_number`, `company_type_id`) VALUES (6,'Triodos','',20);
 /*!40000 ALTER TABLE `General_company` ENABLE KEYS */;
 UNLOCK TABLES;
 
