@@ -280,18 +280,18 @@ def print_certificate(request, icse, type):
 		obj.persons += "</li>"
 	obj.persons += "</ul>"
 	obj.persons = mark_safe(obj.persons)
-	if type == "0":
+	if type == "0" or type =="10":
 		obj.address = ""
 		obj.job = ""
 		for license in icse.rel_licences.all():
 			obj.job += license.rel_job.name
 			obj.address += str(license.rel_address)
-		template = 'certificate.html'
-	elif type=="1":
+		template = 'certificate.html' if type=="0" else 'certificate_stallholder.html'
+	elif type=="1" or type=="11":
 		obj.jobs = ""
 		for license in icse.rel_licences.all():
 			obj.jobs += license.rel_job.name
-		template = 'certificate_services.html'
+		template = 'certificate_services.html' if type=="1" else 'certificate_services_stallholder.html'
 	elif type=="2":
 		pass
 	elif type=="3":
