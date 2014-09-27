@@ -1029,7 +1029,7 @@ class iC_Self_Employed(iC_Record):
 			text = _("Imprimir certificat d'activitat").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
-			url = reverse("Welcome:print_certificate", args=(self.id, 2))
+			url = "/media/invoice.xls"
 			text = _("Imprimir model de factura").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
@@ -1041,7 +1041,7 @@ class iC_Self_Employed(iC_Record):
 		else:
 			return str_none;
 
-	print_certificate.short_description="PDF"
+	print_certificate.short_description= _(u"Carpeta d'usuari")
 	def _user_member(self):
 		from django.core.exceptions import ObjectDoesNotExist
 		from public_form.models import RegistrationProfile, RegistrationManager
@@ -1075,7 +1075,29 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 		super(iC_Stallholder, self).__init__(*args, **kwargs)
 		self.record_type = iC_Record_Type.objects.get(clas='iC_Stallholder')
 
+	def print_certificate(self):
+		if self.id:
+			url = reverse("Welcome:print_certificate", args=(self.id, 10))
+			text = _("Imprimir certificat fires").encode("utf-8")
+			link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
 
+			url = reverse("Welcome:print_certificate", args=(self.id, 11))
+			text = _("Imprimir certificat d'activitat").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+			url = "/media/invoice.xls"
+			text = _("Imprimir model de factura").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+			url = reverse("Welcome:print_certificate", args=(self.id, 3))
+			text = _("Imprimir CIF").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+			return link
+		else:
+			return str_none;
+
+	print_certificate.short_description= _(u"Carpeta d'usuari")
 class Learn_Session(iC_Record):
 	nonmaterial = models.ForeignKey('General.Nonmaterial', verbose_name=_(u"Formació (obra inmaterial)"))
 	assistants = models.ManyToManyField('General.Human', related_name='assist_sessions', blank=True, null=True,

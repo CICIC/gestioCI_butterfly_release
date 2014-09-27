@@ -30,6 +30,18 @@
 {% endfor %}
 <tr><td colspan="3">{% trans "Haureu d'aportar el document corresponent a cada traspàs." %}</td></tr>
 </table>
+{% if obj.is_stall_holder %}<br>
+<h3>{% trans "Firaires" %}</h3>
+<table border=1>
+<tr>
+<td>___</td><td>{% trans "Foto parada (2)"%}</td>
+<td>___</td><td>{% trans "Descripci&oacute; detallada de parada i productes" %}</td>
+</tr>
+<tr>
+<td>___</td><td>{% trans "Fotos productes (2)"%}</td>
+<td colspan="2">{% trans "(2) Portar fotos en usb o correu de contacte " %}</td></tr>
+</table>
+{% endif %}
 <br>
 <h3>{% trans "Quota alta soci CIC" %}</h3>
 {{obj.fee}}<br>
