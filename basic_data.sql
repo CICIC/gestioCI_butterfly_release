@@ -126,7 +126,7 @@ UNLOCK TABLES;
 LOCK TABLES `General_address` WRITE;
 /*!40000 ALTER TABLE `General_address` DISABLE KEYS */;
 INSERT INTO `General_address` (`id`, `name`, `address_type_id`, `p_address`, `town`, `postalcode`, `region_id`, `ic_larder`, `size`, `size_unit_id`, `longitude`, `latitude`, `description`) VALUES
-(1, 'AureaSocial', 44, 'Sardenya 261-263', 'Barcelona', '08013', 3, 0, NULL, NULL, NULL, NULL, '');
+(1, 'AureaSocial', 44, 'Sardenya 261-263', 'Barcelona', '08013', 1999999999, 0, NULL, NULL, NULL, NULL, '');
 /*!40000 ALTER TABLE `General_address` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -216,17 +216,22 @@ INSERT INTO `General_company_type` (`being_type_id`) VALUES
 UNLOCK TABLES;
 
 --
+-- Dumping data for table `General_company`
+--
+
+LOCK TABLES `General_company` WRITE;
+/*!40000 ALTER TABLE `General_company` DISABLE KEYS */;
+INSERT INTO `General_company` (`human_id`, `legal_name`, `vat_number`, `company_type_id`) VALUES (6,'','',20);
+/*!40000 ALTER TABLE `General_company` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Dumping data for table `General_human`
 --
 
 LOCK TABLES `General_human` WRITE;
 /*!40000 ALTER TABLE `General_human` DISABLE KEYS */;
-INSERT INTO `General_human` (`id`, `name`, `birth_date`, `death_date`, `nickname`, `email`, `telephone_cell`, `telephone_land`, `website`, `description`) VALUES
-(1, 'Revolució Integral', NULL, NULL, 'RI', '', '', '', '', ''),
-(2, 'Xarxa de Cooperatives Integrals', NULL, NULL, 'XCI', '', '', '', '', ''),
-(3, 'Cooperativa Integral Catalana', NULL, NULL, 'CIC', '', '', '', '', ''),
-(4, 'testPerson', NULL, NULL, '', 'tes@tes.tes', '34876592', '', '', 'wadhjbvñascv'),
-(5, 'testProj', NULL, NULL, '', 'tes@tes.tes', '', '', '', '');
+INSERT INTO `General_human` (`id`, `name`, `birth_date`, `death_date`, `nickname`, `email`, `telephone_cell`, `telephone_land`, `website`, `description`) VALUES (1,'Revolució Integral',NULL,NULL,'RI','','','','',''),(2,'Xarxa de Cooperatives Integrals',NULL,NULL,'XCI','','','','',''),(3,'Cooperativa Integral Catalana',NULL,NULL,'CIC','','','','',''),(4,'testPerson',NULL,NULL,'','tes@tes.tes','34876592','','','wadhjbvñascv'),(5,'testProj',NULL,NULL,'','tes@tes.tes','','','',''),(6,'Triodos',NULL,NULL,'','','','','',NULL);
 /*!40000 ALTER TABLE `General_human` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -379,13 +384,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `General_region` WRITE;
 /*!40000 ALTER TABLE `General_region` DISABLE KEYS */;
-INSERT INTO `General_region` (`id`, `name`, `region_type_id`, `parent_id`, `description`, `lft`, `rght`, `tree_id`, `level`) VALUES
-(1, 'Països Catalans', 40, 5, '', 2, 9, 2, 1),
-(2, 'Catalunya', 41, 1, '', 3, 8, 2, 2),
-(3, 'Barcelonès', 43, 2, '', 4, 5, 2, 3),
-(4, 'Anoia', 43, 2, '', 6, 7, 2, 3),
-(5, 'continent europeu', 39, NULL, '', 1, 10, 2, 0),
-(6, 'planeta Terra', 62, NULL, '', 1, 2, 3, 0);
+INSERT INTO `General_region` (`id`, `name`, `description`, `lft`, `rght`, `tree_id`, `level`, `parent_id`, `region_type_id`) VALUES (1,'Països Catalans','',2,91,2,1,5,40),(2,'Catalunya','',3,90,2,2,1,41),(5,'continent europeu','',1,92,2,0,NULL,39),(6,'planeta Terra','',1,2,3,0,NULL,62),(7,'Alt Camp','',8,9,2,3,2,43),(8,'Alt Empordà','',10,11,2,3,2,43),(9,'Alt Penedès','',12,13,2,3,2,43),(10,'Alt Urgell','',14,15,2,3,2,43),(11,'Alta Ribagorça','',16,17,2,3,2,43),(12,'Anoia','',18,19,2,3,2,43),(13,'Bages','',20,21,2,3,2,43),(14,'Baix Camp','',22,23,2,3,2,43),(15,'Baix Ebre','',24,25,2,3,2,43),(16,'Baix Empordà','',26,27,2,3,2,43),(17,'Baix Llobregat','',28,29,2,3,2,43),(18,'Baix Penedès','',30,31,2,3,2,43),(19,'Barcelonès','',32,33,2,3,2,43),(20,'Berguedà','',34,35,2,3,2,43),(21,'Cerdanya','',36,37,2,3,2,43),(22,'Conca Barberà','',38,39,2,3,2,43),(23,'Garraf','',40,41,2,3,2,43),(24,'Garrigues','',42,43,2,3,2,43),(25,'Garrotxa','',44,45,2,3,2,43),(26,'Gironès','',46,47,2,3,2,43),(27,'Maresme','',48,49,2,3,2,43),(28,'Montsià','',50,51,2,3,2,43),(29,'Noguera','',52,53,2,3,2,43),(30,'Osona','',54,55,2,3,2,43),(31,'Pallars Jussà','',56,57,2,3,2,43),(32,'Pallars Sobirà','',58,59,2,3,2,43),(33,'Pla d\'urgell','',60,61,2,3,2,43),(34,'Pla de l\'Estany','',62,63,2,3,2,43),(35,'Priorat','',64,65,2,3,2,43),(36,'Ribera d\'Ebre','',66,67,2,3,2,43),(37,'Ripollès','',68,69,2,3,2,43),(38,'Segarra','',70,71,2,3,2,43),(39,'Segrià','',72,73,2,3,2,43),(40,'Selva','',74,75,2,3,2,43),(41,'Solsonès','',76,77,2,3,2,43),(42,'Tarragonès','',78,79,2,3,2,43),(43,'Terra Alta','',80,81,2,3,2,43),(44,'Urgell','',82,83,2,3,2,43),(45,'Val d\'Aran','',84,85,2,3,2,43),(46,'Vallès Occidental','',86,87,2,3,2,43),(47,'Vallès Oriental','',88,89,2,3,2,43);
 /*!40000 ALTER TABLE `General_region` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -503,7 +502,7 @@ INSERT INTO `General_unit` (`id`, `name`, `description`, `unit_type_id`, `code`,
 (3, 'Metre Quadrat', '', 38, 'm2', NULL, NULL),
 (4, 'Hectàrea', '', 38, 'Ha', NULL, NULL),
 (5, 'Hora', '', 48, 'h', NULL, NULL),
-(6, 'Riu', '', 35, 'riu', 4, 17),
+(6, 'Riu', '', 35, 'riu', 12, NULL),
 (7, 'FairCoin', '', 36, 'FAC', 6, NULL);
 /*!40000 ALTER TABLE `General_unit` ENABLE KEYS */;
 UNLOCK TABLES;
