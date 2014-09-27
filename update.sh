@@ -30,7 +30,7 @@ python manage.py migrate Welcome
 
 echo "update database"
 
-mysql -u $user -p$password -h $host $dbName < GeneralWelcome_base24-9-14.sql
+mysql -u $user -p$password -h $host $dbName < basic_data.sql
 mysql -u $user -p$password -h $host $dbName < bdgestiociProduccio.sql
 
 echo "migrating public_form"
