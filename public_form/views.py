@@ -967,7 +967,6 @@ def save_current_human(request, current_human):
 	except ObjectDoesNotExist:
 		messages.warning(request, _(u"No s'ha trobat cap persona") )
 		try:
-			import pdb; pdb.set_trace()
 			current_person = Person()
 			current_person.name = "Persona del projecte:" + current_human.name
 			current_person.telephone_land = current_human.telephone_land
