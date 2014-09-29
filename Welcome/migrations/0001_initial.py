@@ -411,7 +411,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ic_akin_membership',
             name='ic_membership',
-            field=models.ForeignKey(related_name=b'akin_memberships', verbose_name='vinculada al Projectes Socis', blank=True, to='Welcome.iC_Membership', null=True),
+            field=models.ManyToManyField(related_name=b'akin_memberships', null=True, verbose_name='vinculada al Projectes Socis', to='Welcome.iC_Membership', blank=True),
             preserve_default=True,
         ),
         migrations.AddField(
