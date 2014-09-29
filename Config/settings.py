@@ -1,3 +1,4 @@
+
 #encoding=utf-8
 
 """
@@ -222,7 +223,7 @@ TIME_ZONE = 'Europe/Madrid'
 USE_L10N = True
 USE_I18N = True
 USE_TZ = True
-
+DEFAULT_CHARSET = "UTF-8"
 
 
 '''
