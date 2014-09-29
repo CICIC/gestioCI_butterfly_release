@@ -9,7 +9,7 @@ import mptt.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('General', '__first__'),
+        ('General', '0001_initial'),
     ]
 
     operations = [
@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
                 ('ic_document', models.OneToOneField(parent_link=True, primary_key=True, serialize=False, to='Welcome.iC_Document')),
                 ('start_date', models.DateField(null=True, verbose_name="Data d'inici del contracte", blank=True)),
                 ('end_date', models.DateField(null=True, verbose_name='Data de final del contracte', blank=True)),
-                ('company', models.ForeignKey(verbose_name='Empresa contractant', to='General.Company')),
+                ('company', models.ForeignKey(verbose_name='Empresa contractant', blank=True, to='General.Company', null=True)),
                 ('person', models.ForeignKey(verbose_name='Persona contractada', to='General.Person')),
             ],
             options={
@@ -114,7 +114,8 @@ class Migration(migrations.Migration):
                 ('price', models.DecimalField(null=True, verbose_name='Import', max_digits=13, decimal_places=2, blank=True)),
                 ('start_date', models.DateField(null=True, verbose_name="Data d'inici de l'asseguran\xe7a", blank=True)),
                 ('end_date', models.DateField(null=True, verbose_name="Data de final de l'asseguran\xe7a", blank=True)),
-                ('company', models.ForeignKey(verbose_name='Empresa asseguradora', to='General.Company')),
+                ('payed_date', models.DateField(null=True, verbose_name="Data pagament de l'asseguran\xe7a", blank=True)),
+                ('company', models.ForeignKey(verbose_name='Empresa asseguradora', blank=True, to='General.Company', null=True)),
                 ('price_unit', models.ForeignKey(verbose_name='Unitat', blank=True, to='General.Unit', null=True)),
                 ('rel_address', models.ForeignKey(verbose_name='Adre\xe7a assegurada', blank=True, to='General.Address', null=True)),
                 ('rel_job', models.ForeignKey(verbose_name='Ofici assegurat', blank=True, to='General.Job', null=True)),
@@ -183,7 +184,7 @@ class Migration(migrations.Migration):
                 ('review_vat', models.BooleanField(default=False, verbose_name='IVA en revisi\xf3?')),
                 ('last_review_date', models.DateField(null=True, verbose_name='Data \xfaltima revisi\xf3 IVA', blank=True)),
                 ('mentor_comment', models.TextField(null=True, verbose_name='Comentaris soci mentor', blank=True)),
-                ('extra_days', models.IntegerField(default=0, help_text='Dies extra que pot editar el trimestre en curs.', max_length=2, verbose_name='Dies extra')),
+                ('extra_days', models.IntegerField(default=0, max_length=2, blank=True, help_text='Dies extra que pot editar el trimestre en curs.', null=True, verbose_name='Dies extra')),
             ],
             options={
                 'verbose_name': 'Alta Proj.Autoocupat',
@@ -249,7 +250,7 @@ class Migration(migrations.Migration):
                 ('datetime', models.DateTimeField(null=True, verbose_name='Dia i Hora', blank=True)),
                 ('duration', models.TimeField(default=b'01:00', verbose_name='Duraci\xf3')),
                 ('address', models.ForeignKey(verbose_name='Adre\xe7a', blank=True, to='General.Address', null=True)),
-                ('assistants', models.ManyToManyField(related_name=b'assist_sessions', to='General.Human', blank=True, help_text='buscar', null=True, verbose_name='Assistents')),
+                ('assistants', models.ManyToManyField(related_name=b'assist_sessions', to='General.Human', blank=True, help_text='Quan escullis cada entitat assistent, desa el formulari per veure el seu nom aqu\xed', null=True, verbose_name='Assistents')),
                 ('facilitator', models.ForeignKey(related_name=b'facilitate_sessions', verbose_name='Facilitador', blank=True, to='General.Human', null=True)),
                 ('nonmaterial', models.ForeignKey(verbose_name='Formaci\xf3 (obra inmaterial)', to='General.Nonmaterial')),
             ],
@@ -302,7 +303,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ic_self_employed',
             name='mentor_membership',
-            field=models.ForeignKey(related_name=b'mentor_of_SE', verbose_name='Soci Mentor', blank=True, to='Welcome.iC_Membership', null=True),
+            field=models.ForeignKey(related_name=b'mentor_of_SE', verbose_name='Mentor projecte', blank=True, to='Welcome.iC_Membership', null=True),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -410,7 +411,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ic_akin_membership',
             name='ic_membership',
-            field=models.ForeignKey(related_name=b'akin_memberships', verbose_name='vinculada al Projecte Soci', blank=True, to='Welcome.iC_Membership', null=True),
+            field=models.ForeignKey(related_name=b'akin_memberships', verbose_name='vinculada al Projectes Socis', blank=True, to='Welcome.iC_Membership', null=True),
             preserve_default=True,
         ),
         migrations.AddField(

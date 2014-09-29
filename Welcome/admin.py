@@ -155,23 +155,23 @@ class AutoRecordName(admin.ModelAdmin):
 class Public_AkinMembershipAdmin(AutoRecordName):
 	model = iC_Akin_Membership
 	raw_id_fields = ('person', 'ic_membership',)
-	readonly_fields = ('_has_id_card', '_person_link',)
+	readonly_fields = ('_has_id_card', '_person_link', '_memberships')
 	fieldsets = (
 		(None, {
 			'fields':(('person', '_person_link',),
-								('join_date', 'ic_membership',),
+								('join_date', 'ic_membership', '_memberships'),
 								('description', '_has_id_card'))
 		}),
 	)
 
 class AkinMembershipAdmin(Public_AkinMembershipAdmin):
-	list_display = ['name', 'person', 'join_date', 'ic_membership', '_has_id_card',]
+	list_display = ['name', 'person', 'join_date',  '_has_id_card',]
 	#raw_id_fields = ('person', 'ic_membership',)
-	readonly_fields = ('record_type', 'name', 'ic_project', '_has_id_card', '_person_link')
+	readonly_fields = ('record_type', 'name', 'ic_project', '_has_id_card', '_person_link', '_memberships')
 	fieldsets = (
 		(None, {
 			'fields':(('record_type', 'ic_project', '_has_id_card'),
-								('person', '_person_link', 'ic_membership', ),
+								('person', '_person_link', 'ic_membership', '_memberships' ),
 								('join_date', 'end_date'),
 								('description', 'name'))
 		}),
@@ -481,7 +481,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 	model = iC_Stallholder
 	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
 	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_rel_images')
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_rel_images', '_akin_members')
 	fieldsets = (
 		(_(u"fase 1: Autoocupat"), {
 			#'classes': ('collapse',),
@@ -497,6 +497,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 					('_rel_id_cards',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
+					('_akin_members'),
 					('_join_fee'),
 					('_rel_fees',),
 					('print_task_list'),

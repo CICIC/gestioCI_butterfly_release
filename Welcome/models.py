@@ -283,11 +283,9 @@ class iC_Akin_Membership(iC_Record):
 	person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
 	ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
 	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"entitat legal"))
-
-	ic_membership = models.ForeignKey('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada al Projecte Soci"))
 	join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
-
+	ic_membership = models.ManyToManyField('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada al Projectes Socis"))
 	def _has_id_card(self):
 		if self.person.id_card is None or self.person.id_card == '':
 			return False
@@ -296,6 +294,22 @@ class iC_Akin_Membership(iC_Record):
 	_has_id_card.boolean = True
 	_has_id_card.short_description = _(u"Dni/Nie?")
 	has_id_card = property(_has_id_card)
+
+	def _memberships(self):
+
+		out = ""
+		if self.id:
+			current_memberships = self.ic_membership.all()
+			if current_memberships.count() > 0:
+				out = "<ul>"
+				for rel in current_memberships:
+					out += "<li>" + rel.name + "</li>"
+				out += "</ul>"
+		else:
+			out = _(u"(Cap)").encode("utf-8")
+		return out.encode("utf-8")
+	_memberships.allow_tags = True
+	_memberships.short_description = _(u"Projectes")
 
 	def __unicode__(self):
 		if self.record_type is None or self.record_type == '':

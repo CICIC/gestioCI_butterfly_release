@@ -11,9 +11,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='ic_labor_contract',
-            name='company',
-            field=models.ForeignKey(verbose_name='Empresa contractant', blank=True, to='General.Company', null=True),
+        migrations.RemoveField(
+            model_name='ic_akin_membership',
+            name='ic_membership',
         ),
     ]
