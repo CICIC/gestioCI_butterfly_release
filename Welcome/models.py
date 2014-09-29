@@ -296,7 +296,6 @@ class iC_Akin_Membership(iC_Record):
 	has_id_card = property(_has_id_card)
 
 	def _memberships(self):
-
 		out = ""
 		if self.id:
 			current_memberships = self.ic_membership.all()
@@ -305,7 +304,7 @@ class iC_Akin_Membership(iC_Record):
 				for rel in current_memberships:
 					out += "<li>" + rel.name + "</li>"
 				out += "</ul>"
-		else:
+		if out == "":
 			out = _(u"(Cap)").encode("utf-8")
 		return out.encode("utf-8")
 	_memberships.allow_tags = True
