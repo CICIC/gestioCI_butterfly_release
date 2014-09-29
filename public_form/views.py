@@ -957,7 +957,6 @@ def save_current_human(request, current_human):
 		current_project.project_type = Project_Type.objects.get(id=request.POST.get("project_type", -1))
 		current_project.description = request.POST.get("description", "")
 		current_project.ecommerce = request.POST.get("ecommerce", "0")
-		current_project.description = request.POST.get("description", "")
 		current_project.save()
 	except ObjectDoesNotExist:
 		current_project = None
@@ -968,8 +967,9 @@ def save_current_human(request, current_human):
 	except ObjectDoesNotExist:
 		messages.warning(request, _(u"No s'ha trobat cap persona") )
 		try:
+			import pdb; pdb.set_trace()
 			current_person = Person()
-			current_person.name = "Persona del projecte:" + str(current_human.name)
+			current_person.name = "Persona del projecte:" + current_human.name
 			current_person.telephone_land = current_human.telephone_land
 			current_person.telephone_cell = current_human.telephone_cell
 			current_person.email = current_human.email
