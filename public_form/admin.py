@@ -358,8 +358,6 @@ class Public_ProjectAdmin(ProjectAdmin):
 				if request.GET.get('next') == 'public_form':
 					response['location'] = reverse('public_form:entry_page_to_gestioci')
 				else:
-					print "si paso"
-					print request.GET.get('next') + "?human_id=" + str(obj.id)
 					response['location'] = request.GET.get('next') + "?human_id=" + str(obj.id)
 
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):

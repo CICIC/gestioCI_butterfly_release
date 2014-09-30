@@ -48,13 +48,13 @@ class AutoRecordName(admin.ModelAdmin):
 				instance.human = instance.person
 
 		if hasattr(self, 'record_type') and self.record_type is not None:
-			print instance.record_type.clas
+			#print instance.record_type.clas
 			if instance.record_type.clas == 'iC_Stallholder' or instance.record_type.clas == 'iC_Self_Employed':
 				if hasattr(instance.ic_membership, 'selfemployed_recs'):
 					recs = instance.ic_membership.selfemployed_recs.filter(end_date=None)
-					print 'RECS: '+str(recs)
+					#print 'RECS: '+str(recs)
 					if recs.count() > 1: # TODO rise a real exeption
-						print 'ERRORR!!! '
+						#print 'ERRORR!!! '
 						print "Hi ha més d'un registre d'autoocupat sense data de baixa ¿??"
 						return False
 					elif recs.count() > 0: # TODO rise a real exeption
@@ -66,7 +66,8 @@ class AutoRecordName(admin.ModelAdmin):
 				icms = instance.human.ic_membership_set.filter(end_date=None)
 				if icms.count() > 0:
 					if icms.first().id == instance.id:
-						print 'Update! ...instance.save() '
+						#print 'Update! ...instance.save() '
+						pass
 					else:
 						print 'ERROR!! '
 						print 'Ja tenim registre alta: '+str(icms)
@@ -331,7 +332,6 @@ class SelfEmployedForm(forms.ModelForm):
 		if self.instance.id:
 			self.fields['ic_CESnum'].initial = self.instance.ic_membership.ic_CESnum
 			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances.all() | self.instance.rel_insurances.all()
-			pass
 
 class Public_SelfEmployedAdmin(AutoRecordName):
 	class Media:
@@ -748,9 +748,7 @@ class LearnSessionAdmin(AutoRecordName):
 			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
 			try:
 				nonmat = Nonmaterial.objects.get(id=nonmaterial_id)
-				print nonmat
 				if nonmat:
-					print nonmat.id
 					kwargs['queryset'] = Nonmaterial.objects.filter(id=nonmaterial_id)
 					kwargs['initial'] = nonmat
 			except:

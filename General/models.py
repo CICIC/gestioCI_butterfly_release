@@ -30,7 +30,6 @@ str_remove = 'treu'
 
 def erase_id_link(field, id):
 	out = '<a class="erase_id_on_box" name="'+str(field)+','+str(id)+'" href="javascript:;">'+str_remove+'</a>'
-	print out
 	return out
 
 #	 C O N C E P T S - (Conceptes...)
@@ -181,21 +180,21 @@ class Human(Being):	# Create own ID's
 			if recrels.count() == 0:
 				for acc in self.accountsCes.all():
 					newrec, created = rel_Human_Records.objects.get_or_create(human=self, record=acc, relation=rel_tit)
-					print '- new_REC acc_Ces: CREATED:'+str(created)+' :: '+str(newrec)
+					#print '- new_REC acc_Ces: CREATED:'+str(created)+' :: '+str(newrec)
 
 		if hasattr(self, 'accountsBank') and self.accountsBank.count() > 0:
 			recrels = rel_Human_Records.objects.filter(human=self, record__in=self.accountsBank.all())
 			if recrels.count() == 0:
 				for acc in self.accountsBank.all():
 					newrec, created = rel_Human_Records.objects.get_or_create(human=self, record=acc, relation=rel_tit)
-					print '- new_REC acc_Bank: CREATED:'+str(created)+' :: '+str(newrec)
+					#print '- new_REC acc_Bank: CREATED:'+str(created)+' :: '+str(newrec)
 
 		if hasattr(self, 'accountsCrypto') and self.accountsCrypto.count() > 0:
 			recrels = rel_Human_Records.objects.filter(human=self, record__in=self.accountsCrypto.all())
 			if recrels.count() == 0:
 				for acc in self.accountsCrypto.all():
 					newrec, created = rel_Human_Records.objects.get_or_create(human=self, record=acc, relation=rel_tit)
-					print '- new_REC acc_Crypto: CREATED:'+str(created)+' :: '+str(newrec)
+					#print '- new_REC acc_Crypto: CREATED:'+str(created)+' :: '+str(newrec)
 
 			#print 'recrels: '+str(recrels)
 			#print self.accountsCes.all()
@@ -836,7 +835,7 @@ class Material(Artwork): # Create own ID's
 
 	def _addresses_list(self):
 		out = ul_tag
-		print self.addresses.all()
+		#print self.addresses.all()
 		if self.addresses.all().count() > 0:
 			for add in self.addresses.all():
 				rel = add.materials.filter(material=self).first().relation
@@ -848,7 +847,7 @@ class Material(Artwork): # Create own ID's
 
 	def _jobs_list(self):
 		out = ul_tag
-		print self.jobs.all()
+		#print self.jobs.all()
 		if self.jobs.all().count() > 0:
 			for job in self.jobs.all():
 				rel = job.materials.filter(material=self).first().relation

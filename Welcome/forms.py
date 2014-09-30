@@ -82,9 +82,6 @@ class iC_Self_Employed_form(forms.ModelForm):
 
 			self.fields['fee_membership'].queryset = self.instance.rel_fees
 
-			for fe in Fee.objects.all():
-				print fe.record_type.clas
-
 			self.fields['quarter_membership'].queryset = self.instance.rel_fees
 			try:
 				current_main_address = rel_Human_Addresses.objects.get(human=self.instance.person, main_address = True)

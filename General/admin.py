@@ -1205,7 +1205,7 @@ class Type_RegionAdmin(MPTTModelAdmin):
 	list_display = ['name', 'clas', 'parent']
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'parent':
-			print Space_Type.objects.filter(clas='Region').first()
+			#print Space_Type.objects.filter(clas='Region').first()
 			typ = Space_Type.objects.filter(clas='Region').first()
 			kwargs['queryset'] = Space_Type.objects.filter(lft__gte=typ.lft, rght__lte=typ.rght)#, tree_id=typ.tree_id)
 		return super(Type_RegionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)

@@ -183,8 +183,6 @@ class create_membership_form(forms.ModelForm):
 		return self.cleaned_data.get("nickname")
 
 	def clean_name(self):
-		print "#Clean Name---------------------------------------------------------------"
-		print 'Pers_NAME? '+str(self.cleaned_data.get("name"))
 		#print 'NAME: '+str(self.cleaned_data['name'])
 		if self.cleaned_data.get("name") is None or self.cleaned_data.get("name") == '':
 			print 'Clean_Person_Name: A N O N Y M O U S ? '+str(self.cleaned_data)

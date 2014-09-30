@@ -30,7 +30,6 @@ SHA1_RE = re.compile('^[a-f0-9]{40}$')
 class RegistrationManager(models.Manager):
 
 	def activate_user(self, activation_key):
-		print activation_key
 		if SHA1_RE.search(activation_key):
 			try:
 				profile = self.get(activation_key=activation_key)
@@ -165,9 +164,7 @@ class RegistrationProfile(models.Model):
 
 		message = render_to_string('activation_email.html',
 								   ctx_dict)
-		
-		#self.user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-		print subject + message
+
 
 '''
 This is model form human_proxy ModelAdmin
