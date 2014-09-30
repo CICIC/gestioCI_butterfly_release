@@ -40,7 +40,12 @@ str_addfee = "crea Quota d'alta"
 str_valid = "valida"
 str_payed = "pagada"
 
-
+change_class = " class='changelink' "
+change_caption = __("Editar").encode("utf-8")
+add_class = " class='addlink' "
+add_caption = __("Afegeix").encode("utf-8")
+general_href = "<a href='/admin/General/"
+welcome_href = "<a href='/admin/Welcome/"
 
 '''
 @app.route('/update_fnk', method=["POST"])
@@ -619,7 +624,14 @@ class iC_Self_Employed(iC_Record):
 				return self.ic_membership.ic_project.nickname+' > '+self.ic_membership.__unicode__()
 		else:
 			return self.record_type.name+': '+self.ic_membership.__unicode__()
-
+	def _get_next(self):
+		if self.id:
+			id = str(self.id) + "/"
+		else:
+			id = ""
+		next_url = "?next=/admin/Welcome/%s/%s" %  (self.record_type.clas.lower(), id)
+		next_url = next_url.encode("utf-8")
+		return next_url
 	class Meta:
 		verbose_name = _(u"Alta Proj.Autoocupat")
 		verbose_name_plural = _(u"- Altes Proj. Autoocupats")
@@ -630,15 +642,11 @@ class iC_Self_Employed(iC_Record):
 			self.record_type = iC_Record_Type.objects.get(clas='iC_Self_Employed')
 
 	def _member_link(self):
-		if self.id:
-			id = str(self.id) + "/"
-		else:
-			id = ""
-		next_url = "?next=/admin/Welcome/%s/%s" %  (self.record_type.clas.lower(), id)
-		next_url = next_url.encode("utf-8")
+		next_url = self._get_next()
+
 		if hasattr(self, 'ic_membership') and self.ic_membership.id:
 			slug = self.ic_membership.record_type.clas.lower()
-			out = "<a href='/admin/Welcome/" + slug + '/' + str(self.ic_membership.id) + next_url + "'>" + a_edit + '</a>'
+			out = "<a " + change_class + " href='/admin/Welcome/" + slug + '/' + str(self.ic_membership.id) + next_url + "'>" + a_edit + '</a>'
 			return out
 		else:
 			return "Not present"
@@ -646,7 +654,6 @@ class iC_Self_Employed(iC_Record):
 	_member_link.short_description = ''
 
 	def _human_link(self):
-
 		if hasattr(self.ic_membership, 'human') and self.ic_membership.human.id:
 			#print 'HUMAN ID: '+str(self.ic_membership.human.id)
 			slug = 'human'
@@ -658,7 +665,7 @@ class iC_Self_Employed(iC_Record):
 				slug = 'person'
 			else:
 				return slug+'!!'
-			link = a_strG + slug + '/' + str(self.ic_membership.human.id) + a_str3 + a_edit + '</a>'
+			link = "<a href='/admin/Welcome/%s/%s/%s'>%s</a>" % (slug, self.ic_membership.human.id, self._get_next(), a_edit)
 			out = self.ic_membership.human.__unicode__()
 			return '<strong>'+out+'</strong> &nbsp; <- '+link
 		else:
@@ -686,7 +693,7 @@ class iC_Self_Employed(iC_Record):
 					id = str(self.id) + "/"
 				else:
 					id = ""
-				out += "<li> <a href='/admin/Welcome/fee/%s/?next=/admin/Welcome/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (str(fee.id), self.record_type.clas.lower(), id, fee.__unicode__(), str_valid, fee_val, str_payed, ico)
+				out += "<li> <a %s href='/admin/Welcome/fee/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (change_class, str(fee.id), self._get_next(), fee.__unicode__(), str_valid, fee_val, str_payed, ico)
 			#print out+'</ul>'
 			return out+'</ul>'
 		return str_none
@@ -709,35 +716,37 @@ class iC_Self_Employed(iC_Record):
 				id = str(self.id) + "/"
 			else:
 				id = ""
-			out += "<li> <a href='/admin/Welcome/fee/%s/?next=/admin/Welcome/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (str(fee.id), self.record_type.clas.lower(), id, fee.__unicode__(), str_valid, fee_val, str_payed, ico)
+			out += "<li> <a %s href='/admin/Welcome/fee/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (change_class, str(fee.id), self._get_next(), fee.__unicode__(), str_valid, fee_val, str_payed, ico)
 			return out+'</ul>'
 		return str_none
 	_join_fee.allow_tags = True
 	_join_fee.short_description = ''
 
-	def _akin_members(self):
+	def _render_person(self, rel):
+		out = ""
+		if hasattr(rel, 'person'):
+			c = "[%s]" % (rel.person.id_card) if rel.person.id_card else ""
+			m = "[%s]" % (rel.person.email) if rel.person.email else ""
+			tc = "[%s]" % (str(rel.person.telephone_cell)) if rel.person.telephone_cell else ""
+			tl = "[%s]" % (str(rel.person.telephone_land)) if rel.person.telephone_land else ""
+			fields = "%s %s %s %s" % ( c, m, tc, tl)
+			out = "<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>" % (change_class, str(rel.person.id), self._get_next(), rel.person.name, fields)
+		return out
 
+	def _akin_members(self):
 		from Welcome.models import iC_Akin_Membership
 		out = ""
 		if self.id:
 			current_memberships = iC_Akin_Membership.objects.filter(ic_membership=self.ic_membership)
-
 			if current_memberships.count() > 0:
 				for rel in current_memberships:
-					if hasattr(rel, 'person'):
-						fields = "[%s] [%s] [%s] [%s]" % ( 	rel.person.id_card,
-							rel.person.email,
-							str(rel.person.telephone_cell),
-							str(rel.person.telephone_land)
-						)
-						out += a_strG + 'person/'+ str(rel.person.id) + a_str3 + '<b>'+ rel.person.name + '</b></a> ' + fields + "<br>"
-					else:
-						#print '_REL_ID_CARDS: rel has not Person! '+str(rel)
-						pass
+					out += self._render_person(rel)
 		else:
 			out = _(u"(Cap)").encode("utf-8")
-		add_button = "/admin/Welcome/ic_akin_membership/add/?next=/admin/Welcome/" + self.record_type.clas.lower() + "/" + str(self.id) + "/"
-		add_button = "<a href='%s' > %s </a>" % (add_button.encode("utf-8"), _(u"Afegeix soci afí").encode("utf-8") )
+
+		add_button = "/admin/Welcome/ic_akin_membership/add/" + self._get_next()
+		add_button = "<a %s href='%s' > %s </a>" % (add_class, add_button.encode("utf-8"), _(u"Afegeix soci afí").encode("utf-8") )
+
 		return out.encode("utf-8") + "<br>" + add_button
 	_akin_members.allow_tags = True
 	_akin_members.short_description = _(u"Socis afins")
@@ -747,144 +756,111 @@ class iC_Self_Employed(iC_Record):
 		out = ''
 		if rels.count() > 0:
 			for rel in rels:
-				if hasattr(rel, 'person'):
-					fields = "[%s] [%s] [%s] [%s]" % ( 	rel.person.id_card,
-						rel.person.email,
-						str(rel.person.telephone_cell),
-						str(rel.person.telephone_land)
-					)
-					out += a_strG +'person/'+str(rel.person.id)+a_str3 + '<b>'+ rel.person.name + '</b></a> ' + fields + "<br>"
-
-				else:
-					#print '_REL_ID_CARDS: rel has not Person! '+str(rel)
-					pass
+				out += self._render_person(rel)
 			return out
 		else:
-			out = a_strG +'person/'+str(self.ic_membership.human.id)+a_str3+ str(self.ic_membership.human)+'</a> ['+str(self.ic_membership.human.person.id_card) + "]"
+			out = "<a %s href='/admin/General/person/%s/%s'>%s</a> [%s]" % (change_class, str(self.ic_membership.human.id), self._get_next(), str(self.ic_membership.human) , str(self.ic_membership.human.person.id_card))
 			return out
 	_rel_id_cards.allow_tags = True
 	_rel_id_cards.short_description = _(u"Socis de referència")
 
+	def _get_contract_link_change(self, contract, slug, label):
+		caption = contract.ic_document.name.encode("utf-8")
+		label = label.encode("utf-8") 
+		id = str(contract.id)
+		link = "<a %s href='/admin/Welcome/%s/%s/%s' > %s</a>" % (change_class, slug, id, self._get_next(), change_caption)
+		output = "<li> %s %s %s </li>" % ( label, caption, link)
+		return output
+
+	def _get_contract_link_add(self, adr, label, type):
+		if self.id:
+			if hasattr(self.ic_membership.human, 'project'):
+				persons = self.ic_membership.human.project.persons
+				if persons.count() > 0:
+					current_person = persons.first()
+			elif hasattr(self.ic_membership.human, 'person'):
+				current_person = self.ic_membership.human.person
+			add_button = ""
+			if current_person:
+				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, type))
+			add_button = "<a %s href='%s%s'> %s </a>" % (add_class, add_button,self._get_next(), add_caption )
+			output = "<li>" + label.encode("utf-8") + add_button + "</li>"
+			return output
+		else:
+			return ""
+
+	def _get_address_link_change(self, adr):
+		url = '/admin/General/address/%s/%s' % (str(adr.id), self._get_next() )
+		link = "<a %s href='%s'>%s</a>"  % (change_class, url, change_caption)
+		return link.encode("utf-8")
+
+	def _get_address_link_add(self, type, label):
+		id = self._get_current_human_id()
+		add_button = reverse('Welcome:self_employed_save_item', args=( id, 0, self.id, type))
+		add_button = "<a %s href='%s%s'> %s </a>" % (add_class, add_button.encode("utf-8"), self._get_next(), label.encode("utf-8") )
+		return add_button
+
+	def _render_address_field(self, label, field):
+		try:
+			return "<li>%s: %s </li>" % (label.encode("utf-8"), field.encode("utf-8"))
+		except:
+			return "<li>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
+
+	def _render_address_foreign(self, adr, slug, foreign, label, type):
+		if foreign.count() > 0:
+			output = self._get_contract_link_change( foreign[0], slug, label )
+		else:
+			output = self._get_contract_link_add( adr, label, type)
+		return output
+
 	def _render_address(self, adr):
 
-		if self.id:
-			id = str(self.id) + "/"
-		else:
-			id = ""
-		next_url = "?next=/admin/Welcome/%s/%s" %  (self.record_type.clas.lower(), id)
-		next_url = next_url.encode("utf-8")
-		a_strW = "<a href='/admin/Welcome/"
-		a_strG = "<a href='/admin/General/"
-
 		output = "<br><ul>"
-		output += "<li>" + _(u"Adreça: ").encode("utf-8") + adr.p_address.encode("utf-8") + "</li>"
-		output += "<li>" + _(u"Població: ").encode("utf-8") + adr.town.encode("utf-8")  + "</li>"
-		try:
-			output += "<li>" + _(u"CP: ").encode("utf-8") + adr.postalcode.encode("utf-8") + "</li>"
-		except:
-			output += "<li>" + _(u"CP: ").encode("utf-8") + _(u"(Cap)").encode("utf-8") + "</li>"
 
-		try:
-			output += "<li>" + _(u"Comarca: ").encode("utf-8") + adr.region.name.encode("utf-8") + "</li>"
-		except:
-			output += "<li>" + _(u"Comarca: (cap) ").encode("utf-8")  + "</li>"
+		output += self._render_address_field( _(u"Adreça"), adr.p_address )
+		output += self._render_address_field( _(u"Població"), adr.town )
+		output += self._render_address_field( _(u"CP"), adr.postalcode )
+		output += self._render_address_field( _(u"Comarca"), adr.region.name if adr.region else adr.region )
+		output += self._render_address_field( _(u"Ubicació específica"), str(adr))
 
-		output += "<li>" + _(u"Ubicació específica: ").encode("utf-8") + str(adr) + "</li>"
+		foreign = self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas= "contract_use")
+		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió d'ús: "), 0)
 
-		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_use").count()>0:
-			contract = self.rel_address_contracts.get(address=adr, ic_document__doc_type__clas="contract_use")
-			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + next_url + "' >" + _("Editar").encode("utf-8") + "</a>"
-			output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + str(contract.ic_document) + link + "</li>"
-		else:
-			if self.id:
-				if hasattr(self.ic_membership.human, 'project'):
-					persons = self.ic_membership.human.project.persons
-					if persons.count() > 0:
-						current_person = persons.first()
-				elif hasattr(self.ic_membership.human, 'person'):
-					current_person = self.ic_membership.human.person
-				add_button = ""
-				if current_person:
-					add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 0))
-				add_button = "<a  href='%s%s' > %s </a>" % (add_button, next_url, _("Afegeix").encode("utf-8") )
-				output += "<li>" + _(u"Cessió d'ús: ").encode("utf-8") + add_button + "</li>"
-			else:
-				pass
-		if self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas="contract_hire").count()>0:
-			contract = self.rel_address_contracts.get(address=adr, ic_document__doc_type__clas="contract_hire")
-			link = " " + a_strW + "ic_address_contract/" + str(contract.id) + next_url + "'>" + _("Editar").encode("utf-8") + "</a>"
-			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + contract.ic_document.name.encode("utf-8") + link.encode("utf-8") + "</li>"
-		else:
-			if hasattr(self.ic_membership.human, 'project'):
-				persons = self.ic_membership.human.project.persons
-				if persons.count() > 0:
-					current_person = persons.first()
-			elif hasattr(self.ic_membership.human, 'person'):
-				current_person = self.ic_membership.human.person
-			if current_person:
-				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 1))
-			add_button = "<a href='%s%s'> %s </a>" % (add_button, next_url,  _("Afegeix").encode("utf-8") )
-			output += "<li>" + _(u"Contracte lloguer: ").encode("utf-8") + add_button + "</li>"
+		foreign = self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas= "contract_hire")
+		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió de lloguer: "), 1)
 
-		if self.rel_licences.filter(rel_address=adr).count()>0:
-			contract = self.rel_licences.get(rel_address=adr)
-			link = " " + a_strW + "ic_licence/" + str(contract.id) + next_url + "'>" + _("Editar").encode("utf-8") + "</a>"
-			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + contract.ic_document.name.encode("utf-8") + link.encode("utf-8") + "</li>"
-		else:
-			if hasattr(self.ic_membership.human, 'project'):
-				persons = self.ic_membership.human.project.persons
-				if persons.count() > 0:
-					current_person = persons.first()
-			elif hasattr(self.ic_membership.human, 'person'):
-				current_person = self.ic_membership.human.person
-			if current_person:
-				add_button = reverse('Welcome:self_employed_save_item', args=(current_person.id, adr.id, self.id, 2))
-			add_button = "<a href='%s%s'> %s </a>" % (add_button, next_url,  _("Afegeix").encode("utf-8") )
-			output += "<li>" + _(u"Llicència activitat: ").encode("utf-8") + add_button.encode("utf-8") + "</li>"
-		link = a_strG + "address/" + str(adr.id) + next_url + "'>" + _(u"Editar").encode("utf-8") + "</a>"
-		output = output + "<li>" + link.encode("utf-8") + "</li>"
+		foreign =  self.rel_licences.filter(rel_address=adr)
+		output += self._render_address_foreign( adr, 'ic_licence', foreign, _(u"Llicència d'activitat: "), 2)
+
+		output += "<li>%s</li>" % ( self._get_address_link_change(adr) )
+
 		output += "</ul>"
 		return output
 
-	def _main_address_render(self):
-
+	def _get_current_human_id(self):
 		if self.id:
-			id = str(self.id) + "/"
+			current_human = 0
+			if hasattr(self.ic_membership.human, 'project'):
+				current_human = self.ic_membership.human.project.id
+			elif hasattr(self.ic_membership.human, 'person'):
+				current_human = self.ic_membership.human.person.id
+			return current_human
 		else:
-			id = ""
-		next_url = "?next=/admin/Welcome/%s/%s" %  (self.record_type.clas.lower(), id)
-		next_url = next_url.encode("utf-8")
+			return 0
 
+	def _main_address_render(self):
 		try:
 			adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
 		except:
 			adr = None
 		output = ""
 		if adr:
-			output = self._render_address(adr)
-
-		if hasattr(self.ic_membership.human, 'project'):
-			current_human = self.ic_membership.human.project
-		elif hasattr(self.ic_membership.human, 'person'):
-			current_human = self.ic_membership.human.person
-		if adr:
-			return output
-		else:
-			add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 3))
-			add_button = "<a href='%s%s'> %s </a>" % (add_button.encode("utf-8"), next_url, _(u"Afegeix adreça principal").encode("utf-8") )
-			return output + add_button
-
-
+			return self._render_address(adr)
+		return self._get_address_link_add( 3, _(u"Afegeix adreça principal") )
 	_main_address_render.allow_tags = True
 	_main_address_render.short_description = _(u"Adreça principal")
 
 	def _other_address_render(self):
-		if self.id:
-			id = str(self.id) + "/"
-		else:
-			id = ""
-		next_url = "?next=/admin/Welcome/%s/%s" %  (self.record_type.clas.lower(), id)
-		next_url = next_url.encode("utf-8")
 
 		addresses = self.ic_membership.human.rel_human_addresses_set.filter(main_address=False)
 		output = ""
@@ -893,18 +869,11 @@ class iC_Self_Employed(iC_Record):
 				output += self._render_address(adr.address)
 			except Exception as e:
 				output += '%s (%s)' % (e.message, type(e))
-		if self.id:
-			if hasattr(self.ic_membership.human, 'project'):
-				current_human = self.ic_membership.human.project
-			elif hasattr(self.ic_membership.human, 'person'):
-				current_human = self.ic_membership.human.person
-			else:
-				current_human = self.ic_membership.human
-			add_button = reverse('Welcome:self_employed_save_item', args=(current_human.id, 0, self.id, 4))
-			add_button = "<a href='%s%s'>%s </a>" % (add_button.encode("utf-8"), next_url, _(u"Afegeix altre adreça").encode("utf-8") )
-			output = output + add_button
 
-		return output
+		if output == "":
+			return self._get_address_link_add( 4, _(u"Afegeix altre adreça") )
+		else:
+			return output
 	_other_address_render.allow_tags = True
 	_other_address_render.short_description = _(u"Altres adreces")
 
@@ -917,7 +886,7 @@ class iC_Self_Employed(iC_Record):
 					ico = ico_yes
 				else:
 					ico = ico_no
-				out += '<li>'+a_strW +'ic_address_contract/'+str(adr.id)+a_str3 + '<b>'+adr.__unicode__() +'</b></a>: '+adr.doc_type.name+' &nbsp; '+ico+'</li>'
+				out += "<li><a %s href='admin/Welcome/ic_address_contract/%s/%s'>%s: %s %s</a></li>" % (change_class, str(adr.id), self._get_next(), adr.__unicode__(), adr.doc_type.name, ico)
 			return out + '</ul>'
 		return str_none
 	_rel_address_contract.allow_tags = True
@@ -937,7 +906,7 @@ class iC_Self_Employed(iC_Record):
 					ico = ico_yes
 				else:
 					ico = ico_no
-				out += '<li>'+a_strW +'ic_licence/'+str(lic.id)+a_str3 + '<b>'+lic.__unicode__() +'</b></a>: '+job+' '+adr+' &nbsp; '+ico+'</li>'
+				out += "<li><a %s href='/admin/Welcome/ic_insurance/%s/%s'> <b>%s</b> </a>: %s %s %s</li>" % (change_class, str(lic.id), self._get_next(), lic.ic_document.doc_type.name, job, adr, ico )
 			return out + '</ul>'
 		return str_none
 	_rel_licences.allow_tags = True
@@ -957,7 +926,7 @@ class iC_Self_Employed(iC_Record):
 					ico = ico_yes
 				else:
 					ico = ico_no
-				out += '<li>'+a_strW +'ic_insurance/'+str(ins.id)+a_str3 + '<b>'+ins.ic_document.__unicode__() +'</b></a>: '+job+' '+adr+' &nbsp; '+ico+'</li>'
+				out += "<li><a %s href='/admin/Welcome/ic_insurance/%s/%s'> <b>%s</b> </a>: %s %s %s</li>" % (change_class, str(ins.id), self._get_next(), ins.ic_document.doc_type.name, job, adr, ico )
 			return out + '</ul>'
 		return str_none
 	_rel_insurances.allow_tags = True
@@ -998,13 +967,13 @@ class iC_Self_Employed(iC_Record):
 		elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
 			address = hum.rel_human_addresses_set.filter(main_address=True).first().address
 			if address:
-				link = a_strG + "address/" + address.id + "'>" + _("Editar").encode("utf-8") + "</a>"
+				link = a_strG + "address/" + address.id + "'>" + change_caption + "</a>"
 				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
 			else:
 				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
 		else:
 			adr = hum.rel_human_addresses_set.filter(main_address=True).first().address
-			link = a_strG + "address/" + str(adr.id) + "'>" + _("Editar").encode("utf-8") + "</a>"
+			link = a_strG + "address/" + str(adr.id) + "'>" + change_caption + "</a>"
 			if adr.postalcode is None or adr.postalcode == '':
 				out += "<li>A l'adreça principal li falta el Codi Postal. " + link + "</li>"
 			if adr.region is None or adr.region == '':
