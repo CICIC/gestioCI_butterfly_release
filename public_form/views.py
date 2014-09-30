@@ -1034,15 +1034,12 @@ def save_fees(request, current_person, current_project, current_human, ic):
 	#expected field clas="((45_eco) advanced_fee)"
 	if request.POST.get("project_subtype", -1) == "1":
 		fee_type = iC_Record_Type.objects.get(clas__contains='individual')
-		fee_type_quarter = iC_Record_Type.objects.get(clas__contains='advanced_fee')
-		amount_advanced_tax = fee_type_quarter.clas.split("_")[0].replace("((","")
 		messages.info(request, "Busco cuota 1")
 	elif request.POST.get("project_subtype", -1) == "2":
 		fee_type = iC_Record_Type.objects.get(clas__contains='collective')
-		fee_type_quarter = iC_Record_Type.objects.get(clas__contains='advanced_fee')
-		amount_advanced_tax = fee_type_quarter.clas.split("_")[0].replace("((","")
 		messages.info(request, "Busco cuota 2")
-
+	fee_type_quarter = iC_Record_Type.objects.get(clas__contains='advanced_fee')
+	amount_advanced_tax = fee_type_quarter.clas.split("_")[0].replace("((","")
 	if current_person:
 		human = current_person
 	elif current_project:
@@ -1052,13 +1049,13 @@ def save_fees(request, current_person, current_project, current_human, ic):
 
 	if not current_project:
 		current_project = current_human
-
+	import pdb; pdb.set_trace()
 	if fee_type:
 		current_fee = Fee(
 			human = human,
 			project = current_project,
 			record_type = fee_type,
-			amount = fee_type.clas.split("_")[0].replace("((", ""),
+			amount = fee_type.clas.split("_")[0].replace("(", ""),
 			unit = Unit.objects.get(name="Euro"),
 			issue_date = datetime.now(),
 			deadline_date = datetime.now() + timedelta(days=5) ,
