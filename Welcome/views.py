@@ -203,7 +203,8 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		adr.postalcode = _("<00000>")
 		related_address = rel_Human_Addresses(human=current_project, address=adr, main_address = True)
 		related_address.save()
-		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/?_popup=1")
+		next_url = request.GET.get("next","")
+		return HttpResponseRedirect("/admin/General/address/" + str(adr.id)  + "/?next=" + next_url)
 	elif current_project and type=="4":
 		from General.models import Address, rel_Human_Addresses
 		adr = Address()
@@ -213,7 +214,8 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		adr.postalcode = _("<00000>")
 		related_address = rel_Human_Addresses(human=current_project, address=adr)
 		related_address.save()
-		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) +  "/?_popup=1")
+		next_url = request.GET.get("next","")
+		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/?next=" + next_url)
 	callback_url = "/admin/Welcome/" + callback_clas + "/" + str(id)  + "/"
 	return HttpResponseRedirect(callback_url)
 
