@@ -155,6 +155,7 @@ class AutoRecordName(admin.ModelAdmin):
 
 class Public_AkinMembershipAdmin(AutoRecordName):
 	model = iC_Akin_Membership
+	search_fields = ('person__name', 'person__email', 'person__surnames')
 	raw_id_fields = ('person', 'ic_membership',)
 	readonly_fields = ('_has_id_card', '_person_link', '_memberships')
 	fieldsets = (
