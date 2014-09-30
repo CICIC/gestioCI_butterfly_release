@@ -153,18 +153,17 @@ from public_form.admin import type_human_filter, type_session_filter
 class human_proxy_modeladmin(admin.ModelAdmin):
 	model = human_proxy
 	form = human_proxy_form
-	list_per_page = 8
+	list_per_page = 15
 	list_display = ('edit_link', "name", "email", "telephone_land", "telephone_cell", "website")
 	list_display_links = ('edit_link', )
 	change_list_template = 'public_form_self.html'
 	change_form_template = 'public_form_change_self.html'
-	search_fields = ('name',)
+	search_fields = ('name', 'email', 'telephone_cell')
 	list_filter = (type_session_filter, type_human_filter, type_session_filter_socialcoin, type_human_filter_coin)
 	def get_actions(self, request):
 		actions = super(human_proxy_modeladmin, self).get_actions(request)
 		del actions['delete_selected']
 		return actions
-
 	def edit_link(self, obj):
 		if obj is None:
 			return "(None)"
@@ -224,7 +223,6 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 			return mark_safe("<a href='%s'><img src='%s' class='user_grid'></a> | <a %s href='%s'>%s</a>" % (img_link, img_url, _class, url, message))
 	make_mentor_link.allow_tags = True
 	make_mentor_link.short_description = _(u"Mentor")
-
 	def save_model(self, request, obj, form, change):
 		current_project = obj
 
