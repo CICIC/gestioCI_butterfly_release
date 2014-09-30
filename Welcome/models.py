@@ -58,7 +58,7 @@ def erase_id_link(field, id):
 	return out
 
 def show_thumbnail(img):
-	print 'IMG: '+str(img)
+	#print 'IMG: '+str(img)
 	#print 'HEIGHT: '+str(img.height)
 	#print 'WIDTH: '+str(img.width)
 	#for im in img:
@@ -204,29 +204,30 @@ class Fee(iC_Record):
 							pass
 						else:
 							try:
-								print '_AUTO_AMOUNT: not equal'
+								#print '_AUTO_AMOUNT: not equal'
 								eqi2 = UnitRatio.objects.filter(in_unit=self.unit)
 								#print '_AUTO_AMOUNT: eqi2: '+str(eqi2)
 								#print '_AUTO_AMOUNT: eqi2.first '+str(eqi2.first().out_unit.name)
 								eqi3 = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=eqi2.first().out_unit)
 								#print '_AUTO_AMOUNT: eqi3: '+str(eqi3)
 								rate2 = eqi3.first().rate
-								print '_AUTO_AMOUNT: rate2: '+str(rate2)
+								#print '_AUTO_AMOUNT: rate2: '+str(rate2)
 								rate = (1/eqi2.first().rate)*rate2
 							except:
 								return None
 					elif eqi.count() == 1:
 						rate = eqi.first().rate
 					else:
-						print '_AUTO_AMOUNT: eqi ??: '+str(eqi)
+						pass
+						#print '_AUTO_AMOUNT: eqi ??: '+str(eqi)
 					val = float(arr[0])/float(rate)
 					setattr(self, 'amount', val)
 					#print '_AUTO_AMOUNT: tudo bem, val='+str(val)+' rate='+str(rate)
 					return True # if bool breaks the init, put 'return' alone...
 				else:
-					print '_AUTO_AMOUNT: uni.count != 1 !!? '+str(uni)
+					#print '_AUTO_AMOUNT: uni.count != 1 !!? '+str(uni)
 					return None
-			print '_AUTO_AMOUNT: arr[0] not digit! '+str(arr[0])
+			#print '_AUTO_AMOUNT: arr[0] not digit! '+str(arr[0])
 			return None
 		return None
 	_auto_amount.boolean = True
@@ -450,15 +451,14 @@ class iC_Membership(iC_Record):
 				if hasattr(self, 'record_type') and self.record_type is not None:
 					clas = self.record_type.clas
 					#print 'CLAS: '+clas
-
 					if hasattr(self.human, 'person') and self.human.person is not None:
 						typ = iC_Record_Type.objects.get(clas__contains='individual')
 					elif hasattr(self.human, 'project') and self.human.project is not None:
-						print 'PROJ_TYPE: '+str(self.human.project.project_type.parent.clas)
+						#print 'PROJ_TYPE: '+str(self.human.project.project_type.parent.clas)
 						if self.human.project.project_type.parent.clas == 'online':
 							typ = iC_Record_Type.objects.get(clas__contains='collective')
 						else:
-							print 'Proyecto de un tipo que no esta en la rama clas=online, no generamos quota automàtica...'
+							#print 'Proyecto de un tipo que no esta en la rama clas=online, no generamos quota automàtica...'
 							return None
 					eur = Unit.objects.get(code='€')
 					uid = typ.id
@@ -467,17 +467,19 @@ class iC_Membership(iC_Record):
 					#print Fee
 					amo = str(arr[0])
 					fees = Fee.objects.filter(record_type=typ, human=self.human, unit=eur, amount=amo)
-					print 'TYP: '+str(typ)+' HUMAN:'+str(self.human)+' UNIT:'+str(eur)+' AMOUN:'+str(amo)
+					#print 'TYP: '+str(typ)+' HUMAN:'+str(self.human)+' UNIT:'+str(eur)+' AMOUN:'+str(amo)
 					#print Fee.objects.get_or_create
 					newfee, created = Fee.objects.get_or_create(record_type=typ, human=self.human, unit=eur, amount=amo)
 					if created:
 						self.join_fee = newfee
-						print 'CREATED JOIN_FEE: '+str(self.join_fee)
+						#print 'CREATED JOIN_FEE: '+str(self.join_fee)
 						self.save()
 					else:
-						print "ERROR: CAN'T CREATE AUTOMATIC JOIN_FEE! human:"+str(self.human)
+						#print "ERROR: CAN'T CREATE AUTOMATIC JOIN_FEE! human:"+str(self.human)
+						pass
 		except Exception as e:
-			print '%s (%s)' % (e.message, type(e))
+			#print '%s (%s)' % (e.message, type(e))
+			pass
 
 class iC_Person_Membership(iC_Membership):
 	ic_membership = models.OneToOneField('iC_Membership', primary_key=True, parent_link=True)
@@ -670,7 +672,7 @@ class iC_Self_Employed(iC_Record):
 		#print 'N fees: '+str(fees.count())
 		if fees.count() > 0:
 			for fee in fees:
-				print fee
+				#print fee
 				ico = ico_no
 				if fee.payed:
 					ico = ico_yes
@@ -730,7 +732,8 @@ class iC_Self_Employed(iC_Record):
 						)
 						out += a_strG + 'person/'+ str(rel.person.id) + a_str3 + '<b>'+ rel.person.name + '</b></a> ' + fields + "<br>"
 					else:
-						print '_REL_ID_CARDS: rel has not Person! '+str(rel)
+						#print '_REL_ID_CARDS: rel has not Person! '+str(rel)
+						pass
 		else:
 			out = _(u"(Cap)").encode("utf-8")
 		add_button = "/admin/Welcome/ic_akin_membership/add/?next=/admin/Welcome/" + self.record_type.clas.lower() + "/" + str(self.id) + "/"
@@ -753,7 +756,8 @@ class iC_Self_Employed(iC_Record):
 					out += a_strG +'person/'+str(rel.person.id)+a_str3 + '<b>'+ rel.person.name + '</b></a> ' + fields + "<br>"
 
 				else:
-					print '_REL_ID_CARDS: rel has not Person! '+str(rel)
+					#print '_REL_ID_CARDS: rel has not Person! '+str(rel)
+					pass
 			return out
 		else:
 			out = a_strG +'person/'+str(self.ic_membership.human.id)+a_str3+ str(self.ic_membership.human)+'</a> ['+str(self.ic_membership.human.person.id_card) + "]"
@@ -1183,7 +1187,7 @@ class iC_Document(iC_Record):
 
 	def _ic_membership(self):
 		if hasattr(self, 'membership') and self.membership:
-			print 'ADDRESS_CONTRACT te MEMBERSHIP ??!! '
+			#print 'ADDRESS_CONTRACT te MEMBERSHIP ??!! '
 			return self.membership.first()
 		elif hasattr(self, 'selfemployed') and hasattr(self.selfemployed.first(), 'ic_membership'):
 			return self.selfemployed.first().ic_membership
@@ -1427,12 +1431,13 @@ from django.dispatch import receiver
 @receiver(post_save, sender=Fee)
 def my_callback(sender, **kwargs):
 
-	print("Post Save!")
+	#print("Post Save!")
 	if kwargs['instance'].record_type:
 		clas = kwargs['instance'].record_type.clas
 		if 'individual' in clas:
-			print 'INDIVDUAL'
-			print sender
+			#print 'INDIVDUAL'
+			#print sender
+			pass
 
-		print kwargs['instance'].record_type.clas
-		print kwargs['instance'].id
+		#print kwargs['instance'].record_type.clas
+		#print kwargs['instance'].id
