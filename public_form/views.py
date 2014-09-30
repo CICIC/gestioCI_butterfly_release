@@ -1058,7 +1058,7 @@ def save_fees(request, current_person, current_project, current_human, ic):
 			human = human,
 			project = current_project,
 			record_type = fee_type,
-			amount = fee_type.clas.split("-")[0].replace("(", ""),
+			amount = fee_type.clas.split("_")[0].replace("((", ""),
 			unit = Unit.objects.get(name="Euro"),
 			issue_date = datetime.now(),
 			deadline_date = datetime.now() + timedelta(days=5) ,
