@@ -66,7 +66,7 @@ class Type(Concept):	# Create own ID's (TREE)
 #	 B E I N G S - (Éssers, Entitats, Projectes...)
 
 class Being(models.Model):	# Abstract
-	name = models.CharField(verbose_name=_(u"Nom"), max_length=200, help_text=_(u"El nom de la Entitat"))
+	name = models.CharField(verbose_name=_(u"Nom"), blank=False, null=False, max_length=200, help_text=_(u"El nom de la Entitat"))
 	#being_type = TreeForeignKey('Being_Type', blank=True, null=True, verbose_name=_(u"Tipus d'entitat"))
 	birth_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de naixement"), help_text=_(u"El dia que va començar a existir"))
 	death_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'acabament"), help_text=_(u"El dia que va deixar d'existir"))
@@ -86,8 +86,8 @@ class Being_Type(Type):
 
 class Human(Being):	# Create own ID's
 	nickname = models.CharField(max_length=50, blank=True, verbose_name=_(u"Sobrenom"), help_text=_(u"El sobrenom (nickname) de l'entitat Humana"))
-	email = models.EmailField(max_length=100, blank=True, verbose_name=_(u"Email"), help_text=_(u"L'adreça d'email principal de l'entitat humana"))
-	telephone_cell = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telèfon mòbil"), help_text=_(u"El telèfon principal de l'entitat Humana"))
+	email = models.EmailField(max_length=100, blank=False, null=False, verbose_name=_(u"Email"), help_text=_(u"L'adreça d'email principal de l'entitat humana"))
+	telephone_cell = models.CharField(max_length=20, blank=False, null=False, verbose_name=_(u"Telèfon mòbil"), help_text=_(u"El telèfon principal de l'entitat Humana"))
 	telephone_land = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telèfon fix"))
 	website = models.CharField(max_length=100, blank=True, verbose_name=_(u"Web"), help_text=_(u"L'adreça web principal de l'entitat humana"))
 	description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció entitat"))
