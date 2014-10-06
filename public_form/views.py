@@ -1045,7 +1045,7 @@ def save_fees(request, current_person, current_project, current_human, ic):
 
 	if not current_project:
 		current_project = current_human
-	import pdb; pdb.set_trace()
+
 	if fee_type:
 		current_fee = Fee(
 			human = human,
