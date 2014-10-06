@@ -89,7 +89,7 @@
 									{% if not dont_memberships %}
 									<tr><td colspan="2"><label>
 										{% if current_coin_session %}
-											{{ current_coin_session}} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_coin_session|get_id}}"> {% trans "Editar" %}</a>
+											{{ current_coin_session}} <a href="/admin/Welcome/learn_session/{{current_coin_session|get_id}}/?next=/admin/public_form/human_proxy/?coin_session_id={{current_coin_session|get_id}}"> {% trans "Editar" %}</a>
 										{% else %}
 											{% trans "Cap sessió de moneda social seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 										{% endif %}
