@@ -1040,8 +1040,7 @@ class iC_Self_Employed(iC_Record):
 		current_project = self.ic_membership.ic_project
 		try:
 			current_registration = RegistrationProfile.objects.get(person=current_person, project = current_project, record_type = rt_id)
-			from Welcome.admin import global_PASSWORD
-			return  _(" Usuari: ").encode("utf-8") + current_registration.user.username + " " + _(" Contrasenya:").encode("utf-8") + current_registration.user.username + global_PASSWORD
+			return  _(" Usuari: ").encode("utf-8") + current_registration.user.username + " " + _(" Contrasenya:").encode("utf-8") + _(u" L'usuari l'ha de canviar").encode("utf-8")
 		except ObjectDoesNotExist:
 			return _("Encara no s'ha creat.")
 	_user_member.short_description = "Usuari per entrar al entorno virtual"
