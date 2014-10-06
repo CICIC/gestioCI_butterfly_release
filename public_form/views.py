@@ -536,10 +536,6 @@ def entry_page_to_gestioci(request, user_id = None):
 	else:
 		moment_img = "welcome_flow.png"
 
-		print "wwweeeeeeeeeeeeeeeeeeeeeeeeee"
-		print membership
-	#END STATE ROAD MAP PICTURE
-	
 	#LOG IN PANEL
 	from django.contrib.auth.forms import AuthenticationForm
 	from Cooper.admin import UserAdminAuthenticationForm
