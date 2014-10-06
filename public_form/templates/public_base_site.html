@@ -29,7 +29,7 @@
 											{% for person in current_project_referents %}
 											<li><img class="user_grid" src="{% static 'user_images/Person_user.png' %}"> {{person.person}}
 											<a onclick='return showRelatedObjectLookupPopup(this);' 
-											href="/admin/General/person/{{person.person|get_id}}/"> - {% trans " Editar" %}</a>
+											href="/admin/General/person/{{person.person|get_id}}"> - {% trans " Editar" %}</a>
 											</li>
 											{% endfor %}
 										</ul>
@@ -37,7 +37,7 @@
 										{% for project in current_human|get_projects %}
 											<li><img class="user_grid" src="{% static 'user_images/Project_user.png' %}"> {{project.human}}
 											<a onclick='return showRelatedObjectLookupPopup(this);' 
-											href="/admin/General/project/{{project.human|get_id}}/"> - {% trans " Editard" %}</a>
+											href="/admin/General/project/{{project.human|get_id}}"> - {% trans " Editard" %}</a>
 											</li>
 										{% endfor %}
 										</ul>
@@ -46,36 +46,34 @@
 										{% if current_memberships_person and not current_memberships%}
 											<ul>{% for m in current_memberships_person %}
 												<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
-												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/"> - {% trans " Editar" %}</a></li>
+												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans " Editar" %}</a></li>
 												{% endfor %}
 											</ul>
 										{% endif %}
 										{% if current_memberships %}
 											<ul>{% for m in current_memberships %}
 												<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
-												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/"> - {% trans " Editar" %}</a></li>
+												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans " Editar" %}</a></li>
 												{% endfor %}
 											</ul>
 										{% endif %}
 										{% if current_memberships_self %}
 											<ul>{% for m in current_memberships_self %}
 													<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
-													href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/"> - {% trans " Editar" %}</a></li>
+													href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans " Editar" %}</a></li>
 												{% endfor %}
 											</ul>
 										{% endif %}
 										{% if current_memberships_stallholder %}
 											<ul>{% for m in current_memberships_stallholder %}
 													<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
-													href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}/"> - {% trans " Editar" %}</a></li>
+													href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans " Editar" %}</a></li>
 												{% endfor %}</ul>
 										{% endif %}
 									</td></tr>
 									<tr><td colspan="2"><label>
 										{% if current_session %}
-											{{ current_session}} <a 
-											onclick='return showRelatedObjectLookupPopup(this);'
-											href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}/"> {% trans "Editar" %}</a>
+											{{ current_session}} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
 										{% else %}
 											{% trans "Cap sessió seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 										{% endif %}
@@ -91,9 +89,7 @@
 									{% if not dont_memberships %}
 									<tr><td colspan="2"><label>
 										{% if current_coin_session %}
-											{{ current_coin_session}} <a 
-											onclick='return showRelatedObjectLookupPopup(this);'
-											href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_coin_session|get_id}}/"> {% trans "Editar" %}</a>
+											{{ current_coin_session}} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_coin_session|get_id}}"> {% trans "Editar" %}</a>
 										{% else %}
 											{% trans "Cap sessió de moneda social seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 										{% endif %}
