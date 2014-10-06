@@ -222,7 +222,7 @@ THOUSAND_SEPARATOR = '.'
 TIME_ZONE = 'Europe/Madrid'
 USE_L10N = True
 USE_I18N = True
-USE_TZ = True
+USE_TZ = False
 DEFAULT_CHARSET = "UTF-8"
 
 
