@@ -13,7 +13,7 @@ class human_proxy_form(forms.ModelForm):
 							max_length=100,
 							widget=forms.TextInput(),
 							label=_("Nom projecte"),
-							required=False,
+							required=True,
 							error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
 
 	email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Correu-e projecte"))
