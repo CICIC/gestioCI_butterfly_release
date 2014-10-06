@@ -44,11 +44,14 @@ class RegistrationManager(models.Manager):
 				return user
 		return False
 
-	def create_active_user(self, username, email, password,
+	def create_active_user(self, username, email, 
 							 site, person, project, record_type):
 
-		new_user = User.objects.create_user(username, email, password)
+		new_user = User.objects.create_user(username, email, "blank")
 		new_user.is_active = False
+		new_user.save()
+		password = User.objects.make_random_password()
+		new_user.set_password(password)
 		new_user.save()
 		registration_profile = self.create_profile(new_user, person, project, record_type , True)
 		return new_user

@@ -20,7 +20,7 @@ from django.forms.formsets import formset_factory
 
 from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
 
-global_PASSWORD = "54@Ww"
+
 #class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
 class AutoRecordName(admin.ModelAdmin):
 	class Media:
@@ -402,7 +402,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					user = RegistrationProfile.objects.create_active_user(
 								obj.ic_membership.ic_CESnum,
 								current_person.email,
-								obj.ic_membership.ic_CESnum + global_PASSWORD,
 								admin,
 								current_person,
 								current_project,
