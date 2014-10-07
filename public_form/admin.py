@@ -170,14 +170,14 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 		else:
 			url = "/admin/public_form/human_proxy/?human_id=%s" % (obj.id)
 			message = obj.name 
-			_class = "class='no_assistant'"
+			_class = "" #"class='no_assistant'"
 			img_link = "/admin/General/human/%s" % (obj.id)
 			img_link_next = "next=/admin/public_form/human_proxy"
 			img_url = "/static/user_images/Anon_user.png"
 			if obj.assist_sessions:
 				for session in obj.assist_sessions.all():
 					url = "/admin/public_form/human_proxy/?human_id=%s" % (obj.id)
-					_class = "class='assistant'"
+					_class = "" #"class='assistant'"
 			try:
 				is_project = Project.objects.get(id=obj.id)
 				img_url = "/static/user_images/Project_user.png"
