@@ -756,9 +756,9 @@ class Public_AddressAdmin(Css_Mixin):
 		js = ("general.js",)
 
 	readonly_fields = ('_main_addr_of', '_jobs_list',)
-	list_display = ['name', 'address_type', 'p_address', 'town', 'postalcode', 'region', '_main_addr_of',]
+	list_display = ['name', 'address_type', 'p_address', 'town', 'postalcode', 'region', '_main_addr_of']
 	list_filter = ('address_type', 'region',)
-	search_fields = ('name', 'p_address', 'town', 'postalcode', 'region')
+	search_fields = ('name', 'p_address', 'town', 'postalcode', 'region__name')
 	raw_id_fields = ('jobs',)
 	fieldsets = (
 		(None, {
