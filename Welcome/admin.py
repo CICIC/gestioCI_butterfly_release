@@ -354,8 +354,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		(_(u"Fase 1: Acollida i Avaluació"), {
 			#'classes': ('collapse',),
 			'fields': (
-				('ic_membership', '_member_link', '_min_human_data'),
-				('organic',),
+				('ic_membership', '_member_link', ),
 				('_has_assisted_welcome',)
 			)
 		}),
@@ -363,6 +362,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			'classes': ('welcome',),
 			'fields': (
 					('_rel_id_cards',),
+					('_min_human_data',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
 					('_akin_members'),
@@ -486,8 +486,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 		(_(u"Fase 1: Acollida i Avaluació"), {
 			#'classes': ('collapse',),
 			'fields': (
-				('ic_membership', '_member_link', '_min_human_data'),
-				('organic',),
+				('ic_membership', '_member_link'),
 				('_has_assisted_welcome',)
 			)
 		}),
@@ -495,6 +494,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 			'classes': ('welcome',),
 			'fields': (
 					('_rel_id_cards',),
+					('_min_human_data',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
 					('_akin_members'),
