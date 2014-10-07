@@ -365,9 +365,9 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					('_min_human_data',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
-					('_akin_members'),
 					('_join_fee'),
 					('_rel_fees',),
+					('_akin_members'),
 					('print_task_list'),
 					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
 		}),
@@ -497,9 +497,9 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 					('_min_human_data',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
-					('_akin_members'),
 					('_join_fee'),
 					('_rel_fees',),
+					('_akin_members'),
 					('print_task_list'),
 					('_has_assisted_socialcoin',))
 		}),
