@@ -37,11 +37,12 @@
 										{% for project in current_human|get_projects %}
 											<li><img class="user_grid" src="{% static 'user_images/Project_user.png' %}"> {{project.human}}
 											<a onclick='return showRelatedObjectLookupPopup(this);' 
-											href="/admin/General/project/{{project.human|get_id}}"> - {% trans " Editard" %}</a>
+											href="/admin/General/project/{{project.human|get_id}}"> - {% trans " Editar" %}</a>
 											</li>
 										{% endfor %}
 										</ul>
 									</tr>
+									{% if current_memberships_person and not current_memberships or current_memberships or current_memberships_self %}
 									<tr><td colspan="2">
 										{% if current_memberships_person and not current_memberships%}
 											<ul>{% for m in current_memberships_person %}
@@ -71,30 +72,38 @@
 												{% endfor %}</ul>
 										{% endif %}
 									</td></tr>
-									<tr><td colspan="2"><label>
-										{% if current_session %}
-											{{ current_session}} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
-										{% else %}
-											{% trans "Cap sessió seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
-										{% endif %}
+									{% endif %}
+ 									{% if current_session %}
+										<tr><td colspan="2"><label>
+										{{ current_session}} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
 										</label></td></tr>
+									{% elif is_project %}
+										<tr><td colspan="2"><label>
+										{% trans "Cap sessió d'acollida seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
+										</label></td></tr>
+									{% endif %}
+
 									{% if dont_memberships %}
 										{{current_sesion_form.as_table}}
 									{% endif %}
 									{% if current_human and current_session and has_session and dont_memberships %}
 										<tr><td colspan="2"><input type="submit" value="{% trans 'Crear alta autoocupat' %}"></td></tr>
-									{% elif current_session and current_human.id and dont_memberships %}
+									{% elif current_session and current_human.id and dont_memberships and is_project %}
 										<tr><td colspan="2"><input type="submit" value="{% trans "Establir que " %}{{current_human}}{% trans " ha assistit a aquesta sessió d'Acollida" %}"{{current_session}}></td></tr>
 									{% endif %}
 									{% if not dont_memberships %}
-									<tr><td colspan="2"><label>
 										{% if current_coin_session %}
-											{{ current_coin_session}} <a href="/admin/Welcome/learn_session/{{current_coin_session|get_id}}/?next=/admin/public_form/human_proxy/?coin_session_id={{current_coin_session|get_id}}"> {% trans "Editar" %}</a>
-										{% else %}
-											{% trans "Cap sessió de moneda social seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
-										{% endif %}
-										</label></td></tr>
-										{% if current_coin_session and current_human.id and not has_coin_session%}
+											<tr><td colspan="2"><label>
+												{{ current_coin_session}} <a href="/admin/Welcome/learn_session/{{current_coin_session|get_id}}/?next=/admin/public_form/human_proxy/?coin_session_id={{current_coin_session|get_id}}"> {% trans "Editar" %}</a>
+												</label></td></tr>
+											{% elif is_project %}
+												<tr><td colspan="2"><label>
+												{% trans "Cap sessió de moneda social seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
+												</label></td></tr>
+											{% endif %}
+										
+										{{is_project}}
+										{% if current_coin_session and current_human.id and not has_coin_session and is_project%}
 											<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a aquesta sessió de moneda social' %}"{{current_coin_session}}></td></tr>
 										{% endif %}
 									{% endif %}

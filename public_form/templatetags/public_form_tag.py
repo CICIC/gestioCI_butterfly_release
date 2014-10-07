@@ -159,17 +159,20 @@ class human_tag_node(template.Node):
 					context['dont_memberships'] = ic.count()==0 and icse.count()==0 #and icsh.count()==0
 					#Try to cast type
 					from General.models import Person, Project
+					is_project = False
 					try:
 						current_entity = Project.objects.get( id=obj ) 
 						from General.models import Relation
 						context['current_project_referents'] = current_entity.human_persons.filter(relation=Relation.objects.get(clas='reference'))
+						is_project = True
 					except ObjectDoesNotExist:
 						try:
-							current_entity = Person.objects.get( id=obj ) 
+							current_entity = Person.objects.get( id=obj )
 						except ObjectDoesNotExist:
 							pass
 					if current_entity:
 						context['current_human'] = current_entity
+					context['is_project'] = is_project
 			return ''
 
 '''On a template, by loading this tag
