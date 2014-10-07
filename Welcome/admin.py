@@ -351,7 +351,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
 
 	fieldsets = (#MembershipAdmin.fieldsets + (
-		(_(u"fase 1: Autoocupat"), {
+		(_(u"Fase 1: Acollida i Avaluació"), {
 			#'classes': ('collapse',),
 			'fields': (
 				('ic_membership', '_member_link', '_min_human_data'),
@@ -359,7 +359,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 				('_has_assisted_welcome',)
 			)
 		}),
-		(_(u"fase 2: Llista de tasques"), {
+		(_(u"Fase 2: Llista de tasques pendents"), {
 			'classes': ('welcome',),
 			'fields': (
 					('_rel_id_cards',),
@@ -371,7 +371,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					('print_task_list'),
 					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
 		}),
-		(_(u"fase 3: Alta"), {
+		(_(u"Fase 3:  Moneda social i Alta"), {
 			'classes': ('welcome',),
 			'fields': (
 				('mentor_membership', 'mentor_comment',),
@@ -483,7 +483,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
 						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_rel_images', '_akin_members')
 	fieldsets = (
-		(_(u"fase 1: Autoocupat"), {
+		(_(u"Fase 1: Acollida i Avaluació"), {
 			#'classes': ('collapse',),
 			'fields': (
 				('ic_membership', '_member_link', '_min_human_data'),
@@ -491,7 +491,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 				('_has_assisted_welcome',)
 			)
 		}),
-		(_(u"fase 2: Llista de tasques"), {
+		(_(u"Fase 2: Llista de tasques pendents"), {
 			'classes': ('welcome',),
 			'fields': (
 					('_rel_id_cards',),
@@ -503,7 +503,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 					('print_task_list'),
 					('_has_assisted_socialcoin',))
 		}),
-		(_(u"fase 3: Alta"), {
+		(_(u"Fase 3:  Moneda social i Alta"), {
 			'classes': ('welcome',),
 			'fields': (
 				('rel_images', '_rel_images' ),
