@@ -722,15 +722,18 @@ class iC_Self_Employed(iC_Record):
 	_join_fee.allow_tags = True
 	_join_fee.short_description = ''
 
+	def _get_label_error(self, caption):
+		return str("<font style='color:red;'> %s </font>" % ( caption.encode("utf-8") ))
 	def _render_person(self, rel):
 		out = ""
 		if hasattr(rel, 'person'):
-			c = "[%s]" % (rel.person.id_card) if rel.person.id_card else ""
-			m = "[%s]" % (rel.person.email) if rel.person.email else ""
-			tc = "[%s]" % (str(rel.person.telephone_cell)) if rel.person.telephone_cell else ""
-			tl = "[%s]" % (str(rel.person.telephone_land)) if rel.person.telephone_land else ""
-			fields = "%s %s %s %s" % ( c, m, tc, tl)
-			out = "<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>" % (change_class, str(rel.person.id), self._get_next(), rel.person.name, fields)
+			c = "[%s]" % ( str(rel.person.id_card) if rel.person.id_card else self._get_label_error(__("Falta DNI/NIF")))
+			s = "[%s]" % (rel.person.surnames if rel.person.surnames else self._get_label_error(__("Falten cognoms")) )
+			m = "[%s]" % (rel.person.email if rel.person.email else self._get_label_error(__("Falta email")))
+			tc = "[%s]" % (str(rel.person.telephone_cell) if rel.person.telephone_cell else self._get_label_error(__(u"Telèfon mòbil")))
+			tl = "%s" % (str("["+rel.person.telephone_land+"]") if rel.person.telephone_land else "")
+			fields = "%s %s %s %s %s" % ( c, s, m, tc, tl)
+			out = "<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>" % (change_class, str(rel.person.id), self._get_next(), rel.person.name, mark_safe( str(fields) ) )
 		return out
 
 	def _akin_members(self):
@@ -760,10 +763,14 @@ class iC_Self_Employed(iC_Record):
 		if rels.count() > 0:
 			for rel in rels:
 				out += self._render_person(rel)
-			return out
 		else:
 			out = "<a %s href='/admin/General/person/%s/%s'>%s</a> [%s]" % (change_class, str(self.ic_membership.human.id), self._get_next(), str(self.ic_membership.human) , str(self.ic_membership.human.person.id_card))
-			return out
+
+		if self.id:
+			add_button = "/admin/General/project/%s/%s" % (self.ic_membership.human.id, self._get_next())
+			add_button = "<a %s href='%s' > %s </a>" % (add_class, add_button.encode("utf-8"), _(u"Afegeix soci de referència").encode("utf-8") )
+			out = out.encode("utf-8") + "<br>" + add_button
+		return out
 	_rel_id_cards.allow_tags = True
 	_rel_id_cards.short_description = _(u"Socis de referència")
 

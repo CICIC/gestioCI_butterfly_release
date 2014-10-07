@@ -355,13 +355,13 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			#'classes': ('collapse',),
 			'fields': (
 				('ic_membership', '_member_link', ),
-				('_has_assisted_welcome',)
+				('_has_assisted_welcome',),
+				('_rel_id_cards',),
 			)
 		}),
 		(_(u"Fase 2: Llista de tasques pendents"), {
 			'classes': ('welcome',),
 			'fields': (
-					('_rel_id_cards',),
 					('_min_human_data',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
@@ -487,13 +487,13 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 			#'classes': ('collapse',),
 			'fields': (
 				('ic_membership', '_member_link'),
-				('_has_assisted_welcome',)
+				('_has_assisted_welcome',),
+				('_rel_id_cards',),
 			)
 		}),
 		(_(u"Fase 2: Llista de tasques pendents"), {
 			'classes': ('welcome',),
 			'fields': (
-					('_rel_id_cards',),
 					('_min_human_data',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
@@ -795,8 +795,6 @@ admin.site.register(iC_Address_Contract, AddressContractAdmin)
 admin.site.register(iC_Insurance, InsuranceAdmin)
 
 admin.site.register(iC_Licence, LicenceAdmin)
-
-
 
 #admin.site.register(Fee, Public_FeeAdmin)
 admin.site.register(Fee, FeeAdmin)
