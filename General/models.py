@@ -205,8 +205,8 @@ class Human(Being):	# Create own ID's
 
 class Person(Human):
 	human = models.OneToOneField('Human', primary_key=True, parent_link=True)
-	surnames = models.CharField(max_length=200, blank=True, verbose_name=_(u"Cognoms"), help_text=_(u"Els cognoms de la Persona"))
-	id_card = models.CharField(max_length=9, blank=True, verbose_name=_(u"DNI/NIE"))
+	surnames = models.CharField(max_length=200, blank=False, null=False, verbose_name=_(u"Cognoms"), help_text=_(u"Els cognoms de la Persona"))
+	id_card = models.CharField(max_length=9, blank=False, null=False, verbose_name=_(u"DNI/NIE"))
 	email2 = models.EmailField(blank=True, verbose_name=_(u"Email alternatiu"))
 	nickname2 = models.CharField(max_length=50, blank=True, verbose_name=_(u"Sobrenom a la Xarxa Social"))
 
