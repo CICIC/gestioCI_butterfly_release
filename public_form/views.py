@@ -1187,7 +1187,7 @@ def save_form_self_employed(request):
 
 		if ic:
 			amount_advanced_tax, fee_type_quarter = save_fees(request, current_person, current_project, current_human, ic)
-			save_other_fields(request, ic)
+			#save_other_fields(request, ic)
 			ice = save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter)
 			messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":

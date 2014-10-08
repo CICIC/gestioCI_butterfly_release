@@ -489,6 +489,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 				('ic_membership', '_member_link'),
 				('_has_assisted_welcome',),
 				('_rel_id_cards',),
+				('organic', 'tent_type',),
 			)
 		}),
 		(_(u"Fase 2: Llista de tasques pendents"), {

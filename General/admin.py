@@ -482,9 +482,20 @@ class H_assetInline(admin.StackedInline):
 	#	M_addressInline,
 	#]'''
 
-
-
-
+#	WARNING, this is an unexpected reference from Welcome module. Should be removed.
+from Welcome.models import iC_Membership
+class H_membership_Inline(admin.StackedInline):
+	model = iC_Membership
+	extra = 0
+	fk_name = 'human'
+	readonly_fields = ('_self_link', '_ic_selfemployed_list_extended')
+	fields = ('_self_link', '_ic_selfemployed_list_extended', 'virtual_market', 'expositors')
+	def has_delete_permission(self, request, obj=None):
+		return False
+	def has_add_permission(self, request, obj=None):
+		return False
+	verbose_name = _("Altes")
+	verbose_name_plural = ""
 
 class HumanAdmin(Css_Mixin):
 	list_display = ['name', 'nickname', 'email']
@@ -555,7 +566,7 @@ class HumanAdmin(Css_Mixin):
 
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
 	model = Project
-	readonly_fields = ('_ref_persons', '_ic_membership', '_fees_to_pay',)
+	readonly_fields = ('_ref_persons', '_fees_to_pay',)
 	change_list_template = None
 	fieldsets = (
 		(None, {
@@ -567,10 +578,11 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
 		(_(u"Descripció"), {
 			#'classes': ('collapse',),
 			'fields': (('description',),
-								('_ic_membership', '_fees_to_pay',),)
+			('_fees_to_pay',),)
 		}),
 	)
 	inlines = [
+		H_membership_Inline,
 		Proj_refPersonInline,
 		H_addressInline,
 		H_jobInline,

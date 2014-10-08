@@ -38,8 +38,7 @@ class learn_session_proxy_form(forms.ModelForm):
 		from public_form.models import Learn_Session
 		model = Learn_Session
 		fields = ( "datetime", )
-
-
+from Welcome.models import TentType_list
 class public_form_self_admin(forms.ModelForm):
 	description = forms.CharField( widget=forms.Textarea, label=_(u"Descripció projecte") )
 
@@ -55,23 +54,13 @@ class public_form_self_admin(forms.ModelForm):
 	project_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES, label=_(u"Tipus de projecte"), required=True)
 	project_subtype = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES_sub, label=_(u"Tipus de projecte"), required=True)
 	organic = forms.BooleanField(label=_(u"Productes ecològics") )
-	ecommerce = forms.BooleanField(label=_(u"Comerç electronic propi") )
-	expositors = forms.BooleanField(label=_(u"Expositors") )
 
-	TentType = (
-		('none',_(u"Sense Carpa")),
-		('wood',_(u"Carpa de fusta")),
-		('metal',_(u"Carpa metàlica"))
-	)
-	tent_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=TentType, label=_(u"Tipus parada firaire"))
-	virtual_market = forms.BooleanField(label=_(u"Mercat Virtual"))
+	tent_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=TentType_list, label=_(u"Tipus parada firaire"))
+
 	#Agregar create_membership_form > fields{ name + surname + telephone_cell}
 	def __init__(self, *args, **kwargs):
 		super(public_form_self_admin, self).__init__(*args, **kwargs)
-		if self.instance.id:
-			#self.fields['mentor_of_SE'].queryset = self.instance.ic_project.persons.all()
-			#self.fields['expositors'].queryset = self.instance.expositors.all()
-			pass
+		self.fields['tent_type'].initial = 'none'
 	class Meta:
 		from Welcome.models import iC_Membership
 		model = iC_Membership

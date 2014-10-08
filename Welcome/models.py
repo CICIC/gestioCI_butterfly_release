@@ -16,6 +16,11 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 #from General.models import Record, Human, Person, Project, Relation
 
+TentType_list = (
+	('none',_(u"Sense Carpa")),
+	('wood',_(u"Carpa de fusta")),
+	('metal',_(u"Carpa metàlica"))
+)
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Welcome/"
 a_strWC = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/cooper/Welcome/"
@@ -419,17 +424,37 @@ class iC_Membership(iC_Record):
 	_is_selfemployed.short_description = _(u"AO")
 	is_selfemployed = property(_is_selfemployed)
 
-	def _ic_selfemployed_list(self):
+	def _ic_selfemployed_list(self, extended=False):
+
 		if self._is_selfemployed():
 			out = ul_tag
 			for rec in self.selfemployed_recs.all():
-				out += '<li>'+ a_strW + 'ic_self_employed/'+str(rec.id) + a_str3 + '<b>'+str(rec.name) + '</b></a></li>'
+				caption = str(rec.name.encode("utf-8")) if rec.name else rec
+
+				try:
+					stallholder = iC_Stallholder.objects.get(id=rec.id)
+				except:
+					stallholder = None
+				stallholder_data = ""
+
+				self_employed_data = ""
+				if extended and stallholder is not None:
+					organic = _(u"Sí").encode("utf-8") if rec.organic else _("No").encode("utf-8")
+					self_employed_data = _(u"Productes ecològics/organics? ").encode("utf-8") +  organic
+					stallholder_data = _(u"Tipus de carpa: ").encode("utf-8") + stallholder.get_tent_type_display()
+
+				out += '<li>%sic_self_employed/%s%s<b>%s</b> </a> <br>%s<br> %s</li>' % (a_strW, str(rec.id), a_str3, caption, self_employed_data, stallholder_data.encode("utf-8"))
 			if out == ul_tag:
 				return str_none
 			return out+'</ul>'
 		return str_none
 	_ic_selfemployed_list.allow_tags = True
 	_ic_selfemployed_list.short_description = _(u"reg. alta Autoocupat")
+
+	def _ic_selfemployed_list_extended(self, extended=False):
+		return self._ic_selfemployed_list(True)
+	_ic_selfemployed_list_extended.allow_tags = True
+	_ic_selfemployed_list_extended.short_description = _(u"reg. alta Autoocupat")
 
 	def _expositors_list(self):
 		out = ul_tag
@@ -439,7 +464,7 @@ class iC_Membership(iC_Record):
 			return str_none
 		return out+'</ul>'
 	_expositors_list.allow_tags = True
-	_expositors_list.short_description = ''
+	_expositors_list.short_description = _('Expositors')
 
 	def _selflink(self):
 		if self.id:
@@ -448,6 +473,14 @@ class iC_Membership(iC_Record):
 			return "Not present"
 	_selflink.allow_tags = True
 	_selflink.short_description = ''
+
+	def _self_link(self):
+		if self.id:
+			return "<ul><li>%sic_membership/%s'>%s</a></li></ul>" % (a_strW, str(self.id), self)
+		else:
+			return _("(Cap)")
+	_self_link.allow_tags = True
+	_self_link.short_description = _(u'Reg.  ')
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Membership, self).__init__(*args, **kwargs)
@@ -1060,15 +1093,12 @@ class iC_Self_Employed(iC_Record):
 			return _("Encara no s'ha creat.")
 	_user_member.short_description = "Usuari per entrar al entorno virtual"
 
+
 class iC_Stallholder(iC_Self_Employed):	# Firaire
 	ic_self_employed = models.OneToOneField('iC_Self_Employed', primary_key=True, parent_link=True)
 	#req_photos = models.SmallIntegerField(default=1, verbose_name=_(u"Requereix fotos?"))
-	TentType = (
-		('none',_(u"sense")),
-		('wood',_(u"de fusta")),
-		('metal',_(u"metàlica"))
-	)
-	tent_type = models.CharField(max_length=5, choices=TentType, blank=True, null=True, verbose_name=_(u"Tipus de carpa"))
+	
+	tent_type = models.CharField(max_length=5, choices=TentType_list, blank=True, null=True, verbose_name=_(u"Tipus de carpa"))
 
 	class Meta:
 		verbose_name = _(u"Alta Proj.Autoocupat Firaire")
