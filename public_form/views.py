@@ -952,7 +952,8 @@ def save_current_human(request, current_human):
 		current_project = Project.objects.get(id=request.POST["current_human"])
 		current_project.project_type = Project_Type.objects.get(id=request.POST.get("project_type", -1))
 		current_project.description = request.POST.get("description", "")
-		current_project.ecommerce = request.POST.get("ecommerce", "0")
+
+		current_project.ecommerce = request.POST.get("ecommerce", False)
 		current_project.save()
 	except ObjectDoesNotExist:
 		current_project = None
@@ -1171,7 +1172,7 @@ def save_form_self_employed(request):
 
 		messages.info(request, "Post params: project_type: " + request.POST.get("project_type", "nada"))
 		messages.info(request, "Post params: project_subtype: " + request.POST.get("project_subtype", "nada"))
-
+		
 		current_project, current_person = save_current_human(request, current_human)
 
 		if current_human:
