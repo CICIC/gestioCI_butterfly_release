@@ -518,6 +518,8 @@ class H_membership_Inline(admin.StackedInline):
 			if current_memberships.count() > 0:
 				for rel in current_memberships:
 					out += self._render_person(rel)
+			else:
+				out = _(u"(Cap)")
 		else:
 			out = _(u"(Cap)")
 		return out.encode("utf-8")
