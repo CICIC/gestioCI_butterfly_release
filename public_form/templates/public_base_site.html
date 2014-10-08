@@ -101,11 +101,9 @@
 												{% trans "Cap sessió de moneda social seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
 												</label></td></tr>
 											{% endif %}
-										
-										{{is_project}}
-										{% if current_coin_session and current_human.id and not has_coin_session and is_project%}
-											<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a aquesta sessió de moneda social' %}"{{current_coin_session}}></td></tr>
-										{% endif %}
+											{% if current_coin_session and current_human.id and not has_coin_session and is_project%}
+												<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a aquesta sessió de moneda social' %}"{{current_coin_session}}></td></tr>
+											{% endif %}
 									{% endif %}
 
 								</table>
