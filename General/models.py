@@ -598,7 +598,7 @@ class Address(Space):	# Create own ID's
 	def _jobs_list(self):
 		out = ul_tag
 		for jo in self.jobs.all():
-			out += '<li><b>'+jo.verb+'</b> - '+erase_id_link('jobs', str(jo.id))+'</li>'
+			out += '<li><b>'+jo.name+'</b> - '+erase_id_link('jobs', str(jo.id))+'</li>'
 		if out == ul_tag:
 			return str_none
 		return out+'</ul>'
