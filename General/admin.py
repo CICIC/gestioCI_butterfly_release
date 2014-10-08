@@ -488,14 +488,41 @@ class H_membership_Inline(admin.StackedInline):
 	model = iC_Membership
 	extra = 0
 	fk_name = 'human'
-	readonly_fields = ('_self_link', '_ic_selfemployed_list_extended')
-	fields = ('_self_link', '_ic_selfemployed_list_extended', 'virtual_market', 'expositors')
+	readonly_fields = ('_self_link', '_ic_selfemployed_list_extended', '_akin_members')
+	fields = ('_self_link', '_ic_selfemployed_list_extended', 'virtual_market', 'expositors', '_akin_members')
 	def has_delete_permission(self, request, obj=None):
 		return False
 	def has_add_permission(self, request, obj=None):
 		return False
 	verbose_name = _("Altes")
 	verbose_name_plural = ""
+
+	def _render_person(self, rel):
+		out = ""
+		if hasattr(rel, 'person'):
+			c = "%s" % ( str(rel.person.id_card) if rel.person.id_card else "")
+			m = "%s" % (rel.person.email if rel.person.email else "")
+			tc = "%s" % (str(rel.person.telephone_cell) if rel.person.telephone_cell else "")
+			tl = "%s" % (str(rel.person.telephone_land) if rel.person.telephone_land else "")
+			fields = "%s %s %s %s" % ( c, m, tc, tl)
+			from General.models import a_strG
+
+			out = "%sperson/%s'><b>%s</b></a> %s<br>" % (a_strG, str(rel.person.id), rel.person.__unicode__(), mark_safe( str(fields) ) )
+
+		return out
+	def _akin_members(self, obj):
+		from Welcome.models import iC_Akin_Membership
+		out = ""
+		if obj.ic_membership.id:
+			current_memberships = iC_Akin_Membership.objects.filter(ic_membership=obj.ic_membership)
+			if current_memberships.count() > 0:
+				for rel in current_memberships:
+					out += self._render_person(rel)
+		else:
+			out = _(u"(Cap)").encode("utf-8")
+		return out.encode("utf-8")
+	_akin_members.allow_tags = True
+	_akin_members.short_description = _(u"Socis afins")
 
 class HumanAdmin(Css_Mixin):
 	list_display = ['name', 'nickname', 'email']
