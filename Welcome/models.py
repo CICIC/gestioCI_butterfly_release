@@ -298,7 +298,7 @@ class iC_Akin_Membership(iC_Record):
 	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"entitat legal"))
 	join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
-	ic_membership = models.ManyToManyField('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada al Projectes Socis"))
+	ic_membership = models.ManyToManyField('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada als Projectes Socis"))
 	def _has_id_card(self):
 		if self.person.id_card is None or self.person.id_card == '':
 			return False
@@ -759,16 +759,17 @@ class iC_Self_Employed(iC_Record):
 
 	def _get_label_error(self, caption):
 		return str("<font style='color:red;'> %s </font>" % ( caption.encode("utf-8") ))
+
 	def _render_person(self, rel):
 		out = ""
 		if hasattr(rel, 'person'):
 			c = "[%s]" % ( str(rel.person.id_card) if rel.person.id_card else self._get_label_error(__("Falta DNI/NIF")))
-			s = "[%s]" % (rel.person.surnames if rel.person.surnames else self._get_label_error(__("Falten cognoms")) )
+			s = "%s" % ( "" if rel.person.surnames else self._get_label_error(__("[Falten cognoms]")) )
 			m = "[%s]" % (rel.person.email if rel.person.email else self._get_label_error(__("Falta email")))
 			tc = "[%s]" % (str(rel.person.telephone_cell) if rel.person.telephone_cell else self._get_label_error(__(u"Telèfon mòbil")))
 			tl = "%s" % (str("["+rel.person.telephone_land+"]") if rel.person.telephone_land else "")
-			fields = "%s %s %s %s %s" % ( c, s, m, tc, tl)
-			out = "<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>" % (change_class, str(rel.person.id), self._get_next(), rel.person.name, mark_safe( str(fields) ) )
+			fields = "%s %s %s %s %s" % ( c, s.decode("utf-8"), m, tc, tl)
+			out = "<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>" % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), mark_safe( str(fields) ) )
 		return out
 
 	def _akin_members(self):
@@ -1238,9 +1239,9 @@ class iC_Labor_Contract(iC_Document):
 	def __unicode__(self):
 
 		if self.company:
-			return self.company.nickname+': '+self.person.name+' '+self.person.surnames+' ('+self.person.id_card+')'
+			return self.company.nickname+': '+self.person.__unicode__() +' ('+self.person.id_card+')'
 		else:
-			return self.person.name+' '+self.person.surnames+' ('+self.person.id_card+')'
+			return self.person.__unicode__() +' ('+self.person.id_card+')'
 
 	class Meta:
 		verbose_name = _(u"Contracte Laboral CI")
