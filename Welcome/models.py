@@ -752,7 +752,7 @@ class iC_Self_Employed(iC_Record):
 		add_button = "/admin/Welcome/ic_akin_membership/add/" + self._get_next()
 		add_button = "<a %s href='%s' > %s </a>" % (add_class, add_button.encode("utf-8"), _(u"Afegeix soci afí").encode("utf-8") )
 
-		add_button2 = a_strW + "ic_akin_membership/"
+		add_button2 = welcome_href + "ic_akin_membership/"
 		add_button2 = "%s'  > %s </a>" % ( add_button2.encode("utf-8"), _(u"Obre la llista de socis afins per vincular soci al projecte").encode("utf-8") )
 
 		return out.encode("utf-8") + "<br>" + add_button + "<br>" + add_button2
