@@ -128,6 +128,20 @@ class Human(Being):	# Create own ID's
 	_selflink.allow_tags = True
 	_selflink.short_description = ''
 	self_link = property (_selflink)
+	def self_link_no_pop(self, next):
+		if self.id:
+			if hasattr(self, 'person'):
+				id = self.person.id
+				slug = "person"
+			elif hasattr(self, 'project'):
+				id = self.project.id
+				slug = "project"
+			return mark_safe( "<a href='/admin/General/%s/%s%s'>%s</a>") % ( slug, str(id), next, a_edit )
+		else:
+			return "Not present"
+	self_link_no_pop.allow_tags = True
+	self_link_no_pop.short_description = ''
+
 	def _ic_membership(self):
 		try:
 			#print self.ic_membership_set.all()

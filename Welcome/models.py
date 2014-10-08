@@ -974,23 +974,23 @@ class iC_Self_Employed(iC_Record):
 			return slug+'!!'
 
 		if hum.email is None or hum.email == '':
-			out += '<li>Falta el Email. ' + hum.self_link + '</li>'
+			out += '<li>Falta el Email. %s</li>' % ( hum.self_link_no_pop(self._get_next()) )
 		if hum.telephone_cell is None or hum.telephone_cell == '':
-			out += '<li>Falta el Teléfon mobil. ' + hum.self_link + '</li>'
+			out += '<li>Falta el Teléfon mobil. %s</li>'  % ( hum.self_link_no_pop(self._get_next()) )
 		if hum.description is None or hum.description == '':
-			out += '<li>Falta alguna Descripció. ' + hum.self_link + '</li>'
+			out += '<li>Falta alguna Descripció. %s</li>' % ( hum.self_link_no_pop(self._get_next()) )
 		if hum.addresses.all().count() < 1:
-			out += '<li>Falta alguna Adreça. ' + hum.self_link + '</li>'
+			out += '<li>Falta alguna Adreça. %s</li>' % ( hum.self_link_no_pop(self._get_next()) )
 		elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
 			address = hum.rel_human_addresses_set.filter(main_address=True).first().address
 			if address:
-				link = a_strG + "address/" + address.id + "'>" + change_caption + "</a>"
+				link = "%saddress/%s%s'> %s </a>" % (general_href, address.id, self._get_next(), change_caption)
 				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
 			else:
 				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
 		else:
 			adr = hum.rel_human_addresses_set.filter(main_address=True).first().address
-			link = a_strG + "address/" + str(adr.id) + "'>" + change_caption + "</a>"
+			link = "%saddress/%s%s'> %s </a>" % (general_href, adr.id, self._get_next(), change_caption)
 			if adr.postalcode is None or adr.postalcode == '':
 				out += "<li>A l'adreça principal li falta el Codi Postal. " + link + "</li>"
 			if adr.region is None or adr.region == '':
@@ -998,9 +998,10 @@ class iC_Self_Employed(iC_Record):
 
 		if hasattr(hum, 'project'):
 			if hum.project.project_type is None or hum.project.project_type == '':
-				out += '<li>És projecte i falta el Tipus. ' + hum.project.self_link + '</li>'
+				out += '<li>És projecte i falta el Tipus. %s</li>'  % ( hum.project.self_link_no_pop(self._get_next()) )
 			if hum.project._get_ref_persons().count() < 1:
-				out += '<li>Falta alguna Persona de Referencia.' + hum.project.self_link + '</li>'
+				out += '<li>Falta alguna Persona de Referencia. %s</li>'  % ( hum.project.self_link_no_pop(self._get_next()) )
+
 		#print str(self.ic_stallholder)
 		if hasattr(self, 'ic_stallholder'):
 			if self.ic_stallholder.tent_type is None or self.ic_stallholder.tent_type == '':
