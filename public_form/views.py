@@ -1172,7 +1172,7 @@ def save_form_self_employed(request):
 
 		messages.info(request, "Post params: project_type: " + request.POST.get("project_type", "nada"))
 		messages.info(request, "Post params: project_subtype: " + request.POST.get("project_subtype", "nada"))
-		
+
 		current_project, current_person = save_current_human(request, current_human)
 
 		if current_human:
