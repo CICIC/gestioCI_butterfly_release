@@ -44,6 +44,8 @@ change_class = " class='changelink' "
 change_caption = __("Editar").encode("utf-8")
 add_class = " class='addlink' "
 add_caption = __("Afegeix").encode("utf-8")
+delete_class = " class='deletelink' "
+delete_caption = __("Treu").encode("utf-8")
 general_href = "<a href='/admin/General/"
 welcome_href = "<a href='/admin/Welcome/"
 
@@ -810,6 +812,11 @@ class iC_Self_Employed(iC_Record):
 		add_button = "<a %s href='%s%s'> %s </a>" % (add_class, add_button.encode("utf-8"), self._get_next(), label.encode("utf-8") )
 		return add_button
 
+	def _get_address_link_delete(self, adr):
+		url = '/admin/General/address/%s/delete/%s' % (str(adr.id), self._get_next() )
+		link = "<a %s href='%s'>%s</a>"  % (delete_class, url, delete_caption)
+		return link.encode("utf-8")
+
 	def _render_address_field(self, label, field):
 		try:
 			return "<li>%s: %s </li>" % (label.encode("utf-8"), field.encode("utf-8"))
@@ -842,7 +849,7 @@ class iC_Self_Employed(iC_Record):
 		foreign =  self.rel_licences.filter(rel_address=adr)
 		output += self._render_address_foreign( adr, 'ic_licence', foreign, _(u"Llicència d'activitat: "), 2)
 
-		output += "<li>%s</li>" % ( self._get_address_link_change(adr) )
+		output += "<li>%s %s</li>" % ( self._get_address_link_change(adr), self._get_address_link_delete(adr) )
 
 		output += "</ul>"
 		return output
@@ -936,7 +943,7 @@ class iC_Self_Employed(iC_Record):
 					ico = ico_yes
 				else:
 					ico = ico_no
-				out += "<li><a %s href='/admin/Welcome/ic_insurance/%s/%s'> <b>%s</b> </a>: %s %s %s</li>" % (change_class, str(ins.id), self._get_next(), ins.ic_document.doc_type.name, job, adr, ico )
+				out += "<li><a %s href='/admin/Welcome/ic_insurance/%s/%s'> <b>%s</b> </a>: %s %s %s %s</li>" % (change_class, str(ins.id), self._get_next(), ins.ic_document.doc_type.name, job, adr, erase_id_link('rel_insurances', str(ins.id)), ico )
 			return out + '</ul>'
 		return str_none
 	_rel_insurances.allow_tags = True
