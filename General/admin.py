@@ -620,7 +620,7 @@ class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
 
 class Public_PersonAdmin(HumanAdmin):
-	list_display = ['name', 'surnames', 'nickname', 'email']
+	list_display = ['name', 'surnames', 'nickname', 'email', ]
 	readonly_fields = ('_ic_membership', '_fees_to_pay',)
 	change_list_template = None
 	fieldsets = (
@@ -652,7 +652,7 @@ class Public_PersonAdmin(HumanAdmin):
 		#H_recordInline,
 
 		H_accountCesInline,
-		#H_accountBankInline,
+		H_accountBankInline,
 		H_accountCryptoInline,
 	]
 
