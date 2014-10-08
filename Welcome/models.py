@@ -295,7 +295,7 @@ class iC_Akin_Membership(iC_Record):
 	ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
 	person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
 	ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
-	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"entitat legal"))
+	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='Entitats_legals', verbose_name=_(u"Cooperativa (Interprofessionals / XIPU)"))
 	join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
 	ic_membership = models.ManyToManyField('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada als Projectes Socis"))
@@ -353,7 +353,7 @@ class iC_Membership(iC_Record):
 	ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
 	human = models.ForeignKey('General.Human', verbose_name=_(u"Ens Soci"))
 	ic_project = TreeForeignKey('General.Project', related_name='memberships', verbose_name=_(u"Cooperativa Integral"))
-	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='memberships', verbose_name=_(u"entitat legal"))
+	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='memberships', verbose_name=_(u"Cooperativa (Interprofessionals / XIPU)"))
 
 	contribution = TreeForeignKey('General.Relation', blank=True, null=True, verbose_name=_(u"Tipus de contribució"))
 	join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))

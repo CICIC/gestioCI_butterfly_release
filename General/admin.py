@@ -489,7 +489,7 @@ class H_membership_Inline(admin.StackedInline):
 	extra = 0
 	fk_name = 'human'
 	readonly_fields = ('_self_link', '_ic_selfemployed_list_extended', '_akin_members')
-	fields = ('_self_link', '_ic_selfemployed_list_extended', 'virtual_market', 'expositors', '_akin_members')
+	fields = ('_self_link', '_ic_selfemployed_list_extended', 'virtual_market', 'expositors', '_akin_members', 'ic_company')
 	def has_delete_permission(self, request, obj=None):
 		return False
 	def has_add_permission(self, request, obj=None):
@@ -519,7 +519,7 @@ class H_membership_Inline(admin.StackedInline):
 				for rel in current_memberships:
 					out += self._render_person(rel)
 		else:
-			out = _(u"(Cap)").encode("utf-8")
+			out = _(u"(Cap)")
 		return out.encode("utf-8")
 	_akin_members.allow_tags = True
 	_akin_members.short_description = _(u"Socis afins")
