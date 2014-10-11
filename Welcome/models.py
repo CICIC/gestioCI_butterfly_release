@@ -1071,6 +1071,14 @@ class iC_Self_Employed(iC_Record):
 			text = _("Imprimir model de factura").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
+			url = "/media/iae_stallholder.jpg"
+			text = _("Imprimir IAE venda ambulant").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+			url = "/media/iae_stallholder1.jpg"
+			text = _("AE venda ambulant d'aliments").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
 			url = reverse("Welcome:print_certificate", args=(self.id, 3))
 			text = _("Imprimir CIF").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
