@@ -85,7 +85,7 @@ class AutoRecordName(admin.ModelAdmin):
 	def response_add(self, request, obj):
 		from django.http import HttpResponseRedirect, HttpResponse
 		from django.core.urlresolvers import reverse
-		response = super(AutoRecordName, self).response_change(request, obj)
+		response = super(AutoRecordName, self).response_add(request, obj)
 		if request.GET.has_key('next'):
 			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
 				response['location'] = request.GET.get('next')
@@ -107,7 +107,7 @@ class AutoRecordName(admin.ModelAdmin):
 	def response_delete(self, request, obj_display):
 		from django.http import HttpResponseRedirect, HttpResponse
 		from django.core.urlresolvers import reverse
-		response = super(AutoRecordName, self).response_change(request, obj_display)
+		response = super(AutoRecordName, self).response_delete(request, obj_display)
 		if request.GET.has_key('next'):
 			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
 				response['location'] = request.GET.get('next')
