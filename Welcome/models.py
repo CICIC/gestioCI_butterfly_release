@@ -921,10 +921,7 @@ class iC_Self_Employed(iC_Record):
 			except Exception as e:
 				output += '%s (%s)' % (e.message, type(e))
 
-		if output == "":
-			return self._get_address_link_add( 4, _(u"Afegeix altre adreça") )
-		else:
-			return output
+		return output + self._get_address_link_add( 4, _(u"Afegeix altre adreça") )
 	_other_address_render.allow_tags = True
 	_other_address_render.short_description = _(u"Altres adreces")
 
@@ -1071,14 +1068,6 @@ class iC_Self_Employed(iC_Record):
 			text = _("Imprimir model de factura").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
-			url = "/media/iae_stallholder.jpg"
-			text = _("Imprimir IAE venda ambulant").encode("utf-8")
-			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
-
-			url = "/media/iae_stallholder1.jpg"
-			text = _("AE venda ambulant d'aliments").encode("utf-8")
-			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
-
 			url = reverse("Welcome:print_certificate", args=(self.id, 3))
 			text = _("Imprimir CIF").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
@@ -1130,6 +1119,15 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 			url = "/media/invoice.xls"
 			text = _("Imprimir model de factura").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+			url = "/media/iae_stallholder.jpg"
+			text = _("Imprimir IAE venda ambulant").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+			url = "/media/iae_stallholder1.jpg"
+			text = _("AE venda ambulant d'aliments").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
 
 			url = reverse("Welcome:print_certificate", args=(self.id, 3))
 			text = _("Imprimir CIF").encode("utf-8")
