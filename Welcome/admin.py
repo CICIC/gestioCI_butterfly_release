@@ -363,7 +363,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			'classes': ('welcome',),
 			'fields': (
 					('_min_human_data',),
-					('_main_address_render', '_other_address_render'),
+					('rel_address_contracts', '_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
 					('_join_fee'),
 					('_rel_fees',),
@@ -496,7 +496,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 			'classes': ('welcome',),
 			'fields': (
 					('_min_human_data',),
-					('_main_address_render', '_other_address_render'),
+					('rel_address_contracts', '_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances' ),
 					('_join_fee'),
 					('_rel_fees',),
