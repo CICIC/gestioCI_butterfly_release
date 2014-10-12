@@ -871,7 +871,7 @@ class iC_Self_Employed(iC_Record):
 		output += self._render_address_field( _(u"Adreça"), adr.p_address )
 		output += self._render_address_field( _(u"Població"), adr.town )
 		output += self._render_address_field( _(u"CP"), adr.postalcode )
-		output += self._render_address_field( _(u"Comarca"), adr.region.name if adr.region else adr.region )
+		output += self._render_address_field( _(u"Co‌marca"), adr.region.name if adr.region else adr.region )
 		output += self._render_address_field( _(u"Ubicació específica"), str(adr))
 
 		foreign = self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas= "contract_use")
@@ -991,6 +991,16 @@ class iC_Self_Employed(iC_Record):
 	_rel_images.allow_tags = True
 	_rel_images.short_description = ''
 
+	def validate_adr(self, adr):
+		import pdb; pdb.set_trace()
+		link = "%saddress/%s%s'> %s </a>" % (general_href, adr.id, self._get_next(), change_caption)
+		out = ""
+		if adr.postalcode is None or adr.postalcode == '':
+			out += "<li>A l'adreça %s li manca el Codi Postal. %s</li>" % (str(adr.name), link)
+		if adr.region is None or adr.region == '':
+			out += "<li>A l'adreça %s li manca la Comarca. %s</li>" % (str(adr.name), link)
+		return out
+
 	def _min_human_data(self):
 		hum = self.ic_membership.human
 		out = ul_tag_err
@@ -1012,6 +1022,7 @@ class iC_Self_Employed(iC_Record):
 			out += '<li>Falta alguna Descripció. %s</li>' % ( hum.self_link_no_pop(self._get_next()) )
 		if hum.addresses.all().count() < 1:
 			out += '<li>Falta alguna Adreça. %s</li>' % ( hum.self_link_no_pop(self._get_next()) )
+		
 		elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
 			address = hum.rel_human_addresses_set.filter(main_address=True).first().address
 			if address:
@@ -1020,12 +1031,10 @@ class iC_Self_Employed(iC_Record):
 			else:
 				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
 		else:
-			adr = hum.rel_human_addresses_set.filter(main_address=True).first().address
-			link = "%saddress/%s%s'> %s </a>" % (general_href, adr.id, self._get_next(), change_caption)
-			if adr.postalcode is None or adr.postalcode == '':
-				out += "<li>A l'adreça principal li falta el Codi Postal. " + link + "</li>"
-			if adr.region is None or adr.region == '':
-				out += "<li>A l'adreça principal li falta la Comarca " + link + "</li>"
+			other_address = hum.rel_human_addresses_set.filter(main_address=False).all()
+			output_address = ""
+			for adr in other_address:
+				out += self.validate_adr(adr.address)
 
 		if hasattr(hum, 'project'):
 			if hum.project.project_type is None or hum.project.project_type == '':
