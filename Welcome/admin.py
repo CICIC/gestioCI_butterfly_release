@@ -430,6 +430,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			#https://wiki.enredaos.net/index.php?title=Talk:CICICdev_butterfly_rev/11102014#I.29_ALTA_PROJECTE_AUTOOCUPAT / .18
 			#typ = iC_Record_Type.objects.get(clas='Fee')
 			#kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
+			pass
 		return super(Public_SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class SelfEmployedAdmin(Public_SelfEmployedAdmin):
