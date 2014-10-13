@@ -1105,7 +1105,8 @@ def save_self_employed(current_person, current_project, current_human, ic, reque
 		messages.info(request, _(u"Creant registre self employed") )
 		ice = iC_Self_Employed ()
 		ice.ic_membership = ic
-		ice.organic = request.POST.get("organic", False)
+
+		ice.organic = request.POST.get("organic", False) == "on"
 		try:
 			current_fee_quarter = Fee(
 				human = human,
