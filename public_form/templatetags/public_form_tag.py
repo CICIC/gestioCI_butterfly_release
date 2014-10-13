@@ -49,15 +49,15 @@ class sessions_tag_node(template.Node):
 		from Welcome.models import Learn_Session
 
 		if obj.GET.has_key("learn_session_id"):
-			current_session = Learn_Session.objects.get( id=obj.GET["learn_session_id"] ) 
+			current_session = Learn_Session.objects.filter(id=obj.GET["learn_session_id"]).first()
 
 		if obj.GET.has_key("human_id"):
 			from General.models import Human, Project
-			current_human = Human.objects.get( id=obj.GET["human_id"] ) 
+			current_human = Human.objects.filter(id=obj.GET["human_id"] ).first()
 
 		if obj.GET.has_key("coin_session_id"):
 			from General.models import Human, Project
-			current_coin_session = Learn_Session.objects.get( id=obj.GET["coin_session_id"] ) 
+			current_coin_session = Learn_Session.objects.filter(id=obj.GET["coin_session_id"]).first()
 
 		if current_human and current_human.assist_sessions.filter(nonmaterial__id = 1).count()>0:
 			current_session = current_human.assist_sessions.filter(nonmaterial__id = 1).first()
