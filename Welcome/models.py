@@ -872,13 +872,22 @@ class iC_Self_Employed(iC_Record):
 		link = "<a %s href='%s'>%s</a>"  % (delete_class, url, delete_caption)
 		return link.encode("utf-8")
 
-	def _render_address_field(self, label, field):
+	def _render_address_field(self, label, field, required=False):
 		try:
-			return "<li>%s: %s </li>" % (label.encode("utf-8"), field.encode("utf-8"))
+			if field.encode("utf-8"):
+				return "<li>%s: %s </li>" % (label.encode("utf-8"), field.encode("utf-8"))
+			else:
+				if required:
+					return "<li>%s: %s </li>" % (label.encode("utf-8"), ico_no )
+				else:
+					return "<li>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
 		except:
-			return "<li>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
+			if required:
+				return "<li>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
+			else:
+				return "<li>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
 
-	def _render_address_foreign(self, adr, slug, foreign, label, type):
+	def _render_address_foreign(self	, adr, slug, foreign, label, type):
 		if foreign.count() > 0:
 			output = self._get_contract_link_change( foreign[0], slug, label )
 		else:
@@ -891,8 +900,8 @@ class iC_Self_Employed(iC_Record):
 
 		output += self._render_address_field( _(u"Adreça"), adr.p_address )
 		output += self._render_address_field( _(u"Població"), adr.town )
-		output += self._render_address_field( _(u"CP"), adr.postalcode )
-		output += self._render_address_field( _(u"Co‌marca"), adr.region.name if adr.region else adr.region )
+		output += self._render_address_field( _(u"CP"), adr.postalcode, True )
+		output += self._render_address_field( _(u"Co‌marca"), adr.region.name if adr.region else adr.region, True)
 		output += self._render_address_field( _(u"Ubicació específica"), str(adr))
 
 		foreign = self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas= "contract_use")
@@ -1013,7 +1022,6 @@ class iC_Self_Employed(iC_Record):
 	_rel_images.short_description = ''
 
 	def validate_adr(self, adr):
-		import pdb; pdb.set_trace()
 		link = "%saddress/%s%s'> %s </a>" % (general_href, adr.id, self._get_next(), change_caption)
 		out = ""
 		if adr.postalcode is None or adr.postalcode == '':
