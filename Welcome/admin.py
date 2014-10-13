@@ -346,7 +346,9 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	form = SelfEmployedForm
 
 	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_akin_members')
+						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', 
+						'_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', 
+						'_user_member', '_akin_members')
 
 	raw_id_fields = ('mentor_membership', 'ic_membership', 'rel_fees', 'rel_address_contracts', 'rel_licences', 'rel_insurances')
 
@@ -423,7 +425,11 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
 		if db_field.name == 'rel_fees':
 			kwargs['queryset'] = Fee.objects.filter(record_type__parent__clas='quarterly_fee')
-
+		elif db_field.name == 'mentor_mentorship':
+			#TODO: show persons of membership
+			#https://wiki.enredaos.net/index.php?title=Talk:CICICdev_butterfly_rev/11102014#I.29_ALTA_PROJECTE_AUTOOCUPAT / .18
+			#typ = iC_Record_Type.objects.get(clas='Fee')
+			#kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 		return super(Public_SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class SelfEmployedAdmin(Public_SelfEmployedAdmin):
