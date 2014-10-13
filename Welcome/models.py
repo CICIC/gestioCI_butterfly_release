@@ -757,19 +757,40 @@ class iC_Self_Employed(iC_Record):
 	_join_fee.allow_tags = True
 	_join_fee.short_description = ''
 
-	def _get_label_error(self, caption):
-		return str("<font style='color:red;'> %s </font>" % ( caption.encode("utf-8") ))
+	def _get_label_error(self, caption, field):
+		str_out = ""
+		if field:
+			str_out = field
+			print "valor ok"
+			print field
+		else:
+			print "vacio!"
+			str_out = "<font style='color:red'>" + caption.encode("utf-8") + "</font>"
+			print str_out
+		print "-----"
+		return str_out
 
 	def _render_person(self, rel):
 		out = ""
 		if hasattr(rel, 'person'):
-			c = "[%s]" % ( str(rel.person.id_card) if rel.person.id_card else self._get_label_error(__("Falta DNI/NIF")))
-			s = "%s" % ( "" if rel.person.surnames else self._get_label_error(__("[Falten cognoms]")) )
-			m = "[%s]" % (rel.person.email if rel.person.email else self._get_label_error(__("Falta email")))
-			tc = "[%s]" % (str(rel.person.telephone_cell) if rel.person.telephone_cell else self._get_label_error(__(u"Telèfon mòbil")))
-			tl = "%s" % (str("["+rel.person.telephone_land+"]") if rel.person.telephone_land else "")
-			fields = "%s %s %s %s %s" % ( c, s.decode("utf-8"), m, tc, tl)
-			out = "<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>" % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), mark_safe( str(fields) ) )
+			c = self._get_label_error(__(" [Falta DNI/NIF] "),rel.person.id_card)
+			s = self._get_label_error(__(" [Falten cognoms] "),rel.person.surnames)
+			m = self._get_label_error(__(" [Falta email] "),rel.person.email)
+			tc = self._get_label_error(__(u" [Falta el telèfon mòbil] "),str(rel.person.telephone_cell))
+			tl = self._get_label_error("",str(rel.person.telephone_land))
+
+			fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc, tl)
+			out_str ="<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>"
+			try:
+				out = out_str % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields.decode("utf-8") )
+			except:
+				out = out_str % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields )
+			print "render function: " + out
+			print ">>>"
+			if out:
+				return out
+			else:
+				out = out
 		return out
 
 	def _akin_members(self):
