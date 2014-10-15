@@ -371,11 +371,12 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					('_rel_fees',),
 					('_akin_members'),
 					('print_task_list'),
-					('_has_assisted_socialcoin',))# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
+					)# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
 		}),
 		(_(u"Fase 3:  Moneda social i Alta"), {
 			'classes': ('welcome',),
 			'fields': (
+				('_has_assisted_socialcoin',),
 				('mentor_membership', 'mentor_comment',),
 				('ic_CESnum',),
 				('join_date', ),
@@ -509,11 +510,12 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 					('_rel_fees',),
 					('_akin_members'),
 					('print_task_list'),
-					('_has_assisted_socialcoin',))
+					)
 		}),
 		(_(u"Fase 3:  Moneda social i Alta"), {
 			'classes': ('welcome',),
 			'fields': (
+				('_has_assisted_socialcoin',),
 				('rel_images', '_rel_images' ),
 				('mentor_membership', 'mentor_comment',),
 				('ic_CESnum',),
