@@ -1152,7 +1152,7 @@ def save_form_self_employed(request):
 	current_human = get_current_human_or_none(request)
 	current_session = get_current_session_or_none(request, "current_session")
 	current_coin_session = get_current_session_or_none(request, "current_coin_session")
-	import pdb; pdb.set_trace()
+
 	if not request.POST:
 		return HttpResponseRedirect(get_url_for(current_human, current_session))
 
