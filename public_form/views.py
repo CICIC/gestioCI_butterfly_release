@@ -918,7 +918,7 @@ def apply_join_session(request, current_human, current_session):
 		messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 
 def get_url_for (current_human, current_session, current_coin_session = None):
-	callback_url = "/cooper/public_form/human_proxy/"
+	callback_url = "/admin/public_form/human_proxy/"
 	output = ""
 	if current_human and current_session:
 		output =  "%s?human_id=%s&learn_session_id=%s" % (callback_url, current_human.id,current_session.id)
@@ -931,6 +931,8 @@ def get_url_for (current_human, current_session, current_coin_session = None):
 				output = "%s?coin_session_id=%s" % (callback_url, current_coin_session.id)
 			else:
 				output += "&coin_session_id=%s" % (current_coin_session.id)
+	else:
+		output = callback_url
 	return output
 
 '''
@@ -1150,14 +1152,22 @@ def save_form_self_employed(request):
 	current_human = get_current_human_or_none(request)
 	current_session = get_current_session_or_none(request, "current_session")
 	current_coin_session = get_current_session_or_none(request, "current_coin_session")
-
+	import pdb; pdb.set_trace()
 	if not request.POST:
 		return HttpResponseRedirect(get_url_for(current_human, current_session))
 
-	if request.POST.has_key("public_form_action"):
-		current_human = get_current_human_or_none(request)
-		current_session = get_current_session_or_none(request)
-
+	if request.POST["public_form_action"] ==  "public_form_action_save_membership":
+		from public_form.forms import public_form_self_admin
+		form = public_form_self_admin(request.POST)
+		if not form.is_valid():
+			for err in form.errors:
+				if err != "organic":
+					error_text = str(form.fields[err].label.encode("utf-8")) + ": " + _(u"Aquest camp es obligatori").encode("utf-8")
+					messages.error(request, error_text)
+			try:
+				return HttpResponseRedirect(get_url_for(current_human, None))
+			except:
+				return HttpResponseRedirect(get_url_for(None, None))
 	if request.POST["public_form_action"] == "public_form_action_join_session":
 		apply_join_session(request, current_human, current_session)
 		return HttpResponseRedirect(get_url_for(current_human, current_session))

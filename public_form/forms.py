@@ -34,7 +34,7 @@ class learn_session_proxy_form(forms.ModelForm):
 		fields = ( "datetime", )
 from Welcome.models import TentType_list
 class public_form_self_admin(forms.ModelForm):
-	description = forms.CharField( widget=forms.Textarea, label=_(u"Descripció projecte") )
+	description = forms.CharField( widget=forms.Textarea, label=_(u"Descripció projecte"), required=True )
 
 	CHOICES = (
 		('31', _(u'Autoocupat'),),
@@ -45,7 +45,7 @@ class public_form_self_admin(forms.ModelForm):
 		('1', _(u'Individual'),),
 		('2', _(u'Col·lectiu'),),
 	)
-	project_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES, label=_(u"Tipus de projecte"), required=True)
+	project_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES, label=_(u"Tipus de soci"), required=True)
 	project_subtype = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES_sub, label=_(u"Tipus de projecte"), required=True)
 	organic = forms.BooleanField(label=_(u"Productes ecològics") )
 
