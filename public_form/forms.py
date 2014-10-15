@@ -9,13 +9,7 @@ class human_proxy_form(forms.ModelForm):
 
 	attrs_dict = {'class': 'required'}
 
-	name = forms.RegexField(regex=r'^[ \w.@+-]+$',
-							max_length=100,
-							widget=forms.TextInput(),
-							label=_("Nom projecte"),
-							required=True,
-							error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-
+	name = forms.CharField( max_length=200, widget=forms.TextInput(),label=_("Nom projecte"),required=True)
 	email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict, max_length=100)), label=_("Correu-e projecte"))
 	telephone_cell = ESPhoneNumberField( label=_(u"Telèfon mòbil projecte") )
 	telephone_land = ESPhoneNumberField( label=_(u"Telèfon fix projecte"), required=False )
