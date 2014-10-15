@@ -189,7 +189,7 @@ class Fee(iC_Record):
 	def __init__(self, *args, **kwargs):
 		super(Fee, self).__init__(*args, **kwargs)
 		if not hasattr(self, 'project') or self.project is None or self.project == '':
-			self.project = Project.objects.get(nickname='CIC')	# if empty, put generic ic_record_type for project membership
+			self.project = Project.objects.get(nickname='CIC')# if empty, put generic ic_record_type for project membership
 		#print 'INIT'
 		#print args
 		#print kwargs
@@ -200,12 +200,16 @@ class Fee(iC_Record):
 				self._auto_amount()
 
 	def _auto_amount(self):
+
 		if self.record_type.clas.startswith('(') and self.unit is not None:
 
 			arr = self.record_type.clas.split(' ')[0].strip('()').split('_')
 			if arr[0].isdigit():
-				uni = Unit.objects.filter(code=arr[1])
-				if uni.count() == 1:
+				uni = Unit.objects.filter(code__iexact=arr[1])
+				if not uni:
+					uni = Unit.objects.filter(name__iexact=arr[1])
+				
+				if uni:
 					eqi = UnitRatio.objects.filter(in_unit=uni.first(), out_unit=self.unit)
 					rate = 1
 					if eqi.count() == 0:
