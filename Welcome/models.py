@@ -767,13 +767,8 @@ class iC_Self_Employed(iC_Record):
 		str_out = ""
 		if field:
 			str_out = field
-			print "valor ok"
-			print field
 		else:
-			print "vacio!"
 			str_out = "<font style='color:red'>" + caption.encode("utf-8") + "</font>"
-			print str_out
-		print "-----"
 		return str_out
 
 	def _render_person(self, rel):
@@ -893,9 +888,14 @@ class iC_Self_Employed(iC_Record):
 			else:
 				return "<li>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
 
-	def _render_address_foreign(self	, adr, slug, foreign, label, type):
+	def _render_address_foreign(self, adr, slug, foreign, label, type, is_address = False, is_license= False):
 		if foreign.count() > 0:
-			output = self._get_contract_link_change( foreign[0], slug, label )
+			status = ""
+			if is_address:
+				status = foreign[0]._min_addrcontract_data()
+			if is_license:
+				status = foreign[0]._min_licence_data()
+			output = self._get_contract_link_change( foreign[0], slug, label ) + status
 		else:
 			output = self._get_contract_link_add( adr, label, type)
 		return output
@@ -911,13 +911,13 @@ class iC_Self_Employed(iC_Record):
 		output += self._render_address_field( _(u"Ubicació específica"), str(adr))
 
 		foreign = self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas= "contract_use")
-		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió d'ús: "), 0)
+		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió d'ús: "), 0, True)
 
 		foreign = self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas= "contract_hire")
-		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió de lloguer: "), 1)
+		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió de lloguer: "), 1, True)
 
 		foreign =  self.rel_licences.filter(rel_address=adr)
-		output += self._render_address_foreign( adr, 'ic_licence', foreign, _(u"Llicència d'activitat: "), 2)
+		output += self._render_address_foreign( adr, 'ic_licence', foreign, _(u"Llicència d'activitat: "), 2, False, True)
 
 		output += "<li>%s %s</li>" % ( self._get_address_link_change(adr), self._get_address_link_delete(adr) )
 
