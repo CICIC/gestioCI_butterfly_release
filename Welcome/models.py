@@ -999,9 +999,9 @@ class iC_Self_Employed(iC_Record):
 	def _rel_insurances(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
 		insus = self.rel_insurances.all()
 		out = ul_tag
-		job = adr = ''
 		if insus.count() > 0:
 			for ins in insus:
+				job = adr = ''
 				if ins.rel_job:
 					job = ins.rel_job.name
 				if ins.rel_address:
