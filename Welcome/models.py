@@ -1137,7 +1137,7 @@ class iC_Self_Employed(iC_Record):
 class iC_Stallholder(iC_Self_Employed):	# Firaire
 	ic_self_employed = models.OneToOneField('iC_Self_Employed', primary_key=True, parent_link=True)
 	#req_photos = models.SmallIntegerField(default=1, verbose_name=_(u"Requereix fotos?"))
-	
+
 	tent_type = models.CharField(max_length=5, choices=TentType_list, blank=True, null=True, verbose_name=_(u"Tipus de carpa"))
 
 	class Meta:
