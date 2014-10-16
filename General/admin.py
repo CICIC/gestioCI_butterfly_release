@@ -489,7 +489,7 @@ class H_membership_Inline(admin.StackedInline):
 	extra = 0
 	fk_name = 'human'
 	readonly_fields = ('_self_link', '_ic_selfemployed_list_extended', '_akin_members')
-	fields = ('_self_link', '_ic_selfemployed_list_extended', 'virtual_market', 'expositors', '_akin_members', 'ic_company')
+	fields = ('ic_CESnum', '_self_link', '_ic_selfemployed_list_extended', 'virtual_market', 'expositors', '_akin_members', 'ic_company')
 	def has_delete_permission(self, request, obj=None):
 		return False
 	def has_add_permission(self, request, obj=None):
