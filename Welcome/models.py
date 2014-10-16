@@ -190,13 +190,8 @@ class Fee(iC_Record):
 		super(Fee, self).__init__(*args, **kwargs)
 		if not hasattr(self, 'project') or self.project is None or self.project == '':
 			self.project = Project.objects.get(nickname='CIC')# if empty, put generic ic_record_type for project membership
-		#print 'INIT'
-		#print args
-		#print kwargs
 		if hasattr(self, 'record_type') and self.record_type is not None:
 			if self.record_type.clas.startswith('(') and self.unit is not None:
-				#pass
-				#print 'Fee INIT: has record_type, call _auto_amount()'
 				self._auto_amount()
 
 	def _auto_amount(self):
