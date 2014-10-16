@@ -494,8 +494,8 @@ class H_membership_Inline(admin.StackedInline):
 		return False
 	def has_add_permission(self, request, obj=None):
 		return False
-	verbose_name = _("Altes")
-	verbose_name_plural = ""
+	verbose_name = _("Registre de soci")
+	verbose_name_plural = _(u"Dades dels registres d'alta")
 
 	def _render_person(self, rel):
 		out = ""
