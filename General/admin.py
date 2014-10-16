@@ -875,6 +875,7 @@ class RecordAdmin(admin.ModelAdmin):
 class AccountCesAdmin(AutoNameMixin):
 	model = AccountCes
 	list_display = ['name', 'human', 'entity', 'code', 'number', 'unit']
+	raw_id_fields = ('human',)
 	fieldsets = (
 		(' ', {
 			'fields':
@@ -893,6 +894,7 @@ class AccountCesAdmin(AutoNameMixin):
 
 class AccountBankAdmin(AutoNameMixin):
 	model = AccountBank
+	raw_id_fields = ('human',)
 	list_display = ['name', 'human', 'company', 'code', 'number', 'unit']
 	fieldsets = (
 		(' ', {
@@ -909,6 +911,7 @@ class AccountBankAdmin(AutoNameMixin):
 
 class AccountCryptoAdmin(AutoNameMixin):
 	model = AccountCrypto
+	raw_id_fields = ('human',)
 	list_display = ['name', 'human', 'number', 'unit']
 	fieldsets = (
 		(' ', {
