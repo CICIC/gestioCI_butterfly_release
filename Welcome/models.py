@@ -444,7 +444,7 @@ class iC_Membership(iC_Record):
 				self_employed_data = ""
 				if extended and stallholder is not None:
 					organic = _(u"Sí").encode("utf-8") if rec.organic else _("No").encode("utf-8")
-					self_employed_data = _(u"Productes ecològics").encode("utf-8") +  organic
+					self_employed_data = _(u"Productes ecològics: ").encode("utf-8") +  organic
 					stallholder_data = _(u"Tipus de carpa: ").encode("utf-8") + stallholder.get_tent_type_display()
 
 				out += '<li>%sic_self_employed/%s%s<b>%s</b> </a> <br>%s<br> %s</li>' % (a_strW, str(rec.id), a_str3, caption, self_employed_data, stallholder_data.encode("utf-8"))
@@ -480,7 +480,9 @@ class iC_Membership(iC_Record):
 
 	def _self_link(self):
 		if self.id:
-			return "<ul><li>%sic_membership/%s'>%s</a></li></ul>" % (a_strW, str(self.id), self)
+			project_type = _(u"Col·lectiu").encode("utf-8") if self.record_type.clas == "iC_Project_Membership" else _("Individual").encode("utf-8")
+			project_type = _(u"Tipus de projecte: ").encode("utf-8") + project_type
+			return "<ul><li>%sic_membership/%s'>%s</a></li><li>%s</li></ul>" % (a_strW, str(self.id), self, project_type)
 		else:
 			return _("(Cap)")
 	_self_link.allow_tags = True
