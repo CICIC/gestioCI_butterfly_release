@@ -38,10 +38,10 @@
 			membership( $( "#record_type_id" ).val() );
 		}
 
-		$( ".ui-tabs" ).tabs();
-		$( ".ui-tabs" ).show();
+		//$( ".ui-tabs" ).tabs();
+		//$( ".ui-tabs" ).show();
 
-
+		membership(7);
 	} )
 }) (django.jQuery);
 
