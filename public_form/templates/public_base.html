@@ -52,7 +52,7 @@
     <!-- END Header -->
     {% block breadcrumbs %}
     <div class="breadcrumbs">
-	<a href="/admin/public_form/human_proxy">{% trans "Anar a la Pàgina d'entrada admin (acollida)" %}</a>
+	<!--<a href="/admin/public_form/human_proxy">{% trans "Anar a la Pàgina d'entrada admin (acollida)" %}</a>-->
     {% if title %} &rsaquo; {{ title }}{% endif %}
     </div>
     {% endblock %}
@@ -69,7 +69,7 @@
     <!-- Content -->
     <div id="content" class="{% block coltype %}colM{% endblock %}">
         {% block pretitle %}<!--<p>{% trans "Què puc fer en aquesta pàgina?" %}</p>-->{% endblock %}
-        {% block content_title %}<!--<p><i>{% trans "Seleccionar pestanya. Fer click als links de la creu verda (Nou) i/o del llàpis (Modificar) per accedir a les opcions.</p><p>Nota per revisadors: Les lletres en vermell son per usuaris i membres; les lletres en verd per admin." %}</i></p> </h1>-->{% if title %}<h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>{% endif %}{% endblock %}
+        {% block content_title %}<a href="http://cooperativa.cat">cooperativa.cat</a> | <a href="">F.A.Q</a><!--<p><i>{% trans "Seleccionar pestanya. Fer click als links de la creu verda (Nou) i/o del llàpis (Modificar) per accedir a les opcions.</p><p>Nota per revisadors: Les lletres en vermell son per usuaris i membres; les lletres en verd per admin." %}</i></p> </h1>-->{% if title %}<h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>{% endif %}{% endblock %}
         {% block content %}
         {% block object-tools %}{% include "entry_page_to_gestioCI_.html" %}{% endblock %}
         {{ content }}
