@@ -78,41 +78,21 @@ class project_form(forms.ModelForm):
 	class Meta:
 		model = Project
 		exclude = ()
-class create_membership_form(forms.ModelForm):
-	'''
-	CHOICES_PERSON = (
-		("anonymous", _(u'Anònim (No omplirè dades persona)')),
-		("public", _(u'Persona (Omplirè dades de persona)')),
-	)
-	# Create field with loaded choices-------------------------------------------------
-	type_person = forms.ChoiceField(
-		widget=forms.RadioSelect,
-		choices=CHOICES_PERSON,
-		label=_(u"Tipus de persona"),
-		localize=True, required=True)
-	'''
 
-	#Menú choices-----------------------------------------------------------------------
-	'''
-	typ = iC_Record_Type.objects.get(clas='iC_Membership')
-	types = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght)
-	CHOICES = ()
-	for type in types:
-		print type.id
-		CHOICES = CHOICES + ( ( type.id, type.name) ,)
-	'''
+class create_membership_form(forms.ModelForm):
+
 	from Welcome.models import iC_Record_Type
 	from Welcome.models import iC_Type
 	choice_one = iC_Record_Type.objects.get(clas="iC_Akin_Membership")
 	choice_two = iC_Record_Type.objects.get(clas="iC_Person_Membership")
 	choice_three = iC_Record_Type.objects.get(clas="iC_Project_Membership")
+
 	CHOICES = (
 		(choice_one.id, choice_one.name),
 		(choice_two.id, choice_two.name),
 		(choice_three.id, choice_three.name),
 	)
 
-	# Create field with loaded choices-------------------------------------------------
 	type = forms.ChoiceField(
 		widget=forms.RadioSelect,
 		choices=CHOICES,
@@ -129,59 +109,13 @@ class create_membership_form(forms.ModelForm):
 								max_length=100)),
 							  label=_("E-mail"))
 
-	password1 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
-								label=_("Password"))
+	password1 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),label=_("Password"))
 
-	password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
-								label=_("Password (again)"))
-
-	name = forms.RegexField(regex=r'^[ \w.@+-]+$',
-								max_length=50,
-								widget=forms.TextInput(),
-								label=_("Nom real"),
-								required=False,
-								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-
-	project_name = forms.RegexField(regex=r'^[\w.@+-]+$',
-								max_length=100,
-								widget=forms.TextInput(),
-								label=_("Nom del projecte"),
-								required=False,
-								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-
-	project_website = forms.RegexField(regex=r'^[\w.@+-]+$',
-								label=_("Web del projecte"),
-								max_length=100,
-								widget=forms.TextInput(),
-								required=False,
-								error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+	password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),label=_("Password (again)"))
 
 	from django.contrib.admin import VERTICAL
 	radio_fields = {"type": VERTICAL}
 
-	def clean_nickname(self):
-		print "#Clean nickname---------------------------------------------------------------"
-		if self.cleaned_data.get("nickname") is None:
-			return self.cleaned_data.get("username")
-		return self.cleaned_data.get("nickname")
-
-	def clean_name(self):
-		#print 'NAME: '+str(self.cleaned_data['name'])
-		if self.cleaned_data.get("name") is None or self.cleaned_data.get("name") == '':
-			print 'Clean_Person_Name: A N O N Y M O U S ? '+str(self.cleaned_data)
-			return "anonymous"
-		else:
-			#self.cleaned_data['name'] = self.cleaned_data.get("person_name")
-			#print 'Clean_Person_Name: '+str(self.cleaned_data.get("person_name"))
-			return self.cleaned_data.get("name")
-	'''
-	def clean_project_name(self):
-		print "#Clean project_name---------------------------------------------------------------"
-		if self.cleaned_data.get("project_name") is None or self.cleaned_data.get("project_name") == '':
-			print 'Clean_Project_Name: A N O N Y M O U S'
-			return "anonymous"
-		return self.cleaned_data.get("project_name")
-	'''
 	def clean_username(self):
 		from django.contrib.auth.models import User
 		existing = User.objects.filter(username__iexact=self.cleaned_data['username'])
@@ -204,4 +138,4 @@ class create_membership_form(forms.ModelForm):
 
 	class Meta:
 		model = Person
-		fields = ("type", "username", "email", "id_card", "name", "surnames", "nickname", "telephone_land", "telephone_cell") #Do not remove!!, aleph (29/08/2014)
+		fields = ("type", "username", "email", )

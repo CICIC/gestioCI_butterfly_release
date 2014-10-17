@@ -38,7 +38,7 @@
 					</table>
 				</div>
 				<br>
-				<div id="public_section" class="form-row">
+				<!--<div id="public_section" class="form-row">
 					<h3>{% trans "Dades persona" %}</h3>
 					<table>
 						<tr><th>{{form.nickname.label_tag}}</th><td>{{form.nickname}}{{form.nickname.errors}}</td><td rowspan="6">{{profile_person}}</td></tr>
@@ -56,12 +56,12 @@
 						<tr><th>{{form.project_name.label_tag}}</th><td>{{form.project_name}}{{form.project_name.errors}}</td><td rowspan="2">{{profile_project}}</td></tr>
 						<tr><th>{{form.project_website.label_tag}}</th><td>{{form.project_website}}{{form.project_website.errors}}</td></tr>
 					</table>
-				</div>
+				</div>-->
 				<input type="submit" value="{% trans 'Envia el formulari' %}" /><br><p>{% trans tag_send %}</p>
-				<div id="actions_section">
+				<!--<div id="actions_section">
 					<br>
 
-				</div>
+				</div>-->
 			</div>
 			<br>
 			{% csrf_token %}

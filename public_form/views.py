@@ -587,10 +587,10 @@ def create_membership(request, record_type_id=4):
 
 	if request.user.is_anonymous:
 		current_user = _(u"Omple el formulari de dades d'usuari")
-	if not current_project:
+	'''if not current_project:
 		current_project = _(u"Omple el formulari de dades de projecte")
 	if not current_person:
-		current_person = _(u"Omple el formulari de dades de persona")
+		current_person = _(u"Omple el formulari de dades de persona")'''
 	foot_content = ""
 	if request.POST:
 
@@ -599,19 +599,20 @@ def create_membership(request, record_type_id=4):
 		if form.is_valid():
 			record_type_id = request.POST["type"]
 
+
 			from Welcome.models import Person
 			current_person = form.save()
-			current_person.name = form.cleaned_data.get("name")
-			current_person.nickname = form.cleaned_data.get("nickname")
+			current_person.name = form.cleaned_data.get("username")
+			current_person.nickname = form.cleaned_data.get("username")
 			current_person.save()
 
 			from Welcome.models import iC_Record_Type
 			from Welcome.models import Project
-			if str(record_type_id) == str(iC_Record_Type.objects.get(clas="iC_Project_Membership").id):
+			'''if str(record_type_id) == str(iC_Record_Type.objects.get(clas="iC_Project_Membership").id):
 				current_project = Project(name=form.cleaned_data.get("project_name"), website=form.cleaned_data.get("project_website"))
 				current_project.save()
 			else:
-				current_project = Project()
+				current_project = Project()'''
 
 			from public_form.bots import user_registration_bot
 			urb = user_registration_bot()
@@ -645,8 +646,7 @@ def create_membership(request, record_type_id=4):
 	message_desc = ""
 	if current_registration and not request.user.is_anonymous() and not request.user.is_active:
 		user_url = current_registration.get_activation_url()
-	print "dsgsdgsdgsd"
-	print user_url
+
 	if user_url:
 		url = " <a href='" + current_registration.get_activation_url() + "'>" + "Enllaç d'activació" + "</a>  per fer trampes em comptes d'utilitzar l'enllaç que hem enviat al teu correu electrònic."
 		profile_desc = _(u"Usuari pendent d'activació.")
@@ -673,7 +673,7 @@ def create_membership(request, record_type_id=4):
 	context = RequestContext(request)
 	for key, value in extra_context.items():
 		context[key] = callable(value) and value() or value
-	print "#Render form -----------------------------------------------------------------"
+
 	return render_to_response(
 		'create_membership.html',
 		{'form': form},
