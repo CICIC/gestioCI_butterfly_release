@@ -736,7 +736,7 @@ class iC_Self_Employed(iC_Record):
 			return out+'</ul>'
 		return str_none
 	_rel_fees.allow_tags = True
-	_rel_fees.short_description = ''#_(u"contractes?")
+	_rel_fees.short_description = _(u"Quota avançada")
 
 	def _join_fee(self):
 		fee = self.ic_membership.join_fee
@@ -760,7 +760,7 @@ class iC_Self_Employed(iC_Record):
 			return out+'</ul>'
 		return str_none
 	_join_fee.allow_tags = True
-	_join_fee.short_description = ''
+	_join_fee.short_description = _(u"Quota d'alta")
 
 	def _get_label_error(self, caption, field):
 		str_out = ""
