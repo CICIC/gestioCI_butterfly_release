@@ -589,10 +589,6 @@ class iC_Project_Membership(iC_Membership):
 	_selflink.allow_tags = True
 	_selflink.short_description = ''
 
-def print_XIPU(self):
-
-def print_Inter(self):
-
 class iC_Self_Employed(iC_Record):
 
 	ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
@@ -1102,16 +1098,16 @@ class iC_Self_Employed(iC_Record):
 
 			company_slug = self.ic_membership.ic_company.name
 
-			url = "/media/CIF_" + company_slug + ".xls"
-			text = _("Imprimir CIF").encode("utf-8") + " " + company_slug
-			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+			url = "/media/CIF_" + company_slug + ".pdf"
+			text = _("CIF").encode("utf-8") + " " + company_slug
+			link = "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			url = "/media/modelfactura_" + company_slug + ".xls"
-			text = _("Imprimir model de factura").encode("utf-8") + " " + company_slug
+			text = _("Model de factura").encode("utf-8") + " " + company_slug
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			url = reverse("Welcome:print_certificate", args=(self.id, 0, company_slug))
-			text = _("Imprimir certificat local").encode("utf-8")
+			text = _(" Model certificat autoocupats").encode("utf-8")
 			link += "<br><a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			return link
@@ -1159,24 +1155,24 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 
 			company_slug = self.ic_membership.ic_company.name
 
-			url = "/media/CIF_" + company_slug + ".xls"
-			text = _("Imprimir CIF").encode("utf-8") + " " + company_slug
-			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+			url = "/media/CIF_" + company_slug + ".pdf"
+			text = _("CIF").encode("utf-8") + " " + company_slug
+			link = "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			url = "/media/modelfactura_" + company_slug + ".xls"
-			text = _("Imprimir model de factura").encode("utf-8") + " " + company_slug
+			text = _("Model de factura").encode("utf-8") + " " + company_slug
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
-			url = "/media/iae_stallholder.jpg"
-			text = _("Imprimir IAE venda ambulant").encode("utf-8")
+			url = "/media/iae_stallholder.pdf"
+			text = _("IAE venda ambulant").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
-			url = "/media/iae_stallholder1.jpg"
-			text = _("AE venda ambulant d'aliments").encode("utf-8")
+			url = "/media/iae_stallholder1.pdf"
+			text = _("IAE venda ambulant d'aliments").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			url = reverse("Welcome:print_certificate", args=(self.id, 10, company_slug))
-			text = _("Imprimir certificat fires").encode("utf-8")
+			text = _("Model certificat firaires").encode("utf-8")
 			link += "<br><a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			return link

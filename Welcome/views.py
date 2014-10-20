@@ -294,7 +294,8 @@ def print_certificate(request, icse, type, cooperative):
 		template = 'certificate_' + cooperative + '.html' if type=="0" else 'certificate_stallholder_' + cooperative + '.html'
 
 	html = render_to_string( template, {'obj': obj})
-	return render_pdf(html.encode("utf-8"))
+
+	return render_pdf(html.encode("utf-8"), request)
 
 import ho.pisa as pisa
 import cStringIO as StringIO
@@ -303,10 +304,16 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 
-def render_pdf(html):
-	import pdb;pdb.set_trace()
+
+def get_full_path_x(request):
+    full_path = ('http', ('', 's')[request.is_secure()], '://',
+    request.META['HTTP_HOST'], request.path)
+    return ''.join(full_path)
+	
+def render_pdf(html, request):
+	path = get_full_path_x(request)
 	result = StringIO.StringIO()
-	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result)
+	pdf = pisa.pisaDocument(StringIO.StringIO(html), result, link_callback=path)
 	if not pdf.err:
 		return HttpResponse(result.getvalue(), content_type='application/pdf')
 	return HttpResponse(_(u'Error al generar el PDF: %s') % cgi.escape(html))

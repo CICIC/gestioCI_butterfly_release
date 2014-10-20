@@ -1,20 +1,22 @@
+<html>
 {% load admin_static %}
+	<body>
+		<p>Barcelona, {{obj.date}}</p>
 
-<p>Barcelona, {{obj.date}}</p>
+		<p>Joan Josep Mart&iacute;nez Solana, amb DNI 36937731F com a secretari del Consell Rector de Xarxa Integral de Professionals i Usu&agrave;ries SCCL amb CIF F65343287,  certifica que les seg&uuml;ents persones s&oacute;n s&ograve;cies de la cooperativa:</p>
+			{{obj.persons}}
 
-<p>Joan Josep Mart&iacute;nez Solana, amb DNI 36937731F com a secretari del Consell Rector de Xarxa Integral de Professionals i Usu&agrave;ries SCCL amb CIF F65343287,  certifica que les següentes persones s&oacute;n s&ograve;cies de la cooperativa:</p>
-	{{obj.persons}}
+		<p></p>
 
-<p></p>
+		<P> Aix&iacute; mateix, certifica que estan autoritzades per participar en fires i mercats amb artesania i alimentaci&oacute; en representaci&oacute; d'aquesta cooperativa, en qualitat de s&ograve;cies volunt&agrave;ries, aix&iacute; com participar en qualsevol activitat d'acord amb els seus estatuts.</p>
 
-<P> Aix&iacute; mateix, certifica que estan autoritzades per participar en fires i mercats amb artesania i alimentaci&oacute; en representaci&oacute; d'aquesta cooperativa, en qualitat de s&ograve;cies volunt&agrave;ries, aix&iacute; com participar en qualsevol activitat d'acord amb els seus estatuts.</p>
+		<p>I perqu&egrave; aix&iacute; consti, es lliura la present certificaci&oacute;,</p>
 
-<p>I perqu&egrave; aix&iacute; consti, es lliura la present certificaci&oacute;,</p>
+		<p><img alt="image" width="200" height="150" src="signature_XIPU.jpg"></p>
 
-<p><img width="400" src="{% static 'signature_XIPU.jpg' %}"></p>
-
-<p>Joan Josep Mart&iacute;nez Solana
-Secretari Consell Rector
-Xarxa Integral de Professionals i Usu&agrave;ries, SCCL</p>
-
+		<p>Joan Josep Mart&iacute;nez Solana
+		Secretari Consell Rector
+		Xarxa Integral de Professionals i Usu&agrave;ries, SCCL</p>
+	</body>
+</html>
 
