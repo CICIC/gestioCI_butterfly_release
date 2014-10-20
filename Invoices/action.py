@@ -33,7 +33,7 @@ class bot_exporter(object):
 			excludeset = set(self.exclude)
 			field_names = field_names - excludeset
 
-		response = HttpResponse(mimetype='text/csv')
+		response = HttpResponse(content_type='text/csv')
 		response['Content-Disposition'] = 'attachment; filename=%s.csv' % unicode(opts).replace('.', '_')
 
 		writer = csv.writer(response)

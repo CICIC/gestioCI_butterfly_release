@@ -8,6 +8,7 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
+
 def public_form(request):
 	# Get the context from the request.
 	context = RequestContext(request)
@@ -108,7 +109,6 @@ def public_view_company(request):
 	# Bad form (or form details), no form supplied...
 	# Render the form with error messages (if any).
 	return render_to_response('public_form.html', {'form': form}, context)
-
 
 '''
 type = 0 => address_contract ==> cessió (contract_use)
@@ -250,7 +250,7 @@ def print_task_list(request, icse):
 		obj.quarter_fee = current_icse.rel_fees.all()[0]
 	from django.conf.urls.static import static
 	html = render_to_string( 'task_list.html', {'obj': obj})
-	return render_pdf(html.encode("utf-8"))
+	return render_pdf(html)
 
 @login_required
 def print_certificate(request, icse, type):
@@ -312,13 +312,11 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse
 
 def render_pdf(html):
-	print html
-	return HttpResponse(html)
+	import pdb;pdb.set_trace()
 	result = StringIO.StringIO()
 	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result)
 	if not pdf.err:
-		print result.getvalue()
-		return HttpResponse(result.getvalue(), mimetype='application/pdf')
+		return HttpResponse(result.getvalue(), content_type='application/pdf')
 	return HttpResponse(_(u'Error al generar el PDF: %s') % cgi.escape(html))
 
 	'''
@@ -348,6 +346,7 @@ def render_pdf(html):
 	'''
 	switch case human:
 	case person:
+	
 		reverse = 'General:Public_PersonAdmin'
 	case company:
 		reverse = 'General:Public_CompanyAdmin'

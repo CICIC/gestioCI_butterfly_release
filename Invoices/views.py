@@ -46,6 +46,6 @@ def render_pdf(html):
 	result = StringIO.StringIO()
 	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result)
 	if not pdf.err:
-		return HttpResponse(result.getvalue(), mimetype='application/pdf')
+		return HttpResponse(result.getvalue(), content_type='application/pdf')
 	return HttpResponse(_(u'Error al generar el PDF: %s') % cgi.escape(html))
 
