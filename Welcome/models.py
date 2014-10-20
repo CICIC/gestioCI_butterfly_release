@@ -553,7 +553,6 @@ class iC_Person_Membership(iC_Membership):
 	_selflink.allow_tags = True
 	_selflink.short_description = ''
 
-
 class iC_Project_Membership(iC_Membership):
 	ic_membership = models.OneToOneField('iC_Membership', primary_key=True, parent_link=True)
 	project = models.ForeignKey('General.Project', verbose_name=_(u"Projecte Sòci"))
@@ -590,16 +589,9 @@ class iC_Project_Membership(iC_Membership):
 	_selflink.allow_tags = True
 	_selflink.short_description = ''
 
+def print_XIPU(self):
 
-
-'''
-class iC_Membership_Type(iC_Record_Type):
-	record_type = models.OneToOneField('iC_Record_Type', primary_key=True, parent_link=True)
-	class Meta:
-		verbose_name = _(u"Tipus de Soci")
-		verbose_name_plural = _(u"c-> Tipus de Socis")
-'''
-
+def print_Inter(self):
 
 class iC_Self_Employed(iC_Record):
 
@@ -614,12 +606,6 @@ class iC_Self_Employed(iC_Record):
 	organic = models.BooleanField(default=False, verbose_name=_(u"Productes ecològics/organics?"))
 	#welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
 
-	'''
-	req_address_contract = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix contractes (lloguer, cessió, etc)?"))
-	req_insurance = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix assegurances?"))
-	req_licence = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix llicències?"))
-	req_images = models.SmallIntegerField(default=0, verbose_name=_(u"Requereix fotos?"))
-	'''
 	rel_address_contracts = models.ManyToManyField('iC_Address_Contract', related_name="selfemployed", blank=True, null=True, verbose_name=_(u"Contractes d'Adreça vinculats"))
 	rel_insurances = models.ManyToManyField('iC_Insurance', related_name="selfemployed", blank=True, null=True, verbose_name=_(u"Assegurances vinculades"))
 	rel_licences = models.ManyToManyField('iC_Licence', related_name="selfemployed", blank=True, null=True, verbose_name=_(u"Llicències vinculades"))
@@ -631,6 +617,7 @@ class iC_Self_Employed(iC_Record):
 	mentor_membership = models.ForeignKey('iC_Membership', related_name='mentor_of_SE', blank=True, null=True, verbose_name=_(u"Mentor projecte"))
 	mentor_comment = models.TextField(blank=True, null=True, verbose_name=_(u"Comentaris soci mentor"))
 	extra_days=models.IntegerField(blank=True, null=True, verbose_name=_(u"Dies extra"), help_text=_(u"Dies extra que pot editar el trimestre en curs."), max_length=2, default=0)
+
 	def _has_assisted_welcome(self):
 		sess = self.ic_membership.human.assist_sessions.filter(record_type__clas='welcome_session')
 
@@ -1106,21 +1093,26 @@ class iC_Self_Employed(iC_Record):
 
 	def print_certificate(self):
 		if self.id:
-			url = reverse("Welcome:print_certificate", args=(self.id, 0))
+			#Patch for non-assigned XIPU or Interprofessionals
+			if not self.ic_membership.ic_company:
+				from General.models import Company
+				inter = Company.objects.get(name="Interprofessionals")
+				self.ic_membership.ic_company = inter
+				self.save()
+
+			company_slug = self.ic_membership.ic_company.name
+
+			url = "/media/CIF_" + company_slug + ".xls"
+			text = _("Imprimir CIF").encode("utf-8") + " " + company_slug
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+			url = "/media/modelfactura_" + company_slug + ".xls"
+			text = _("Imprimir model de factura").encode("utf-8") + " " + company_slug
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+
+			url = reverse("Welcome:print_certificate", args=(self.id, 0, company_slug))
 			text = _("Imprimir certificat local").encode("utf-8")
-			link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
-
-			url = reverse("Welcome:print_certificate", args=(self.id, 1))
-			text = _("Imprimir certificat d'activitat").encode("utf-8")
-			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
-
-			url = "/media/invoice.xls"
-			text = _("Imprimir model de factura").encode("utf-8")
-			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
-
-			url = reverse("Welcome:print_certificate", args=(self.id, 3))
-			text = _("Imprimir CIF").encode("utf-8")
-			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+			link += "<br><a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			return link
 		else:
@@ -1158,16 +1150,21 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 
 	def print_certificate(self):
 		if self.id:
-			url = reverse("Welcome:print_certificate", args=(self.id, 10))
-			text = _("Imprimir certificat fires").encode("utf-8")
-			link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
+			#Patch for non-assigned XIPU or Interprofessionals
+			if not self.ic_membership.ic_company:
+				from General.models import Company
+				xipu = Company.objects.get(name="XIPU")
+				self.ic_membership.ic_company = xipu
+				self.save()
 
-			url = reverse("Welcome:print_certificate", args=(self.id, 11))
-			text = _("Imprimir certificat d'activitat").encode("utf-8")
+			company_slug = self.ic_membership.ic_company.name
+
+			url = "/media/CIF_" + company_slug + ".xls"
+			text = _("Imprimir CIF").encode("utf-8") + " " + company_slug
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
-			url = "/media/invoice.xls"
-			text = _("Imprimir model de factura").encode("utf-8")
+			url = "/media/modelfactura_" + company_slug + ".xls"
+			text = _("Imprimir model de factura").encode("utf-8") + " " + company_slug
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			url = "/media/iae_stallholder.jpg"
@@ -1178,10 +1175,9 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 			text = _("AE venda ambulant d'aliments").encode("utf-8")
 			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
-
-			url = reverse("Welcome:print_certificate", args=(self.id, 3))
-			text = _("Imprimir CIF").encode("utf-8")
-			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+			url = reverse("Welcome:print_certificate", args=(self.id, 10, company_slug))
+			text = _("Imprimir certificat fires").encode("utf-8")
+			link += "<br><a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			return link
 		else:

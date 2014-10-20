@@ -392,6 +392,12 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 				obj.ic_membership.ic_CESnum = form.cleaned_data.get("ic_CESnum")
 				obj.ic_membership.save()
 
+			if obj.ic_membership:
+				if not obj.ic_membership.ic_company:
+					from General.models import Company
+					inter = Company.objects.get(name="Interprofessionals")
+					obj.ic_membership.ic_company = inter
+
 			if change and form.cleaned_data.get("join_date"):
 				from django.core.exceptions import ObjectDoesNotExist
 				from public_form.models import RegistrationProfile
@@ -525,6 +531,14 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 				('_user_member')
 			)}),
 	)
+	def save_model(self, request, obj, form, change):
+		if form.is_valid():
+			if obj.ic_membership:
+				if not obj.ic_membership.ic_company:
+					from General.models import Company
+					xipu = Company.objects.get(name="XIPU")
+					obj.ic_membership.ic_company = xipu
+					obj.save()
 
 class StallholderAdmin(Public_StallholderAdmin):
 
