@@ -25,6 +25,8 @@
     } else {
       $('fieldset.welcome div').remove();
     }
-
+	if ( $('font[alt=print_task_no]').length > 0){
+		$('#print_task_list').replaceWith(gettext("Falten dades en Socis de referència, adreces o quotes."));
+	}
   } )
 }) (django.jQuery);

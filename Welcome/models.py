@@ -722,6 +722,8 @@ class iC_Self_Employed(iC_Record):
 				fee_dat = fee._min_fee_data()
 				if "alt='False'" in fee_dat:
 					fee_val = ico_no
+					#Add control for print_task_list that will be controlled in selfemployed.js
+					fee_val += "<font alt='print_task_no'></font>"
 				elif "alt='True'" in fee_dat:
 					fee_val = ico_yes
 				#print fee_val
@@ -746,6 +748,8 @@ class iC_Self_Employed(iC_Record):
 			fee_dat = fee._min_fee_data()
 			if "alt='False'" in fee_dat:
 				fee_val = ico_no
+				#Add control for print_task_list that will be controlled in selfemployed.js
+				fee_val += "<font alt='print_task_no'></font>"
 			elif "alt='True'" in fee_dat:
 				fee_val = ico_yes
 			if self.id:
@@ -763,7 +767,7 @@ class iC_Self_Employed(iC_Record):
 		if field:
 			str_out = field
 		else:
-			str_out = "<font style='color:red'>" + caption.encode("utf-8") + "</font>"
+			str_out = "<font alt='person_missing_data' style='color:red'>" + caption.encode("utf-8") + "</font>"
 		return str_out
 
 	def _render_person(self, rel):
@@ -810,6 +814,9 @@ class iC_Self_Employed(iC_Record):
 		if rels.count() > 0:
 			for rel in rels:
 				out += self._render_person(rel)
+				#Add control for print_task_list that will be controlled in selfemployed.js
+				if out.find("person_missing_data"):
+					out += "<font alt='print_task_no'></font>"
 		else:
 			out = "<a %s href='/admin/General/person/%s/%s'>%s</a> [%s]" % (change_class, str(self.ic_membership.human.id), self._get_next(), str(self.ic_membership.human) , str(self.ic_membership.human.person.id_card))
 
@@ -869,10 +876,13 @@ class iC_Self_Employed(iC_Record):
 			if field.encode("utf-8"):
 				return "<li>%s: %s </li>" % (label.encode("utf-8"), field.encode("utf-8"))
 			else:
+				#Add control for print_task_list that will be controlled in selfemployed.js
+				if out.find("person_missing_data"):
+					out += "<p ></p>"
 				if required:
-					return "<li>%s: %s </li>" % (label.encode("utf-8"), ico_no )
+					return "<li alt='print_task_no'>%s: %s </li>" % (label.encode("utf-8"), ico_no )
 				else:
-					return "<li>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
+					return "<li alt='print_task_no'>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
 		except:
 			if required:
 				return "<li>%s: %s </li>" % (label.encode("utf-8"), _(u"(Cap)").encode("utf-8") )
@@ -886,6 +896,11 @@ class iC_Self_Employed(iC_Record):
 				status = foreign[0]._min_addrcontract_data()
 			if is_license:
 				status = foreign[0]._min_licence_data()
+
+			if status != ico_yes:
+				#Add control for print_task_list that will be controlled in selfemployed.js
+				status += "<font alt='print_task_no'></font>"
+
 			output = self._get_contract_link_change( foreign[0], slug, label ) + status
 		else:
 			output = self._get_contract_link_add( adr, label, type)
@@ -1084,7 +1099,8 @@ class iC_Self_Employed(iC_Record):
 		if self.id:
 			url = reverse("Welcome:print_task_list", args=(self.id,))
 			text = _("Imprimir llista de tasques").encode("utf-8")
-			link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
+			link = "<a id='print_task_list' name='print_task_list' href='%s' target='_blank'> %s </a>" % (url, text)
+			return link
 		else:
 			return str_none;
 
