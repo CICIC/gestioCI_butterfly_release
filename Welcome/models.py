@@ -781,12 +781,6 @@ class iC_Self_Employed(iC_Record):
 				out = out_str % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields.decode("utf-8") )
 			except:
 				out = out_str % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields )
-			print "render function: " + out
-			print ">>>"
-			if out:
-				return out
-			else:
-				out = out
 		return out
 
 	def _akin_members(self):
@@ -858,6 +852,8 @@ class iC_Self_Employed(iC_Record):
 		return link.encode("utf-8")
 
 	def _get_address_link_add(self, type, label):
+		if not self.id:
+			return None
 		id = self._get_current_human_id()
 		add_button = reverse('Welcome:self_employed_save_item', args=( id, 0, self.id, type))
 		add_button = "<a %s href='%s%s'> %s </a>" % (add_class, add_button.encode("utf-8"), self._get_next(), label.encode("utf-8") )
@@ -943,7 +939,8 @@ class iC_Self_Employed(iC_Record):
 	_main_address_render.short_description = _(u"Adreça principal")
 
 	def _other_address_render(self):
-
+		if not self.id:
+			return _("(Cap)")
 		addresses = self.ic_membership.human.rel_human_addresses_set.filter(main_address=False)
 		output = ""
 		for adr in addresses:
@@ -1088,7 +1085,6 @@ class iC_Self_Employed(iC_Record):
 			url = reverse("Welcome:print_task_list", args=(self.id,))
 			text = _("Imprimir llista de tasques").encode("utf-8")
 			link = "<a href='%s' target='_blank'> %s </a>" % (url, text)
-			return link
 		else:
 			return str_none;
 
