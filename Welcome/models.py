@@ -660,6 +660,7 @@ class iC_Self_Employed(iC_Record):
 				return self.ic_membership.ic_project.nickname+' > '+self.ic_membership.__unicode__()
 		else:
 			return self.record_type.name+': '+self.ic_membership.__unicode__()
+
 	def _get_next(self):
 		if self.id:
 			id = str(self.id) + "/"
@@ -668,9 +669,6 @@ class iC_Self_Employed(iC_Record):
 		next_url = "?next=/admin/Welcome/%s/%s" %  (self.record_type.clas.lower(), id)
 		next_url = next_url.encode("utf-8")
 		return next_url
-	class Meta:
-		verbose_name = _(u"Alta Proj.Autoocupat")
-		verbose_name_plural = _(u"- Altes Proj. Autoocupats")
 
 	def __init__(self, *args, **kwargs):
 		super(iC_Self_Employed, self).__init__(*args, **kwargs)
@@ -1064,7 +1062,6 @@ class iC_Self_Employed(iC_Record):
 			out += '<li>Falta alguna Descripció. %s</li>' % ( hum.self_link_no_pop(self._get_next()) )
 		if hum.addresses.all().count() < 1:
 			out += '<li>Falta alguna Adreça. %s</li>' % ( hum.self_link_no_pop(self._get_next()) )
-		
 		elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
 			address = hum.rel_human_addresses_set.filter(main_address=True).first().address
 			if address:
@@ -1091,7 +1088,9 @@ class iC_Self_Employed(iC_Record):
 		#print out
 		if out == ul_tag_err:
 			return ico_yes
-		return out+'<li>'+ico_no+'</li></ul>'
+
+		#Add control for print_task_list that will be controlled in selfemployed.js
+		return out+'<li alt="print_task_no">'+ico_no+'</li></ul>'
 	_min_human_data.allow_tags = True
 	_min_human_data.short_description = 'Dades mínimes?'
 
@@ -1103,8 +1102,8 @@ class iC_Self_Employed(iC_Record):
 			return link
 		else:
 			return str_none;
-
 	print_task_list.short_description="PDF"
+
 	def print_certificate(self):
 		if self.id:
 			url = reverse("Welcome:print_certificate", args=(self.id, 0))
@@ -1126,8 +1125,8 @@ class iC_Self_Employed(iC_Record):
 			return link
 		else:
 			return str_none;
-
 	print_certificate.short_description= _(u"Carpeta d'usuari")
+
 	def _user_member(self):
 		from django.core.exceptions import ObjectDoesNotExist
 		from public_form.models import RegistrationProfile, RegistrationManager
@@ -1187,8 +1186,8 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 			return link
 		else:
 			return str_none;
-
 	print_certificate.short_description= _(u"Carpeta d'usuari")
+
 class Learn_Session(iC_Record):
 	nonmaterial = models.ForeignKey('General.Nonmaterial', verbose_name=_(u"Formació (obra inmaterial)"))
 	assistants = models.ManyToManyField('General.Human', related_name='assist_sessions', blank=True, null=True,
