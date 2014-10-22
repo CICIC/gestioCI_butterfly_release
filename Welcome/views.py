@@ -279,25 +279,28 @@ def print_certificate(request, icse, type, cooperative):
 	for rel in rels:
 		obj.persons += "<li>"
 		if hasattr(rel, 'person'):
-			obj.persons +=  rel.person.name.encode("utf-8") + _(" amb DNI: ").encode("utf-8") +rel.person.id_card
+			obj.persons += rel.person.name + _(" amb DNI: ").encode("utf-8") + str(rel.person.id_card)
 		else:
-			obj.persons +=   icse.ic_membership.human.person.name + _(" amb DNI: ").encode("utf-8") + icse.ic_membership.human.person.id_card
+			obj.persons += icse.ic_membership.human.person.name + _(" amb DNI: ").encode("utf-8") + str(icse.ic_membership.human.person.id_card)
 		obj.persons += "</li>"
 	obj.persons += "</ul>"
 	obj.persons = mark_safe(obj.persons)
 
 	if type == "0" or type =="10":
-		obj.jobs_and_address = ""
+		obj.jobs_and_address = "<ul>"
 		for license in icse.rel_licences.all():
-			obj.jobs_and_address += license.rel_job.name
+			obj.jobs_and_address += "<li>" + license.rel_job.name if license.rel_job else ""
 			adr = license.rel_address
 			if adr:
-				if adr.ic_address_contract:
-					obj.adresses += "%s %s %s (%s)" % ( _(u"al local situat a l'adreça:"),  adr.p_address, adr.postalcode, adr.town, adr.region.name )
+				if icse.rel_address_contracts.filter(address=adr).count > 0:
+					caption = _(u"al local situat a l'adreça:").encode("utf-8")
+					obj.jobs_and_address += " %s %s %s %s (%s) %s" % (caption.decode("utf-8"), adr.p_address.encode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), adr.region.name.encode("utf-8"), "</li>" )
+		obj.jobs_and_address += "</ul>"
+		obj.jobs_and_address = mark_safe(obj.jobs_and_address)
 		template = 'certificate_' + cooperative + '.html' if type=="0" else 'certificate_stallholder_' + cooperative + '.html'
 
 	html = render_to_string( template, {'obj': obj})
-
+	#return HttpResponse(html)
 	return render_pdf(html.encode("utf-8"), request)
 
 import ho.pisa as pisa
