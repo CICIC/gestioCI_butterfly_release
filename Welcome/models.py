@@ -890,7 +890,7 @@ class iC_Self_Employed(iC_Record):
 	def _render_address(self, adr):
 
 		output = "<br><ul>"
-
+		output += self._render_address_field( _(u"Nom"), adr.name )
 		output += self._render_address_field( _(u"Adreça"), adr.p_address )
 		output += self._render_address_field( _(u"Població"), adr.town )
 		output += self._render_address_field( _(u"CP"), adr.postalcode, True )
@@ -1046,14 +1046,9 @@ class iC_Self_Employed(iC_Record):
 		if hum.addresses.all().count() < 1:
 			out += '<li>Falta alguna Adreça. %s</li>' % ( hum.self_link_no_pop(self._get_next()) )
 		elif hum.rel_human_addresses_set.filter(main_address=True).count() < 1:
-			address = hum.rel_human_addresses_set.filter(main_address=True).first().address
-			if address:
-				link = "%saddress/%s%s'> %s </a>" % (general_href, address.id, self._get_next(), change_caption)
-				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
-			else:
-				out += '<li>Alguna adreça ha de ser la principal. ' + link + '</li>'
+			out += '<li>Alguna adreça ha de ser la principal.</li>'
 		else:
-			other_address = hum.rel_human_addresses_set.filter(main_address=False).all()
+			other_address = hum.rel_human_addresses_set.all()
 			output_address = ""
 			for adr in other_address:
 				out += self.validate_adr(adr.address)
@@ -1128,6 +1123,9 @@ class iC_Self_Employed(iC_Record):
 		except ObjectDoesNotExist:
 			return _("Encara no s'ha creat.")
 	_user_member.short_description = "Usuari per entrar al entorno virtual"
+	class Meta:
+		verbose_name = _(u"Alta Proj.Autoocupat")
+		verbose_name_plural = _(u"- Altes Proj. Autoocupats")
 
 
 class iC_Stallholder(iC_Self_Employed):	# Firaire
