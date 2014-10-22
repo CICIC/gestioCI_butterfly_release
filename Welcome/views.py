@@ -208,10 +208,11 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 	elif current_project and type=="4":
 		from General.models import Address, rel_Human_Addresses
 		adr = Address()
-		adr.save()
+		adr.name = current_project.name
 		adr.p_address = _("<introducir>")
 		adr.town = _("<introducir>")
-		adr.postalcode = _("<00000>")
+		adr.postalcode = _("00000")
+		adr.save()
 		related_address = rel_Human_Addresses(human=current_project, address=adr)
 		related_address.save()
 		next_url = request.GET.get("next","")
@@ -250,7 +251,7 @@ def print_task_list(request, icse):
 		obj.quarter_fee = current_icse.rel_fees.all()[0]
 	from django.conf.urls.static import static
 	html = render_to_string( 'task_list.html', {'obj': obj})
-	return render_pdf(html)
+	return render_pdf(html.encode("utf-8"), request)
 
 @login_required
 def print_certificate(request, icse, type, cooperative):
@@ -266,7 +267,7 @@ def print_certificate(request, icse, type, cooperative):
 
 	obj.project = icse.ic_membership.human
 	from datetime import datetime
-	obj.date = datetime.now()
+	obj.date = icse.ic_membership.join_date
 	from General.models import Relation
 	ref_typ = Relation.objects.get(clas='reference')
 	from General.models import rel_Human_Persons
@@ -286,11 +287,13 @@ def print_certificate(request, icse, type, cooperative):
 	obj.persons = mark_safe(obj.persons)
 
 	if type == "0" or type =="10":
-		obj.address = ""
-		obj.job = ""
+		obj.jobs_and_address = ""
 		for license in icse.rel_licences.all():
-			obj.job += license.rel_job.name
-			obj.address += str(license.rel_address)
+			obj.jobs_and_address += license.rel_job.name
+			adr = license.rel_address
+			if adr:
+				if adr.ic_address_contract:
+					obj.adresses += "%s %s %s (%s)" % ( _(u"al local situat a l'adreça:"),  adr.p_address, adr.postalcode, adr.town, adr.region.name )
 		template = 'certificate_' + cooperative + '.html' if type=="0" else 'certificate_stallholder_' + cooperative + '.html'
 
 	html = render_to_string( template, {'obj': obj})
@@ -309,7 +312,7 @@ def get_full_path_x(request):
     full_path = ('http', ('', 's')[request.is_secure()], '://',
     request.META['HTTP_HOST'], request.path)
     return ''.join(full_path)
-	
+
 def render_pdf(html, request):
 	path = get_full_path_x(request)
 	result = StringIO.StringIO()

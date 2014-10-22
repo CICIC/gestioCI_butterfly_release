@@ -743,12 +743,15 @@ class iC_Self_Employed(iC_Record):
 	_join_fee.allow_tags = True
 	_join_fee.short_description = _(u"Quota d'alta")
 
-	def _get_label_error(self, caption, field):
+	def _get_label_error(self, caption, field, required = True):
 		str_out = ""
 		if field:
 			str_out = field
 		else:
-			str_out = "<font alt='person_missing_data' style='color:red'>" + caption.encode("utf-8") + "</font>"
+			if required:
+				str_out = "<font alt='person_missing_data' style='color:red'>" + caption.encode("utf-8") + "</font>"
+			else:
+				str_out = ""
 		return str_out
 
 	def _render_person(self, rel):
@@ -758,7 +761,7 @@ class iC_Self_Employed(iC_Record):
 			s = self._get_label_error(__(" [Falten cognoms] "),rel.person.surnames)
 			m = self._get_label_error(__(" [Falta email] "),rel.person.email)
 			tc = self._get_label_error(__(u" [Falta el telèfon mòbil] "),str(rel.person.telephone_cell))
-			tl = self._get_label_error("",str(rel.person.telephone_land))
+			tl = self._get_label_error("",str(rel.person.telephone_land), False)
 
 			fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc, tl)
 			out_str ="<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>"
@@ -796,7 +799,8 @@ class iC_Self_Employed(iC_Record):
 			for rel in rels:
 				out += self._render_person(rel)
 				#Add control for print_task_list that will be controlled in selfemployed.js
-				if out.find("person_missing_data"):
+				if out.find("person_missing_data") > 0:
+					import pdb; pdb.set_trace()
 					out += "<font alt='print_task_no'></font>"
 		else:
 			out = "<a %s href='/admin/General/person/%s/%s'>%s</a> [%s]" % (change_class, str(self.ic_membership.human.id), self._get_next(), str(self.ic_membership.human) , str(self.ic_membership.human.person.id_card))
