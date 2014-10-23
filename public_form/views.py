@@ -891,13 +891,16 @@ def get_current_human_or_none(request):
 		messages.warning(request, _(u"No s'ha trobat al humà") )
 	return current_human
 
-def get_current_session_or_none(request, type="current_session"):
+def get_current_session_or_none(request, type="current_session", current_human = None, session_type = 1):
+	current_session = None
 	try:
 		from Welcome.models import Learn_Session
 		current_session = Learn_Session.objects.get(id=request.POST[type])
 	except:
-		current_session = None
-		messages.warning(request, _(u"No s'ha trobat la sessió") )
+		if current_human:
+			current_session = current_human.assist_sessions.filter(nonmaterial__id = session_type).first()
+		if not current_session:
+			messages.warning(request, _(u"No s'ha trobat la sessió") )
 	return current_session
 
 def apply_join_session(request, current_human, current_session):
@@ -1150,8 +1153,8 @@ def save_stall_holder(ic, ice, request):
 def save_form_self_employed(request):
 
 	current_human = get_current_human_or_none(request)
-	current_session = get_current_session_or_none(request, "current_session")
-	current_coin_session = get_current_session_or_none(request, "current_coin_session")
+	current_session = get_current_session_or_none(request, "current_session", current_human, 1)
+	current_coin_session = get_current_session_or_none(request, "current_coin_session", current_human, 2)
 
 	if not request.POST:
 		return HttpResponseRedirect(get_url_for(current_human, current_session))
@@ -1160,6 +1163,7 @@ def save_form_self_employed(request):
 		from public_form.forms import public_form_self_admin
 		form = public_form_self_admin(request.POST)
 		if not form.is_valid():
+			import pdb; pdb.set_trace()
 			for err in form.errors:
 				if err != "organic":
 					error_text = str(form.fields[err].label.encode("utf-8")) + ": " + _(u"Aquest camp es obligatori").encode("utf-8")

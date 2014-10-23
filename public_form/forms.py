@@ -47,7 +47,7 @@ class public_form_self_admin(forms.ModelForm):
 	)
 	project_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES, label=_(u"Tipus de soci"), required=True)
 	project_subtype = forms.ChoiceField(widget=forms.RadioSelect(), choices=CHOICES_sub, label=_(u"Tipus de projecte"), required=True)
-	organic = forms.BooleanField(label=_(u"Productes ecològics") )
+	organic = forms.BooleanField(label=_(u"Productes ecològics"), required=False )
 
 	tent_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=TentType_list, label=_(u"Tipus parada firaire"))
 
