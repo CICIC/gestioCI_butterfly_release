@@ -800,7 +800,6 @@ class iC_Self_Employed(iC_Record):
 				out += self._render_person(rel)
 				#Add control for print_task_list that will be controlled in selfemployed.js
 				if out.find("person_missing_data") > 0:
-					import pdb; pdb.set_trace()
 					out += "<font alt='print_task_no'></font>"
 		else:
 			out = "<a %s href='/admin/General/person/%s/%s'>%s</a> [%s]" % (change_class, str(self.ic_membership.human.id), self._get_next(), str(self.ic_membership.human) , str(self.ic_membership.human.person.id_card))

@@ -1163,7 +1163,6 @@ def save_form_self_employed(request):
 		from public_form.forms import public_form_self_admin
 		form = public_form_self_admin(request.POST)
 		if not form.is_valid():
-			import pdb; pdb.set_trace()
 			for err in form.errors:
 				if err != "organic":
 					error_text = str(form.fields[err].label.encode("utf-8")) + ": " + _(u"Aquest camp es obligatori").encode("utf-8")
