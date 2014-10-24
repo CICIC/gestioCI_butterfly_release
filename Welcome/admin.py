@@ -156,13 +156,14 @@ from reverseadmin import ReverseModelAdmin
 
 class Public_AkinMembershipAdmin(ReverseModelAdmin):
 	model = iC_Akin_Membership
-	search_fields = ('person__name', 'person__email', 'person__surnames')
-	raw_id_fields = ('ic_membership',)
+	list_display = ['name', 'person', 'join_date',  '_has_id_card',]
+	raw_id_fields = ( 'ic_membership',)
+	readonly_fields = ('_has_id_card', '_person_link', '_memberships')
 	fieldsets = (
 		(None, {
-			'fields':(
-								('join_date', 'ic_membership', ),
-								('description',))
+			'fields':(('_person_link',),
+					('join_date', 'ic_membership', '_memberships', ),
+					('description', '_has_id_card'))
 		}),
 	)
 	inline_type = 'tabular'
@@ -177,7 +178,7 @@ class AkinMembershipAdmin(Public_AkinMembershipAdmin):
 	fieldsets = (
 		(None, {
 			'fields':(('record_type', 'ic_project', '_has_id_card'),
-								('person', '_person_link', 'ic_membership', '_memberships' ),
+								( '_person_link', 'ic_membership', '_memberships' ),
 								('join_date', 'end_date'),
 								('description', 'name'))
 		}),
