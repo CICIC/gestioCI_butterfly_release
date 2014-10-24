@@ -219,7 +219,7 @@ class ReverseInlineModelAdmin(InlineModelAdmin):
 											 **defaults)
 
 from Welcome.admin import AutoRecordName
-class ReverseModelAdmin(ModelAdmin):
+class ReverseModelAdmin(AutoRecordName):
 	'''
 	Patched ModelAdmin class. The add_view method is overridden to
 	allow the reverse inline formsets to be saved before the parent
