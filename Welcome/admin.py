@@ -152,19 +152,23 @@ class AutoRecordName(admin.ModelAdmin):
 
 
 #---------	M E M B E R S H I P ' S
+from reverseadmin import ReverseModelAdmin
 
-class Public_AkinMembershipAdmin(AutoRecordName):
+class Public_AkinMembershipAdmin(ReverseModelAdmin):
 	model = iC_Akin_Membership
 	search_fields = ('person__name', 'person__email', 'person__surnames')
-	raw_id_fields = ('person', 'ic_membership',)
-	readonly_fields = ('_has_id_card', '_person_link', '_memberships')
+	raw_id_fields = ('ic_membership',)
 	fieldsets = (
 		(None, {
-			'fields':(('person', '_person_link',),
-								('join_date', 'ic_membership', '_memberships'),
-								('description', '_has_id_card'))
+			'fields':(
+								('join_date', 'ic_membership', ),
+								('description',))
 		}),
 	)
+	inline_type = 'tabular'
+	person = ( 'person', ( 'name', 'surnames', 'email') )
+	inline_reverse = ( person,)
+
 
 class AkinMembershipAdmin(Public_AkinMembershipAdmin):
 	list_display = ['name', 'person', 'join_date',  '_has_id_card',]
