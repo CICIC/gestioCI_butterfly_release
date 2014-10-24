@@ -166,8 +166,8 @@ class Public_AkinMembershipAdmin(ReverseModelAdmin):
 					('description', '_has_id_card'))
 		}),
 	)
-	inline_type = 'tabular'
-	person = ( 'person', ( 'name', 'surnames', 'email') )
+	inline_type = 'stacked'
+	person = ( 'person', ('id_card', 'name', 'surnames', 'email', 'nickname2', 'email', 'telephone_cell','telephone_land') )
 	inline_reverse = ( person,)
 
 
