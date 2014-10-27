@@ -1062,7 +1062,7 @@ class iC_Self_Employed(iC_Record):
 		#print str(self.ic_stallholder)
 		if hasattr(self, 'ic_stallholder'):
 			if self.ic_stallholder.tent_type is None or self.ic_stallholder.tent_type == '':
-				out += '<li>És firaire i falta el tipus de carpa. </li>'
+				out += '<li>És firaire i falta el tipus de parada firaire. </li>'
 		#print out
 		if out == ul_tag_err:
 			return ico_yes
@@ -1132,7 +1132,7 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 	ic_self_employed = models.OneToOneField('iC_Self_Employed', primary_key=True, parent_link=True)
 	#req_photos = models.SmallIntegerField(default=1, verbose_name=_(u"Requereix fotos?"))
 
-	tent_type = models.CharField(max_length=5, choices=TentType_list, blank=True, null=True, verbose_name=_(u"Tipus de carpa"))
+	tent_type = models.CharField(max_length=5, choices=TentType_list, blank=True, null=True, verbose_name=_(u"Tipus parada firaire"))
 
 	class Meta:
 		verbose_name = _(u"Alta Proj.Autoocupat Firaire")
