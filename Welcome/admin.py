@@ -374,7 +374,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					('rel_insurances', '_rel_insurances',),
 					('_join_fee'),
 					('_rel_fees',),
-					('_akin_members'),
 					('print_task_list'),
 					)# 'rel_address_contracts', 'rel_insurances', 'rel_licences', ))
 		}),
@@ -382,6 +381,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			'classes': ('welcome',),
 			'fields': (
 				('_has_assisted_socialcoin',),
+				('_akin_members'),
 				('mentor_membership', 'mentor_comment',),
 				('ic_CESnum',),
 				('join_date', ),
@@ -519,7 +519,6 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 					('rel_insurances', '_rel_insurances',  ),
 					('_join_fee'),
 					('_rel_fees',),
-					('_akin_members'),
 					('print_task_list'),
 					)
 		}),
@@ -527,6 +526,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 			'classes': ('welcome',),
 			'fields': (
 				('_has_assisted_socialcoin',),
+				('_akin_members'),
 				('rel_images', '_rel_images' ),
 				('mentor_membership', 'mentor_comment',),
 				('ic_CESnum',),
