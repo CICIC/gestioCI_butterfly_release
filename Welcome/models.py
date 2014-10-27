@@ -882,10 +882,6 @@ class iC_Self_Employed(iC_Record):
 			if is_license:
 				status = foreign[0]._min_licence_data()
 
-			if status != ico_yes:
-				#Add control for print_task_list that will be controlled in selfemployed.js
-				status += "<font alt='print_task_no'></font>"
-
 			output = self._get_contract_link_change( foreign[0], slug, label ) + status
 		else:
 			output = self._get_contract_link_add( adr, label, type)
