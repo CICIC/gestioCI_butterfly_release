@@ -600,7 +600,7 @@ class iC_Self_Employed(iC_Record):
 
 	rel_fees = models.ManyToManyField('Fee', related_name='selfemployed', blank=True, null=True,verbose_name=_(u"Quotes trimestrals"))#limit_choices_to={'record_type__parent__clas': 'quarterly_fee'})#human':ic_membership.human.pk})#.self_employed})
 
-	organic = models.BooleanField(default=False, verbose_name=_(u"Productes ecològics/organics?"))
+	organic = models.BooleanField(default=False, verbose_name=_(u"Productes ecològics"))
 	#welcome_session = models.BooleanField(default=False, verbose_name=_(u"Assistencia sessió d'acollida?"))
 
 	rel_address_contracts = models.ManyToManyField('iC_Address_Contract', related_name="selfemployed", blank=True, null=True, verbose_name=_(u"Contractes d'Adreça vinculats"))
