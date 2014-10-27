@@ -608,11 +608,12 @@ def create_membership(request, record_type_id=4):
 
 			from Welcome.models import iC_Record_Type
 			from Welcome.models import Project
-			'''if str(record_type_id) == str(iC_Record_Type.objects.get(clas="iC_Project_Membership").id):
-				current_project = Project(name=form.cleaned_data.get("project_name"), website=form.cleaned_data.get("project_website"))
+			if str(record_type_id) == str(iC_Record_Type.objects.get(clas="iC_Project_Membership").id):
+				project_name = "Projecte de " + form.cleaned_data.get("username")
+				current_project = Project(name=project_name)
 				current_project.save()
 			else:
-				current_project = Project()'''
+				current_project = Project()
 
 			from public_form.bots import user_registration_bot
 			urb = user_registration_bot()

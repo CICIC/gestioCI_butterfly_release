@@ -6,11 +6,10 @@
 <script type="text/javascript" src="{% static 'profile_type.js' %}"></script>
 <link rel="stylesheet" type="text/css" href="{% static 'profile_type.css' %}" />
 
-<p>
-	<u>{% trans "Accions que pots fer:" %}</u>:
 
-<br>
-	<div class="users">
+<div class="users">
+	<br>
+	<u>{% trans "Accions que pots fer:" %}</u>:
 		<div class="admin">
 			<h4>{{profile_desc}}</h4>
 			<label>{% trans "Administrador" %}</label><br>
@@ -18,7 +17,7 @@
 			<br>
 			<p><label>{% trans "Tipus: " %}{{profile_type}}</label><br></p>
 		</div>
-<ul>
+	<ul>
 	{% if profile_person and user.is_active %}
 		
 	{% else %}
@@ -43,7 +42,7 @@
 			<h4>{% trans "Usuari: " %} {{profile_desc}}</h4>
 			<img id="profile_image" src="{% static 'Anon_user.png' %}"><br>
 			<ul>
-			 {% block userlinks %} <li> -
+			 {% block userlinks %} <li> 
                 {% url 'django-admindocs-docroot' as docsroot %}
                 {% if docsroot %}
                   <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
@@ -54,6 +53,12 @@
                 {% endif %}
                 {% if not user.is_anonymous%}
 					<a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a></li>
+				{% else %}
+					{% if not user.is_authenticated %}
+						{% include "login_short.html" %}
+							</li>
+					{% else %}
+					{% endif %}
 				{% endif %}
             {% endblock %}
 			{% if user.is_active  %}
@@ -122,9 +127,6 @@
 			</div>
 		{% endif %}
 	{% endfor %}
-
-</p>
-
 
 <input type="hidden" id="profile_type" value="{{profile_type}}">
 </div>

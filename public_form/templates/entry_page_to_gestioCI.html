@@ -7,14 +7,6 @@
 	{% include 'admin/change_language.html' %} 
 {% endblock %}
 
-{% block nav-global %}
-	{% if not user.is_authenticated %}
-		{% include "login_short.html" %}
-	  <br><br><br>
-	{% else %}
-	{% endif %}
-{% endblock %}
-
 {% block foot_content %}
 	{% include "profile_type.html" %}
 {% endblock %}
