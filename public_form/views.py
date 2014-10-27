@@ -802,7 +802,7 @@ def activate_membership(request, activation_key):
 def save_form_profile(request):
 
 	from Welcome.models import iC_Record
-	form_id = request.POST["form_id"]
+	form_id = request.POST["form_id"].replace(".","")
 	print form_id
 	try:
 		membership_type = iC_Record.objects.get(id=form_id).record_type.clas
