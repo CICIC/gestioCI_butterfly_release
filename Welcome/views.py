@@ -243,12 +243,16 @@ def print_task_list(request, icse):
 	obj.address_contracts =  current_icse.rel_address_contracts
 	obj.licences = current_icse.rel_licences
 
-	obj.fee =  current_icse.ic_membership.join_fee
+	fee = current_icse.ic_membership.join_fee
+	name = fee.record_type.name.encode("utf-8")
+	obj.fee = "%s: [%s %s]" % (name.decode("utf-8"), str(fee.amount), fee.unit.code)
 
 	obj.is_stall_holder = current_icse.record_type.clas == "iC_Stallholder"
 
 	if current_icse.rel_fees.all().count()>0:
-		obj.quarter_fee = current_icse.rel_fees.all()[0]
+		fee = current_icse.rel_fees.all().first()
+		name = fee.record_type.name.encode("utf-8")
+		obj.quarter_fee = "%s: [%s %s]" % (name.decode("utf-8"), str(fee.amount), fee.unit.code)	
 	from django.conf.urls.static import static
 	html = render_to_string( 'task_list.html', {'obj': obj})
 	return render_pdf(html.encode("utf-8"), request)
