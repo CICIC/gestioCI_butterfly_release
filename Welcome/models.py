@@ -998,7 +998,10 @@ class iC_Self_Employed(iC_Record):
 					ico = ico_yes
 				else:
 					ico = ico_no
-				out += "<li><a %s href='/admin/Welcome/ic_insurance/%s/%s'> <b>%s</b> </a>: %s %s %s %s</li>" % (change_class, str(ins.id), self._get_next(), ins.ic_document.doc_type.name, job, adr, erase_id_link('rel_insurances', str(ins.id)), ico )
+				#Uncomment this link when needs to recover "treu" button
+				#erase_link =  erase_id_link('rel_insurances', str(ins.id))
+				erase_link =""
+				out += "<li><a %s href='/admin/Welcome/ic_insurance/%s/%s'> <b>%s</b> </a>: %s %s %s %s</li>" % (change_class, str(ins.id), self._get_next(), ins.ic_document.doc_type.name, job, adr, erase_link, ico )
 			return out + '</ul>'
 		return str_none
 	_rel_insurances.allow_tags = True
