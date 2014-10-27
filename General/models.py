@@ -577,8 +577,8 @@ class Address(Space):	# Create own ID's
 	address_type = TreeForeignKey('Address_Type', blank=True, null=True, verbose_name=_(u"Tipus d'adreça"))
 	p_address = models.CharField(max_length=200, verbose_name=_(u"Direcció"), help_text=_(u"Adreça postal vàlida per a enviaments"))
 	town = models.CharField(max_length=150, verbose_name=_(u"Població"), help_text=_(u"Poble, ciutat o municipi"))
-	postalcode = models.CharField(max_length=5, blank=True, null=True, verbose_name=_(u"Codi postal"))
-	region = TreeForeignKey('Region', blank=True, null=True, related_name='rel_addresses', verbose_name=_(u"Comarca"))
+	postalcode = models.CharField(max_length=5, blank=False, null=False, verbose_name=_(u"Codi postal"))
+	region = TreeForeignKey('Region', blank=False, null=False, related_name='rel_addresses', verbose_name=_(u"Comarca"))
 
 	#telephone = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telefon fix"))
 	ic_larder = models.BooleanField(default=False, verbose_name=_(u"És Rebost?"))
