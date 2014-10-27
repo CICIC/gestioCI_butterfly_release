@@ -1176,6 +1176,14 @@ class iC_Stallholder(iC_Self_Employed):	# Firaire
 			url = reverse("Welcome:print_certificate", args=(self.id, 10, company_slug))
 			text = _("Model certificat firaires").encode("utf-8")
 			link += "<br><a href='%s' target='_blank'> %s </a>" % (url, text)
+			
+			url = "/media/poster_coinsession.pdf"
+			text = _("Cartell Moneda Social").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
+			
+			url = "/media/poster_cic.pdf"
+			text = _("Cartell CIC").encode("utf-8")
+			link += "<br> <a href='%s' target='_blank'> %s </a>" % (url, text)
 
 			return link
 		else:
