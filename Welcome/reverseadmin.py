@@ -72,6 +72,7 @@ from django.utils.encoding import force_unicode
 from django.utils.functional import curry
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+from django.core.exceptions import PermissionDenied
 
 class ReverseInlineFormSet(BaseModelFormSet):
 	'''
@@ -365,6 +366,7 @@ class ReverseModelAdmin(AutoRecordName):
 		obj = self.get_object(request, unquote(object_id))
 
 		if not self.has_change_permission(request, obj):
+
 			raise PermissionDenied
 
 		if obj is None:
