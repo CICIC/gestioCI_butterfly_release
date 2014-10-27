@@ -1112,7 +1112,8 @@ def save_self_employed(current_person, current_project, current_human, ic, reque
 		ice = iC_Self_Employed ()
 		ice.ic_membership = ic
 
-		ice.organic = request.POST.get("organic", False) == "on"
+		ice.organic = 1 if request.POST.get("organic", False) == "on" else 0
+		ice.save()
 		try:
 			current_fee_quarter = Fee(
 				human = human,
@@ -1124,7 +1125,7 @@ def save_self_employed(current_person, current_project, current_human, ic, reque
 				deadline_date = datetime.now() + timedelta(days=5) ,
 			)
 			current_fee_quarter.save()
-			ice.save()
+
 			ice.rel_fees.add(current_fee_quarter)
 			ice.save()
 		except Exception as e:
@@ -1142,6 +1143,7 @@ def save_stall_holder(ic, ice, request):
 		ich.ic_self_employed=ice
 		ich.ic_membership= ic
 		ich.tent_type=request.POST.get("tent_type", "none")
+		ich.organic = ice.organic
 		try:
 			ich.name = str(ich)
 			ich.save()
@@ -1207,5 +1209,8 @@ def save_form_self_employed(request):
 			messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":
 				icsh = save_stall_holder(ic, ice, request)
+
+
+
 
 	return HttpResponseRedirect(get_url_for(current_human, current_session))
