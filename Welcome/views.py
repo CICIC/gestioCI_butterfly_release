@@ -283,9 +283,10 @@ def print_certificate(request, icse, type, cooperative):
 	for rel in rels:
 		obj.persons += "<li>"
 		if hasattr(rel, 'person'):
-			obj.persons += rel.person.name + _(" amb DNI: ").encode("utf-8") + str(rel.person.id_card)
+			person = rel.person
 		else:
-			obj.persons += icse.ic_membership.human.person.name + _(" amb DNI: ").encode("utf-8") + str(icse.ic_membership.human.person.id_card)
+			person = icse.ic_membership.human.person
+		obj.persons += person.name.encode('ascii', 'xmlcharrefreplace') + " " + person.surnames.encode('ascii', 'xmlcharrefreplace') + " " +  _(" amb DNI: ").encode("utf-8") + str(person.id_card)
 		obj.persons += "</li>"
 	obj.persons += "</ul>"
 	obj.persons = mark_safe(obj.persons)
