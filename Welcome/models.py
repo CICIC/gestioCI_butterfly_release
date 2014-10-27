@@ -441,7 +441,7 @@ class iC_Membership(iC_Record):
 				if extended and stallholder is not None:
 					organic = _(u"Sí").encode("utf-8") if rec.organic else _("No").encode("utf-8")
 					self_employed_data = _(u"Productes ecològics: ").encode("utf-8") +  organic
-					stallholder_data = _(u"Tipus de carpa: ").encode("utf-8") + stallholder.get_tent_type_display()
+					stallholder_data = _(u"Tipus parada firaire: ").encode("utf-8") + stallholder.get_tent_type_display()
 
 				out += '<li>%sic_self_employed/%s%s<b>%s</b> </a> <br>%s<br> %s</li>' % (a_strW, str(rec.id), a_str3, caption, self_employed_data, stallholder_data.encode("utf-8"))
 			if out == ul_tag:
