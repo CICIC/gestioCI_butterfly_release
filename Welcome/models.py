@@ -763,8 +763,10 @@ class iC_Self_Employed(iC_Record):
 			m = self._get_label_error(__(" [Falta email] "),rel.person.email)
 			tc = self._get_label_error(__(u" [Falta el telèfon mòbil] "),str(rel.person.telephone_cell))
 			tl = self._get_label_error("",str(rel.person.telephone_land), False)
-
-			fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc, tl)
+			try:
+				fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc, tl)
+			except:
+				fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc.decode("utf-8"), tl)
 			out_str ="<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>"
 			try:
 				out = out_str % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields.decode("utf-8") )
