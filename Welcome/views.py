@@ -293,13 +293,18 @@ def print_certificate(request, icse, type, cooperative):
 
 	if type == "0" or type =="10":
 		obj.jobs_and_address = "<ul>"
-		for license in icse.rel_licences.all():
-			obj.jobs_and_address += "<li>" + license.rel_job.name if license.rel_job else ""
-			adr = license.rel_address
-			if adr:
-				if icse.rel_address_contracts.filter(address=adr).count > 0:
-					caption = _(u"al local situat a l'adreça:").encode("utf-8")
-					obj.jobs_and_address += " %s %s %s %s (%s) %s" % (caption.decode("utf-8"), adr.p_address.encode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), adr.region.name.encode("utf-8"), "</li>" )
+		jobs = []
+		for adr in icse.ic_membership.human.addresses.all():
+			for job in adr.jobs.all():
+				jobs.append(job.id)
+				obj.jobs_and_address += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') 
+				caption = _(u"al local situat a l'adreça:").encode("utf-8")
+				region = adr.region.name.encode('ascii', 'xmlcharrefreplace')
+				obj.jobs_and_address += " %s %s %s %s (%s) %s" % (caption.decode("utf-8"), adr.p_address.encode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
+		for job in icse.ic_membership.human.jobs.all():
+			if not job.id in jobs:
+				obj.jobs_and_address += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') + "</li>"
+
 		obj.jobs_and_address += "</ul>"
 		obj.jobs_and_address = mark_safe(obj.jobs_and_address)
 		template = 'certificate_' + cooperative + '.html' if type=="0" else 'certificate_stallholder_' + cooperative + '.html'
