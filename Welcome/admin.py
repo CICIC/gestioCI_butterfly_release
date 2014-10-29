@@ -339,6 +339,25 @@ class SelfEmployedForm(forms.ModelForm):
 			self.fields['ic_CESnum'].initial = self.instance.ic_membership.ic_CESnum
 			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances.all() | self.instance.rel_insurances.all()
 
+	def clean(self):
+		#Specific rel_images field validation after queryset filtered:
+		#super(Public_SelfEmployedAdmin, self).formfield_for_manytomany
+		saved = False
+		#import pdb; pdb.set_trace()
+		new_image_list = self.data.getlist("rel_images")
+		for new_image_id in new_image_list:
+			from General.models import Image
+			new_image_object = Image.objects.filter(id=new_image_id).first()
+			if new_image_object not in self.instance.rel_images.all():
+				self.instance.rel_images.add(new_image_object)
+				saved = True
+
+		if saved:
+			self.instance.save()
+			self.errors.pop('rel_images')
+
+		return super(SelfEmployedForm, self).clean()
+
 class Public_SelfEmployedAdmin(AutoRecordName):
 	class Media:
 		css = {
@@ -436,6 +455,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 
 	'''
 	def get_form(self, request, obj=None, **kwargs):
+		#save obj so we can use it in self.formfield_for_manytomany()
 		self.obj = obj
 		return super(Public_SelfEmployedAdmin, self).get_form(request, obj, **kwargs)
 
@@ -449,6 +469,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			#kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 			pass
 		elif db_field.name == 'rel_images':
+			#self.obj is object assigned self.get_form()
 			kwargs['queryset'] = db_field.rel.to.objects.filter(id__in=self.obj.rel_images.all())
 
 
