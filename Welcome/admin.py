@@ -391,6 +391,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			)}),
 	)
 	def save_model(self, request, obj, form, change):
+
 		if form.is_valid():
 
 			if obj.ic_membership and form.cleaned_data.get("ic_CESnum"):
@@ -434,6 +435,10 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		return super(SelfEmployedAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	'''
+	def get_form(self, request, obj=None, **kwargs):
+		self.obj = obj
+		return super(Public_SelfEmployedAdmin, self).get_form(request, obj, **kwargs)
+
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
 		if db_field.name == 'rel_fees':
 			kwargs['queryset'] = Fee.objects.filter(record_type__parent__clas='quarterly_fee')
@@ -443,6 +448,10 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			#typ = iC_Record_Type.objects.get(clas='Fee')
 			#kwargs['queryset'] = iC_Record_Type.objects.filter(lft__gt=typ.lft, rght__lt=typ.rght, tree_id=typ.tree_id)
 			pass
+		elif db_field.name == 'rel_images':
+			kwargs['queryset'] = db_field.rel.to.objects.filter(id__in=self.obj.rel_images.all())
+
+
 		return super(Public_SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class SelfEmployedAdmin(Public_SelfEmployedAdmin):
@@ -499,6 +508,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 
 	model = iC_Stallholder
 	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
+
 	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
 						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_rel_images', '_akin_members')
 	fieldsets = (
@@ -544,7 +554,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 					xipu = Company.objects.get(name="XIPU")
 					obj.ic_membership.ic_company = xipu
 					obj.save()
-
+	
 class StallholderAdmin(Public_StallholderAdmin):
 
 	pass
@@ -730,6 +740,9 @@ class InsuranceAdmin(AutoRecordName):
 			kwargs['queryset'] = Unit.objects.filter(unit_type=typs)
 		return super(InsuranceAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
+from General.admin import Css_Mixin
+class ImageAdmin(Css_Mixin):
+	pass
 from django.core.exceptions import ObjectDoesNotExist
 
 #---------	O T H E R	 I C _ R E C O R D S
@@ -831,6 +844,6 @@ admin.site.register(Fee, FeeAdmin)
 admin.site.register(Learn_Session, LearnSessionAdmin)
 user_admin_site.register(Learn_Session, LearnSessionAdmin)
 admin.site.register(Project_Accompaniment)
-admin.site.register(Image)
+admin.site.register(Image, ImageAdmin)
 
 admin.site.register(Payment_Type, MPTTModelAdmin)
