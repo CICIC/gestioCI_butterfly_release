@@ -811,6 +811,7 @@ class iC_Self_Employed(iC_Record):
 			add_button = "/admin/General/project/%s/%s" % (self.ic_membership.human.id, self._get_next())
 			add_button = "<a %s href='%s' > %s </a>" % (add_class, add_button.encode("utf-8"), _(u"Afegeix soci de referència").encode("utf-8") )
 			out = out.encode("utf-8") + "<br>" + add_button
+
 		return out
 	_rel_id_cards.allow_tags = True
 	_rel_id_cards.short_description = _(u"Socis de referència")
@@ -1014,7 +1015,7 @@ class iC_Self_Employed(iC_Record):
 		out = '<div class="thumb_line">'
 		if imgs.count() > 0:
 			for img in imgs:
-				out += '<div class="thumb">'+a_strG + 'image/'+str(img.id)+a_str3 + show_thumbnail(img) + '<br>'+ img.__unicode__() +'</a></div> '#+str(url)
+				out += "<div class='thumb'><a href='/admin/General/image/"+str(img.id) +"/" + self._get_next() + "'>" + show_thumbnail(img) + '<br>'+ img.__unicode__() +'</a></div> '#+str(url)
 			return out+'</div>'
 		return str_none
 	_rel_images.allow_tags = True
