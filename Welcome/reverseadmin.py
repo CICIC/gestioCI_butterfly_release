@@ -73,7 +73,7 @@ from django.utils.functional import curry
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.core.exceptions import PermissionDenied
-from django.db import FieldDoesNotExist
+from django.db.models import FieldDoesNotExist
 
 class ReverseInlineFormSet(BaseModelFormSet):
 	'''
