@@ -1128,7 +1128,7 @@ class iC_Self_Employed(iC_Record):
 			return  _(" Usuari: ").encode("utf-8") + current_registration.user.username + " " + _(" Contrasenya:").encode("utf-8") + _(u" L'usuari l'ha de canviar").encode("utf-8")
 		except ObjectDoesNotExist:
 			return _("Encara no s'ha creat.")
-	_user_member.short_description = "Usuari per entrar al entorno virtual"
+	_user_member.short_description = _(u"Usuari accés entorn virtual")
 	class Meta:
 		verbose_name = _(u"Alta Proj.Autoocupat")
 		verbose_name_plural = _(u"- Altes Proj. Autoocupats")
