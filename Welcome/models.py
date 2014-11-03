@@ -168,10 +168,10 @@ class Fee(iC_Record):
 	def __unicode__(self):
 		if self.record_type is None:
 			#record_type = "<record:type.name>"
-			return 'Fee ??: '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'
+			return 'Fee ??: ['+str(self.amount)+' '+self.unit.code+']'
 		else:
 			record_type = self.record_type.name
-		return record_type +': '+self.human.__unicode__()+' ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
+		return record_type +': ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
 
 	class Meta:
 		verbose_name = _(u"Quota")
@@ -1119,7 +1119,6 @@ class iC_Self_Employed(iC_Record):
 	def _user_member(self):
 		from django.core.exceptions import ObjectDoesNotExist
 		from public_form.models import RegistrationProfile, RegistrationManager
-
 		rt_id = self.record_type.id
 		current_person = self.ic_membership.human.persons.first()
 		current_project = self.ic_membership.ic_project
