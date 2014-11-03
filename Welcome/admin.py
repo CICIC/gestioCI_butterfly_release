@@ -366,7 +366,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type', 'rel_fees']# '_join_fee_payed']
 	form = SelfEmployedForm
 
-	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
+	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', 
 						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', 
 						'_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', 
 						'_user_member', '_akin_members')
@@ -385,7 +385,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		(_(u"Fase 2: Llista de tasques pendents"), {
 			'classes': ('welcome',),
 			'fields': (
-					('_min_human_data',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances',),
 					('_join_fee'),
@@ -542,8 +541,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 	model = iC_Stallholder
 	list_display = ['name', '_member_link', 'ic_membership', 'join_date', 'record_type']# '_join_fee_payed']
 
-	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_min_human_data',
-						'_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_rel_images', '_akin_members')
+	readonly_fields = ('_member_link', '_join_fee', '_rel_fees', '_has_assisted_welcome', '_rel_id_cards', '_rel_address_contract', '_rel_licences', '_rel_insurances', '_has_assisted_socialcoin', '_main_address_render', '_other_address_render', 'print_task_list', 'print_certificate', '_user_member', '_rel_images', '_akin_members')
 	fieldsets = (
 		(_(u"Fase 1: Acollida i Avaluació"), {
 			#'classes': ('collapse',),
@@ -557,7 +555,6 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 		(_(u"Fase 2: Llista de tasques pendents"), {
 			'classes': ('welcome',),
 			'fields': (
-					('_min_human_data',),
 					('_main_address_render', '_other_address_render'),
 					('rel_insurances', '_rel_insurances',  ),
 					('_join_fee'),
