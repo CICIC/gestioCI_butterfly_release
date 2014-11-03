@@ -300,7 +300,12 @@ def print_certificate(request, icse, type, cooperative):
 				obj.jobs_and_address += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') 
 				caption = _(u"al local situat a l'adreça:").encode("utf-8")
 				region = adr.region.name.encode('ascii', 'xmlcharrefreplace')
-				obj.jobs_and_address += " %s %s %s %s (%s) %s" % (caption.decode("utf-8"), adr.p_address.encode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
+				try:
+					address_text = adr.p_address.encode("utf-8")
+					obj.jobs_and_address += " %s %s %s %s (%s) %s" % (caption, address_text.decode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
+				except:
+					obj.jobs_and_address = caption + "/" + address_text + "</li>"
+					
 		for job in icse.ic_membership.human.jobs.all():
 			if not job.id in jobs:
 				obj.jobs_and_address += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') + "</li>"
