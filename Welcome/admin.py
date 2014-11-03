@@ -568,6 +568,7 @@ class Public_StallholderAdmin(Public_SelfEmployedAdmin):
 			)}),
 	)
 	def save_model(self, request, obj, form, change):
+		super(Public_StallholderAdmin,self).save_model(request, obj, form, change)
 		if form.is_valid():
 			if obj.ic_membership:
 				if not obj.ic_membership.ic_company:
