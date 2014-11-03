@@ -340,10 +340,7 @@ class SelfEmployedForm(forms.ModelForm):
 			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances.all() | self.instance.rel_insurances.all()
 
 	def clean(self):
-		#Specific rel_images field validation after queryset filtered:
-		#super(Public_SelfEmployedAdmin, self).formfield_for_manytomany
 		saved = False
-		#import pdb; pdb.set_trace()
 		new_image_list = self.data.getlist("rel_images")
 		for new_image_id in new_image_list:
 			from General.models import Image
@@ -474,6 +471,21 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 
 
 		return super(Public_SelfEmployedAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+	def response_change(self, request, obj):
+		#Every time this window in invoked "_popup", 
+		#save button wont save to list_display but stay in list_change.
+		from django.http import HttpResponseRedirect, HttpResponse
+		from django.core.urlresolvers import reverse
+
+		response = super(AutoRecordName, self).response_change(request, obj)
+
+		obj_id = obj.id if obj.id else 0
+		if request.GET.has_key('next'):
+			response['location'] = response['location'] + "/" + str(obj_id) + "/?next=" + request.GET.get('next')
+		elif request.GET.has_key('_popup'):
+			import pdb; pdb.set_trace()
+			response['location'] = response['location'] + str(obj_id) + "?_popup=1"
+		return response
 
 class SelfEmployedAdmin(Public_SelfEmployedAdmin):
 	class Media:
