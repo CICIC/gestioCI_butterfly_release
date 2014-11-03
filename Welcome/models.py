@@ -1206,11 +1206,11 @@ class Learn_Session(iC_Record):
 					if not hasattr(self, 'address') or self.address is None:
 						return '??: (??)'
 					else:
-						return '??: '+str(self.datetime.date())+ ' ('+ str(self.datetime.time()) + ') ' + _(u"Falta facilitador").encode("utf-8")+ ' ' + self.address.name
+						return '??: '+str(self.datetime.date())+ ' '+ str(self.datetime.time()) + ' ' + _(u"Falta facilitador").encode("utf-8")+ ' ' + self.address.name
 				else:
-					return self.nonmaterial.name+': '+str(self.datetime.date())+' ('+str(self.datetime.time())+ ') ' + _(u"Falta facilitador").encode("utf-8")+ ' ' +  +self.address.name
+					return self.nonmaterial.name+': '+str(self.datetime.date())+' '+str(self.datetime.time())+ ' ' + _(u"Falta facilitador").encode("utf-8")+ ' ' +  +self.address.name
 			else:
-				return self.nonmaterial.name+': '+str(self.datetime.date())+' ('+str(self.datetime.time())+') '+self.address.name
+				return self.nonmaterial.name+': '+str(self.datetime.date())+' '+str(self.datetime.time())+' '+self.address.name
 		except Exception as e:
 			print e.message
 
