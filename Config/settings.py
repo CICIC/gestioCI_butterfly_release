@@ -69,7 +69,6 @@ INSTALLED_APPS = (
     #'feincms',
     #'feincms.module.page',
     #'feincms.module.medialibrary'
-    "easy_pdf"
 
 )
 MIDDLEWARE_CLASSES = (
