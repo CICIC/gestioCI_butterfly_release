@@ -482,7 +482,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		if request.GET.has_key('next'):
 			response['location'] = response['location'] + "/" + str(obj_id) + "/?next=" + request.GET.get('next')
 		elif request.GET.has_key('_popup'):
-			import pdb; pdb.set_trace()
 			response['location'] = response['location'] + str(obj_id) + "?_popup=1"
 		return response
 

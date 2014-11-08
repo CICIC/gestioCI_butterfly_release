@@ -206,6 +206,8 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "media"),
 )
 
+PDF_IMAGES_DIR = os.path.join(BASE_DIR, "Welcome/templates")
+
 '''
 6 Localization
 '''
