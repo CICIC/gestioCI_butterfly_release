@@ -69,6 +69,7 @@ INSTALLED_APPS = (
     #'feincms',
     #'feincms.module.page',
     #'feincms.module.medialibrary'
+    "easy_pdf"
 
 )
 MIDDLEWARE_CLASSES = (
@@ -205,6 +206,8 @@ STATICFILES_DIRS = (
 		BASE_DIR + '/public_form/templates/js',
     os.path.join(BASE_DIR, "media"),
 )
+
+PDF_IMAGES_DIR = os.path.join(BASE_DIR, "Welcome/templates")
 
 '''
 6 Localization
