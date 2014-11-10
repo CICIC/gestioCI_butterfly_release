@@ -245,7 +245,32 @@ from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 
 class render_obj(object):
-	pass
+	def render_adress(self, adr, job):
+		output += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') 
+		caption = _(u"al local situat a l'adreça:").encode("utf-8")
+		region = adr.region.name.encode('ascii', 'xmlcharrefreplace')
+		try:
+			address_text = adr.p_address.encode("utf-8")
+			output += " %s %s %s %s (%s) %s" % (caption, address_text.decode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
+		except:
+			output = caption + "/" + address_text + "</li>"
+	def jobs_and_address_render(self, icse):
+		import pdb;pdb.set_trace()
+		obj = self
+		output = "<ul>"
+		already_showed_jobs = []
+		address_list = icse.ic_membership.human.addresses.all()
+		for adr in address_list:
+			for job in adr.jobs.all():
+				already_showed_jobs.append(job.id)
+				output += self.render_address(adr. job)
+		jobs_list = icse.ic_membership.human.jobs.all()
+		for job in jobs_list:
+			if not job.id in already_showed_jobs:
+				output += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') + "</li>"
+
+		obj.jobs_and_address += "</ul>"
+		return obj.jobs_and_address
 
 @login_required
 def print_task_list(request, icse):
@@ -312,26 +337,7 @@ def print_certificate(request, icse, type, cooperative):
 	obj.persons = mark_safe(obj.persons)
 
 	if type == "0" or type =="10":
-		obj.jobs_and_address = "<ul>"
-		jobs = []
-		for adr in icse.ic_membership.human.addresses.all():
-			for job in adr.jobs.all():
-				jobs.append(job.id)
-				obj.jobs_and_address += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') 
-				caption = _(u"al local situat a l'adreça:").encode("utf-8")
-				region = adr.region.name.encode('ascii', 'xmlcharrefreplace')
-				try:
-					address_text = adr.p_address.encode("utf-8")
-					obj.jobs_and_address += " %s %s %s %s (%s) %s" % (caption, address_text.decode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
-				except:
-					obj.jobs_and_address = caption + "/" + address_text + "</li>"
-					
-		for job in icse.ic_membership.human.jobs.all():
-			if not job.id in jobs:
-				obj.jobs_and_address += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') + "</li>"
-
-		obj.jobs_and_address += "</ul>"
-		obj.jobs_and_address = mark_safe(obj.jobs_and_address)
+		obj.jobs_and_address = mark_safe(obj.jobs_and_address_render(icse))
 		template = 'certificate_' + cooperative + '.html' if type=="0" else 'certificate_stallholder_' + cooperative + '.html'
 
 	html = render_to_string( template, {'obj': obj})
