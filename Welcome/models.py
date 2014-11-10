@@ -314,7 +314,8 @@ class iC_Akin_Membership(iC_Record):
 			if current_memberships.count() > 0:
 				out = "<ul>"
 				for rel in current_memberships:
-					rel_str = rel.name if rel.name else _(u"Falta nom")
+					try:
+						rel_str = rel.name if rel.name else _(u"Falta nom!").encode("utf-8")
 					out += "<li>" + rel_str  + "</li>"
 				out += "</ul>"
 		if out == "":
