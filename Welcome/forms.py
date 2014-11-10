@@ -100,6 +100,31 @@ class iC_Self_Employed_form(forms.ModelForm):
 		from Welcome.models import iC_Self_Employed
 		model = iC_Self_Employed
 		fields = [ "mentors_choice", "mentor_comment", "main_address_choice", 'other_address', "rel_insurances", "rel_licences", "rel_address_contracts", 	"fee_membership"]
+class SelfEmployedForm(forms.ModelForm):
+	ic_CESnum = forms.CharField(widget=forms.TextInput(attrs=dict(max_length=8)),label=_(u"Número COOP soci"), required=False)
+	def __init__(self, *args, **kwargs):
+		self.request = kwargs.pop('request', None)
+		super(SelfEmployedForm, self).__init__(*args, **kwargs)
+		#print 'FORM: KWARGS: '+str(kwargs)
+		if self.instance.id:
+			self.fields['ic_CESnum'].initial = self.instance.ic_membership.ic_CESnum
+			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances.all() | self.instance.rel_insurances.all()
+
+	def clean(self):
+		saved = False
+		new_image_list = self.data.getlist("rel_images")
+		for new_image_id in new_image_list:
+			from General.models import Image
+			new_image_object = Image.objects.filter(id=new_image_id).first()
+			if new_image_object not in self.instance.rel_images.all():
+				self.instance.rel_images.add(new_image_object)
+				saved = True
+
+		if saved:
+			self.instance.save()
+			self.errors.pop('rel_images')
+
+		return super(SelfEmployedForm, self).clean()
 
 class public_form(forms.ModelForm):
 	CHOICES_admin = (

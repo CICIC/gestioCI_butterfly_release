@@ -60,7 +60,14 @@ class AutoRecordName(admin.ModelAdmin):
 								return self.model.objects.filter(human=current_human)
 						except:
 							pass
-
+					import pdb; pdb.set_trace()
+					if hasattr(self.model, "ic_membership"):
+						try:
+							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(ic_membership__human=current_human).count()>0:
+								return self.model.objects.filter(ic_membership__human=current_human)
+						except:
+							pass
 					if hasattr(self.model, "ic_self_employed"):
 						try:
 							current_human = Human.objects.get(id=current_registration.project.id)
@@ -370,32 +377,7 @@ class SE_relAddressContractInline(admin.StackedInline):
 
 
 
-class SelfEmployedForm(forms.ModelForm):
-	ic_CESnum = forms.CharField(widget=forms.TextInput(attrs=dict(max_length=8)),label=_(u"Número COOP soci"), required=False)
-	def __init__(self, *args, **kwargs):
-		self.request = kwargs.pop('request', None)
-		super(SelfEmployedForm, self).__init__(*args, **kwargs)
-		#print 'FORM: KWARGS: '+str(kwargs)
-		if self.instance.id:
-			self.fields['ic_CESnum'].initial = self.instance.ic_membership.ic_CESnum
-			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances.all() | self.instance.rel_insurances.all()
-
-	def clean(self):
-		saved = False
-		new_image_list = self.data.getlist("rel_images")
-		for new_image_id in new_image_list:
-			from General.models import Image
-			new_image_object = Image.objects.filter(id=new_image_id).first()
-			if new_image_object not in self.instance.rel_images.all():
-				self.instance.rel_images.add(new_image_object)
-				saved = True
-
-		if saved:
-			self.instance.save()
-			self.errors.pop('rel_images')
-
-		return super(SelfEmployedForm, self).clean()
-
+from Welcome.forms import SelfEmployedForm
 class Public_SelfEmployedAdmin(AutoRecordName):
 	class Media:
 		css = {
