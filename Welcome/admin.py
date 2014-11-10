@@ -33,6 +33,36 @@ class AutoRecordName(admin.ModelAdmin):
 			"admin/js/jquery.init.js",
 			'welcome.js',
 		)
+	def queryset(self, request):
+
+		if request.user.is_superuser:
+			return self.model.objects.all()
+		else:
+			if request.user.is_staff:
+				return self.model.objects.all()
+			else:
+
+				from public_form.models import RegistrationProfile
+				try:
+					current_registration = RegistrationProfile.objects.get(user=request.user)
+					if hasattr(self.model, "person"):
+						try:
+							current_human = Human.objects.get(id=current_registration.person.id)
+							if self.model.objects.filter(human=current_human).count()>0:
+								return self.model.objects.filter(human=current_human)
+						except:
+							pass
+					if hasattr(self.model, "ic_project"):
+						try:
+							current_human = Human.objects.get(id=current_registration.project.id)
+						except:
+							pass
+					if current_human:
+						return self.model.objects.filter(human=current_human)
+				except:
+					pass
+				return self.model.objects.filter(id=-1)
+
 
 	def save_model(self, request, obj, form, change):
 		instance = form.save(commit=False)
