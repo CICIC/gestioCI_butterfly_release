@@ -246,7 +246,7 @@ from django.contrib.auth.decorators import login_required
 
 class render_obj(object):
 	def render_adress(self, adr, job):
-		output += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') 
+		output = "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') 
 		caption = _(u"al local situat a l'adreça:").encode("utf-8")
 		region = adr.region.name.encode('ascii', 'xmlcharrefreplace')
 		try:
@@ -254,23 +254,30 @@ class render_obj(object):
 			output += " %s %s %s %s (%s) %s" % (caption, address_text.decode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
 		except:
 			output = caption + "/" + address_text + "</li>"
+		return output
 	def jobs_and_address_render(self, icse):
-		import pdb;pdb.set_trace()
+		import pdb; pdb.set_trace()
 		obj = self
 		output = "<ul>"
 		already_showed_jobs = []
 		address_list = icse.ic_membership.human.addresses.all()
+
 		for adr in address_list:
 			for job in adr.jobs.all():
 				already_showed_jobs.append(job.id)
-				output += self.render_address(adr. job)
+				output += self.render_address(adr, job)
 		jobs_list = icse.ic_membership.human.jobs.all()
+		licenses_list = icse.rel_licences.all()
+		for lic in licenses_list:
+			if lic.rel_job and lic.rel_address:
+				output += self.render_address(adr, job)
+
 		for job in jobs_list:
 			if not job.id in already_showed_jobs:
 				output += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') + "</li>"
 
-		obj.jobs_and_address += "</ul>"
-		return obj.jobs_and_address
+		output += "</ul>"
+		return output
 
 @login_required
 def print_task_list(request, icse):
@@ -337,7 +344,10 @@ def print_certificate(request, icse, type, cooperative):
 	obj.persons = mark_safe(obj.persons)
 
 	if type == "0" or type =="10":
+		obj.jobs_and_address = ""
 		obj.jobs_and_address = mark_safe(obj.jobs_and_address_render(icse))
+		print obj.jobs_and_address
+		import pdb; pdb.set_trace()
 		template = 'certificate_' + cooperative + '.html' if type=="0" else 'certificate_stallholder_' + cooperative + '.html'
 
 	html = render_to_string( template, {'obj': obj})
