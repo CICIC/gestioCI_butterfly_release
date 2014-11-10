@@ -611,7 +611,7 @@ class iC_Self_Employed(iC_Record):
 	assigned_vat = models.DecimalField(max_digits=4, decimal_places=2, default=18, blank=True, null=True, verbose_name=_(u"IVA assignat"))
 	review_vat = models.BooleanField(default=False, verbose_name=_(u"IVA en revisió?"))
 	last_review_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data última revisió IVA"))
-	mentor_membership = models.ForeignKey('iC_Membership', related_name='mentor_of_SE', blank=True, null=True, verbose_name=_(u"Mentor projecte"))
+	mentor_membership = models.ForeignKey('iC_Akin_Membership', related_name='mentor_of_SE', blank=True, null=True, verbose_name=_(u"Mentor projecte"))
 	mentor_comment = models.TextField(blank=True, null=True, verbose_name=_(u"Comentaris soci mentor"))
 	extra_days=models.IntegerField(blank=True, null=True, verbose_name=_(u"Dies extra"), help_text=_(u"Dies extra que pot editar el trimestre en curs."), max_length=2, default=0)
 
