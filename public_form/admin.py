@@ -414,7 +414,8 @@ class only_membership_filter(SimpleListFilter):
 		return queryset.filter(record_type = self.value())
 
 class RegistrationProfileAdmin(ModelAdmin):
-	list_filter= (only_pending_filter, only_membership_filter)
+	search_fields = ("user__username", "person__name")
+	list_filter= (only_pending_filter, )
 	model = RegistrationProfile
 	list_display = ('user', 'activation_key', 'person', 'record_type' )
 
