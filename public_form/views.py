@@ -601,10 +601,9 @@ def create_membership(request, record_type_id=4):
 
 
 			from Welcome.models import Person
-
-			current_person = form.save()
 			if not form.cleaned_data.get("telephone_cell"):
 				current_person.telephone_cell = "666666666"
+
 			current_person.name = form.cleaned_data.get("username")
 			current_person.nickname = form.cleaned_data.get("username")
 			current_person.save()
