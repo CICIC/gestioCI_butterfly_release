@@ -418,5 +418,5 @@ class RegistrationProfileAdmin(ModelAdmin):
 	list_filter= (only_pending_filter, )
 	model = RegistrationProfile
 	list_display = ('user', 'activation_key', 'person', 'record_type' )
-
+	raw_id_fields = ('user', 'person')
 admin.site.register(RegistrationProfile, RegistrationProfileAdmin)
