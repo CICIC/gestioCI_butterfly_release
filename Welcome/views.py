@@ -348,8 +348,6 @@ def print_certificate(request, icse, type, cooperative):
 	if type == "0" or type =="10":
 		obj.jobs_and_address = ""
 		obj.jobs_and_address = mark_safe(obj.jobs_and_address_render(icse))
-		print obj.jobs_and_address
-		import pdb; pdb.set_trace()
 		template = 'certificate_' + cooperative + '.html' if type=="0" else 'certificate_stallholder_' + cooperative + '.html'
 
 	html = render_to_string( template, {'obj': obj})
