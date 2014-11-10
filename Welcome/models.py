@@ -1215,7 +1215,7 @@ class Learn_Session(iC_Record):
 			else:
 				return self.nonmaterial.name+': '+str(self.datetime.date())+' '+str(self.datetime.time())+' '+self.address.name
 		except Exception as e:
-			print e.message
+			return str(self.name)
 
 	class Meta:
 		verbose_name = _(u"Sessió formativa")
