@@ -116,9 +116,11 @@ type = 1 => address_contract ==> lloger (contract_hire)
 type = 2 => labor_contract
 type = 3 => add main address
 type = 4 => add other address
+type = 5 => remove cardid (person.id / 0 / ic_membership.human.id, 5)
 '''
 @login_required
 def self_employed_save_item(request, person_id, address_id, id, type):
+
 	from General.models import Person, Address, Project
 	from Welcome.models import iC_Stallholder, iC_Self_Employed
 	try:
@@ -217,6 +219,11 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		related_address.save()
 		next_url = request.GET.get("next","")
 		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/?next=" + next_url)
+	elif type=="5":
+		from General.models import rel_Human_Persons, Person, Human
+		rel_Human_Persons.objects.get(person= current_person, human=Human.objects.get(id=id) ).delete()
+		next_url = request.GET.get("next","")
+		return HttpResponseRedirect( next_url )
 	callback_url = "/admin/Welcome/" + callback_clas + "/" + str(id)  + "/"
 	return HttpResponseRedirect(callback_url)
 
