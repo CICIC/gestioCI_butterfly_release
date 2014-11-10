@@ -87,9 +87,9 @@ def entry_page_to_gestioci(request, user_id = None):
 					print current_registration.person.id
 					qobjects = iC_Akin_Membership
 					membership = qobjects.objects.get( person=current_registration.person)
-
-				membership_id = membership.id
-				type = membership.record_type.clas
+					membership_id = membership.id if membership else 0
+					if membership_id > 0:
+						type = membership.record_type.clas
 
 				if type == "iC_Akin_Membership":
 					from Welcome.forms import iC_Akin_Membership_form
@@ -601,7 +601,10 @@ def create_membership(request, record_type_id=4):
 
 
 			from Welcome.models import Person
+
 			current_person = form.save()
+			if not form.cleaned_data.get("telephone_cell"):
+				current_person.telephone_cell = "666666666"
 			current_person.name = form.cleaned_data.get("username")
 			current_person.nickname = form.cleaned_data.get("username")
 			current_person.save()
