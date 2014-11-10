@@ -854,6 +854,7 @@ admin.site.register(iC_Membership, MembershipAdmin)
 user_admin_site.register(iC_Self_Employed, Public_SelfEmployedAdmin)
 admin.site.register(iC_Self_Employed, SelfEmployedAdmin)
 
+user_admin_site.register(iC_Stallholder, Public_StallholderAdmin)
 admin.site.register(iC_Stallholder, StallholderAdmin)
 
 
