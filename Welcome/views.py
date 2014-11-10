@@ -220,10 +220,23 @@ def self_employed_save_item(request, person_id, address_id, id, type):
 		next_url = request.GET.get("next","")
 		return HttpResponseRedirect("/admin/General/address/" + str(adr.id) + "/?next=" + next_url)
 	elif type=="5":
-		from General.models import rel_Human_Persons, Person, Human
-		rel_Human_Persons.objects.get(person= current_person, human=Human.objects.get(id=id) ).delete()
-		next_url = request.GET.get("next","")
-		return HttpResponseRedirect( next_url )
+		from django.core.exceptions import ObjectDoesNotExist
+		try:
+			from General.models import rel_Human_Persons, Person, Human
+			current_human = Human.objects.get(id=id)
+			current_person = Person.objects.get(id=person_id)
+			rel_Human_Persons.objects.get(person=current_person,human=current_human).delete()
+			next_url = request.GET.get("next","")
+			return HttpResponseRedirect(next_url)
+		except ObjectDoesNotExist as e:
+			from django.contrib import messages
+			messages.error(request, e.message )
+			messages.info(request, _(u" No s'ha pogut desvincular el sóci membre.") )
+		except Exception as e:
+			from django.contrib import messages
+			messages.error(request, e.message )
+			messages.info(request, _(u" No s'ha pogut desvincular el sóci membre.") )
+
 	callback_url = "/admin/Welcome/" + callback_clas + "/" + str(id)  + "/"
 	return HttpResponseRedirect(callback_url)
 
