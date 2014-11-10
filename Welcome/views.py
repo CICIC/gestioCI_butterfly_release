@@ -247,7 +247,7 @@ from django.contrib.auth.decorators import login_required
 class render_obj(object):
 	def render_address(self,adr, job):
 		output = "<li>" + job.name.encode('ascii', 'xmlcharrefreplace')
-		caption = _(u"al local situat a l'adreça:").encode("utf-8")
+		caption = _(u" al local situat a l'adreça:").encode("utf-8")
 		region = adr.region.name.encode('ascii', 'xmlcharrefreplace')
 		try:
 				address_text = adr.p_address.encode("utf-8")
