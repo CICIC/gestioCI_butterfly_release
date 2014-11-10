@@ -60,7 +60,7 @@ class AutoRecordName(admin.ModelAdmin):
 								return self.model.objects.filter(human=current_human)
 						except:
 							pass
-					import pdb; pdb.set_trace()
+
 					if hasattr(self.model, "ic_membership"):
 						try:
 							current_human = Human.objects.get(id=current_registration.project.id)
