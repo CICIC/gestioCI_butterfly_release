@@ -42,8 +42,8 @@ class sessions_tag_node(template.Node):
 		# obj now is the object you passed the tag
 
 		current_human = None
-		current_session = None
-		current_coin_session = None
+		current_session = ""
+		current_coin_session = ""
 
 		from django.core.exceptions import ObjectDoesNotExist
 		from Welcome.models import Learn_Session
@@ -88,7 +88,15 @@ class sessions_tag_node(template.Node):
 
 		context['current_human'] = current_human
 		context['current_session'] = current_session
+		try:
+			context['current_session_name'] = current_session.name
+		except:
+			context['current_session_name'] = ""
 		context['current_coin_session'] = current_coin_session
+		try:
+			context['current_coin_session_name'] = current_coin_session.name
+		except:
+			context['current_coin_session_name'] = ""
 
 		return ''
 
@@ -211,10 +219,15 @@ with point on miles. So this is to get str
 '''
 @register.filter
 def get_id(value):
-	if hasattr(value, "id"):
-		return str(value.id)
-	else:
-		return value
+	try:
+		if not value:
+			return "0"
+		if hasattr(value, "id"):
+			return str(value.id)
+		else:
+			return value
+	except:
+		return "0"
 
 
 '''

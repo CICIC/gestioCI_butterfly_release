@@ -75,7 +75,7 @@
 									{% endif %}
  									{% if current_session %}
 										<tr><td colspan="2"><label>
-										{{ current_session}} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
+										{{ current_session_name }} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
 										</label></td></tr>
 									{% elif is_project %}
 										<tr><td colspan="2"><label>
@@ -92,9 +92,9 @@
 										<tr><td colspan="2"><input type="submit" value="{% trans "Establir que " %}{{current_human}}{% trans " ha assistit a aquesta sessió d'Acollida" %}"{{current_session}}></td></tr>
 									{% endif %}
 									{% if not dont_memberships %}
-										{% if current_coin_session %}
+										{% if current_coin_session != None %}
 											<tr><td colspan="2"><label>
-												{{ current_coin_session}} <a href="/admin/Welcome/learn_session/{{current_coin_session|get_id}}/?next=/admin/public_form/human_proxy/?coin_session_id={{current_coin_session|get_id}}"> {% trans "Editar" %}</a>
+												{{ current_coin_session_name}} <a href="/admin/Welcome/learn_session/{{current_coin_session|get_id}}/?next=/admin/public_form/human_proxy/?coin_session_id={{current_coin_session|get_id}}"> {% trans "Editar" %}</a>
 												</label></td></tr>
 											{% elif is_project %}
 												<tr><td colspan="2"><label>
