@@ -1,17 +1,21 @@
 {% load i18n %}
+<style>
+.header { background-color:#bbbbbb; }
+.checkmark { width:2em; text-align:center; }
+</style>
 <div style="font-size:13px">
 	<h1>{% trans 'LLISTA DE TASQUES PENDENTS - ALTA SOCIS AUTOOCUPATS' %}</h1>
 	<h2>{% trans '- Cooperativa Integral Catalana -' %}</h2>
 	<p>{% trans "A continuació, us indiquem la llista de tasques que heu de realitzar. Per qualsevol dubte disposeu de la Web de la CIC (http://cooperativa.cat/participa/vols-fer-ten-soci-autonom/). En cas necessari, també podeu acudir al responsable amb qui heu fet la sessió d'Avaluació. Quan tingueu totes aquestes tasques completades haureu de demanar hora amb aquest responsable per venir un altra dia -les mateixes persones- a completar el procés d'alta del vostre projecte. IMPORTANT: si no aporteu tota la documentació i tasques demanades en aquesta llista no podrem completar el procés encara que vingueu a una sessió d'Alta i l'haureu de repetir un altre dia." %} </p>
 	<br>
 	<table border=1 style="padding:1 1 0 1">
-	<tr><td>{% trans "Codi Projecte" %}</td><td>{% trans "Responsable d'Avaluació" %}</td><td>{% trans "Correu de contacte" %}</td></tr>
+	<tr><th class="header">{% trans "Codi Projecte" %}</td><th class="header">{% trans "Responsable d'Avaluació" %}</td><th class="header">{% trans "Correu de contacte" %}</td></tr>
 	<tr><td>{{obj.current_project}}</td><td>{{obj.current_admin}}</td><td>{{obj.current_admin.email}}</td></tr>
 	</table>
 	<br>
 	<h3>{% trans "Assegurances" %}</h3>
 	<table border=1 style="padding:1 1 0 1">
-	<tr><td>{% trans "Activitat"%}</td><td>{% trans "Comentaris"%}</td></tr>
+	<tr><th class="header">{% trans "Activitat"%}</td><th class="header">{% trans "Comentaris"%}</td></tr>
 	{% for insurance in obj.insurances.all%}
 		<tr><td>{{insurance.rel_job|default:""}}</td><td>{{insurance.description|default:""}}</td></tr>
 	{% endfor %}
@@ -21,7 +25,7 @@
 	<br>
 	<h3>{% trans "Traspassos" %}</h3>
 	<table border=1 style="padding:1 1 0 1">
-	<tr><td>{% trans "Tipus "%}</td><td>{% trans "Adreça"%}</td><td>{% trans "Comentaris"%}</td></tr>
+	<tr><th class="header">{% trans "Tipus "%}</td><th class="header">{% trans "Adreça"%}</td><th class="header">{% trans "Comentaris"%}</td></tr>
 	{% for contract in obj.address_contracts.all%}
 		<tr><td>{{contract.ic_document.doc_type.name}}</td><td>{{contract.address}}</td><td>{{contract.description|default:""}}</td></tr>
 	{% endfor %}
@@ -36,13 +40,13 @@
 	<h3>{% trans "Firaires " %}</h3>
 	<table border=1 style="padding:1 1 0 1">
 	<tr>
-	<td width="25px">X</td><td>{% trans "Foto parada (2)"%}</td>
-	<td width="25px">X</td><td>{% trans "Descripci&oacute; detallada de parada i productes" %}</td>
-	<td width="25px">X</td><td>{% trans "Fotos productes (2)"%}</td>
+	<td class="checkmark">X</td><td>{% trans "Foto parada"%}</td>
+	<td class="checkmark">X</td><td>{% trans "Descripci&oacute; detallada de parada i productes" %}</td>
+	<td class="checkmark">X</td><td>{% trans "Fotos productes"%}</td>
 	</tr>
 	</table>
 	<br>
-	{% trans "(2) Portar fotos en usb o correu de contacte " %}
+	{% trans "Porteu les fotos en USB o adjunteu-les al correu electr&ograve;nic de contacte" %}
 	<br>
 	{% endif %}
 	<br>

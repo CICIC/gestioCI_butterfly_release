@@ -318,7 +318,7 @@ def print_certificate(request, icse, type, cooperative):
 	#return HttpResponse(html)
 	return render_pdf(html.encode("utf-8"), request)
 
-import ho.pisa as pisa
+from xhtml2pdf import pisa
 import cStringIO as StringIO
 import cgi
 import os
