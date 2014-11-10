@@ -611,6 +611,7 @@ def create_membership(request, record_type_id=4):
 			if str(record_type_id) == str(iC_Record_Type.objects.get(clas="iC_Project_Membership").id):
 				project_name = "Projecte de " + form.cleaned_data.get("username")
 				current_project = Project(name=project_name)
+				current_project.telephone_cell = "666666666"
 				current_project.save()
 			else:
 				current_project = Project()
@@ -974,6 +975,8 @@ def save_current_human(request, current_human):
 			current_person.name = "Persona del projecte:" + current_human.name
 			current_person.telephone_land = current_human.telephone_land
 			current_person.telephone_cell = current_human.telephone_cell
+			if not current_person.telephone_cell:
+				current_person.telephone_cell = "666666666"
 			current_person.email = current_human.email
 			current_person.save()
 			from General.models import rel_Human_Persons, Relation
