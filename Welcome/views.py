@@ -245,18 +245,17 @@ from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 
 class render_obj(object):
-	def render_address(adr, job):
-		output = "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') 
+	def render_address(self,adr, job):
+		output = "<li>" + job.name.encode('ascii', 'xmlcharrefreplace')
 		caption = _(u"al local situat a l'adreça:").encode("utf-8")
 		region = adr.region.name.encode('ascii', 'xmlcharrefreplace')
 		try:
-			address_text = adr.p_address.encode("utf-8")
-			output += " %s %s %s %s (%s) %s" % (caption, address_text.decode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
+				address_text = adr.p_address.encode("utf-8")
+				output += " %s %s %s %s (%s) %s" % (caption, address_text.decode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
 		except:
-			output = caption + "/" + address_text + "</li>"
+				output += caption + "/" + address_text + "</li>"
 		return output
 	def jobs_and_address_render(self, icse):
-		import pdb; pdb.set_trace()
 		obj = self
 		output = "<ul>"
 		already_showed_jobs = []
@@ -266,18 +265,21 @@ class render_obj(object):
 			for job in adr.jobs.all():
 				already_showed_jobs.append(job.id)
 				output += obj.render_address(adr, job)
-		jobs_list = icse.ic_membership.human.jobs.all()
+
 		licenses_list = icse.rel_licences.all()
 		for lic in licenses_list:
-			if lic.rel_job and lic.rel_address:
-				output += obj.render_address(adr, job)
+			if lic.rel_job and lic.rel_address and not lic.rel_job.id in already_showed_jobs:
+				already_showed_jobs.append(lic.rel_job.id)
+				output += obj.render_address(lic.rel_address, lic.rel_job)
 
+		jobs_list = icse.ic_membership.human.jobs.all()
 		for job in jobs_list:
 			if not job.id in already_showed_jobs:
 				output += "<li>" + job.name.encode('ascii', 'xmlcharrefreplace') + "</li>"
 
 		output += "</ul>"
 		return output
+
 
 @login_required
 def print_task_list(request, icse):
