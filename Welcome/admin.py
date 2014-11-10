@@ -33,6 +33,7 @@ class AutoRecordName(admin.ModelAdmin):
 			"admin/js/jquery.init.js",
 			'welcome.js',
 		)
+
 	def queryset(self, request):
 
 		if request.user.is_superuser:
@@ -55,6 +56,16 @@ class AutoRecordName(admin.ModelAdmin):
 					if hasattr(self.model, "ic_project"):
 						try:
 							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(human=current_human).count()>0:
+								return self.model.objects.filter(human=current_human)
+						except:
+							pass
+
+					if hasattr(self.model, "ic_self_employed"):
+						try:
+							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(ic_self_employed__ic_membership__human=current_human).count()>0:
+								return self.model.objects.filter(ic_self_employed__ic_membership__human=current_human)
 						except:
 							pass
 					if current_human:
