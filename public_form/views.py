@@ -599,13 +599,11 @@ def create_membership(request, record_type_id=4):
 		if form.is_valid():
 			record_type_id = request.POST["type"]
 
-
 			from Welcome.models import Person
-			if not form.cleaned_data.get("telephone_cell"):
-				current_person.telephone_cell = "666666666"
-
+			current_person = Person()
 			current_person.name = form.cleaned_data.get("username")
 			current_person.nickname = form.cleaned_data.get("username")
+			current_person.telephone_cell = "666666666"
 			current_person.save()
 
 			from Welcome.models import iC_Record_Type
