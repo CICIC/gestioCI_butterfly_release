@@ -591,6 +591,51 @@ class HumanAdmin(Css_Mixin):
 		else:
 			return formset.save()
 
+	def has_change_permission(self, request, obj=None):
+		if request.user.is_superuser:
+			return True
+		else:
+			if request.user.is_staff:
+				return True
+			else:
+				if obj:
+					import pdb; pdb.set_trace()
+					from public_form.models import RegistrationProfile
+					try:
+						current_registration = RegistrationProfile.objects.get(user=request.user)
+						return current_registration.person == obj or current_registration.project == obj
+					except:
+						return False
+				return True
+
+	def queryset(self, request):
+		if request.user.is_superuser:
+			return self.model.objects.all()
+		else:
+			if request.user.is_staff:
+				return self.model.objects.all()
+			else:
+
+				from public_form.models import RegistrationProfile
+				try:
+					current_registration = RegistrationProfile.objects.get(user=request.user)
+					try:
+						current_human = Human.objects.get(id=current_registration.person.id)
+						if self.model.objects.filter(human=current_human).count()>0:
+							return self.model.objects.filter(human=current_human)
+					except:
+						pass
+
+					try:
+						current_human = Human.objects.get(id=current_registration.project.id)
+					except:
+						pass
+					if current_human:
+						return self.model.objects.filter(human=current_human)
+				except:
+					pass
+				return self.model.objects.filter(id=-1)
+
 
 
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
@@ -696,6 +741,7 @@ class Public_PersonAdmin(HumanAdmin):
 		H_accountBankInline,
 		H_accountCryptoInline,
 	]
+
 
 class PersonAdmin(Public_PersonAdmin):
 
