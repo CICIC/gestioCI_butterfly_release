@@ -784,7 +784,7 @@ class LearnSessionAdmin(AutoRecordName):
 	list_display = ['name', 'nonmaterial', 'datetime', '_num_assistants', 'address', 'facilitator']
 	list_filter = ('nonmaterial', 'datetime',)
 	search_fields = ('name', 'address',)
-	raw_id_fields = ('assistants',)
+	raw_id_fields = ('address', 'assistants',)
 	fieldsets = (
 		(None, {
 			'fields': (
