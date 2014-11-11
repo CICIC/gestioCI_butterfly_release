@@ -191,6 +191,20 @@ class member_object(object):
 				caption =  object._rel_id_cards.short_description.encode("utf-8").decode("utf-8")
 				links.append( _folder( caption, value ))
 				links.append( _folder( object._akin_members.short_description.encode("utf-8"), object._akin_members(False, "/cooper/").decode("utf-8")  ) )
+				try:
+					#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
+					if not object.ic_membership.ic_company:
+						from General.models import Company
+						if not self.user.groups.all().filter(name="iC_Stallholder"):
+							coop = Company.objects.get(name="Interprofessionals")
+						else:
+							coop = Company.objects.get(name="XIPU")
+						object.ic_membership.ic_company = coop
+						object.save()
+
+					links.append( _folder( "Cooperativa", str(object.ic_membership.ic_company) ) )
+				except:
+					pass
 
 				if not self.user.groups.all().filter(name="iC_Stallholder"):
 					links.append( _member_folder( object ) )
