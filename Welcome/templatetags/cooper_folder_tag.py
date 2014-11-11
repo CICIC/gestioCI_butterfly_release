@@ -54,6 +54,11 @@ def _section(caption):
 def _link(url, caption):
 	return "<a href='%s'>%s</a>"  % ( url, caption ) 
 
+def _member_folder(object):
+	caption = object.print_certificate.short_description.encode("utf-8") 
+	value = object.print_certificate()
+	return "<h5>%s</h5> %s" % ( caption, value ) 
+
 class member_object(object):
 	def __init__(self, user):
 		self.user = user
@@ -111,17 +116,19 @@ class member_object(object):
 
 		objects = self.get_member_group_data(group, model)
 		for object in objects:
-			admin_url = urlresolvers.reverse("member:%s_%s_change" % (object._meta.app_label, object._meta.model_name), args=(object.id,))
 
 			if isinstance(object, iC_Stallholder):
-				sections.append( _section( _(u" Particular de Firaire " ).encode("utf-8") ) )
+					sections.append( _section( _(u" Particular de Firaire " ).encode("utf-8") ) )
+					links.append( _member_folder( object ) )
 
 			elif isinstance(object, iC_Self_Employed):
-				if self.user.groups.all().filter(name="iC_Stallholder"):
-					sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
-					value = object.print_task_list().encode("utf-8")
-					links.append( value  )
+				sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
 
+				value = object.print_task_list().encode("utf-8")
+				links.append( value )
+
+				if not self.user.groups.all().filter(name="iC_Stallholder"):
+					links.append( _member_folder( object ) )
 			else:
 				links.append( object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) )
 
@@ -135,6 +142,7 @@ class member_object(object):
 
 				sections.append( _section( object.record_type.name ) )
 
+			admin_url = urlresolvers.reverse("member:%s_%s_change" % (object._meta.app_label, object._meta.model_name), args=(object.id,))
 			links.append( _link(admin_url, object.record_type.name) )
 
 		return sections, links
