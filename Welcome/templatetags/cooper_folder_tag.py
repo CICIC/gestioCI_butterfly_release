@@ -9,21 +9,6 @@ from django.core import urlresolvers
 from django.db.models.loading import get_model
 from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership
 
-'''
-@param: 
-	REQUEST
-	use:
-		GET.key("learn_session_id")
-		GET.key("human_id")
-
-@return:
-	context['current_human']: General.model > Based on key(human_id), will be a Project or a Person or a Human
-	context['dont_memberships'] : Boolean > True meaning human does not have any membership
-	context['current_memberships']:  queryset > Welcome.ic_Membership, related object for Human
-	context['current_memberships_self']: queryset > Welcome.ic_Self_Employed, related object for Human
-	current_memberships_stallholder']: queryset > Welcome.ic_Stallholder, related object for Human
-'''
-
 def _links_list_to_ul(links):
 	output = "<ul>"
 	for link in links:
@@ -65,7 +50,6 @@ def _fees_folder(object):
 	value = object._rel_fees("/cooper/")
 	return _folder( caption, value ) 
 
-
 def _get_label_error( caption, field, required = True):
 	str_out = ""
 	if field:
@@ -87,23 +71,26 @@ delete_class = " class='deletelink' "
 delete_caption = __("Treu").encode("utf-8")
 general_href = "<a href='/admin/General/"
 welcome_href = "<a href='/admin/Welcome/"
-def _render_person(rel, admin_path="/admin/"):
+def _render_person(rel, admin_path="/cooper/"):
 
 	out = ""
 	if hasattr(rel, 'person'):
-		c = _get_label_error(__(" [Falta DNI/NIF] "),rel.person.id_card, False)
-		m = _get_label_error(__(" [Falta email] "),rel.person.email, False)
-		tc =_get_label_error(__(u" [Falta el telèfon mòbil] "),str(rel.person.telephone_cell), False)
-		tl =_get_label_error("",str(rel.person.telephone_land), False)
-		try:
-			fields = "%s - %s  - %s  %s" % ( c, m, tc, tl)
-		except:
-			fields = "%s - %s - %s  %s" % ( c, m, tc.decode("utf-8"), tl)
-		out_str ="<a %s href='%sGeneral/person/%s%s'><b>%s</b></a> %s<br>"
-		try:
-			out = out_str % (change_class, admin_path, str(rel.person.id), "", rel.person.__unicode__(), fields.decode("utf-8") )
-		except:
-			out = out_str % (change_class, admin_path, str(rel.person.id), "", rel.person.__unicode__(), fields )
+		person = rel.person
+	else:
+		person = rel
+	c = _get_label_error(__(" [Falta DNI/NIF] "),person.id_card, False)
+	m = _get_label_error(__(" [Falta email] "),person.email, False)
+	tc =_get_label_error(__(u" [Falta el telèfon mòbil] "),str(person.telephone_cell), False)
+	tl =_get_label_error("",str(person.telephone_land), False)
+	try:
+		fields = "%s - %s  - %s  %s" % ( c, m, tc, tl)
+	except:
+		fields = "%s - %s - %s  %s" % ( c, m, tc.decode("utf-8"), tl)
+	out_str ="<a %s href='%sGeneral/person/%s%s'><b>%s</b></a> %s<br>"
+	try:
+		out = out_str % (change_class, admin_path, str(person.id), "", person.__unicode__(), fields.decode("utf-8") )
+	except:
+		out = out_str % (change_class, admin_path, str(person.id), "", person.__unicode__(), fields )
 	return out
 def _folder(caption, value):
 	return "<h5>%s</h5> %s" % ( caption, value ) 
@@ -198,13 +185,17 @@ class member_object(object):
 		if isinstance(object, iC_Person_Membership):
 			caption = _("Persona").encode("utf-8")
 
-		links.append( object.ic_project._ref_persons().decode("utf-8") )
+		links_ref = []
+		for person in object.ic_project._get_ref_persons():
+			links_ref.append( _render_person(person) )
+		links.append( _folder("Referentes", _links_list_to_ul(links_ref) ) )
+
 		links.append( _folder( caption, object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) ) )
 
 		caption = _(u"Els meus comptes").encode("utf-8")
 		links_account = []
 		for account in object.ic_membership.human._my_accounts():
-			links_account.append( _link( "s", account.name) )
+			links_account.append( _link( account.link(), account.name) )
 		links.append( _folder(caption, _links_list_to_ul(links_account) )  )
 
 		sections.append( _section( object.record_type.name ) )
@@ -236,35 +227,31 @@ class member_object(object):
 
 		return sections, links
 
+
 	def render_group(self,group):
 		image = "<img src='/static/%s_user.png' width='25px'>" % (group.name)
 		sections, links = self.render_group_get_objects(group)
-		output = ""
 		for section in sections:
-			output =  "<li> \
-						<table width=%s> \
-							<tr height=15><td colspan=2><h4>%s</h4></td></tr> \
-							<tr> \
-								<td width=27>%s</td> \
-								<td><span class='mini quiet'>%s</span></td> \
-							</tr> \
-						</table></li>" 
-			output = _safe_render( output, section, image, _links_list_to_ul(links) )
-
-		return output
+			class render_object(object):
+				pass
+			obj = render_object()
+			obj.section = mark_safe(section)
+			obj.image = mark_safe(image)
+			obj.links = mark_safe(_links_list_to_ul(links))
+			return obj
+		return None
 
 	def avatar(self):
 		return mark_safe("<img src='/static/Anon_user.png' width='15px'>")
 
 	def groups_list(self):
-		output = ""
+		output_list = []
 		for group in self.user.groups.all():
 			if group.name == "iC_Self_Employed" and self.user.groups.all().filter(name="iC_Stallholder"):
 				pass
 			else:
-				output += self.render_group(group)
-
-		return mark_safe( output )
+				output_list.append( self.render_group(group) )
+		return output_list
 
 class human_tag_node(template.Node):
 	def __init__(self, obj):

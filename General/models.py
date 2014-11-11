@@ -982,7 +982,7 @@ class AccountCes(Record):
 		return '('+self.unit.code+') '+self.human.nickname+' '+self.code+self.number#+' '+self.name
 	def link(self):
 		if self.id:
-			return "/cooper/General/accountces/" + self.id
+			return "/cooper/General/accountces/" + str(self.id)
 		else:
 			return ""
 class AccountBank(Record):
@@ -1006,7 +1006,7 @@ class AccountBank(Record):
 			return "<projecte buit>"
 	def link(self):
 		if self.id:
-			return "/cooper/General/accountbank/" + self.id
+			return "/cooper/General/accountbank/" + str(self.id)
 		else:
 			return ""
 class AccountCrypto(Record):
@@ -1021,6 +1021,6 @@ class AccountCrypto(Record):
 		return '('+self.unit.code+') '+self.human.nickname+' '+self.number # +' '+self.name
 	def link(self):
 		if self.id:
-			return "/cooper/General/accountcrypto/" + self.id
+			return "/cooper/General/accountcrypto/" + str(self.id)
 		else:
 			return ""
