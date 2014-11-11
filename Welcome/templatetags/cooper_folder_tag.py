@@ -125,6 +125,10 @@ class member_object(object):
 				value = object.ic_membership.human._fees_to_pay().encode("utf-8")
 				links.append( "%s: %s" % ( caption, value )  )
 
+				caption = _(u"Els meus comptes").encode("utf-8")
+				value = object.ic_membership.human._my_accounts()
+				links.append( "%s: %s" % ( caption, value )  )
+
 				sections.append( _section( object.record_type.name ) )
 
 			links.append( _link(admin_url, object.record_type.name) )
