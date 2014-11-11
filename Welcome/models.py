@@ -803,7 +803,7 @@ class iC_Self_Employed(iC_Record):
 			for rel in rels:
 				delete_button = reverse('Welcome:self_employed_save_item', args=(rel.person.id, 0, self.ic_membership.human.id, 5))
 				delete_button = "<a %s href='%s%s'> %s </a> " % (delete_class, delete_button,self._get_next(), delete_caption )
-				out += delete_button.encode("utf-8") + self._render_person(rel)
+				out += delete_button.encode("utf-8") + "<br>" + self._render_person(rel) 
 				#Add control for print_task_list that will be controlled in selfemployed.js
 				if out.find("person_missing_data") > 0:
 					out += "<font alt='print_task_no'></font>"

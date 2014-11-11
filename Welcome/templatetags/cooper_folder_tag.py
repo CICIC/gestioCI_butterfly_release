@@ -7,7 +7,7 @@ register = template.Library()
 from django.utils.safestring import mark_safe
 from django.core import urlresolvers
 from django.db.models.loading import get_model
-from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder
+from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership
 
 '''
 @param: 
@@ -58,6 +58,19 @@ def _link(url, caption):
 def _member_folder(object):
 	caption = object.print_certificate.short_description.encode("utf-8") 
 	value = object.print_certificate()
+	return "<h5>%s</h5> %s" % ( caption, value ) 
+
+def _fees_folder(object):
+	caption = _(u"Quotes").encode("utf-8")
+	value = object._rel_fees()
+	return _folder( caption, value ) 
+
+def _fees_folder(object):
+	caption = _(u"Quotes").encode("utf-8")
+	value = object._rel_fees()
+	return _folder( caption, value ) 
+
+def _folder(caption, value):
 	return "<h5>%s</h5> %s" % ( caption, value ) 
 
 class member_object(object):
@@ -121,17 +134,28 @@ class member_object(object):
 			if isinstance(object, iC_Stallholder):
 					sections.append( _section( _(u" Particular de Firaire " ).encode("utf-8") ) )
 					links.append( _member_folder( object ) )
+					links.append( _fees_folder( object ) )
+
 
 			elif isinstance(object, iC_Self_Employed):
 				sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
 
-				value = object.print_task_list().encode("utf-8")
-				links.append( value )
+				#value = object.print_task_list().encode("utf-8")
+				#links.append( value )
+
+				links.append( _folder( object._join_fee.short_description.encode("utf-8"), object._join_fee().decode("utf-8") ))
+				links.append( _folder( object._rel_id_cards.short_description.encode("utf-8").decode("utf-8"), object._rel_id_cards().decode("utf-8") ))
+				links.append( _folder( object._akin_members.short_description.encode("utf-8"), object._akin_members().decode("utf-8")  ) )
 
 				if not self.user.groups.all().filter(name="iC_Stallholder"):
 					links.append( _member_folder( object ) )
+					links.append( _fees_folder( object ) )
+
 			else:
 				links.append( object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) )
+
+				if isinstance(object, iC_Project_Membership):
+					links.append( object.ic_project._ref_persons().decode("utf-8") )
 
 				caption = object.ic_membership.human._fees_to_pay.short_description.encode("utf-8")
 				value = object.ic_membership.human._fees_to_pay().encode("utf-8")
@@ -155,7 +179,7 @@ class member_object(object):
 		output = ""
 		for section in sections:
 			output =  "<li> \
-						<table border=1 width=%s> \
+						<table width=%s> \
 							<tr height=15><td colspan=2><h4>%s</h4></td></tr> \
 							<tr> \
 								<td width=27>%s</td> \
