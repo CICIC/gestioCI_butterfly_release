@@ -692,7 +692,7 @@ class iC_Self_Employed(iC_Record):
 	_human_link.allow_tags = True
 	_human_link.short_description = 'Soci'
 
-	def _rel_fees(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
+	def _rel_fees(self, admin_path="/admin/"): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
 		fees = self.rel_fees.all()
 		out = ul_tag
 		#print 'N fees: '+str(fees.count())
@@ -714,14 +714,14 @@ class iC_Self_Employed(iC_Record):
 					id = str(self.id) + "/"
 				else:
 					id = ""
-				out += "<li> <a %s href='/admin/Welcome/fee/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (change_class, str(fee.id), self._get_next(), fee.__unicode__(), str_valid, fee_val, str_payed, ico)
+				out += "<li> <a %s href='%sWelcome/fee/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (change_class, admin_path, str(fee.id), self._get_next(), fee.__unicode__(), str_valid, fee_val, str_payed, ico)
 			#print out+'</ul>'
 			return out+'</ul>'
 		return str_none
 	_rel_fees.allow_tags = True
 	_rel_fees.short_description = _(u"Quota avançada ")
 
-	def _join_fee(self):
+	def _join_fee(self, admin_path="/admin/"):
 		fee = self.ic_membership.join_fee
 		out = ul_tag
 		if fee:
@@ -739,7 +739,7 @@ class iC_Self_Employed(iC_Record):
 				id = str(self.id) + "/"
 			else:
 				id = ""
-			out += "<li> <a %s href='/admin/Welcome/fee/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (change_class, str(fee.id), self._get_next(), fee.__unicode__(), str_valid, fee_val, str_payed, ico)
+			out += "<li> <a %s href='%sWelcome/fee/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (change_class, admin_path, str(fee.id), self._get_next(), fee.__unicode__(), str_valid, fee_val, str_payed, ico)
 			return out+'</ul>'
 		return str_none
 	_join_fee.allow_tags = True
@@ -756,7 +756,7 @@ class iC_Self_Employed(iC_Record):
 				str_out = ""
 		return str_out
 
-	def _render_person(self, rel):
+	def _render_person(self, rel, admin_path="/admin/"):
 		out = ""
 		if hasattr(rel, 'person'):
 			c = self._get_label_error(__(" [Falta DNI/NIF] "),rel.person.id_card)
@@ -768,14 +768,14 @@ class iC_Self_Employed(iC_Record):
 				fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc, tl)
 			except:
 				fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc.decode("utf-8"), tl)
-			out_str ="<a %s href='/admin/General/person/%s%s'><b>%s</b></a> %s<br>"
+			out_str ="<a %s href='%sGeneral/person/%s%s'><b>%s</b></a> %s<br>"
 			try:
-				out = out_str % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields.decode("utf-8") )
+				out = out_str % (change_class, admin_path, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields.decode("utf-8") )
 			except:
-				out = out_str % (change_class, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields )
+				out = out_str % (change_class, admin_path, str(rel.person.id), self._get_next(), rel.person.__unicode__(), fields )
 		return out
 
-	def _akin_members(self):
+	def _akin_members(self, buttons=True, admin_site="/admin/"):
 		from Welcome.models import iC_Akin_Membership
 		out = ""
 		if self.id:
@@ -786,32 +786,40 @@ class iC_Self_Employed(iC_Record):
 		else:
 			out = _(u"(Cap)").encode("utf-8")
 
-		add_button = "/admin/Welcome/ic_akin_membership/add/" + self._get_next()
-		add_button = "<a %s href='%s' > %s </a>" % (add_class, add_button.encode("utf-8"), _(u"Afegeix soci afí").encode("utf-8") )
-
-		add_button2 = welcome_href + "ic_akin_membership/"
-		add_button2 = "%s'  > %s </a>" % ( add_button2.encode("utf-8"), _(u"Obre la llista de socis afins per vincular soci al projecte").encode("utf-8") )
+		add_button = ""
+		add_button2 =""
+		if buttons:
+			add_button = admin_site +"Welcome/ic_akin_membership/add/" + self._get_next()
+			add_button = "<a %s href='%s' > %s </a>" % (add_class, add_button.encode("utf-8"), _(u"Afegeix soci afí").encode("utf-8") )
+			add_button2 = welcome_href + "ic_akin_membership/"
+			add_button2 = "%s'  > %s </a>" % ( add_button2.encode("utf-8"), _(u"Obre la llista de socis afins per vincular soci al projecte").encode("utf-8") )
 
 		return out.encode("utf-8") + "<br>" + add_button + "<br>" + add_button2
 	_akin_members.allow_tags = True
 	_akin_members.short_description = _(u"Socis afins")
 
-	def _rel_id_cards(self): #= models.SmallIntegerField(default=0, verbose_name=_(u"Requereix DNI membres?"))
+	def _rel_id_cards(self, buttons=True, admin_path="/admin/"):
 		rels = rel_Human_Persons.objects.filter(human=self.ic_membership.human)
 		out = ''
 		if rels.count() > 0:
 			for rel in rels:
-				delete_button = reverse('Welcome:self_employed_save_item', args=(rel.person.id, 0, self.ic_membership.human.id, 5))
-				delete_button = "<a %s href='%s%s'> %s </a> " % (delete_class, delete_button,self._get_next(), delete_caption )
-				out += delete_button.encode("utf-8") + "<br>" + self._render_person(rel) 
+				if buttons:
+					delete_button = reverse('Welcome:self_employed_save_item', args=(rel.person.id, 0, self.ic_membership.human.id, 5))
+					delete_button = "<a %s href='%s%s'> %s </a> " % (delete_class, delete_button,self._get_next(), delete_caption )
+					out += delete_button.encode("utf-8")
+				try:
+					out =+ self._render_person(rel, admin_path) 
+				except:
+					out = self._render_person(rel, admin_path) 
+	
 				#Add control for print_task_list that will be controlled in selfemployed.js
 				if out.find("person_missing_data") > 0:
 					out += "<font alt='print_task_no'></font>"
 		else:
-			out = "<a %s href='/admin/General/person/%s/%s'>%s</a> [%s]" % (change_class, str(self.ic_membership.human.id), self._get_next(), str(self.ic_membership.human) , str(self.ic_membership.human.person.id_card))
+			out = "<a %s href='%sGeneral/person/%s/%s'>%s</a> [%s]" % (change_class, admin_path, str(self.ic_membership.human.id), self._get_next(), str(self.ic_membership.human) , str(self.ic_membership.human.person.id_card))
 
-		if self.id:
-			add_button = "/admin/General/project/%s/%s" % (self.ic_membership.human.id, self._get_next())
+		if self.id and buttons:
+			add_button = "%sGeneral/project/%s/%s" % (admin_path, self.ic_membership.human.id, self._get_next())
 			add_button = "<a %s href='%s' > %s </a>" % (add_class, add_button.encode("utf-8"), _(u"Afegeix soci de referència").encode("utf-8") )
 			out = out.encode("utf-8") + "<br>" + add_button
 

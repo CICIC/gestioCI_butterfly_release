@@ -117,7 +117,8 @@ class Human(Being):	# Create own ID's
 	#_my_accounts.list = []
 	accounts = property(_my_accounts)
 
-	def _selflink(self):
+	def _selflink(self, a_edit="<b>Editar</b>", admin_path="/admin/"):
+		a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='" + admin_path + "General/"
 		if self.id:
 			if hasattr(self, 'person'):
 				return mark_safe( a_strG + "person/" + str(self.person.id) + a_str2 + a_edit + "</a>") # % str(self.id))

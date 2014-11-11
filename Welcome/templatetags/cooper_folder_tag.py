@@ -62,14 +62,50 @@ def _member_folder(object):
 
 def _fees_folder(object):
 	caption = _(u"Quotes").encode("utf-8")
-	value = object._rel_fees()
+	value = object._rel_fees("/cooper/")
 	return _folder( caption, value ) 
 
-def _fees_folder(object):
-	caption = _(u"Quotes").encode("utf-8")
-	value = object._rel_fees()
-	return _folder( caption, value ) 
 
+def _get_label_error( caption, field, required = True):
+	str_out = ""
+	if field:
+		str_out = field
+	else:
+		if required:
+			str_out = "<font alt='person_missing_data' style='color:red'>" + caption.encode("utf-8") + "</font>"
+		else:
+			str_out = ""
+	return str_out
+
+from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext as __
+change_class = " class='changelink' "
+change_caption = __("Editar").encode("utf-8")
+add_class = " class='addlink' "
+add_caption = __("Afegeix").encode("utf-8")
+delete_class = " class='deletelink' "
+delete_caption = __("Treu").encode("utf-8")
+general_href = "<a href='/admin/General/"
+welcome_href = "<a href='/admin/Welcome/"
+def _render_person(rel, admin_path="/admin/"):
+
+	out = ""
+	if hasattr(rel, 'person'):
+		c = _get_label_error(__(" [Falta DNI/NIF] "),rel.person.id_card, False)
+		s = _get_label_error(__(" [Falten cognoms] "),rel.person.surnames, False)
+		m = _get_label_error(__(" [Falta email] "),rel.person.email, False)
+		tc =_get_label_error(__(u" [Falta el telèfon mòbil] "),str(rel.person.telephone_cell), False)
+		tl =_get_label_error("",str(rel.person.telephone_land), False)
+		try:
+			fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc, tl)
+		except:
+			fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc.decode("utf-8"), tl)
+		out_str ="<a %s href='%sGeneral/person/%s%s'><b>%s</b></a> %s<br>"
+		try:
+			out = out_str % (change_class, admin_path, str(rel.person.id), "", rel.person.__unicode__(), fields.decode("utf-8") )
+		except:
+			out = out_str % (change_class, admin_path, str(rel.person.id), "", rel.person.__unicode__(), fields )
+	return out
 def _folder(caption, value):
 	return "<h5>%s</h5> %s" % ( caption, value ) 
 
@@ -138,20 +174,30 @@ class member_object(object):
 
 
 			elif isinstance(object, iC_Self_Employed):
-				sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
 
+				sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
+				try:
+					caption = _(u"Mentor projecte").encode("utf-8")
+					caption_person = _render_person(object.mentor_membership, "/cooper/")
+					links.append( _folder( caption, caption_person  ) )
+				except:
+					pass
 				#value = object.print_task_list().encode("utf-8")
 				#links.append( value )
 
-				links.append( _folder( object._join_fee.short_description.encode("utf-8"), object._join_fee().decode("utf-8") ))
-				links.append( _folder( object._rel_id_cards.short_description.encode("utf-8").decode("utf-8"), object._rel_id_cards().decode("utf-8") ))
-				links.append( _folder( object._akin_members.short_description.encode("utf-8"), object._akin_members().decode("utf-8")  ) )
+				links.append( _folder( object._join_fee.short_description.encode("utf-8"), object._join_fee("/cooper/") ))
+
+				value = object._rel_id_cards(False, "/cooper/")
+				caption =  object._rel_id_cards.short_description.encode("utf-8").decode("utf-8")
+				links.append( _folder( caption, value ))
+				links.append( _folder( object._akin_members.short_description.encode("utf-8"), object._akin_members(False, "/cooper/").decode("utf-8")  ) )
 
 				if not self.user.groups.all().filter(name="iC_Stallholder"):
 					links.append( _member_folder( object ) )
 					links.append( _fees_folder( object ) )
 
 			else:
+
 				links.append( object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) )
 
 				if isinstance(object, iC_Project_Membership):
@@ -168,7 +214,7 @@ class member_object(object):
 				sections.append( _section( object.record_type.name ) )
 
 			admin_url = urlresolvers.reverse("member:%s_%s_change" % (object._meta.app_label, object._meta.model_name), args=(object.id,))
-			links.append( _link(admin_url, object.record_type.name) )
+			links.append( _folder ( _(u"Documents de registre").encode("utf-8"), _link(admin_url, object.record_type.name) ) )
 
 		return sections, links
 
