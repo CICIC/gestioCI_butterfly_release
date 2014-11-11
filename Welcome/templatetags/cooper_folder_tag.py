@@ -115,9 +115,13 @@ class member_object(object):
 
 			if isinstance(object, iC_Stallholder):
 				sections.append( _section( _(u" Particular de Firaire " ).encode("utf-8") ) )
+
 			elif isinstance(object, iC_Self_Employed):
 				if self.user.groups.all().filter(name="iC_Stallholder"):
 					sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
+					value = object.print_task_list().encode("utf-8")
+					links.append( value  )
+
 			else:
 				links.append( object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) )
 
