@@ -599,7 +599,6 @@ class HumanAdmin(Css_Mixin):
 				return True
 			else:
 				if obj:
-					import pdb; pdb.set_trace()
 					from public_form.models import RegistrationProfile
 					try:
 						current_registration = RegistrationProfile.objects.get(user=request.user)
