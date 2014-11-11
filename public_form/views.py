@@ -786,7 +786,8 @@ def get_current_session_or_none(request, type="current_session", current_human =
 		if current_human:
 			current_session = current_human.assist_sessions.filter(nonmaterial__id = session_type).first()
 		if not current_session:
-			messages.warning(request, _(u"No s'ha trobat la sessió") )
+			#messages.warning(request, _(u"No s'ha trobat la sessió") )
+			pass
 	return current_session
 
 def apply_join_session(request, current_human, current_session):
@@ -796,13 +797,13 @@ def apply_join_session(request, current_human, current_session):
 			current_human.assist_sessions.add(current_session)
 		except Exception as e:
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
-			#messages.info(request, _(u" Aquest humà ja ha està afegit.") )
+			messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 		try:
 			current_human.save()
-			#messages.info(request, _(u"S'ha afegit l'assistencia a la sessió." ) )
+			messages.info(request, _(u"S'ha afegit l'assistencia a la sessió." ) )
 		except Exception as e:
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
-			#messages.info(request, _(u"No s'ha establert l'assistència a la sessió.") )
+			messages.info(request, _(u"No s'ha establert l'assistència a la sessió.") )
 	else:
 		messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 
@@ -1096,8 +1097,5 @@ def save_form_self_employed(request):
 			#messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":
 				icsh = save_stall_holder(ic, ice, request)
-
-
-
-
+		messages.info(request, _(u"S'ha asignat correctament")
 	return HttpResponseRedirect(get_url_for(current_human, current_session))
