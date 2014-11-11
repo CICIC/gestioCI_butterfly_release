@@ -119,11 +119,16 @@ class member_object(object):
 				if self.user.groups.all().filter(name="iC_Stallholder"):
 					sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
 			else:
-				print object.human._selflink()
 				links.append( object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) )
+
+				caption = object.ic_membership.human._fees_to_pay.short_description.encode("utf-8")
+				value = object.ic_membership.human._fees_to_pay().encode("utf-8")
+				links.append( "%s: %s" % ( caption, value )  )
+
 				sections.append( _section( object.record_type.name ) )
 
 			links.append( _link(admin_url, object.record_type.name) )
+
 		return sections, links
 
 	def render_group(self,group):
