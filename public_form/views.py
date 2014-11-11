@@ -854,7 +854,7 @@ def save_current_human(request, current_human):
 	try:
 		current_person = Person.objects.get(id=request.POST["current_human"])
 	except ObjectDoesNotExist:
-		messages.warning(request, _(u"No s'ha trobat cap persona") )
+		#messages.warning(request, _(u"No s'ha trobat cap persona") )
 		try:
 			current_person = Person()
 			current_person.name = "Persona del projecte:" + current_human.name
@@ -1094,7 +1094,7 @@ def save_form_self_employed(request):
 			amount_advanced_tax, fee_type_quarter = save_fees(request, current_person, current_project, current_human, ic)
 			#save_other_fields(request, ic)
 			ice = save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter)
-			messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
+			#messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":
 				icsh = save_stall_holder(ic, ice, request)
 
