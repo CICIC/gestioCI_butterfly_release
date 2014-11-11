@@ -7,7 +7,7 @@ register = template.Library()
 from django.utils.safestring import mark_safe
 from django.core import urlresolvers
 from django.db.models.loading import get_model
-from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership
+from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership
 
 '''
 @param: 
@@ -92,14 +92,13 @@ def _render_person(rel, admin_path="/admin/"):
 	out = ""
 	if hasattr(rel, 'person'):
 		c = _get_label_error(__(" [Falta DNI/NIF] "),rel.person.id_card, False)
-		s = _get_label_error(__(" [Falten cognoms] "),rel.person.surnames, False)
 		m = _get_label_error(__(" [Falta email] "),rel.person.email, False)
 		tc =_get_label_error(__(u" [Falta el telèfon mòbil] "),str(rel.person.telephone_cell), False)
 		tl =_get_label_error("",str(rel.person.telephone_land), False)
 		try:
-			fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc, tl)
+			fields = "%s - %s  - %s  %s" % ( c, m, tc, tl)
 		except:
-			fields = "%s - %s - %s - %s  %s" % ( c, s, m, tc.decode("utf-8"), tl)
+			fields = "%s - %s - %s  %s" % ( c, m, tc.decode("utf-8"), tl)
 		out_str ="<a %s href='%sGeneral/person/%s%s'><b>%s</b></a> %s<br>"
 		try:
 			out = out_str % (change_class, admin_path, str(rel.person.id), "", rel.person.__unicode__(), fields.decode("utf-8") )
@@ -155,6 +154,63 @@ class member_object(object):
 
 		return model.objects.filter(id=-1)
 
+	def render_selfemployed(self, object, sections, links):
+
+		sections.append( _section( object.record_type.name ) )
+		links.append( _member_folder( object ) )
+		try:
+			caption = _(u"Mentor projecte").encode("utf-8")
+			caption_person = _render_person(object.mentor_membership, "/cooper/")
+			links.append( _folder( caption, caption_person  ) )
+		except:
+			pass
+
+		links.append( _fees_folder( object ) )
+		links.append( _folder( object._join_fee.short_description.encode("utf-8"), object._join_fee("/cooper/") ))
+		try:
+			#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
+			if not object.ic_membership.ic_company:
+				from General.models import Company
+				if not self.user.groups.all().filter(name="iC_Stallholder"):
+					coop = Company.objects.get(name="Interprofessionals")
+				else:
+					coop = Company.objects.get(name="XIPU")
+				object.ic_membership.ic_company = coop
+				object.save()
+
+			links.append( _folder( "Cooperativa", str(object.ic_membership.ic_company) ) )
+		except:
+			pass
+
+		if not self.user.groups.all().filter(name="iC_Stallholder"):
+			links.append( _member_folder( object ) )
+			links.append( _fees_folder( object ) )
+		value = object._rel_id_cards(False, "/cooper/")
+		caption =  object._rel_id_cards.short_description.encode("utf-8").decode("utf-8")
+		links.append( _folder( caption, value ))
+		links.append( _folder( object._akin_members.short_description.encode("utf-8"), object._akin_members(False, "/cooper/").decode("utf-8")  ) )
+		return sections, links
+
+	def render_member(self, object, sections, links):
+		if isinstance(object, iC_Project_Membership):
+			caption = _("Projecte").encode("utf-8")
+
+		if isinstance(object, iC_Person_Membership):
+			caption = _("Persona").encode("utf-8")
+
+		links.append( object.ic_project._ref_persons().decode("utf-8") )
+		links.append( _folder( caption, object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) ) )
+
+		caption = _(u"Els meus comptes").encode("utf-8")
+		links_account = []
+		for account in object.ic_membership.human._my_accounts():
+			links_account.append( _link( "s", account.name) )
+		links.append( _folder(caption, _links_list_to_ul(links_account) )  )
+
+		sections.append( _section( object.record_type.name ) )
+
+		return sections, links
+
 	def render_group_get_objects(self, group):
 		output = ""
 		links = []
@@ -165,76 +221,23 @@ class member_object(object):
 		model = get_model ( "Welcome", group.name )
 
 		objects = self.get_member_group_data(group, model)
+
 		for object in objects:
-
-			if isinstance(object, iC_Stallholder):
-					sections.append( _section( _(u" Particular de Firaire " ).encode("utf-8") ) )
-					links.append( _member_folder( object ) )
-					links.append( _fees_folder( object ) )
-
-
-			elif isinstance(object, iC_Self_Employed):
-
-				sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
-				try:
-					caption = _(u"Mentor projecte").encode("utf-8")
-					caption_person = _render_person(object.mentor_membership, "/cooper/")
-					links.append( _folder( caption, caption_person  ) )
-				except:
-					pass
-				#value = object.print_task_list().encode("utf-8")
-				#links.append( value )
-
-				links.append( _folder( object._join_fee.short_description.encode("utf-8"), object._join_fee("/cooper/") ))
-
-				value = object._rel_id_cards(False, "/cooper/")
-				caption =  object._rel_id_cards.short_description.encode("utf-8").decode("utf-8")
-				links.append( _folder( caption, value ))
-				links.append( _folder( object._akin_members.short_description.encode("utf-8"), object._akin_members(False, "/cooper/").decode("utf-8")  ) )
-				try:
-					#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
-					if not object.ic_membership.ic_company:
-						from General.models import Company
-						if not self.user.groups.all().filter(name="iC_Stallholder"):
-							coop = Company.objects.get(name="Interprofessionals")
-						else:
-							coop = Company.objects.get(name="XIPU")
-						object.ic_membership.ic_company = coop
-						object.save()
-
-					links.append( _folder( "Cooperativa", str(object.ic_membership.ic_company) ) )
-				except:
-					pass
-
-				if not self.user.groups.all().filter(name="iC_Stallholder"):
-					links.append( _member_folder( object ) )
-					links.append( _fees_folder( object ) )
-
-			else:
-
-				links.append( object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) )
-
-				if isinstance(object, iC_Project_Membership):
-					links.append( object.ic_project._ref_persons().decode("utf-8") )
-
-				caption = object.ic_membership.human._fees_to_pay.short_description.encode("utf-8")
-				value = object.ic_membership.human._fees_to_pay().encode("utf-8")
-				links.append( "%s: %s" % ( caption, value )  )
-
-				caption = _(u"Els meus comptes").encode("utf-8")
-				value = object.ic_membership.human._my_accounts()
-				links.append( "%s: %s" % ( caption, value )  )
-
-				sections.append( _section( object.record_type.name ) )
-
 			admin_url = urlresolvers.reverse("member:%s_%s_change" % (object._meta.app_label, object._meta.model_name), args=(object.id,))
 			links.append( _folder ( _(u"Documents de registre").encode("utf-8"), _link(admin_url, object.record_type.name) ) )
+
+			if isinstance(object, iC_Self_Employed) or isinstance(object, iC_Stallholder):
+				sections, links = self.render_selfemployed(object, sections, links)
+				pass
+			else:
+				sections, links= self.render_member(object, sections, links)
+				pass
+
 
 		return sections, links
 
 	def render_group(self,group):
-
-		image = "<img src='/static/%s_user.png' width='25px'></li>" % (group.name)
+		image = "<img src='/static/%s_user.png' width='25px'>" % (group.name)
 		sections, links = self.render_group_get_objects(group)
 		output = ""
 		for section in sections:
@@ -256,7 +259,10 @@ class member_object(object):
 	def groups_list(self):
 		output = ""
 		for group in self.user.groups.all():
-			output += self.render_group(group)
+			if group.name == "iC_Self_Employed" and self.user.groups.all().filter(name="iC_Stallholder"):
+				pass
+			else:
+				output += self.render_group(group)
 
 		return mark_safe( output )
 

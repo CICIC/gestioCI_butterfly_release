@@ -980,7 +980,11 @@ class AccountCes(Record):
 
 	def __unicode__(self):
 		return '('+self.unit.code+') '+self.human.nickname+' '+self.code+self.number#+' '+self.name
-
+	def link(self):
+		if self.id:
+			return "/cooper/General/accountces/" + self.id
+		else:
+			return ""
 class AccountBank(Record):
 	record = models.OneToOneField('Record', primary_key=True, parent_link=True)
 
@@ -1000,7 +1004,11 @@ class AccountBank(Record):
 			return '('+self.unit.code+') '+self.company.nickname+': '+self.human.nickname+' '+self.number	
 		except:
 			return "<projecte buit>"
-
+	def link(self):
+		if self.id:
+			return "/cooper/General/accountbank/" + self.id
+		else:
+			return ""
 class AccountCrypto(Record):
 	record = models.OneToOneField('Record', primary_key=True, parent_link=True)
 	human = models.ForeignKey('Human', related_name='accountsCrypto', verbose_name=_(u"Entitat humana titular"))
@@ -1011,3 +1019,8 @@ class AccountCrypto(Record):
 		verbose_name_plural = _(u"o- Comptes Criptomonedes")
 	def __unicode__(self):
 		return '('+self.unit.code+') '+self.human.nickname+' '+self.number # +' '+self.name
+	def link(self):
+		if self.id:
+			return "/cooper/General/accountcrypto/" + self.id
+		else:
+			return ""
