@@ -608,7 +608,7 @@ class HumanAdmin(Css_Mixin):
 						return False
 				return True
 
-	def queryset(self, request):
+	def get_queryset(self, request):
 		if request.user.is_superuser:
 			return self.model.objects.all()
 		else:

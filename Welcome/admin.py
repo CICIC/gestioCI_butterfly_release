@@ -34,7 +34,7 @@ class AutoRecordName(admin.ModelAdmin):
 			'welcome.js',
 		)
 
-	def queryset(self, request):
+	def get_queryset(self, request):
 
 		if request.user.is_superuser:
 			return self.model.objects.all()
