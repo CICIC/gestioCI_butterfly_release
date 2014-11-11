@@ -4,11 +4,9 @@
 	{% if not member.is_member %}
 		<p>{% trans 'None available' %}</p>
 	{% else %}
-		<h2>{% trans 'Menú personal' %}
+		<h2>{% trans 'Menú per grups' %}
 		{{ member.avatar }}</h2>
-		<h3>{% trans 'Els meus grups' %}</h3>
 		<ul class="actionlist">
 			{{ member.groups_list }}
 		</ul>
-		<span class="mini quiet"></span>
 	{% endif %}

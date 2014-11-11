@@ -12,7 +12,9 @@
 
 	{% block content %}
 	<div id="content-main">
-
+			{% if request.path == "/cooper/" %}
+				{% include "admin/index_cooper.html" %}
+			{% endif %}
 	{% if app_list %}
 		{% for app in app_list %}
 
@@ -95,9 +97,6 @@
 	{% block sidebar %}
 	<div id="content-related">
 		<div class="module" id="recent-actions-module">
-			{% if request.path == "/cooper/" %}
-				{% include "admin/index_cooper.html" %}
-			{% endif %}
 			<h2>{% trans 'Recent Actions' %}</h2>
 			<h3>{% trans 'My Actions' %}</h3>
 				{% load log %}

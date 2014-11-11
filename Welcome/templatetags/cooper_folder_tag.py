@@ -31,21 +31,22 @@ def _links_list_to_ul(links):
 	return "%s</ul>" % (output)
 
 def _safe_render(output, section, image, links):
+	width = "'100%'"
 	try:
-		output = output.replace("\t","") % ( "'100%'", section, image, links)
+		output = output.replace("\t","") % ( width, section, image, links)
 	except:
 		try:
 			section = section.decode("utf-8")
-			output = output.replace("\t","") % ( "'100%'", section, image, links)
+			output = output.replace("\t","") % ( width, section, image, links)
 		except:
 			try:
 				section = section.encode("utf-8")
-				output = output.replace("\t","") % ( "'100%'", section, image, links)
+				output = output.replace("\t","") % ( width, section, image, links)
 			except:
 				try:
-					output = output.replace("\t","") % (image, "section", links)
+					output = output.replace("\t","") % ( width, image, "section", links)
 				except:
-					output = output % (image, "section", links)
+					output = output % (width, image, "section", links)
 	return output
 
 def _section(caption):
@@ -155,7 +156,7 @@ class member_object(object):
 		for section in sections:
 			output =  "<li> \
 						<table border=1 width=%s> \
-							<tr><td colspan=2><h4>%s</h4></td></tr> \
+							<tr height=15><td colspan=2><h4>%s</h4></td></tr> \
 							<tr> \
 								<td width=27>%s</td> \
 								<td><span class='mini quiet'>%s</span></td> \
