@@ -120,7 +120,7 @@ class member_object(object):
 					sections.append( _section( _(u" Comú als Autoocupats " ).encode("utf-8") ) )
 			else:
 				print object.human._selflink()
-				links.append( object.human.self_link_no_pop( "", "/cooper/" ) )
+				links.append( object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) )
 				sections.append( _section( object.record_type.name ) )
 
 			links.append( _link(admin_url, object.record_type.name) )
