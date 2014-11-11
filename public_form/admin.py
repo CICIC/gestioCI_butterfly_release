@@ -40,7 +40,10 @@ class type_session_filter (SimpleListFilter):
 		for session in welcome_sessions:
 			message =  _(u"%s asistents %s. ")
 			from django.utils import formats
-			date = formats.date_format(session.datetime, "SHORT_DATETIME_FORMAT")
+			if session.datetime:
+				date = formats.date_format(session.datetime, "SHORT_DATETIME_FORMAT")
+			else:
+				date = None
 			message = message % (date, session.assistants.count())
 			yFilters = yFilters + ((session.id, message),)
 		return yFilters
