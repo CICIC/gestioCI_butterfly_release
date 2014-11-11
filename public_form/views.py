@@ -797,13 +797,13 @@ def apply_join_session(request, current_human, current_session):
 			current_human.assist_sessions.add(current_session)
 		except Exception as e:
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
-			messages.info(request, _(u" Aquest humà ja ha està afegit.") )
+			#messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 		try:
 			current_human.save()
-			messages.info(request, _(u"S'ha afegit l'assistencia a la sessió." ) )
+			#messages.info(request, _(u"S'ha afegit l'assistencia a la sessió." ) )
 		except Exception as e:
 			messages.error(request, '%s (%s)' % (e.message, type(e)) )
-			messages.info(request, _(u"No s'ha establert l'assistència a la sessió.") )
+			#messages.info(request, _(u"No s'ha establert l'assistència a la sessió.") )
 	else:
 		messages.info(request, _(u" Aquest humà ja ha està afegit.") )
 
@@ -1076,7 +1076,7 @@ def save_form_self_employed(request):
 	if request.POST["public_form_action"] ==  "public_form_action_save_membership":
 
 		#messages.info(request, "Post params: project_type: " + request.POST.get("project_type", "nada"))
-		messages.info(request, "Post params: project_subtype: " + request.POST.get("project_subtype", "nada"))
+		#messages.info(request, "Post params: project_subtype: " + request.POST.get("project_subtype", "nada"))
 
 		current_project, current_person = save_current_human(request, current_human)
 
@@ -1094,8 +1094,9 @@ def save_form_self_employed(request):
 			amount_advanced_tax, fee_type_quarter = save_fees(request, current_person, current_project, current_human, ic)
 			#save_other_fields(request, ic)
 			ice = save_self_employed(current_person, current_project, current_human, ic, request, amount_advanced_tax, fee_type_quarter)
-			#messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
+			messages.info(request, "Soc firaire " + str(request.POST.get("project_type", -1) == "32") )
 			if ice and request.POST.get("project_type", -1) == "32":
 				icsh = save_stall_holder(ic, ice, request)
-		messages.info(request, _(u"S'ha asignat correctament")
+
+	messages.info(request, "Procés finalitzat")
 	return HttpResponseRedirect(get_url_for(current_human, current_session))
