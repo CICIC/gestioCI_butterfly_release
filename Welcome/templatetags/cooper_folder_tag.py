@@ -7,7 +7,7 @@ register = template.Library()
 from django.utils.safestring import mark_safe
 from django.core import urlresolvers
 from django.db.models.loading import get_model
-from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership
+from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership, iC_Akin_Membership
 from General.models import Human
 
 def _links_list_to_ul(links):
@@ -157,7 +157,7 @@ class member_object(object):
 					return model.objects.filter(ic_membership__ic_project = filter_human )
 	
 
-			if group.name in ("iC_Person_Membership",):
+			if group.name in ("iC_Person_Membership", "iC_Akin_Membership"):
 				filter_human = self.current_registration.person
 				return model.objects.filter(person=filter_human)
 			if group.name in ("iC_Project_Membership",):
@@ -204,9 +204,12 @@ class member_object(object):
 		return sections, links
 
 	def render_member(self, object, sections, links):
-		value = object.ic_CESnum
-		caption =  _(u"Numero al CES/iCES").encode("utf-8")
-		links.append( _folder( caption, value ))
+		try:
+			value = object.ic_CESnum
+			caption =  _(u"Numero al CES/iCES").encode("utf-8")
+			links.append( _folder( caption, value ))
+		except:
+			pass
 
 		if isinstance(object, iC_Project_Membership):
 			caption = _("Projecte").encode("utf-8")
@@ -216,7 +219,7 @@ class member_object(object):
 				links_ref.append( _render_person(person) )
 			links.append( _folder("Referentes", _links_list_to_ul(links_ref) ) )
 
-		if isinstance(object, iC_Person_Membership):
+		if isinstance(object, iC_Person_Membership) or isinstance(object, iC_Akin_Membership):
 			caption = _("Persona").encode("utf-8")
 			links.append( _folder( caption, object.person.self_link_no_pop( "", "/cooper/", object.person.__unicode__() ) ) )
 
@@ -226,19 +229,22 @@ class member_object(object):
 				links_account.append( _link( account.link(), account.name  + " / " + account.record_type.name) )
 			links.append( _folder(caption, _links_list_to_ul(links_account) )  )
 
-			caption = _("Projecte").encode("utf-8")
-			caption_human = object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() )
-			links.append( _folder( caption, object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() ) ) )
+			try:
+				caption = _("Projecte").encode("utf-8")
+				caption_human = object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() )
+				links.append( _folder( caption, object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() ) ) )
+				caption = _(u"Comptes de ").encode("utf-8") +  object.ic_membership.human.__unicode__()
+				links_account = []
+				for account in object.ic_membership.human._my_accounts():
+					links_account.append( _link( account.link(), account.name + " / " + account.record_type.name) )
+				links.append( _folder(caption, _links_list_to_ul(links_account) )  )
+			except:
+				pass
 
-			caption = _(u"Comptes de ").encode("utf-8") +  object.ic_membership.human.__unicode__()
-			links_account = []
-			for account in object.ic_membership.human._my_accounts():
-				links_account.append( _link( account.link(), account.name + " / " + account.record_type.name) )
-			links.append( _folder(caption, _links_list_to_ul(links_account) )  )
-
-		links.append( _folder( object.ic_membership._join_fee.short_description.encode("utf-8"), object.ic_membership._join_fee("/cooper/", "/cooper") ))
-
-		
+		try:
+			links.append( _folder( object.ic_membership._join_fee.short_description.encode("utf-8"), object.ic_membership._join_fee("/cooper/", "/cooper") ))
+		except:
+			pass
 
 		sections.append( _section( object.record_type.name ) )
 

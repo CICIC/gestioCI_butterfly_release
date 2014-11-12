@@ -51,7 +51,13 @@ class AutoRecordName(admin.ModelAdmin):
 							if self.model.objects.filter(human=current_human).count()>0:
 								return self.model.objects.filter(human=current_human)
 						except:
-							pass
+
+							try:
+								current_human = Human.objects.get(id=current_registration.person.id)
+								if self.model.objects.filter(person=current_human).count()>0:
+									return self.model.objects.filter(person=current_human)
+							except:
+								pass
 					if hasattr(self.model, "ic_project"):
 						try:
 							current_human = Human.objects.get(id=current_registration.project.id)
