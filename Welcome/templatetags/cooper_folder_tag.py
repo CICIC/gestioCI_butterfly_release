@@ -96,8 +96,9 @@ def _folder(caption, value):
 	return "<h5>%s</h5> %s" % ( caption, value ) 
 
 class member_object(object):
-	def __init__(self, user):
+	def __init__(self, request, user):
 		self.user = user
+		self.request = request
 
 	def get_member_group_data(self, group, model):
 
@@ -105,12 +106,29 @@ class member_object(object):
 		from General.models import Human
 		try:
 			current_registration = RegistrationProfile.objects.get(user=self.user)
+			print "___________________________"
+			print "CURRENT_REGISTRATION"
+			print current_registration
+			print "CURRENT_GROUP"
+			print group
+			print "CURRENT_MODEL"
+			print MODEL
+			print "___________________________"
 		except:
+			from django.contrib import messages
+			text = _(u"No s'ha trobat Registre de perfil.").encode("utf-8")
+			text = text + " / " + str(self.user.id) + " / " + self.user.__unicode__()
+			text = text + " / grup: " + group.name
+			text = text + " / model: " + str(model)
+			url = "<a href='/admin/public_form/registrationprofile/'> Fix </a>"
+			messages.error(self.request, text + url )
+			print url
 			return model.objects.filter(id=-1)
 		else:
 			if hasattr(model, "person"):
 				try:
 					current_human = Human.objects.get(id=current_registration.person.id)
+					
 					if model.objects.filter(human=current_human).count() > 0:
 						return model.objects.filter(human=current_human)
 				except:
@@ -120,14 +138,6 @@ class member_object(object):
 					current_human = Human.objects.get(id=current_registration.project.id)
 					if model.objects.filter(human=current_human).count()>0:
 						return model.objects.filter(human=current_human)
-				except:
-					pass
-
-			if hasattr(model, "ic_membership"):
-				try:
-					current_human = Human.objects.get(id=current_registration.project.id)
-					if model.objects.filter(ic_membership__human=current_human).count()>0:
-						return model.objects.filter(ic_membership__human=current_human)
 				except:
 					pass
 
@@ -207,9 +217,7 @@ class member_object(object):
 		sections = []
 
 		record = iC_Record_Type.objects.get(clas=group.name)
-
 		model = get_model ( "Welcome", group.name )
-
 		objects = self.get_member_group_data(group, model)
 
 		for object in objects:
@@ -223,10 +231,10 @@ class member_object(object):
 				sections, links= self.render_member(object, sections, links)
 				pass
 
-
 		return sections, links
 
 	def render_group(self,group):
+
 		image = "<img src='/static/%s_user.png' width='25px'>" % (group.name)
 		sections, links = self.render_group_get_objects(group)
 		for section in sections:
@@ -244,7 +252,9 @@ class member_object(object):
 
 	def groups_list(self):
 		output_list = []
+
 		for group in self.user.groups.all():
+
 			if group.name == "iC_Self_Employed" and self.user.groups.all().filter(name="iC_Stallholder"):
 				pass
 			else:
@@ -264,7 +274,7 @@ class human_tag_node(template.Node):
 			obj = self.object.resolve(context)
 			# obj now is the object you passed the tag
 
-			member = member_object(obj.user)
+			member = member_object(obj, obj.user)
 			member.is_member = True
 
 			context['member'] = member
