@@ -42,7 +42,7 @@ ico_no = "<img src='/static/admin/img/icon-no.gif' alt='False'>"
 ico_yes = "<img src='/static/admin/img/icon-yes.gif' alt='True'>"
 
 str_addfee = "crea Quota d'alta"
-str_valid = "valida"
+str_valid = __("Dades complertes").encode("utf-8")
 str_payed = "pagada"
 
 change_class = " class='changelink' "
@@ -390,6 +390,30 @@ class iC_Membership(iC_Record):
 	_join_fee_payed.short_description = _(u"Quota d'Alta Pagada?")
 	joinfee_payed = property(_join_fee_payed)
 
+	def _join_fee(self, admin_path="/admin/", _next="/admin"):
+		_next = "?next=" + _next
+		fee = self.join_fee
+		out = ul_tag
+		if fee:
+			ico = ico_no
+			if fee.payed:
+				ico = ico_yes
+			fee_dat = fee._min_fee_data()
+			if "alt='False'" in fee_dat:
+				fee_val = ico_no
+				#Add control for print_task_list that will be controlled in selfemployed.js
+				fee_val += "<font alt='print_task_no'></font>"
+			elif "alt='True'" in fee_dat:
+				fee_val = ico_yes
+			if self.id:
+				id = str(self.id) + "/"
+			else:
+				id = ""
+			out += "<li> <a %s href='%sWelcome/fee/%s/%s'>%s</a>: &nbsp;%s: %s&nbsp;%s: %s </li>" % (change_class, admin_path, str(fee.id), _next, fee.__unicode__(), str_valid, fee_val, str_payed, ico)
+			return out+'</ul>'
+		return str_none
+	_join_fee.allow_tags = True
+	_join_fee.short_description = _(u"Quota d'alta")
 	def _human_link(self):
 		if hasattr(self, 'human'):
 			return self.human._selflink()

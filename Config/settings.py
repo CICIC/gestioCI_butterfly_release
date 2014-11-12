@@ -252,3 +252,6 @@ EMAIL_PORT = 25
 EMAIL_USE_TLS = False
 #EMAIL_USE_SSL = False
 
+LOGIN_REDIRECT_URL  = "/public_form/entry_page_to_gestioci/"
+LOGIN_URL = "/public_form/entry_page_to_gestioci/"
+

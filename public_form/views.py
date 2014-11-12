@@ -688,14 +688,13 @@ def activate_membership(request, activation_key):
 def save_form_profile(request):
 
 	from Welcome.models import iC_Record
-	form_id = request.POST["form_id"].replace(".","")
-	print form_id
-	try:
-		membership_type = iC_Record.objects.get(id=form_id).record_type.clas
-	except ObjectDoesNotExist:
-		membership_type = None
+	membership_type = None
+	if "form_id" in request.POST :
+		form_id = request.POST["form_id"]
+		if form_id:
+			membership_type = iC_Record.objects.get(id=form_id.replace(".","")).record_type.clas
+
 	form = None
-	print membership_type
 	if membership_type == "iC_Akin_Membership":
 		from Welcome.models import iC_Membership, iC_Project_Membership
 		print "akin"

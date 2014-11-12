@@ -153,7 +153,7 @@ class member_object(object):
 			pass
 
 		links.append( _fees_folder( object ) )
-		links.append( _folder( object._join_fee.short_description.encode("utf-8"), object._join_fee("/cooper/") ))
+
 		try:
 			#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
 			if not object.ic_membership.ic_company:
@@ -190,7 +190,7 @@ class member_object(object):
 		if isinstance(object, iC_Person_Membership):
 			caption = _("Persona").encode("utf-8")
 			links.append( _folder( caption, object.human.self_link_no_pop( "", "/cooper/", object.person.__unicode__() ) ) )
-
+		links.append( _folder( object.ic_membership._join_fee.short_description.encode("utf-8"), object.ic_membership._join_fee("/cooper/", "/cooper") ))
 		caption = _(u"Els meus comptes").encode("utf-8")
 		links_account = []
 		for account in object.ic_membership.human._my_accounts():
@@ -225,7 +225,6 @@ class member_object(object):
 
 
 		return sections, links
-
 
 	def render_group(self,group):
 		image = "<img src='/static/%s_user.png' width='25px'>" % (group.name)
