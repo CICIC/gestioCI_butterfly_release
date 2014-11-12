@@ -217,7 +217,7 @@ class member_object(object):
 			links_account = []
 			for account in object.person._my_accounts():
 				links_account.append( _link( account.link(), account.name  + " / " + account.record_type.name) )
-		links.append( _folder(caption, _links_list_to_ul(links_account) )  )
+			links.append( _folder(caption, _links_list_to_ul(links_account) )  )
 
 		links.append( _folder( object.ic_membership._join_fee.short_description.encode("utf-8"), object.ic_membership._join_fee("/cooper/", "/cooper") ))
 
