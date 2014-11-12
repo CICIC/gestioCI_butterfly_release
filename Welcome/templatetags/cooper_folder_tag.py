@@ -147,7 +147,7 @@ class member_object(object):
 						filter_human = self._get_current_registration_human(self.current_registration.project)
 					return model.objects.filter(ic_membership__human = filter_human )
 
-				if self.current_registration.record_type.clas in ("iC_Person_Membership",):
+				if self.current_registration.record_type.clas in ("iC_Person_Membership", "iC_Akin_Membership"):
 					filter_human = self._get_current_registration_human(self.current_registration.person)
 					if model.objects.filter(ic_membership__human = filter_human ).count() == 0:
 						filter_human = self._get_current_registration_human(self.current_registration.project)

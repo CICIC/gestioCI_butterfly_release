@@ -42,7 +42,6 @@ class AutoRecordName(admin.ModelAdmin):
 			if request.user.is_staff:
 				return self.model.objects.all()
 			else:
-
 				from public_form.models import RegistrationProfile
 				try:
 					current_registration = RegistrationProfile.objects.get(user=request.user)

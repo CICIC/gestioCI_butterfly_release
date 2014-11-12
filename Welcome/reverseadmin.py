@@ -371,8 +371,10 @@ class ReverseModelAdmin(AutoRecordName):
 			raise PermissionDenied
 
 		if obj is None:
+			from django.http import Http404
+			from django.utils.html import escape
 			raise Http404(_('%(name)s object with primary key %(key)r does not exist.') % {'name': force_text(opts.verbose_name), 'key': escape(object_id)})
-		
+
 		if request.method == 'POST' and "_saveasnew" in request.POST:
 			return self.add_view(request, form_url=reverse('admin:%s_%s_add' % (
 				opts.app_label, opts.model_name),
