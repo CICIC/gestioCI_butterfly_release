@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 from django.core import urlresolvers
 from django.db.models.loading import get_model
 from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership
+from General.models import Human
 
 def _links_list_to_ul(links):
 	output = "<ul>"
@@ -93,61 +94,67 @@ def _render_person(rel, admin_path="/cooper/"):
 		out = out_str % (change_class, admin_path, str(person.id), "", person.__unicode__(), fields )
 	return out
 def _folder(caption, value):
-	return "<h5>%s</h5> %s" % ( caption, value ) 
+	output = ""
+	try:
+		output = "<h5>%s</h5> %s" % ( caption, value ) 
+	except:
+		output = "<h5>%s</h5> %s" % ( caption, value.decode("utf-8") ) 
+	return output  
 
 class member_object(object):
 	def __init__(self, request, user):
 		self.user = user
 		self.request = request
 
-	def get_member_group_data(self, group, model):
+	def get_current_registration(self):
 
 		from public_form.models import RegistrationProfile
 		from General.models import Human
+		from django.contrib.auth.models import User
+
 		try:
-			current_registration = RegistrationProfile.objects.get(user=self.user)
-			print "___________________________"
-			print "CURRENT_REGISTRATION"
-			print current_registration
-			print "CURRENT_GROUP"
-			print group
-			print "CURRENT_MODEL"
-			print MODEL
-			print "___________________________"
+			user = User.objects.get(id=self.user.id)
+			current_registration = RegistrationProfile.objects.get(user=user)
+			self.current_registration = current_registration
+			return current_registration
 		except:
 			from django.contrib import messages
 			text = _(u"No s'ha trobat Registre de perfil.").encode("utf-8")
 			text = text + " / " + str(self.user.id) + " / " + self.user.__unicode__()
 			text = text + " / grup: " + group.name
 			text = text + " / model: " + str(model)
-			url = "<a href='/admin/public_form/registrationprofile/'> Fix </a>"
-			messages.error(self.request, text + url )
-			print url
-			return model.objects.filter(id=-1)
-		else:
-			if hasattr(model, "person"):
-				try:
-					current_human = Human.objects.get(id=current_registration.person.id)
-					
-					if model.objects.filter(human=current_human).count() > 0:
-						return model.objects.filter(human=current_human)
-				except:
-					pass
-			if hasattr(model, "ic_project"):
-				try:
-					current_human = Human.objects.get(id=current_registration.project.id)
-					if model.objects.filter(human=current_human).count()>0:
-						return model.objects.filter(human=current_human)
-				except:
-					pass
+			url = mark_safe("<a href='/admin/public_form/registrationprofile/'> Fix </a>")
+			messages.error(self.request, text )
+			messages.info(self.request, url )
+			self.current_registration = None
+		return None
 
-			if hasattr(model, "ic_self_employed"):
-				try:
-					current_human = Human.objects.get(id=current_registration.project.id)
-					if model.objects.filter(ic_self_employed__ic_membership__human=current_human).count()>0:
-						return model.objects.filter(ic_self_employed__ic_membership__human=current_human)
-				except:
-					pass
+	def _get_current_registration_human(self, human):
+		try:
+			return Human.objects.get(id=human.id)
+		except:
+			return human
+
+	def get_member_group_data(self, group, model):
+		if self.get_current_registration():
+
+			filter_human = self.current_registration.person
+
+			if group.name in ("iC_Stallholder", "iC_SelfEmployed"):
+				if self.current_registration.record_type.clas in ("iC_Person_Membership",):
+					filter_human = self._get_current_registration_human(self.current_registration.person)
+					if model.objects.filter(ic_membership__human = filter_human ).count() == 0:
+						filter_human = self._get_current_registration_human(self.current_registration.project)
+					return model.objects.filter(ic_membership__human = filter_human )
+				else:
+					filter_human = self.current_registration.project
+					return model.objects.filter(ic_membership__ic_project = filter_human )
+			if group.name in ("iC_Person_Membership",):
+				filter_human = self.current_registration.person
+				return model.objects.filter(person=filter_human)
+			if group.name in ("iC_Project_Membership",):
+				filter_human = self.current_registration.project
+				return model.objects.filter(human=filter_human)
 
 		return model.objects.filter(id=-1)
 
