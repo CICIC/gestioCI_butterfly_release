@@ -140,7 +140,13 @@ class member_object(object):
 
 			filter_human = self.current_registration.person
 
-			if group.name in ("iC_Stallholder", "iC_SelfEmployed"):
+			if group.name in ("iC_Stallholder", "iC_Self_Employed"):
+				if self.current_registration.record_type.clas in ("iC_Self_Employed",):
+					filter_human = self._get_current_registration_human(self.current_registration.person)
+					if model.objects.filter(ic_membership__human = filter_human ).count() == 0:
+						filter_human = self._get_current_registration_human(self.current_registration.project)
+					return model.objects.filter(ic_membership__human = filter_human )
+
 				if self.current_registration.record_type.clas in ("iC_Person_Membership",):
 					filter_human = self._get_current_registration_human(self.current_registration.person)
 					if model.objects.filter(ic_membership__human = filter_human ).count() == 0:
@@ -149,6 +155,8 @@ class member_object(object):
 				else:
 					filter_human = self.current_registration.project
 					return model.objects.filter(ic_membership__ic_project = filter_human )
+	
+
 			if group.name in ("iC_Person_Membership",):
 				filter_human = self.current_registration.person
 				return model.objects.filter(person=filter_human)
@@ -171,7 +179,6 @@ class member_object(object):
 
 		links.append( _fees_folder( object ) )
 
-		links.append( _folder( object.ic_membership._join_fee.short_description.encode("utf-8"), object.ic_membership._join_fee("/cooper/", "/cooper") ))
 		try:
 			#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
 			if not object.ic_membership.ic_company:
@@ -219,23 +226,26 @@ class member_object(object):
 				links_account.append( _link( account.link(), account.name  + " / " + account.record_type.name) )
 			links.append( _folder(caption, _links_list_to_ul(links_account) )  )
 
+			caption = _("Projecte").encode("utf-8")
+			caption_human = object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() )
+			links.append( _folder( caption, object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() ) ) )
+
+			caption = _(u"Comptes de ").encode("utf-8") +  object.ic_membership.human.__unicode__()
+			links_account = []
+			for account in object.ic_membership.human._my_accounts():
+				links_account.append( _link( account.link(), account.name + " / " + account.record_type.name) )
+			links.append( _folder(caption, _links_list_to_ul(links_account) )  )
+
 		links.append( _folder( object.ic_membership._join_fee.short_description.encode("utf-8"), object.ic_membership._join_fee("/cooper/", "/cooper") ))
 
-		caption = _("Projecte").encode("utf-8")
-		caption_human = object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() )
-		links.append( _folder( caption, object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() ) ) )
-
-		caption = _(u"Comptes de ").encode("utf-8") +  object.ic_membership.human.__unicode__()
-		links_account = []
-		for account in object.ic_membership.human._my_accounts():
-			links_account.append( _link( account.link(), account.name + " / " + account.record_type.name) )
-		links.append( _folder(caption, _links_list_to_ul(links_account) )  )
+		
 
 		sections.append( _section( object.record_type.name ) )
 
 		return sections, links
 
 	def render_group_get_objects(self, group):
+
 		output = ""
 		links = []
 		sections = []
@@ -249,8 +259,8 @@ class member_object(object):
 			links.append( _folder ( _(u"Documents de registre").encode("utf-8"), _link(admin_url, object.record_type.name) ) )
 
 			if isinstance(object, iC_Self_Employed) or isinstance(object, iC_Stallholder):
+
 				sections, links = self.render_selfemployed(object, sections, links)
-				pass
 			else:
 				sections, links= self.render_member(object, sections, links)
 				pass
