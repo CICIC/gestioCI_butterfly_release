@@ -181,16 +181,15 @@ class member_object(object):
 	def render_member(self, object, sections, links):
 		if isinstance(object, iC_Project_Membership):
 			caption = _("Projecte").encode("utf-8")
+			links.append( _folder( caption, object.human.self_link_no_pop( "", "/cooper/", object.project.__unicode__() ) ) )
+			links_ref = []
+			for person in object.ic_project._get_ref_persons():
+				links_ref.append( _render_person(person) )
+			links.append( _folder("Referentes", _links_list_to_ul(links_ref) ) )
 
 		if isinstance(object, iC_Person_Membership):
 			caption = _("Persona").encode("utf-8")
-
-		links_ref = []
-		for person in object.ic_project._get_ref_persons():
-			links_ref.append( _render_person(person) )
-		links.append( _folder("Referentes", _links_list_to_ul(links_ref) ) )
-
-		links.append( _folder( caption, object.human.self_link_no_pop( "", "/cooper/", object.human.__unicode__() ) ) )
+			links.append( _folder( caption, object.human.self_link_no_pop( "", "/cooper/", object.person.__unicode__() ) ) )
 
 		caption = _(u"Els meus comptes").encode("utf-8")
 		links_account = []
