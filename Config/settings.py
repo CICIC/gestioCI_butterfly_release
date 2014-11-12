@@ -237,7 +237,7 @@ EMAIL_HOST_USER = "email@host.tld"
 EMAIL_HOST_PASSWORD = "password"
 DEFAULT_FROM_EMAIL = "email@host.tld"
 
-#Opción 1
+#Opción 1gt
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 #EMAIL_USE_SSL = False
@@ -252,6 +252,6 @@ EMAIL_PORT = 25
 EMAIL_USE_TLS = False
 #EMAIL_USE_SSL = False
 
-LOGIN_REDIRECT_URL  = "/public_form/entry_page_to_gestioci/"
+LOGIN_REDIRECT_URL  = "/cooper/"
 LOGIN_URL = "/public_form/entry_page_to_gestioci/"
 
