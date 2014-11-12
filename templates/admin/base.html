@@ -29,7 +29,6 @@
             {% block welcome-msg %}
                 {% trans 'Welcome,' %}
                 <strong>{% firstof user.get_short_name user.get_username %}</strong>.
-				
             {% endblock %}
             {% block userlinks %}
                 {% url 'django-admindocs-docroot' as docsroot %}
@@ -43,6 +42,8 @@
                 <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
             {% endblock %}
         </div>
+		{% else %}
+
         {% endif %}
         {% block nav-global %}{% endblock %}
     </div>
