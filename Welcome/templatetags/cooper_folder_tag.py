@@ -171,6 +171,7 @@ class member_object(object):
 
 		links.append( _fees_folder( object ) )
 
+		links.append( _folder( object.ic_membership._join_fee.short_description.encode("utf-8"), object.ic_membership._join_fee("/cooper/", "/cooper") ))
 		try:
 			#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
 			if not object.ic_membership.ic_company:
@@ -196,6 +197,10 @@ class member_object(object):
 		return sections, links
 
 	def render_member(self, object, sections, links):
+		value = object.ic_CESnum
+		caption =  _(u"Numero al CES/iCES").encode("utf-8")
+		links.append( _folder( caption, value ))
+
 		if isinstance(object, iC_Project_Membership):
 			caption = _("Projecte").encode("utf-8")
 			links.append( _folder( caption, object.human.self_link_no_pop( "", "/cooper/", object.project.__unicode__() ) ) )
@@ -206,12 +211,24 @@ class member_object(object):
 
 		if isinstance(object, iC_Person_Membership):
 			caption = _("Persona").encode("utf-8")
-			links.append( _folder( caption, object.human.self_link_no_pop( "", "/cooper/", object.person.__unicode__() ) ) )
+			links.append( _folder( caption, object.person.self_link_no_pop( "", "/cooper/", object.person.__unicode__() ) ) )
+
+			caption = _(u"Els meus comptes").encode("utf-8")
+			links_account = []
+			for account in object.person._my_accounts():
+				links_account.append( _link( account.link(), account.name  + " / " + account.record_type.name) )
+		links.append( _folder(caption, _links_list_to_ul(links_account) )  )
+
 		links.append( _folder( object.ic_membership._join_fee.short_description.encode("utf-8"), object.ic_membership._join_fee("/cooper/", "/cooper") ))
-		caption = _(u"Els meus comptes").encode("utf-8")
+
+		caption = _("Projecte").encode("utf-8")
+		caption_human = object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() )
+		links.append( _folder( caption, object.ic_membership.human.self_link_no_pop( "", "/cooper/", object.ic_membership.human.__unicode__() ) ) )
+
+		caption = _(u"Comptes de ").encode("utf-8") +  object.ic_membership.human.__unicode__()
 		links_account = []
 		for account in object.ic_membership.human._my_accounts():
-			links_account.append( _link( account.link(), account.name) )
+			links_account.append( _link( account.link(), account.name + " / " + account.record_type.name) )
 		links.append( _folder(caption, _links_list_to_ul(links_account) )  )
 
 		sections.append( _section( object.record_type.name ) )
