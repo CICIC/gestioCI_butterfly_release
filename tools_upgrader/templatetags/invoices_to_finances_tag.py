@@ -9,6 +9,7 @@ from django.core import urlresolvers
 from django.db.models.loading import get_model
 from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership, iC_Akin_Membership
 from General.models import Human
+from django.db.models import Count
 
 def _links_list_to_ul(links):
 	output = "<ul>"
@@ -90,7 +91,7 @@ class member_object(object):
 		links = []
 		links.append( _folder( "Finances_Cooper.count()", str(cooper.objects.all().count())  ) )
 		return links
-		
+
 	def group_invoices(self):
 		links = []
 
@@ -98,6 +99,9 @@ class member_object(object):
 		from Invoices.models import Soci
 		links_members = []
 		links_members.append( _folder( "Invoices_Soci.count()", str(Soci.objects.all().count() ) ) )
+		import pdb; pdb.set_trace()
+		for coop in Soci.objects.values("coop", "coop__name").annotate(count=Count('coop')):
+			links_members.append( _folder( coop.get("coop__name"), coop.get("count") ) )
 
 		#Section 2
 		links_companies = []
