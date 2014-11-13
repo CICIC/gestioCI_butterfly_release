@@ -1,15 +1,21 @@
 #encoding=utf-8
 
 from django.db import models
+from django.contrib import messages
+from mptt.models import MPTTModel
+from mptt.fields import TreeForeignKey, TreeManyToManyField
+from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext as __
+from decimal import Decimal
+from django.http import HttpResponseRedirect, HttpResponse
+from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from datetime import date, timedelta, datetime
-from django.utils.translation import ugettext_lazy as _
 from csvimport.models import CSVImport
-from decimal import Decimal
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from General.models import Concept, Company
 
-from General.models import Concept
-from Welcome.models import iC_Membership
+from Welcome.models import iC_Record, iC_Membership
 
 alphanumeric = RegexValidator(r'^[0-9a-zA-Z]*$', _(u"Nomès números i lletres") )
 class type(Concept):	# create own ID's
@@ -73,7 +79,7 @@ class coop(models.Model):
 		verbose_name_plural= _(u'I - Cooperatives')
 
 
-class company(models.Model):
+class company(Company):
 	name=models.CharField(verbose_name=_(u"Nom Fiscal"), help_text=_(u"El nom fiscal del client a qui es factura. Ex. SOM EL QUE SOM SL"), max_length=200)
 	CIF=models.CharField(verbose_name=_(u"CIF/NIF/NIE"), blank=True, null=True, help_text=_(u"NIF:12345678A - CIF: A12345678 - NIE: X12345678A del client a qui es factura."), max_length=30)
 	otherCIF=models.CharField(verbose_name=_(u"Altres identificadors"), null=True, blank=True, help_text=_(u"Camps no NIF/CIF/NIE del client a qui es factura."), max_length=50)
@@ -109,7 +115,7 @@ class cooper(models.Model):
 	advanced_tax=models.DecimalField(verbose_name=_(u'Quota avançada (€)'), help_text=_(u"Quota que s'aplicarà el primer trimestre"), decimal_places=2, max_digits=10, default=0)
 	clients = models.ManyToManyField(client, verbose_name=_(u"Clients"))
 	providers = models.ManyToManyField(provider, verbose_name=_(u"Proveïdors"))
-	membership = models.ForeignKey(iC_Membership, verbose_name=_(u"rel_to_new_system"), blank=True, null=True)
+	membership = models.ForeignKey('Welcome.iC_Membership', verbose_name=_(u"rel_to_new_system"), blank=True, null=True)
 	def email( self ):
 		return self.user.email
 	email.short_description=_(u"Email")
@@ -173,7 +179,50 @@ movement_STATUSES=(
 		(status_CHOICE_PENDING, _(u'Pendent')),
 		(status_CHOICE_DONE, _(u'Executat')),
 	)
-class invoice(models.Model):
+
+
+class invoice(iC_Record):
+	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
+	human = models.ForeignKey('General.Human', related_name='out_invoices', verbose_name=_(u"Ens pagador"))
+	project = TreeForeignKey('General.Project', related_name='in_invoices', verbose_name=_(u"Projecte receptor"))
+	amount = models.DecimalField(default=0, max_digits=6, decimal_places=2, verbose_name=_(u"Import"))
+	unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
+	ic_membership = models.ForeignKey('Welcome.iC_Membership', related_name='invoices_membership', blank=True, null=True, verbose_name=_(u"Registre de Soci"))
+	lines = models.ForeignKey('Finances.invoice_line', related_name='rel_lines', blank=True, null=True, verbose_name=_(u"Línes"))
+	def _ic_membership(self):
+		#print 'ic_MEMBERSHIP'
+		#print self.membership.all()
+		if hasattr(self, 'membership') and self.membership:
+			return self.membership.first()
+		else:
+			return 'none'
+	_ic_membership.allow_tags = True
+	_ic_membership.short_description = _(u"Registre de Soci")
+	def _ic_selfemployed(self):
+		#print 'ic_SELFEMPLOYED'
+		if hasattr(self, 'selfemployed'):
+			#print self.selfemployed.all()
+			return self.selfemployed.first()
+		else:
+			return 'none'
+	_ic_selfemployed.allow_tags = True
+	_ic_selfemployed.short_description = _(u"Registre d'Autoocupat")
+
+	issue_date = models.DateField(default=datetime.today, blank=True, null=True, verbose_name=_(u"Data d'emisió"))
+	deadline_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de venciment"))
+	payment_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de pagament"))
+	payment_type = TreeForeignKey('Welcome.Payment_Type', blank=True, null=True, verbose_name=_(u"Forma de pagament"))
+
+	rel_account = models.ForeignKey('General.Record', related_name='rel_invoices', blank=True, null=True, verbose_name=_(u"Compte relacionat"))
+
+	def __unicode__(self):
+		if self.record_type is None:
+			#record_type = "<record:type.name>"
+			return 'Invoice ??: ['+str(self.amount)+' '+self.unit.code+']'
+		else:
+			record_type = self.record_type.name
+		return record_type +': ['+str(self.amount)+' '+self.unit.code+']'#' > '+self.project.nickname
+
 	period= models.ForeignKey(period, verbose_name=_(u'Trimestre'))
 	cooper= models.ForeignKey(cooper, verbose_name=_(u"nº COOP"))
 	date= models.DateField(verbose_name=_(u"Data"), help_text=_(u"La data d'emissió de la factura. Exemple dd/mm/aaaa"))
@@ -211,41 +260,51 @@ class invoice(models.Model):
 	status.short_description = _(u"Estat")
 
 	class Meta:
-		abstract=True
+		abstract=False
+		verbose_name = _(u"Factura")
+		verbose_name_plural = _(u"Factures")
+
 
 class sales_invoice(invoice):
+	invoice = models.OneToOneField('Finances.invoice', primary_key=True, parent_link=True)
 	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."))
+	client=models.ForeignKey(client, related_name="sales_invoice_clients", verbose_name=_(u"Client"))
 
 	def number(self):
 		return '%s/%s/%s'%( self.cooper, self.date.year, "%03d" % (self.num) )
 	number.short_description =_(u"Nº Factura")
-	client=models.ForeignKey(client, verbose_name=_(u"Client"))
+
 	def value(self):
 		value=0
 		for line in sales_line.objects.filter(sales_invoice=self.pk):
 			value += line.value
 		return value
 	value.short_description=_(u"Base Imposable (€)")
+
 	def invoiced_vat(self):
 		value=0
 		for line in sales_line.objects.filter(sales_invoice=self.pk):
 			value += line.invoiced_vat()
 		return value
 	invoiced_vat.short_description=_(u"IVA Facturat (€)")
+
 	def assigned_vat(self):
 		value=0
 		for line in sales_line.objects.filter(sales_invoice=self.pk):
 			value += line.assigned_vat()
 		return value
 	assigned_vat.short_description=_(u"IVA Assignat (€)")
+
 	def total(self):
 		value = Decimal("0.00")
 		for line in sales_line.objects.filter(sales_invoice=self.pk):
 			value += line.total() 
 		return value
 	total.short_description=_(u'Total Factura (€)')
+
 	def __unicode__(self):
 		return self.number()
+
 	def __getitem__(self, value):
 		return self.pk
 
@@ -254,9 +313,10 @@ class sales_invoice(invoice):
 		verbose_name_plural=_(u'01 - Factures Emeses')
 		unique_together=('cooper', 'period', 'num')
 
-class purchases_invoice(invoice):
-	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura."),  validators=[alphanumeric])
 
+class purchases_invoice(invoice):
+	invoice = models.OneToOneField('invoice', primary_key=True, parent_link=True)
+	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura."),  validators=[alphanumeric])
 	provider=models.ForeignKey(provider, verbose_name=_(u"Proveïdor"))
 
 	def number(self):
@@ -284,12 +344,14 @@ class purchases_invoice(invoice):
 			value += line.irpf()
 		return value
 	irpf.short_description=_(u"IRPF (€)")
+
 	def total(self):
 		value = Decimal("0.00")
 		for line in purchases_line.objects.filter(purchases_invoice=self.pk):
 			value += line.total()
 		return value
 	total.short_description=_(u'Total Factura (€)')
+
 	def __unicode__(self):
 		return  unicode(self.num) 
 
@@ -298,10 +360,13 @@ class purchases_invoice(invoice):
 		verbose_name_plural=_(u'02 - Factures Despeses')
 
 
-class sales_line (models.Model):
-	sales_invoice=models.ForeignKey(sales_invoice)
-	percent_invoiced_vat=models.ForeignKey(vats, verbose_name=_(u"IVA Facturat (%)"), help_text=_(u"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"))
+class invoice_line(iC_Record):
+	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
 	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la factura. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
+
+class sales_line (invoice_line):
+	line = models.OneToOneField('Finances.invoice_line', primary_key=True, parent_link=True)
+	percent_invoiced_vat=models.ForeignKey(vats, verbose_name=_(u"IVA Facturat (%)"), help_text=_(u"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"))
 
 	def percent_assigned_vat(self):
 		from Finances.bots import bot_assigned_vat
@@ -333,9 +398,8 @@ class sales_line (models.Model):
 		verbose_name=_(u'Línia de factura emesa')
 		verbose_name_plural=_(u'Línies de factura emesa')
 
-class purchases_line (models.Model):
-	purchases_invoice=models.ForeignKey(purchases_invoice)
-	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la factura. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
+class purchases_line (invoice_line):
+	line = models.OneToOneField('Finances.invoice_line', primary_key=True, parent_link=True)
 	percent_vat=models.ForeignKey(vats, verbose_name=_(u'IVA (%)'), help_text=_(u"El % d'IVA que s'aplica en la factura."))
 	percent_irpf=models.IntegerField(verbose_name=_(u'IRPF (%)'), help_text=_(u"El % de retenció de IRPF (Només en lloguers i factures de persones físiques)."), default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
@@ -364,7 +428,7 @@ class purchases_line (models.Model):
 		verbose_name_plural=_(u'Línies de factura despesa')
 
 
-class movement (models.Model):
+class movement (iC_Record):
 	cooper=models.ForeignKey(cooper, null=False, blank=False, verbose_name=_(u"nº COOP"))
 	concept=models.CharField(verbose_name=_(u"Concept"), max_length=200, null=False, 
 		blank=False,)
