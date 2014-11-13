@@ -101,7 +101,7 @@
 
 
 	{% block sidebar %}
-	{% if request.path == "/admin/" %}
+	{% if request.path == "/admin/" and not request.user.is_superuser %}
 	<div id="content-related">
 		<div class="module" id="recent-actions-module">
 			<h2>{% trans 'Recent Actions' %}</h2>
