@@ -16,24 +16,12 @@ def _links_list_to_ul(links):
 		output += "<li>%s</li>" % (link)
 	return "%s</ul>" % (output)
 
-def _safe_render(output, section, image, links):
+def _safe_render(output, image, links):
 	width = "'100%'"
 	try:
-		output = output.replace("\t","") % ( width, section, image, links)
+		output = output.replace("\t","") % ( width, image, links)
 	except:
-		try:
-			section = section.decode("utf-8")
-			output = output.replace("\t","") % ( width, section, image, links)
-		except:
-			try:
-				section = section.encode("utf-8")
-				output = output.replace("\t","") % ( width, section, image, links)
-			except:
-				try:
-					output = output.replace("\t","") % ( width, image, "section", links)
-				except:
-					output = output % (width, image, "section", links)
-	return output
+		return output
 
 def _section(caption):
 	return "<h3>%s</h3>"  % (  caption ) 
@@ -100,57 +88,96 @@ class member_object(object):
 		from Finances.models import cooper
 
 		links = []
-		sections = []
-
-		sections.append( _section( "-- ") ) 
 		links.append( _folder( "Finances_Cooper.count()", str(cooper.objects.all().count())  ) )
-		return links, sections
+		return links
 		
 	def group_invoices(self):
+		links = []
+
+		#Section 1
 		from Invoices.models import Soci
+		links_members = []
+		links_members.append( _folder( "Invoices_Soci.count()", str(Soci.objects.all().count() ) ) )
 
-		links = []
-		sections = []
+		#Section 2
+		links_companies = []
+		from Invoices.models import Client, Provider
+		links_companies.append( _folder( "Invoices_Client.count()", str(Client.objects.all().count() ) ) )
+		links_companies.append( _folder( "Invoices_Provider.count()", str(Provider.objects.all().count() ) ) )
 
-		sections.append( _section( "--") ) 
-		links.append( _folder( "Invoices_Soci.count()", str(Soci.objects.all().count() ) ) )
-		return links, sections
-		
+		#Section 3
+		links_invoices = []
+		from Invoices.models import SalesInvoice, PurchaseInvoice
+		links_invoices.append( _folder( "Invoices_SalesInvoice.count()", str(SalesInvoice.objects.all().count() ) ) )
+		links_invoices.append( _folder( "Invoices_PurchaseInvoice.count()", str(PurchaseInvoice.objects.all().count() ) ) )
+
+		links.append( _folder( _section("Coopers"), _links_list_to_ul(links_members) ) )
+		links.append( _folder( _section("Companies"), _links_list_to_ul(links_companies) ) )
+		links.append( _folder( _section("Invoices"), _links_list_to_ul(links_invoices) ) )
+
+		return links
+
 	def group_finances(self):
+		links = []
+
+		#Section 1
 		from Finances.models import cooper
+		links_members = []
+		links_members.append( _folder( "Finances_ic_self_employed.count()", str(cooper.objects.all().count() ) ) )
 
-		links = []
-		sections = []
+		#Section 2
+		links_companies = []
+		from Finances.models import company
+		links_companies.append( _folder( "Finances_company.count()", str(company.objects.all().count() ) ) )
 
-		sections.append( _section( "-- ") ) 
-		links.append( _folder( "Finances_Cooper.count()", str(cooper.objects.all().count())  ) )
-		return links, sections
-		
+		#Section 3
+		links_invoices = []
+		from Finances.models import purchases_invoice, sales_invoice
+		links_invoices.append( _folder( "Finances_sales_invoice.count()", str(sales_invoice.objects.all().count() ) ) )
+		links_invoices.append( _folder( "Finances_purchases_invoice.count()", str(purchases_invoice.objects.all().count() ) ) )
+		from Finances.models import purchases_line, sales_line
+		links_invoices.append( _folder( "Finances_sales_line.count()", str(sales_line.objects.all().count() ) ) )
+		links_invoices.append( _folder( "Finances_purchases_line.count()", str(purchases_line.objects.all().count() ) ) )
+
+		links.append( _folder( _section("Coopers"), _links_list_to_ul(links_members) ) )
+		links.append( _folder( _section("Companies"), _links_list_to_ul(links_companies) ) )
+		links.append( _folder( _section("Invoices"), _links_list_to_ul(links_invoices) ) )
+
+		return links
+
 	def group_welcome(self):
-		from Welcome.models import iC_Self_Employed
-
 		links = []
-		sections = []
 
-		sections.append( _section( "--") ) 
-		links.append( _folder( "Welcome_ic_self_employed.count()", str(iC_Self_Employed.objects.all().count() ) ) )
-		return links, sections
+		#Section 1
+		from Welcome.models import iC_Self_Employed
+		links_members = []
+		links_members.append( _folder( "Welcome_ic_self_employed.count()", str(iC_Self_Employed.objects.all().count() ) ) )
+
+		#Section 2
+		links_companies = []
+		from General.models import Company
+		links_companies.append( _folder( "General_company.count()", str(Company.objects.all().count() ) ) )
+
+		links.append( _folder( _section("Coopers"), _links_list_to_ul(links_members) ) )
+		links.append( _folder( _section("Companies"), _links_list_to_ul(links_companies) ) )
+
+		return links
 
 	def render_group(self,group):
 
 		image = "<h2>%s</h2>" % (group)
 
 		if group == "Invoices":
-			links, sections = self.group_invoices()
+			links = self.group_invoices()
 		elif  group == "Finances":
-			links, sections = self.group_finances()
+			links= self.group_finances()
 		elif  group == "Welcome":
-			links, sections = self.group_welcome()
-		for section in sections:
+			links = self.group_welcome()
+
+		for link in links:
 			class render_object(object):
 				pass
 			obj = render_object()
-			obj.section = mark_safe(section)
 			obj.image = mark_safe(image)
 			obj.links = mark_safe(_links_list_to_ul(links))
 			return obj
