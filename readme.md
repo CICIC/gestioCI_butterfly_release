@@ -1,24 +1,23 @@
 Doc
 ----------------
-[Main site (Spanish)](https://wiki.enredaos.net/index.php?title=GestioCI)
-[Dev site (Spanish)](https://wiki.enredaos.net/index.php?title=GestioCI-Desarrollo)
+Browse to main wiki doc page: [Main site](https://wiki.enredaos.net/index.php?title=GestioCI) or to developers doc page: [Dev site](https://wiki.enredaos.net/index.php?title=GestioCI-Desarrollo).
 
 DEPENDENCIES
 ------------------
-[Manual (Spanish|catalan)] (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#Dependencias)
+Prepare your python-django 1.7 installation with listed [dependencies] (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#Dependencias).
 
 SETUP
 --------------------
 Use [update.sh] (https://github.com/CICIC/gestioCI_butterfly_release/blob/master/update.sh) to get started. Migrating APPs in proper order is good!
 
-[Manual (Spanish|catalan)] (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#GESTIO_DEV:_instalaci.C3.B3n_.28sin_Invoices.29)
+Read some notes on setup process [butterfly installation notes (without App.Invoices)] (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#GESTIO_DEV:_instalaci.C3.B3n_.28sin_Invoices.29)
 
 ROAD MAP
 --------------------
-[dev group plan (Spanish|catalan)] (https://wiki.enredaos.net/index.php?title=GESTIO-DEV#ROADMAP)
+Developer group renders some monthly papers [Dev group plan] (https://wiki.enredaos.net/index.php?title=GESTIO-DEV#ROADMAP)
 
-[Butterfly plan (Spanish|catalan)] (https://wiki.enredaos.net/index.php?title=Talk:CICICdev/november#Plan_butterfly)
+There is specific current [Butterfly plan] (https://wiki.enredaos.net/index.php?title=Talk:CICICdev/november#Plan_butterfly) on the road.
 
 INFO
 --------------------
-[Current dev group(Spanish|catalan|english)] (https://wiki.enredaos.net/index.php?title=Desarrollo#GESTIO-DEV)
+Browse to [current dev group working progress page] (https://wiki.enredaos.net/index.php?title=Desarrollo#GESTIO-DEV) to get in touch.
