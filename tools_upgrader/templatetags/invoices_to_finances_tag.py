@@ -85,13 +85,6 @@ class member_object(object):
 		self.user = user
 		self.request = request
 
-	def group_finances(self):
-		from Finances.models import cooper
-
-		links = []
-		links.append( _folder( "Finances_Cooper.count()", str(cooper.objects.all().count())  ) )
-		return links
-
 	def group_invoices(self):
 		links = []
 
@@ -99,9 +92,15 @@ class member_object(object):
 		from Invoices.models import Soci
 		links_members = []
 		links_members.append( _folder( "Invoices_Soci.count()", str(Soci.objects.all().count() ) ) )
-		import pdb; pdb.set_trace()
+
+		links_members.append( _section("Cooperativas madre") )
+		from Invoices.models import Coop
+		for coop in Coop.objects.all():
+			links_members.append( _folder( coop.name + " id: " + str(coop.id), "Invoices.models,coop") )
+
+		links_members.append( _section("Socios por cooperativa madre") )
 		for coop in Soci.objects.values("coop", "coop__name").annotate(count=Count('coop')):
-			links_members.append( _folder( coop.get("coop__name"), coop.get("count") ) )
+			links_members.append( coop.get("coop__name") + ".count() " + str( coop.get("count") ) )
 
 		#Section 2
 		links_companies = []
@@ -156,6 +155,16 @@ class member_object(object):
 		from Welcome.models import iC_Self_Employed
 		links_members = []
 		links_members.append( _folder( "Welcome_ic_self_employed.count()", str(iC_Self_Employed.objects.all().count() ) ) )
+
+		links_members.append( _section("Cooperativas madre") )
+		from General.models import Company
+		for coop in Company.objects.filter(name__in=["XIPU", "Interprofessionals"]):
+			links_members.append( _folder( coop.name + " id: " + str(coop.id), "General.models,Company") )
+
+		links_members.append( _section("Socios por cooperativa madre") )
+		from Welcome.models import iC_Self_Employed
+		for coop in iC_Self_Employed.objects.values("ic_membership__ic_company", "ic_membership__ic_company__name").annotate(count=Count('ic_membership__ic_company')):
+			links_members.append( _folder( coop.get("ic_membership__ic_company__name"), coop.get("count") ) )
 
 		#Section 2
 		links_companies = []
