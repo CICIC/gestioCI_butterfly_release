@@ -1,0 +1,479 @@
+#encoding=utf-8
+
+from django.contrib.auth import *
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib import admin
+from django.contrib.auth.models import *
+#from django.contrib.auth.models import User
+from django.contrib.admin.sites import AdminSite
+from django.contrib import admin
+from django.contrib.admin import ModelAdmin
+from django.contrib import messages
+
+#To read settings.MEDIA_URL
+from django.conf import settings
+
+from django.core.exceptions import ValidationError
+from django.core.exceptions import FieldError
+
+from django import forms
+
+from django.forms.util import ErrorList
+
+from django.db import models
+from django.db import IntegrityError, transaction
+from django.db.models import Sum, Max, Count
+from django.db import connection
+
+from django.core.validators import *
+
+from django.utils.translation import ugettext_lazy as _
+
+from forms import *
+
+#Generic import
+import csv
+from csvimport.models import CSVImport
+#Soci special import
+from Invoices.models import CSVImport
+
+#Application
+from Invoices.models import *
+
+from datetime import date, timedelta
+from decimal import Decimal
+
+from action import *
+
+#For cardid validation
+from localflavor.es.forms import *
+from django.db.models import F
+
+#for filtering
+from django.http import HttpResponseRedirect
+
+class UserAdminAuthenticationForm(AuthenticationForm):
+	"""	Same as Django's AdminAuthenticationForm but allows to login any user who is not staff.	"""
+	this_is_the_login_form = forms.BooleanField(widget=forms.HiddenInput,
+								initial=1,
+								error_messages={'required': _(u"Si us plau, torna a validar-te perquè la teva sessió ha expirat.")})
+ 
+	def clean(self):
+		username = self.cleaned_data.get('username')
+		password = self.cleaned_data.get('password')
+		message = _(u"Si us plau, introduïu un nom d'usuari i clau correcta per un compte de personal. Observeu que ambdós camps són sensibles a majúscules.")#ERROR_MESSAGE
+		username = username.replace("COOP","")
+		if username and password:
+			self.user_cache = authenticate(username=username,
+			password=password)
+			if self.user_cache is None:
+				if u'@' in username:
+					# Mistakenly entered e-mail address instead of username?
+					# Look it up.
+					try:
+						user = User.objects.get(email=username)
+					except (User.DoesNotExist, User.MultipleObjectsReturned):
+						# Nothing to do here, moving along.
+						pass
+					else:
+						if user.check_password(password):
+							message = _(u"El teu e-mail no és el teu nom d'usuari"
+										" Prova '%s'.") % user.username
+				raise forms.ValidationError(message)
+			# Removed check for is_staff here!
+			elif not self.user_cache.is_active:
+				raise forms.ValidationError(message)
+		self.check_for_test_cookie()
+		return self.cleaned_data
+
+class UserAdmin(AdminSite):
+	login_form = UserAdminAuthenticationForm
+	# Anything we wish to add or override
+	def has_permission(self, request):
+		"""  Removed check for is_staff."""
+		return request.user.is_active
+user_admin_site = UserAdmin(name='usersadmin')
+
+#Use this in like => list_filter = (onlyownedFilter,)
+class onlyownedFilter(admin.SimpleListFilter):
+	# Human-readable title which will be displayed in the
+	# right admin sidebar just above the filter options.
+    	title = _(u'Hola usuari')
+
+	# Parameter for the filter that will be used in the URL query.
+	parameter_name = 'onlyowned'
+
+	def lookups(self, request, model_admin):
+		return (
+			('Mine', _(u'les meves factures')),
+		)
+
+	def get_queryset(self, request, queryset):
+	# Compare the requested value (either '80s' or '90s')
+	# to decide how to filter the queryset.
+		if self.value() == 'Mine':
+			return queryset.filter(user=request.user)
+
+class CoopAdmin(admin.ModelAdmin):
+	fields = ['name', ]
+	list_display = ('name', )
+	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
+
+class EmailNotificationAdmin(admin.ModelAdmin):
+	class Media:
+			js = (
+				'EmailNotification.js',   # app static folder
+			)
+	fields = ['efrom', 'eto', 'ento', 'sent_to_user', 'subject', 'body', 'period', 'is_active', 'notification_type', 'offset_days', 'pointed_date'  ]
+	list_display = ('efrom', 'ento', 'sent_to_user_filter', 'subject', 'period', 'is_active', 'on_time','execution_date', 'notification_type', 'pointed_date_filter' )
+	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
+
+class First_Period_Filter (admin.SimpleListFilter):
+	title = _(u'primer període')
+	parameter_name = 'first_period'
+
+	def lookups(self, request, model_admin):
+		qs_periods = period.objects.all()
+		yFilters = ()
+		for ob_period in qs_periods:
+			yFilters = yFilters + ((ob_period.id, ob_period.period()),)
+		return yFilters
+
+	def get_queryset(self, request, queryset):
+		if self.value():
+			qs_period = period.objects.get( id = self.value() )
+			qs = queryset.filter ( user__date_joined__lt = qs_period.date_close )
+			return qs
+
+		return queryset
+
+class Closing_Filter (admin.SimpleListFilter):
+    title = _(u'Resultats (Selecciona avanç un Període)')
+    parameter_name = 'closing'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('1', _('Coopers that have periodclosed and has closed')),
+			('2', _('Coopers that have periodclosed')),
+			('3', _('Coopers that have not periodclosed')),
+        )
+
+    def get_queryset(self, request, queryset):
+		if request.GET.has_key('first_period'):
+			id_period = request.GET['first_period']
+			if self.value() == '1':
+				qs = queryset.filter( user__periodclose__period_id = id_period, user__periodclose__closed = True )
+				return qs
+			if self.value() == '2':
+				qs = queryset.filter( user__periodclose__period_id = id_period, user__periodclose__closed = False )
+				return qs
+			if self.value() == '3':
+				qs = queryset.exclude( user__periodclose__period_id = id_period )
+				return qs
+
+class SociAdmin(admin.ModelAdmin):
+	form = SociAdminForm
+	model = 'Soci'
+	list_per_page = 600
+	fields = ['user', 'coop_number', 'IVA_assignat', 'coop', 'extra_days', 'preTAX']
+	list_display = ('firstname', 'lastname', 'coopnumber', 'email', 'IVA_assignat', 'coop', 'extra_days', 'preTAX', 'date_joined')
+	search_fields = ['coop_number', 'user__username', 'user__first_name']
+	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
+
+	def date_joined(self,obj):
+		return obj.user.date_joined
+	date_joined.short_description = _(u"Data d'alta")
+	date_joined.admin_order_field = 'user__date_joined'
+	def firstname(self,obj):
+		return obj.user.first_name
+	firstname.admin_order_field = 'user__first_name'
+	firstname.short_description = _(u"Nom")
+
+	def lastname(self,obj):
+		return obj.user.last_name
+	lastname.admin_order_field = 'user__last_name'
+	lastname.short_description = _(u"Cognom")
+
+	def coopnumber(self,obj):
+		return "%04d" % obj.coop_number
+	coopnumber.short_description = _(u"nº COOP")
+	coopnumber.admin_order_field = 'coop_number'
+
+	def first_period(self, obj):
+		qs = period.objects.filter(date_close__gt = (obj.user.date_joined  ) , first_day__lte = obj.user.date_joined  + timedelta(days=9) )
+		if qs.count() > 0:
+			return qs[0].period()
+		return None
+	first_period.short_description = _(u"Primer període")
+
+	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
+
+class SalesInvoiceAdmin(admin.ModelAdmin):
+	form = SalesInvoiceForm
+	date_hierarchy = "date"
+	list_per_page = 1000
+	readonly_fields = ('percentAssignedVAT', )
+	fields = ['user', 'period', 'num', 'client', 'date', 'value', 'percentInvoicedVAT', 'percentAssignedVAT']
+	list_display = ('SociNum', 'SociName', 'clientName',  'ClientCIF', 'date', 'number', 'value', 'percentInvoicedVAT', 'percentAssignedVAT', 'invoicedVAT', 'assignedVAT', 'total')
+	list_filter = ('period', )
+	search_fields = ['user__soci__coop_number', 'user__username', 'user__first_name']
+	list_export = ('SociNum', 'SociName', 'period', 'number', 'clientName', 'ClientCIF', 'date', 'value', 'percentInvoicedVAT', 'invoicedVAT', 'percentAssignedVAT', 'assignedVAT', 'total')
+	change_list_template = 'admin/Invoices/SalesInvoices/change_list.html'
+
+	def save_model(self, request, obj, form, change):
+		if getattr(obj, 'user', None) is None:
+			obj.user = request.user
+		obj.save()
+	
+	def changelist_view(self, request, extra_context=None):
+		#Get Totals
+		response = super(SalesInvoiceAdmin, self).changelist_view(request, extra_context)
+		try:
+			qs_queryset = response.context_data["cl"].query_set
+		except:
+			qs_queryset = None
+		if qs_queryset and extra_context is None:
+			extra_context = {}
+			sales_total = sales_invoicedVAT = sales_assignedVAT = sales_totalVAT = Decimal('0.00')
+			for item in qs_queryset.all():
+				sales_total += item.value
+				sales_invoicedVAT += item.invoicedVAT()
+				sales_assignedVAT += item.assignedVAT()
+				sales_totalVAT += item.total()
+			extra_context['Sales_total'] = Decimal ( "%.2f" % sales_total )
+			extra_context['Sales_invoicedVAT'] = Decimal ( "%.2f" % sales_invoicedVAT )
+			extra_context['Sales_assignedVAT'] = Decimal ( "%.2f" % sales_assignedVAT )
+			extra_context['Sales_totalVAT'] = Decimal ( "%.2f" % sales_totalVAT )
+		#Filter by default
+		return PeriodManager.filterbydefault(request, self, SalesInvoiceAdmin, extra_context)
+
+	def SociNum (self, obj):
+		getSoci = Soci.objects.get( user=obj.user )
+		return getSoci
+	SociNum.short_description = _(u"Nº Soci")
+	SociNum.admin_order_field = "user__soci__coop_number"
+
+	def SociName (self, obj):
+		return obj.user.first_name + ' ' + obj.user.last_name
+	SociName.short_description = _(u"Nom Soci")
+	SociName.admin_order_field = "user__first_name"
+
+	def clientName (self, obj):
+		return obj.client.name
+	clientName.short_description = _(u"Client")
+
+	def ClientCIF (self, obj):
+		if obj.client.CIF:
+			return obj.client.CIF
+		else:
+			return obj.client.otherCIF
+	ClientCIF.short_description = _(u"Client (ID) ")
+	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
+
+class SalesInvoiceUser(admin.ModelAdmin):
+	form = SalesInvoiceForm
+	model = SalesInvoice
+	date_hierarchy = "date"
+	change_list_template = 'admin/Invoices/SalesInvoices/change_list.html'
+	readonly_fields = ('percentAssignedVAT', )
+	fields = ['period', 'num', 'client', 'date', 'value', 'percentInvoicedVAT']
+	list_display = ('period', 'number', 'num', 'client', 'date', 'value', 'percentInvoicedVAT', 'invoicedVAT', 'percentAssignedVAT', 'assignedVAT', 'total')
+	list_display_links = ( 'number', )
+	list_editable = ('period', 'num', 'client', 'date', 'value', 'percentInvoicedVAT')
+	list_export = ('period', 'number', 'clientName', 'clientCif', 'date', 'value', 'percentInvoicedVAT', 'invoicedVAT', 'percentAssignedVAT', 'assignedVAT', 'total')
+
+	list_filter = ('period',)
+	search_fields = ['num', 'client__name', 'client__CIF', 'client__otherCIF']
+	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
+
+	def clientName(self, obj):
+		return obj.client.name
+	clientName.short_description = _(u"Client")
+
+	def clientCif(self, obj):
+		if obj.client.CIF:
+			return obj.client.CIF
+		else:
+			return obj.client.otherCIF
+	clientCif.short_description = _(u"Client (ID) ")
+ 
+	def save_model(self, request, obj, form, change):
+		if getattr(obj, 'user', None) is None:
+			obj.user = request.user
+		obj.save()
+		#New or Edit
+		if obj:
+			pk = obj.pk
+		else:
+			pk=0
+		if SalesInvoice.objects.filter( user=obj.user, 
+									period=obj.period, 
+									num=obj.num).exclude(pk=pk).count() > 0:
+			messages.warning(request, _(u"Ja existeix una factura amb aquest número. S'ha gravat perquè l'IVA es diferent"))
+
+	def get_queryset(self, request):
+		if request.user.is_superuser:
+			return SalesInvoice.objects.all()
+		return SalesInvoice.objects.filter(user=request.user)
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "client":
+				kwargs["queryset"] = Client.objects.filter(user=request.user)
+		return super(SalesInvoiceUser, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def get_form(self, request, obj=None, **kwargs):
+		ModelForm = super(SalesInvoiceUser, self).get_form(request, obj=None, **kwargs)
+		def form_wrapper(*args, **kwargs):
+			a = ModelForm(*args, **kwargs)
+			a.request = request
+			return a
+		return form_wrapper
+
+	def get_changelist_form(self, request, **kwargs):
+		kwargs['form'] = SalesInvoiceForm
+		SalesInvoiceForm.request = request
+		return super(SalesInvoiceUser, self).get_changelist_form(request, **kwargs)
+
+	def changelist_view(self, request, extra_context=None):
+		#Get totals
+		response = super(SalesInvoiceUser, self).changelist_view(request, extra_context)
+		try:
+			qs_queryset = response.context_data["cl"].query_set
+		except:
+			qs_queryset = None
+
+		if qs_queryset and extra_context is None:
+			extra_context = {}
+			sales_total = sales_invoicedVAT = sales_assignedVAT = sales_totalVAT = Decimal('0.00')
+			for item in qs_queryset.all():
+				sales_total += item.value
+				sales_invoicedVAT += item.invoicedVAT()
+				sales_assignedVAT += item.assignedVAT()
+				sales_totalVAT += item.total()
+			extra_context['Sales_total'] = Decimal ( "%.2f" % sales_total )
+			extra_context['Sales_invoicedVAT'] = Decimal ( "%.2f" % sales_invoicedVAT )
+			extra_context['Sales_assignedVAT'] = Decimal ( "%.2f" % sales_assignedVAT )
+			extra_context['Sales_totalVAT'] = Decimal ( "%.2f" % sales_totalVAT )
+
+		#Filter by period
+		return PeriodManager.filterbydefault(request, self, SalesInvoiceUser, extra_context)
+
+class PurchaseInvoiceAdmin(admin.ModelAdmin):
+	form = PurchaseInvoiceForm
+	date_hierarchy = "date"
+	list_per_page = 1000
+	fields = ['user', 'period', 'num', 'provider', 'date', 'value', 'percentExpencedVAT', 'percentIRPFRetention']
+	list_display = ('SociNum', 'SociName', 'providerName', 'providerCIF', 'date', 'num', 'value', 'percentExpencedVAT','expencedVAT', 'percentIRPFRetention', 'IRPFRetention', 'total')
+	change_list_template = 'admin/Invoices/PurchaseInvoices/change_list.html'
+	list_filter = ('period', )
+	search_fields = ['user__soci__coop_number', 'user__username', 'user__first_name']
+	list_export = ('SociNum', 'SociName', 'num', 'providerName', 'providerCIF', 'date', 'value', 'percentExpencedVAT', 'expencedVAT', 'percentIRPFRetention', 'IRPFRetention', 'total')
+
+	def save_model(self, request, obj, form, change):
+		if getattr(obj, 'user', None) is None:
+			obj.user = request.user
+		obj.save()
+
+	def changelist_view(self, request, extra_context=None):
+		#Calculate Totals
+		response = super(PurchaseInvoiceAdmin, self).changelist_view(request, extra_context)
+		try:
+			qs_queryset = response.context_data["cl"].query_set
+		except:
+			qs_queryset = None
+		if qs_queryset and extra_context is None:
+			extra_context = {}
+			purchases_total = purchases_expencedVAT = purchases_IRPFRetention = purchases_totalVAT = Decimal('0.00')
+			for item in qs_queryset.all():
+				purchases_total += item.value
+				purchases_expencedVAT += item.expencedVAT()
+				purchases_IRPFRetention -= item.IRPFRetention()
+				purchases_totalVAT += item.total()
+			extra_context['Purchases_total']  = Decimal ( "%.2f" % purchases_total )
+			extra_context['Purchases_expencedVAT'] = Decimal ( "%.2f" % purchases_expencedVAT )
+			extra_context['Purchases_IRPFRetention'] = Decimal ( "%.2f" % purchases_IRPFRetention )
+			extra_context['Purchases_totalVATsfegsdgd']  = Decimal ( "%.2f" % purchases_totalVAT )
+		return PeriodManager.filterbydefault(request, self, PurchaseInvoiceAdmin, extra_context)
+
+	def SociNum (self, obj):
+		getSoci = Soci.objects.get( user=obj.user )
+		return getSoci
+	SociNum.short_description = _(u"Nº Soci")
+	SociNum.admin_order_field = "user__soci__coop_number"
+	def SociName (self, obj):
+		return obj.user.first_name + ' ' + obj.user.last_name
+	SociName.short_description = _(u"Nom Soci")
+	SociName.admin_order_field = "user__first_name"
+	def providerName (self, obj):
+		return obj.provider.name
+	providerName.short_description = _(u"Proveïdor")
+
+	def providerCIF (self, obj):
+		if obj.provider.CIF:
+			return obj.provider.CIF
+		else:
+			return obj.provider.otherCIF
+	providerCIF.short_description = _(u"Proveïdor (ID) ")
+	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
+
+class PurchaseInvoiceUser(admin.ModelAdmin):
+	form = PurchaseInvoiceForm
+	date_hierarchy = "date"
+	fields = ['period', 'num', 'provider', 'date', 'value', 'percentExpencedVAT', 'percentIRPFRetention']
+	list_editable = ( 'period', 'num', 'provider', 'date', 'value', 'percentExpencedVAT', 'percentIRPFRetention')
+	list_display = ('number', 'period', 'num', 'provider', 'date', 'value', 'percentExpencedVAT', 'expencedVAT', 'percentIRPFRetention', 'IRPFRetention', 'total')
+	list_display_links = ( 'number', )
+	list_export = ('num', 'providerName', 'providerCif', 'date', 'value', 'percentExpencedVAT', 'expencedVAT', 'percentIRPFRetention', 'IRPFRetention', 'total')
+	list_filter = ('period',)
+	search_fields = ['num', 'provider__name', 'provider__CIF', 'provider__otherCIF']
+	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
+	change_list_template = 'admin/Invoices/PurchaseInvoices/change_list.html'
+
+	def providerName(self, obj):
+		return obj.provider.name
+	providerName.short_description = _(u"Proveïdor")
+
+	def providerCif(self, obj):
+		if obj.provider.CIF:
+			return obj.provider.CIF
+		else:
+			return obj.provider.otherCIF
+	providerCif.short_description = _(u"Proveïdor (ID) ")
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "provider":
+				kwargs["queryset"] = Provider.objects.filter(user=request.user)
+		return super(PurchaseInvoiceUser, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def get_form(self, request, obj=None, **kwargs):
+		ModelForm = super(PurchaseInvoiceUser, self).get_form(request, obj=None, **kwargs)
+		def form_wrapper(*args, **kwargs):
+			a = ModelForm(*args, **kwargs)
+			a.request = request
+			return a
+		return form_wrapper
+
+	def get_changelist_form(self, request, **kwargs):
+		kwargs['form'] = PurchaseInvoiceForm
+		PurchaseInvoiceForm.request = request
+		return super(PurchaseInvoiceUser, self).get_changelist_form(request, **kwargs)
+
+	def save_model(self, request, obj, form, change):
+		if getattr(obj, 'user', None) is None:
+			obj.user = request.user
+		obj.save()
+		#New or Edit
+		if obj:
+			pk = obj.pk
+		else:
+			pk=0
+		if PurchaseInvoice.objects.filter( user=obj.user, 
+									period=obj.period, 
+									num=obj.num).exclude(pk=pk).count() > 0:
+			messages.warning(request, _(u"Ja existeix una factura amb aquest número. S'ha gravat perquè l'IVA es diferent"))
+
+	def get_queryset(self, request):
+		if request.user.is_superuser:
+			return PurchaseInvoice.objects.all()
+		return PurchaseInvoice.objects.filter(user=request.user)
+

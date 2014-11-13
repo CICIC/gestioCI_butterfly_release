@@ -15,7 +15,7 @@ admin.autodiscover()
 #URL PARAMETERS
 #JS
 js_info_dict = {
-	'packages': ('Invoices.package',),
+	'packages': ('finances.package',),
 }
 from Cooper.urls import urlpatterns as cooper_patterns
 
@@ -30,7 +30,7 @@ url(r'^cooper/', include(user_admin_site.urls )),
 #Just to be removed, add backward compatibility with gestioCIv07 where Cooper APP where called Soci.
 url(r'^soci/', include(user_admin_site.urls)),
 #Our invoicing module
-url(r'^invoices/', include('Invoices.urls', namespace='Invoices')),
+url(r'^finances/', include('Finances.urls', namespace='finances')),
 #Our semantic entity sites
 url(r'^admin/', include(admin.site.urls)),
 #Our welcoming module

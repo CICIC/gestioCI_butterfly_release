@@ -387,12 +387,12 @@ class PurchaseInvoiceAdmin(admin.ModelAdmin):
 			for item in qs_queryset.all():
 				purchases_total += item.value
 				purchases_expencedVAT += item.expencedVAT()
-				purchases_IRPFRetention += item.IRPFRetention()
+				purchases_IRPFRetention -= item.IRPFRetention()
 				purchases_totalVAT += item.total()
 			extra_context['Purchases_total']  = Decimal ( "%.2f" % purchases_total )
 			extra_context['Purchases_expencedVAT'] = Decimal ( "%.2f" % purchases_expencedVAT )
 			extra_context['Purchases_IRPFRetention'] = Decimal ( "%.2f" % purchases_IRPFRetention )
-			extra_context['Purchases_totalVAT']  = Decimal ( "%.2f" % purchases_totalVAT )
+			extra_context['Purchases_totalVATsfegsdgd']  = Decimal ( "%.2f" % purchases_totalVAT )
 		return PeriodManager.filterbydefault(request, self, PurchaseInvoiceAdmin, extra_context)
 
 	def SociNum (self, obj):
@@ -734,15 +734,11 @@ class PeriodCloseAdmin(admin.ModelAdmin):
 
 		if obj:
 			user = obj.user
-			if request.user.is_superuser:
-				period_object =  obj.period
-				period_value = obj.period.id
-				
-			else:
-				qs_Period = PeriodManager.get_opened_period(obj.user) 
+			#PERIOD
+			qs_Period = PeriodManager.get_opened_period(obj.user) 
 
-				period_object = qs_Period[0] if qs_Period.count() == 1 else 0
-				period_value = qs_Period[0].id if qs_Period.count() == 1 else 0
+			period_object = qs_Period[0] if qs_Period.count() == 1 else 0
+			period_value = qs_Period[0].id if qs_Period.count() == 1 else 0
 
 			#form.base_fields['period'].initial = period_object
 			#form.base_fields['period'].widget.attrs['disabled'] = True
@@ -767,7 +763,7 @@ class PeriodCloseAdmin(admin.ModelAdmin):
 			form.base_fields['Sales_invoicedVAT'].widget.attrs['readonly'] = True
 			form.base_fields['Sales_assignedVAT'].widget.attrs['readonly'] = True
 			form.base_fields['Sales_totalVAT'].widget.attrs['readonly'] = True
-			
+
 			enabledClosedCheckbox =  period_object.date_open <= datetime.date(datetime.now()) <= period_object.date_close
 			if not enabledClosedCheckbox:
 				form.base_fields['closed'].widget.attrs['disabled'] = True
@@ -927,17 +923,11 @@ class PeriodCloseUser(admin.ModelAdmin):
 	)
 
 	def VAT_1(self, obj):
-		if obj.VAT_type == 1:
-			vat = obj.Sales_invoicedVAT- obj.Purchases_expencedVAT
-			return 0 if vat < 0 else vat
-		return 0
+		return obj.Sales_invoicedVAT- obj.Purchases_expencedVAT
 	VAT_1.decimal = True
 	VAT_1.short_description = _(u'IVA Facturat - Despeses (€)')
 	def VAT_2(self, obj):
-		if obj.VAT_type == 2:
-			vat = obj.Sales_assignedVAT - obj.Purchases_expencedVAT
-			return 0 if vat < 0 else vat
-		return 0
+		return obj.Sales_assignedVAT - obj.Purchases_expencedVAT
 	VAT_2.decimal = True
 	VAT_2.short_description = _(u'IVA Assignat - Despeses (€)')
 	def paymentEntities(self, obj):
@@ -954,18 +944,9 @@ class PeriodCloseUser(admin.ModelAdmin):
 		#PERIOD
 		qs_Period = PeriodManager.get_opened_period( user ) 
 
-		if qs_Period.count() == 1:
-			period_object = qs_Period[0] 
-			period_value = qs_Period[0].id
-		elif request.GET.has_key('period__id__exact'):
-                	id_period = request.GET['period__id__exact']
-                	qs_period = period.objects.get(id=id_period)
-			period_object = qs_period
-			period_value = qs_period.id
-		else:
-			return form
+		period_object = qs_Period[0] if qs_Period.count() == 1 else 0
+		period_value = qs_Period[0].id if qs_Period.count() == 1 else 0
 
-		
 		#form.base_fields['period'].initial = period_object
 		#form.base_fields['period'].widget.attrs['disabled'] = True
 		#SALES
@@ -991,8 +972,7 @@ class PeriodCloseUser(admin.ModelAdmin):
 		form.base_fields['Sales_totalVAT'].widget.attrs['readonly'] = True
 		
 		qs_Soci = Soci.objects.get(user=request.user)
-		if period_object:
-			enabledClosedCheckbox =  period_object.date_open <= datetime.date(datetime.now()) <=  (period_object.date_close + timedelta(days=qs_Soci.extra_days))
+		enabledClosedCheckbox =  period_object.date_open <= datetime.date(datetime.now()) <=  (period_object.date_close + timedelta(days=qs_Soci.extra_days))
 		if not enabledClosedCheckbox:
 			form.base_fields['closed'].widget.attrs['disabled'] = True
 

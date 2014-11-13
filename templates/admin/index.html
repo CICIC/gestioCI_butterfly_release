@@ -15,6 +15,11 @@
 	{% if request.path == "/cooper/" %}
 		{% include "admin/index_cooper.html" %}
 	{% endif %}
+
+	{% if request.user.is_superuser %}
+		{% include "admin/index_super.html" %}
+	{% endif %}
+
 	{% if app_list %}
 		{% for app in app_list %}
 

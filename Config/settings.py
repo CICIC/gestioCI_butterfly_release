@@ -55,7 +55,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	#gestioCI APPS
-    #'Invoices', 	# This is gestioCI block1 Selfoccupated coopers APP
+	'Invoices', 	# This is gestioCI block1 Selfoccupated coopers APP	
+    'Finances', 	# This is gestioCI block1 Selfoccupated coopers APP
     'Cooper', 		# This is gestioCI block1 Selfoccupated coopers APP
     'General',  # This is the general models APP including five main types of data
     'Welcome',   # This is the membership maker APP
@@ -69,6 +70,7 @@ INSTALLED_APPS = (
     #'feincms',
     #'feincms.module.page',
     #'feincms.module.medialibrary'
+	'tools_upgrader'
 
 )
 MIDDLEWARE_CLASSES = (
@@ -100,7 +102,7 @@ DEFAULT_INDEX_TABLESPACE = 'indexes'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'gestioCI_butterfly_migration',
+        'NAME': 'gestiociv08',
         'USER' : 'root',
         'PASSWORD': 'si',
         'HOST': 'localhost',

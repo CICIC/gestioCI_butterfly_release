@@ -1,51 +1,148 @@
-#encoding=utf-8
-from django.http import HttpResponse
-from django.template.loader import render_to_string
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
+from django.views import generic
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.core.urlresolvers import reverse_lazy
+
 from django.contrib.auth.decorators import login_required
 
-@login_required
-def print_period_close(request, period_close_id):
+from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 
-	from Invoices.models import period_close
-	from Invoices.admin import period_close_user
-	from Invoices.forms import period_close_form
+from Invoices.models import SalesInvoice
+from Invoices.models import PurchaseInvoice
 
-	period_close = period_close.objects.get(pk=period_close_id)
-	#set some default values
-	period_close_form.is_new = False
-	period_close_form.obj = period_close
-	period_close_form.request = request
-	from django.utils.translation import ugettext_lazy as _
-	#set fields
-	period_close_form.fieldsets = (
-		({'name': _(u'Període')}, {'fields': (('period',),('cooper',)) }),
-		({'name': _('Emeses')}, {'fields': (('sales_base', 'sales_invoiced_vat'), ('sales_total', 'sales_assigned_vat'))}),
-		({'name': _('Despeses')}, {'fields': (('purchases_base', 'purchases_vat'), ('purchases_total', 'purchases_irpf'))}),
-		({'name': _('Seleccio IVA')}, { 'fields': (('oficial_vat_total', 'assigned_vat_total'), ('vat_type',)) }),
-		({'name': _('Estalvi')}, {'fields': (('savings_with_assigned_vat', 'savings_with_assigned_vat_donation'),)}),
-		({'name': _('Aportacio a la CIC')}, {'fields': (('donation',),)}),
-		({'name': _('Total impostos')}, {'fields': (('total_vat', 'total_irpf'),)}),
-		({'name': _('Quota Trimestral')}, {'fields': (('period_tax', 'advanced_tax' ),)}),
-		({'name': _('Totals')}, {'fields': (('total', 'total_to_pay'),)}),
-	)
-	from Invoices.models import period_close_base_fields
-	period_close_form.current_fields = period_close_base_fields
-	html = render_to_string( 'admin/Invoices/period_close/print_form.html', {'adminform': period_close_form})
-	return render_pdf(html)
+from django import forms
+from django.forms import extras
+from django.forms.extras.widgets import SelectDateWidget
+
+#>>>>>>>import export
+
+def make_custom_datefield(f):
+        formfield = f.formfield()
+        if isinstance(f, models.DateField):
+                formfield.widget.format = '%m/%d/%Y'
+                formfield.widget.attrs.update({'class':'datePicker', 'readonly':'true'})
+        return formfield
+
+def manageSalesInvoices(request, invoice_id):
+#	try:
+#		salesinvoice = SalesInvoice.objects.get(pk=invoice_id)
+#	except SalesInvoice.DoesNotExist:
+#		raise Http404
+	salesinvoice = get_object_or_404(SalesInvoice, pk=invoice_id)
+	return render(request, 'Invoices/SalesInvoice.html', {'salesinvoice': salesinvoice})
+
+#def exportLittleBig_Sales(request, invoice_id):
+#def exportLittleBig_Purchase (request, invoice_id):
+#def exportLittleFat_Sales(request, period_id):
+#	try:
+#		salesinvoice = SalesInvoice.objects.get(pk=invoice_id)
+#	except SalesInvoice.DoesNotExist:
+#		raise Http404
+#	LittleFat_Sales = SalesInvoice.objects.filter(period = period_id).order_by('date')        	
+#	export_init ( LittleFat_Sales, "1tablittlefat.csv" )
+
+
+def managePurchaseInvoices(request, invoice_id):
+#        try:
+#                purchaseinvoice = PurchaseInvoice.objects.get(pk=invoice_id)
+#        except PurchaseInvoice.DoesNotExist:
+#                raise Http404
+	purchaseinvoice = get_object_or_404(PurchaseInvoice, pk=invoice_id)
+        return render(request, 'Invoices/PurchaseInvoice.html', {'purchaseinvoice': purchaseinvoice})
+
+#@login_required
+def index(request):
+        #latest_salesinvoices_list = SalesInvoice.objects.filter(user=request.user).order_by('date')[:5]
+	if request.user.is_authenticated():
+	       	latest_salesinvoices_list = SalesInvoice.objects.filter(user=request.user).order_by('date')[:5]
+        	output = ','.join([p.number for p in latest_salesinvoices_list])
+
+		latest_purchaseinvoices_list = PurchaseInvoice.objects.filter(user=request.user).order_by('date')[:5]
+        	output = ','.join([p.number for p in latest_purchaseinvoices_list])
+
+		context = {'latest_salesinvoices_list': latest_salesinvoices_list, 
+				'latest_purchaseinvoices_list': latest_purchaseinvoices_list}
+     	#latest_purchaseinvoices_list = PurchaseInvoice.objects.order_by('date')[:5]
+        #output = ','.join([q.number for q in latest_purchaseinvoices_list])
+
+        #template = loader.get_template('Invoices/index.html')
+        #context = RequestContext(request, {
+        #                'latest_salesinvoices_list': latest_salesinvoices_list,
+	#		'latest_purchaseinvoices_list': latests_salesinvoices_list,
+        #                })
+        #/return HttpResponse(template.render(context))
+#        context = {'latest_salesinvoices_list': latest_salesinvoices_list}#, 
+		  # 'latest_purchaseinvoices_list': latest_purchaseinvoices_list}
+		return render(request, 'Invoices/index.html', context)
+	return render(request, 'Invoices/index.html', '')
+
+class SalesInvoicesView(generic.DetailView):
+        model = SalesInvoice
+        template_name = 'Invoices/SalesInvoice.html'
+class SalesInvoicesCreate(CreateView):
+	model = SalesInvoice
+	fields = ['number', 'date', 'client', 'value', 'percentInvoicedVAT',  'percentAssignedVAT']
+	date = forms.DateField(widget=extras.SelectDateWidget)
+	template_name = 'Invoices/SalesInvoiceCreate.html'
+class SalesInvoicesUpdate(UpdateView):
+        model = SalesInvoice
+        fields = ['number', 'date', 'client', 'value', 'percentInvoicedVAT',  'percentAssignedVAT']
+	template_name = 'Invoices/SalesInvoiceUpdate.html'
+	date = forms.DateField(widget=extras.SelectDateWidget)
+	def make_custom_datefield(f):
+        	formfield = f.formfield()
+        	if isinstance(f, models.DateField):
+                	formfield.widget.format = '%m/%d/%Y'
+                	formfield.widget.attrs.update({'class':'datePicker', 'readonly':'true'})
+        	return formfield
+	#template_name_suffix = '_update_form'
+class SalesInvoicesDelete(DeleteView):
+        model = SalesInvoice
+	template_name = 'Invoices/SalesInvoiceDelete.html'
+	success_url = reverse_lazy('SalesInvoices')
+
+
+class PurchaseInvoicesView(generic.DetailView):
+        model = PurchaseInvoice
+        template_name = 'Invoices/PurchaseInvoice.html'
+class PurchaseInvoicesCreate(CreateView):
+	model = PurchaseInvoice
+	fields = ['number', 'date', 'client', 'value', 'percentInvoicedVAT',  'percentAssignedVAT']
+	date = forms.DateField(widget=extras.SelectDateWidget)
+	template_name = 'Invoices/PurchaseInvoiceCreate.html'
+class PurchaseInvoicesUpdate(UpdateView):
+        model = PurchaseInvoice
+        fields = ['number', 'date', 'client', 'value', 'percentInvoicedVAT',  'percentAssignedVAT']
+	template_name = 'Invoices/PurchaseInvoiceUpdate.html'
+	date = forms.DateField(widget=extras.SelectDateWidget)
+	def make_custom_datefield(f):
+        	formfield = f.formfield()
+        	if isinstance(f, models.DateField):
+                	formfield.widget.format = '%m/%d/%Y'
+                	formfield.widget.attrs.update({'class':'datePicker', 'readonly':'true'})
+        	return formfield
+	#template_name_suffix = '_update_form'
+class PurchaseInvoicesDelete(DeleteView):
+        model = PurchaseInvoice
+	template_name = 'Invoices/PurchaseInvoiceDelete.html'
+	success_url = reverse_lazy('PurchaseInvoices')
 
 
 
-import ho.pisa as pisa
-import cStringIO as StringIO
-import cgi
-from django.template import RequestContext
-from django.template.loader import render_to_string
-from django.http import HttpResponse
 
-def render_pdf(html):
-	result = StringIO.StringIO()
-	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result)
-	if not pdf.err:
-		return HttpResponse(result.getvalue(), content_type='application/pdf')
-	return HttpResponse(_(u'Error al generar el PDF: %s') % cgi.escape(html))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
