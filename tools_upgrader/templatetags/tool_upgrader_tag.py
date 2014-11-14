@@ -75,16 +75,45 @@ def _folder(caption, value):
 		output = "<h5>%s</h5> %s" % ( caption, value.decode("utf-8") ) 
 	return output  
 
+
 class upgrader_tool(object):
-	def __init__(self, request, user):
-		self.user = user
+
+	def __init__(self, request):
 		self.request = request
+
+	def import_soci(self, soci):
+
+		try:
+			v7_num_coop = soci.coop_number
+			v7_user = soci.user
+		except:
+			return soci
+
+		from Welcome.models import iC_Membership
+		try:
+			v8_num_coop = iC_Membership.objects.filter(ic_CESnum=v7_num_coop)
+		except:
+			v8_num_coop = "[missing]"
+
+		from django.contrib.auth.models import User
+		v8_user = "[missing]"
+		users = User.objects.filter(username=v7_user.username)
+		if users.count()>0:
+			#v8_user = User.objects.filter(username=v7_user.username)
+			pass
+
+		return _folder(v7_num_coop, "From %s %s to %s %s" % (v7_num_coop, v7_user, v8_user, v8_num_coop) ) 
+
 	def process(self):
 		from Invoices.models import Soci
 		result_list = []
-		for soci in Invoices.Soci:
-			result_list.append( self.import_soci(soci) )
-		return result_list 
+		for soci in Soci.objects.all():
+			try:
+				result_list.append( self.import_soci(soci) )
+			except Exception as e:
+				return e
+
+		return mark_safe( _links_list_to_ul(result_list) )
 class statics_object(object):
 	def __init__(self, request, user):
 		self.user = user
@@ -333,8 +362,8 @@ class tool_upgrader_tag_node(template.Node):
 			# obj now is the object you passed the tag
 
 			menu_list = []
-			if obj.GET.has_key("execute"):
-				context['importer'] = upgrader_tool()
+			if obj.GET.has_key("execution"):
+				context['importer'] = upgrader_tool(obj)
 			else:
 				context['importer'] = None
 				menu_list.append( _link( "/admin/?execution=1", " ⊙:> [/admin/?execution=1] Comença migració")) 
