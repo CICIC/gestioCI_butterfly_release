@@ -85,22 +85,61 @@ class member_object(object):
 		self.user = user
 		self.request = request
 
+	def invoices_lines_links(self, links):
+		links.append( _folder( _section("Detalls factures"), _links_list_to_ul(links_lines + links_vats) ) )
+
+		links_lines = []
+		links_lines.append( _folder( u"Factures amb més d'una linea", str( SalesInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1).count() ) ) )
+
+		links_vats = []
+		from Invoices.models import SalesInvoice, PurchaseInvoice
+		invoices_per_vat_list = SalesInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1)
+
+		for invoice in invoices_per_vat_list:
+			list = SalesInvoice.objects.filter(
+					user=invoice.get("user"),
+					num=invoice.get("num"),
+					period=invoice.get("period")
+					).values("percentInvoicedVAT").annotate(
+						count=Count('percentInvoicedVAT')
+					)
+			#for vat in list:
+			#	from Invoices.models import VATS
+			#	links_vats.append( _folder( VATS.objects.get(id=int(vat.get("percentInvoicedVAT"))).value,vat.get("count")   ) )
+			
+		links_lines = []
+		links_lines.append( _folder( u"Factures amb més d'una linea", str( PurchaseInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1).count() ) ) )
+
+		links_vats = []
+		invoices_per_vat_list = PurchaseInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1)
+
+		for invoice in invoices_per_vat_list:
+			list = PurchaseInvoice.objects.filter(
+					user=invoice.get("user"),
+					num=invoice.get("num"),
+					period=invoice.get("period")
+					).values("percentExpencedVAT").annotate(
+						count=Count('percentExpencedVAT')
+					)
+			#links_vats.append( _folder( VATS.objects.get(id=int(vat.get("percentExpencedVAT"))).value, list ) )
+		return links
+
 	def group_invoices(self):
 		links = []
 
 		#Section 1
 		from Invoices.models import Soci
 		links_members = []
-		links_members.append( _folder( "Invoices_Soci.count()", str(Soci.objects.all().count() ) ) )
-
-		links_members.append( _section("Cooperativas madre") )
-		from Invoices.models import Coop
-		for coop in Coop.objects.all():
-			links_members.append( _folder( coop.name + " id: " + str(coop.id), "Invoices.models,coop") )
-
-		links_members.append( _section("Socios por cooperativa madre") )
-		for coop in Soci.objects.values("coop", "coop__name").annotate(count=Count('coop')):
-			links_members.append( coop.get("coop__name") + ".count() " + str( coop.get("count") ) )
+		links_members.append( _folder( 
+			"Total membres",
+			"Invoices_Soci.count(): " + str(Soci.objects.all().count() )
+			) )
+		#1.1
+		coops_per_member = Soci.objects.values("coop__name").annotate(count=Count("coop"))
+		links_coops = []
+		for coop in coops_per_member:
+			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
+		links_members.append( _folder( "Socios por cooperativa madre", _links_list_to_ul(links_coops) ) )
 
 		#Section 2
 		links_companies = []
@@ -113,10 +152,24 @@ class member_object(object):
 		from Invoices.models import SalesInvoice, PurchaseInvoice
 		links_invoices.append( _folder( "Invoices_SalesInvoice.count()", str(SalesInvoice.objects.all().count() ) ) )
 		links_invoices.append( _folder( "Invoices_PurchaseInvoice.count()", str(PurchaseInvoice.objects.all().count() ) ) )
+		#3.1
+		links_vats = []
+		from Invoices.models import VATS
+		links_invoices.append( _folder( "Invoices_VATS.count()", str(VATS.objects.all().count() ) ) )
 
+
+		#Section 4
+		links_coop = []
+		links_coop.append( _section("Cooperativas madre") )
+		from Invoices.models import Coop
+		for coop in Coop.objects.all():
+			links_coop.append( _folder( coop.name + " id: " + str(coop.id), "Invoices.models,coop") )
+
+		#Render
 		links.append( _folder( _section("Coopers"), _links_list_to_ul(links_members) ) )
 		links.append( _folder( _section("Companies"), _links_list_to_ul(links_companies) ) )
 		links.append( _folder( _section("Invoices"), _links_list_to_ul(links_invoices) ) )
+		links.append( _folder( _section("Mother Coops"), _links_list_to_ul(links_coop) ) )
 
 		return links
 
@@ -126,7 +179,16 @@ class member_object(object):
 		#Section 1
 		from Finances.models import cooper
 		links_members = []
-		links_members.append( _folder( "Finances_ic_self_employed.count()", str(cooper.objects.all().count() ) ) )
+		links_members.append( _folder( 
+			"Total membres",
+			"Finances_ic_self_employed.count(): " + str(cooper.objects.all().count() ) 
+			) )
+		#1.1
+		coops_per_member = cooper.objects.values("coop__name").annotate(count=Count("coop"))
+		links_coops = []
+		for coop in coops_per_member:
+			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
+		links_members.append( _folder( "Socios por cooperativa madre", _links_list_to_ul(links_coops) ) )
 
 		#Section 2
 		links_companies = []
@@ -141,6 +203,10 @@ class member_object(object):
 		from Finances.models import purchases_line, sales_line
 		links_invoices.append( _folder( "Finances_sales_line.count()", str(sales_line.objects.all().count() ) ) )
 		links_invoices.append( _folder( "Finances_purchases_line.count()", str(purchases_line.objects.all().count() ) ) )
+		#3.1
+		links_vats = []
+		from Finances.models import vats
+		links_invoices.append( _folder( "Invoices_VATS.count()", str(vats.objects.all().count() ) ) )
 
 		links.append( _folder( _section("Coopers"), _links_list_to_ul(links_members) ) )
 		links.append( _folder( _section("Companies"), _links_list_to_ul(links_companies) ) )
@@ -154,25 +220,37 @@ class member_object(object):
 		#Section 1
 		from Welcome.models import iC_Self_Employed
 		links_members = []
-		links_members.append( _folder( "Welcome_ic_self_employed.count()", str(iC_Self_Employed.objects.all().count() ) ) )
-
-		links_members.append( _section("Cooperativas madre") )
-		from General.models import Company
-		for coop in Company.objects.filter(name__in=["XIPU", "Interprofessionals"]):
-			links_members.append( _folder( coop.name + " id: " + str(coop.id), "General.models,Company") )
-
-		links_members.append( _section("Socios por cooperativa madre") )
-		from Welcome.models import iC_Self_Employed
+		links_members.append( _folder( 
+					"Total membres", 
+					"Welcome_ic_self_employed.count(): " + str(iC_Self_Employed.objects.all().count() ) 
+				) )
+		#1.1
+		links_coops = []
 		for coop in iC_Self_Employed.objects.values("ic_membership__ic_company", "ic_membership__ic_company__name").annotate(count=Count('ic_membership__ic_company')):
-			links_members.append( _folder( coop.get("ic_membership__ic_company__name"), coop.get("count") ) )
+			links_coops.append( str(coop.get("count")) + ": " + str(coop.get("ic_membership__ic_company__legal_name")) )
+		links_members.append( _folder( "Socios por cooperativa madre", _links_list_to_ul(links_coops) ) )
 
 		#Section 2
 		links_companies = []
 		from General.models import Company
 		links_companies.append( _folder( "General_company.count()", str(Company.objects.all().count() ) ) )
 
+		#Section 3
+		links_coop = []
+		links_coop.append( _section("Cooperativas madre") )
+		from General.models import Company
+		for coop in Company.objects.filter(name__in=["XIPU", "Interprofessionals"]):
+			links_coop.append( _folder( coop.name + " id: " + str(coop.id), "General.models,Company") )
+		#3.1
+		links_vats = []
+		from General.models import Record_Type
+		for type in Record_Type.objects.all():
+			links_vats.append( type.clas)
+		links.append( _folder( "VATS", _links_list_to_ul(links_vats) ) )
+	
 		links.append( _folder( _section("Coopers"), _links_list_to_ul(links_members) ) )
 		links.append( _folder( _section("Companies"), _links_list_to_ul(links_companies) ) )
+		links.append( _folder( _section("Mother Coops"), _links_list_to_ul(links_coop) ) )
 
 		return links
 
