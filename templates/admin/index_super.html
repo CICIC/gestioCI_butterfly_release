@@ -1,16 +1,23 @@
 {% load i18n admin_urls admin_static admin_modify %}
-	{% load	invoices_to_finances_tag  %}
-	{% human_tag request %}
-	{% if not member.is_member %}
-		<p>{% trans 'None available' %}</p>
-	{% else %}
+	{% load	tool_upgrader_tag  %}
+	{% upgrader_tag request %}
 		<h2>{% trans 'Eina de migració de Geecon to GestioCIv08' %}
-		{{ member.avatar }}</h2>
+		{{ statics.avatar }}</h2>
 		<br>
+		{{ menu }}
 		<hr>
 		<table width="100%" border=0>
 			<tr>
-				{% for group_list in member.groups_list %}
+				<td>
+					{% if importer %}
+						{{importer.process}}
+					{% endif %}
+				</td>
+			</tr>
+		</table>
+		<table width="100%" border=0>
+			<tr>
+				{% for group_list in statics.groups_list %}
 					<td>
 						<table width="300px" border=0>
 							<tr height=27>
@@ -24,6 +31,6 @@
 				{% endfor %}
 			</tr>
 		</table>
+
 		<br>
 		<hr>
-	{% endif %}
