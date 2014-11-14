@@ -501,10 +501,10 @@ class member_object(object):
 		links_invoices = []
 		from Invoices.models import SalesInvoice, PurchaseInvoice
 		links_invoices.append(_folder("Invoices_SalesInvoice.count()", str(SalesInvoice.objects.all().count())))
-		links_invoices.append(_folder("-", _links_list_to_ul(SalesInvoice.objects.values("period").annotate(count=Count("period"))) ))
+		links_invoices.append(_folder("-", _links_list_to_ul(SalesInvoice.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))) ))
 
 		links_invoices.append(_folder("Invoices_PurchaseInvoice.count()", str(PurchaseInvoice.objects.all().count())))
-		links_invoices.append(_folder("-", _links_list_to_ul(PurchaseInvoice.objects.values("period").annotate(count=Count("period"))) ))
+		links_invoices.append(_folder("-", _links_list_to_ul(PurchaseInvoice.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))) ))
 
 		#Section 4
 		links_coop = []
@@ -517,7 +517,7 @@ class member_object(object):
 		links_balances = []
 		from Invoices.models import PeriodClose
 		links_balances.append(_folder("Invoices_PeriodClose.count()", str(PeriodClose.objects.all().count())))
-		periods = PeriodClose.objects.values("period").annotate(count=Count('period'))
+		periods = PeriodClose.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))
 		links_balances.append(_folder( "-", _links_list_to_ul(periods) ))
 
 		#Render
@@ -536,7 +536,7 @@ class member_object(object):
 		links_members = []
 		links_members.append(_folder(
 			"Total membres",
-			"Finances_ic_self_employed.count(): " + str(cooper.objects.all().count() ) 
+			"Finances_cooper.count(): " + str(cooper.objects.all().count() ) 
 			) )
 		#1.1
 		coops_per_member = cooper.objects.values("coop__name").annotate(count=Count("coop"))
@@ -610,10 +610,16 @@ class member_object(object):
 
 		#Section 5
 		links_types = []
+		from Welcome.models import Fee
+		links_types.append( _folder( "Welcome.Fee", 
+							_links_list_to_ul( Fee.objects.values("record_type__name").annotate(count=Count("record_type__name") ) )
+							)
+						)
+
+		#Section 6
 		from Welcome.models import iC_Record_Type, iC_Record
 		for type in iC_Record_Type.objects.all():
 			links_types.append( type.name + " | " + type.clas + "| #" + str( iC_Record.objects.filter(record_type = type).count()))
-
 		links.append( _folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append( _folder(_section("Companies"), _links_list_to_ul(links_companies)))
 		links.append( _folder(_section("Mother Coops"), _links_list_to_ul(links_coop)))
