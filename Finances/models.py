@@ -44,7 +44,8 @@ class currencies(models.Model):
 		verbose_name_plural= _(u'H - Monedes')
 
 
-class vats(models.Model):
+class vats(iC_Record):
+	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
 	value=models.IntegerField(verbose_name=_(u'IVA'), unique=True, db_index=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
 	def __unicode__(self):
@@ -54,8 +55,8 @@ class vats(models.Model):
 		return self.id
 
 	class Meta:
-		verbose_name= _(u'F - IVA')
-		verbose_name_plural= _(u'F - IVAs')
+		verbose_name= _(u'IVA')
+		verbose_name_plural= _(u'IVAs')
 
 
 class tax(models.Model):
@@ -185,9 +186,11 @@ class invoice(iC_Record):
 	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
 	human = models.ForeignKey('General.Human', related_name='out_invoices', verbose_name=_(u"Ens pagador"))
 	project = TreeForeignKey('General.Project', related_name='in_invoices', verbose_name=_(u"Projecte receptor"))
+	ic_membership = models.ForeignKey('Welcome.iC_Membership', related_name='invoices_membership', blank=True, null=True, verbose_name=_(u"Registre de Soci"))
+
 	amount = models.DecimalField(default=0, max_digits=6, decimal_places=2, verbose_name=_(u"Import"))
 	unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
-	ic_membership = models.ForeignKey('Welcome.iC_Membership', related_name='invoices_membership', blank=True, null=True, verbose_name=_(u"Registre de Soci"))
+
 	lines = models.ForeignKey('Finances.invoice_line', related_name='rel_lines', blank=True, null=True, verbose_name=_(u"Línes"))
 	def _ic_membership(self):
 		#print 'ic_MEMBERSHIP'
@@ -491,9 +494,15 @@ vat_TYPES = (
 		(vat_type_OFICIAL, _(u'Pagament IVA oficial')),
 		(vat_type_ASSIGNED, _(u"Pagament IVA segons l'IVA assignat"))
 	)
-class period_close(models.Model):
+class period_close(iC_Record):
+	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
+	human = models.ForeignKey('General.Human', related_name='out_periodclose', verbose_name=_(u"Humà balance"))
+	project = TreeForeignKey('General.Project', related_name='in_periodclose', verbose_name=_(u"Projecte balance"))
+	ic_membership = models.ForeignKey('Welcome.iC_Membership', related_name='periodclose_membership', blank=True, null=True, verbose_name=_(u"Registre de Soci"))
+
 	period = models.ForeignKey(period, null=True, blank=True, verbose_name=_(u'Trimestre'))
 	cooper = models.ForeignKey(cooper, null=True, blank=True, verbose_name=_(u"nº COOP"))
+
 	closed = models.BooleanField (verbose_name=_("closed"), help_text=_("closed_help_text"), default=False)
 	system_closed = models.BooleanField (verbose_name=_("admin closed"), help_text=_("closed by bot after expiring time"), default=False)
 	#sales
@@ -532,6 +541,7 @@ class period_close(models.Model):
 	assigned_vat_total.short_description = _(u'IVA Assignat - Despeses (€)')
 	#tax
 	period_tax = models.DecimalField(verbose_name=_(u"Quota"), decimal_places=2, help_text=_(u'Càlcul Quota Trimestral (segons taula quotes)'), max_digits=10, blank=True)
+	#rel_fees = models.ManyToManyField('Welcome.Fee', related_name='periodclose_selfemployed', blank=True, null=True,verbose_name=_(u"Quotes trimestrals") )
 	advanced_tax = models.DecimalField(verbose_name=_(u"Quota avançada"), decimal_places=2, max_digits=10, default=0, blank=True)
 	def total_tax(self):
 		return self.period_tax - self.advanced_tax
