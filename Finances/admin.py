@@ -225,7 +225,7 @@ from django.contrib import admin
 
 from Finances.bots import *
 
-admin.site.register(vats)
+admin.site.register(iC_Duty)
 admin.site.register(currencies)
 
 class coop_admin(ModelAdmin):

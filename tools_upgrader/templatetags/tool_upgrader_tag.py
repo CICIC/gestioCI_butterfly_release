@@ -124,7 +124,6 @@ class upgrader_tool(object):
 		for period in period.objects.all():
 			#... is this entity migrated?
 			checked = iC_Period.objects.filter(first_day=period.first_day).count()>0
-			from Finances.bots import bot_object
 			#... if need migration, migrate
 			if not checked:
 				#... create new object
@@ -165,7 +164,6 @@ class upgrader_tool(object):
 		for tax in periodTaxes.objects.all():
 			#... is this entity migrated?
 			checked = iC_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
-			from Finances.bots import bot_object
 			#... if need migration, migrate
 			if not checked:
 
@@ -186,6 +184,46 @@ class upgrader_tool(object):
 					p.save()
 			#...refresh existence flag
 			checked = checked or iC_Tax.objects.filter(min_base=tax.min_base, max_base=tax.min_base).count()>0
+		#...
+		return ico_yes if checked else ico_no
+	def check_duties(self):
+		#Main entity type
+		try:
+			duty_type = iC_Record_Type.objects.get(clas="iC_Duty")
+		except:
+			#Create if initializationg
+			duty_type = iC_Record_Type(clas="iC_Duty", 
+					name="Impuesto oficial del Estado", 
+					description=_(u'Impuestos oficiales como el I.V.A. o el I.A.E.')
+				)
+			if _get_GET("commit", self.request):
+				duty_type.save()
+
+		#Entities of this type
+		from Finances.models import iC_Duty
+		from Invoices.models import VATS
+		#... loop to process each entity
+		checked = False
+		for duty in VATS.objects.all():
+			#... is this entity migrated?
+			checked = iC_Duty.objects.filter(value=duty.value).count()>0
+			#... if need migration, migrate
+			if not checked:
+				#... create new object
+				p = iC_Duty()
+				#... map fields
+				for field in duty._meta.get_all_field_names():
+					try:
+						value = getattr(duty,field)
+						setattr(p, field, value) 
+					except:
+						pass
+				#...save object
+				p.record_type = duty_type
+				if _get_GET("commit", self.request):
+					p.save()
+			#...refresh existence flag
+			checked = checked or iC_Duty.objects.filter(value=duty.value).count()>0
 		#...
 		return ico_yes if checked else ico_no
 
@@ -365,9 +403,13 @@ class statics_object(object):
 		content = _links_list_to_ul(l)
 		links_taxes.append(_folder(caption, content))
 		#3.1
+		links_duties =[]
 		from Invoices.models import VATS
-		links_vats = []
-		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(VATS.objects.all().values("value"))))
+		caption = _prompt_ico(upgrader_tool(self.request).check_duties())
+		caption += " Duties: " + str(VATS.objects.all().count())
+		content = _links_list_to_ul(VATS.objects.all())
+		links_duties.append(_folder(caption, content))
+
 		#3.2
 		links_invoices = []
 		from Invoices.models import SalesInvoice, PurchaseInvoice
@@ -394,7 +436,7 @@ class statics_object(object):
 		#Render
 		links.append( _folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append( _folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_periods + links_taxes + links_vats + links_invoices + links_balances )) )
+		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_periods + links_taxes + links_duties + links_invoices + links_balances )) )
 		links.append( _folder(_section("Mother Coops"), _links_list_to_ul(links_coop)))
 
 		return links
@@ -430,9 +472,9 @@ class statics_object(object):
 		total_str = "Tax: (total %s)" % (iC_Tax.objects.all().count())
 		links_section3.append(_folder(_prompt + total_str, _links_list_to_ul(iC_Tax.objects.all())))
 		#3.1
-		from Finances.models import vats
+		from Finances.models import iC_Duty
 		links_vats = []
-		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(vats.objects.all().values("value"))))
+		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(iC_Duty.objects.all().values("value"))))
 		#3.2
 		links_invoices = []
 		from Finances.models import purchases_invoice, sales_invoice

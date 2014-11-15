@@ -44,6 +44,21 @@ class currencies(models.Model):
 		verbose_name_plural= _(u'H - Monedes')
 
 
+class iC_Duty(iC_Record):
+	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
+	value=models.IntegerField(verbose_name=_(u'IVA'), unique=True, db_index=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
+
+	def __unicode__(self):
+		return unicode(self.value)
+
+	def __getitem__(self, value):
+		return self.id
+
+	class Meta:
+		verbose_name= _(u'IVA')
+		verbose_name_plural= _(u'IVAs')
+
+
 class vats(iC_Record):
 	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
 	value=models.IntegerField(verbose_name=_(u'IVA'), unique=True, db_index=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
@@ -390,7 +405,7 @@ class invoice_line(iC_Record):
 
 class sales_line (invoice_line):
 	line = models.OneToOneField('Finances.invoice_line', primary_key=True, parent_link=True)
-	percent_invoiced_vat=models.ForeignKey(vats, verbose_name=_(u"IVA Facturat (%)"), help_text=_(u"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"))
+	percent_invoiced_vat=models.ForeignKey(iC_Duty, verbose_name=_(u"IVA Facturat (%)"), help_text=_(u"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"))
 
 	def percent_assigned_vat(self):
 		from Finances.bots import bot_assigned_vat
@@ -424,7 +439,7 @@ class sales_line (invoice_line):
 
 class purchases_line (invoice_line):
 	line = models.OneToOneField('Finances.invoice_line', primary_key=True, parent_link=True)
-	percent_vat=models.ForeignKey(vats, verbose_name=_(u'IVA (%)'), help_text=_(u"El % d'IVA que s'aplica en la factura."))
+	percent_vat=models.ForeignKey(iC_Duty, verbose_name=_(u'IVA (%)'), help_text=_(u"El % d'IVA que s'aplica en la factura."))
 	percent_irpf=models.IntegerField(verbose_name=_(u'IRPF (%)'), help_text=_(u"El % de retenció de IRPF (Només en lloguers i factures de persones físiques)."), default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
 	def vat(self):
