@@ -77,7 +77,7 @@ def _folder(caption, value):
 	except:
 		output = "<h5>%s</h5> %s" % ( caption, value.decode("utf-8") ) 
 	return output  
-def _avatar(width="15", clas="Anon_user"):
+def _avatar(width="15", clas="Anon"):
 	return mark_safe("<img src='/static/%s_user.png' width='%spx'>" % (clas,width))
 
 class upgrader_tool(object):
@@ -112,12 +112,26 @@ class upgrader_tool(object):
 		for k,v in self.counters.iteritems():
 			list.append(_folder(k,v))
 		return _folder("Counters", mark_safe(_links_list_to_ul(list)))
+
+
 	def sync_soci_cooper(self, soci):
 		self.counter_plus("processed")
+		recs_list = []
 		try:
 			v8 = iC_Membership.objects.get(ic_CESnum=soci.__unicode__())
 			self.counter_plus("iC_Membership.ic_CESnum || Invoices.soci.__unicode__")
-			folder_title = _avatar("20", v8.record_type.clas.lower() ) + v8._self_link()
+			if v8._is_selfemployed():
+				recs = v8.selfemployed_recs.all()
+				for rec in recs:
+					recs_list.append( _link( rec._get_next(), rec.__unicode__()) )
+					avatar = rec.record_type.clas.lower()
+					self.counter_plus(rec.record_type.clas.lower())
+			else:
+				avatar = v8.record_type.clas.lower()
+				self.counter_plus(v8.record_type.clas.lower())
+
+			recs_list.append(_render_person(v8.human))
+			folder_title = _avatar("20", avatar) + v8._self_link()
 		except:
 			v8 = folder_title = None
 		try:
@@ -126,16 +140,12 @@ class upgrader_tool(object):
 		except:
 			v7 = None
 
-		user_title = v7.username if v7 else "[user not in v7_auth_user]"
-		try:
-			welcome_title = v8._ic_selfemployed_list_extended(True) if v8 else "[missing]"
-		except:
-			try:
-				welcome_title = v8._ic_selfemployed_list(True) if v8 else "[missing]"
-			except:
-				welcome_title = "[Missing]"
+		if not v8:
+			self.counter_plus("[Missing]")
 
-		folder_content = " INVOICES: %s <b>USER: -- %s</b> WELCOME: -- %s " % (soci.__unicode__(), user_title, welcome_title)
+		user_title = v7.username if v7 else "[user not in v7_auth_user]"
+
+		folder_content = " INVOICES: %s <b>USER: -- %s</b> WELCOME: -- %s " % (soci.__unicode__(), user_title,  _links_list_to_ul(recs_list) )
 		return _folder( folder_title, folder_content ) 
 
 
@@ -143,7 +153,7 @@ class upgrader_tool(object):
 		result_list = []
 
 		if "limit_loop_query" in self.request.GET:
-			loop_query = Soci.objects.all()[:self.request.GET.get("limit_loop_query")]
+			loop_query = Soci.objects.all().order_by("coop_number")[:self.request.GET.get("limit_loop_query")]
 		else:
 			loop_query = Soci.objects.all()
 
@@ -161,7 +171,7 @@ class upgrader_tool(object):
 		return mark_safe(counters+list)
 
 class statics_object(object):
-	def __init__(self, request, user):
+	def __init__(self, request	, user):
 		self.user = user
 		self.request = request
 
@@ -384,7 +394,7 @@ class statics_object(object):
 		return None
 
 	def avatar(self ):
-		return _avatar(width="15", clas="Anon_user") 
+		return _avatar(width="15", clas="Anon") 
 	def groups_list(self):
 		output_list = []
 		groups_list = ["Invoices", "Finances", "Welcome"]
@@ -415,6 +425,7 @@ class tool_upgrader_tag_node(template.Node):
 			context['menu'] = mark_safe( _folder( "[tool_upgrader] Menu", _links_list_to_ul(menu_list ))) 
 			context['statics'] = statics
 			return ''
+
 @register.tag
 def upgrader_tag(parser, token):
 	# token is the string extracted from the template, e.g. "box_user_loader my_object"
