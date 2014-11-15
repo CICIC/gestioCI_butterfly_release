@@ -17,13 +17,19 @@ register = template.Library()
 from django.utils.safestring import mark_safe
 from django.core import urlresolvers
 from django.db.models.loading import get_model
-
+from Welcome.models import ico_yes, ico_no
+from Welcome.models import ico_yes, ico_no
 from Welcome.models import *
 from General.models import Human
 from Invoices.models import Soci
 from Invoices.models import v7_auth_user
 from django.db.models import Count
-
+_prompt = " ⊙:> ".decode("utf-8")
+def _prompt_ico(ico=None):
+	output = _prompt
+	if ico:
+		output = "[%s] %s " % (ico, _prompt)
+	return output
 def _links_list_to_ul(links):
 	output = "<ul>"
 	for link in links:
@@ -73,34 +79,42 @@ def _render_person(rel, admin_path="/cooper/"):
 def _folder(caption, value):
 	output = ""
 	try:
-		output = "<h5>%s</h5> %s" % ( caption, value ) 
+		output = "<h5>%s</h5> %s" % ( caption, str(value) ) 
 	except:
-		output = "<h5>%s</h5> %s" % ( caption, value.decode("utf-8") ) 
+		try:
+			output = "<h5>%s</h5> %s" % ( caption, value.decode("utf-8") ) 
+		except:
+			output = "<h5>%s</h5> %s" % ( caption, value ) 
 	return output  
 def _avatar(width="15", clas="Anon"):
 	return mark_safe("<img src='/static/%s_user.png' width='%spx'>" % (clas,width))
+def _get_GET(key, request):
+	if key in request.GET:
+		return request.GET.get(key)
+	else:
+		return False
 
 class upgrader_tool(object):
+	def check_period(self, period):
+		return ico_no
+
 	def __init__(self, request):
 		self.request = request
 		self.counters = {}
 
 		self.menus = []
 		self.menus_add()
-	def _get_GET(self, key):
-		if key in self.request.GET:
-			return self.request.GET.get(key)
-		else:
-			return False
 
 	def menus_add(self, menu=None):
 		if menu:
 			self.menus.append( menu )
 		else:
-			self.menus.append( _link( "/admin/?execution=1", " ⊙:> execution: [boolean]"))
-			self.menus.append( _link( "/admin/?execution=1&counters=1", " ⊙:> counters: [boolean]"))
-			self.menus.append( _link( "/admin/?execution=1&list=1", " ⊙:> list: [boolean]"))
-			self.menus.append( _link( "/admin/?execution=1&counters=1&list=1&limit_loop_query=10", " ⊙:> limit_loop_query: [objects.all() queryset slice]"))
+			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1", _prompt + "statics") + ": [boolean] => Shows full system upgrade statics info. One column for Invoices(gestio.cooperatica.cat); One column for Finances and one for Welcome(both butterfly APP's)")
+			self.menus.append( _link( "/admin/?statics=1&execution=1", _prompt + "execution") + ": [boolean] => Will execute the process. Filter query if it lasts too much.")
+			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1", _prompt + "counters") + ": [boolean] => Will show or not counters section,")
+			self.menus.append( _link( "/admin/?statics=1&execution=1&list=1", _prompt + "list" ) + ": [boolean] => Will show or not list displays." )
+	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
+	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10&query_offset=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
 
 	def counter_plus(self, counter_name):
 		if counter_name in self.counters:
@@ -110,9 +124,12 @@ class upgrader_tool(object):
 	def counter_render(self):
 		list = []
 		for k,v in self.counters.iteritems():
-			list.append(_folder(k,v))
+			try:
+				caption = _prompt + str(k)
+			except:
+				caption  = k
+			list.append(_folder( caption,v))
 		return _folder("Counters", mark_safe(_links_list_to_ul(list)))
-
 
 	def sync_soci_cooper(self, soci):
 		self.counter_plus("processed")
@@ -151,27 +168,28 @@ class upgrader_tool(object):
 
 	def execute(self):
 		result_list = []
-
-		if "limit_loop_query" in self.request.GET:
-			loop_query = Soci.objects.all().order_by("coop_number")[:self.request.GET.get("limit_loop_query")]
-		else:
-			loop_query = Soci.objects.all()
+		records = self.request.GET.get("query_count", Soci.objects.all().count())
+		offset = self.request.GET.get("query_offset", 0)
+		loop_query = Soci.objects.all().order_by("coop_number")[offset:records]
 
 		for soci in loop_query:
 			try:
 				result_list.append(self.sync_soci_cooper(soci))
 			except Exception as e:
-				return e.message
-		return _folder( "List", _links_list_to_ul(result_list))
+				return "Error al procesar" #e.message
+		g = self.request.GET
+		caption = "%s: (registros desde %s a %s)" % ("List", g.get("query_offset", "primero"), g.get("query_count", "último") )
+
+		return _folder( caption, _links_list_to_ul(result_list))
 
 	def process(self):
-		execution = self.execute() if self._get_GET("execution") else ""
-		counters = self.counter_render() if self._get_GET("counters") else ""
-		list = execution if self._get_GET("list") else ""
+		execution = self.execute() if _get_GET("execution", self.request) else ""
+		counters = self.counter_render() if _get_GET("counters", self.request) else ""
+		list = execution if _get_GET("list", self.request) else ""
 		return mark_safe(counters+list)
 
 class statics_object(object):
-	def __init__(self, request	, user):
+	def __init__(self, request, user):
 		self.user = user
 		self.request = request
 
@@ -179,7 +197,7 @@ class statics_object(object):
 		links.append( _folder(_section("Detalls factures"), _links_list_to_ul(links_lines + links_vats)))
 
 		links_lines = []
-		links_lines.append(_folder(u"Factures amb més d'una linea", str( SalesInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1).count())))
+		links_lines.append(_folder(_prompt +u"Factures amb més d'una linea", str( SalesInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1).count())))
 
 		links_vats = []
 		from Invoices.models import SalesInvoice, PurchaseInvoice
@@ -198,7 +216,7 @@ class statics_object(object):
 			#	links_vats.append(_folder(VATS.objects.get(id=int(vat.get("percentInvoicedVAT"))).value,vat.get("count")  ))
 			
 		links_lines = []
-		links_lines.append(_folder(u"Factures amb més d'una linea", str( PurchaseInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1).count())))
+		links_lines.append(_folder(_prompt +u"Factures amb més d'una linea", str( PurchaseInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1).count())))
 
 		links_vats = []
 		invoices_per_vat_list = PurchaseInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1)
@@ -219,7 +237,7 @@ class statics_object(object):
 		#Section 1
 		from Invoices.models import Soci
 		links_members = []
-		links_members.append(_folder(
+		links_members.append(_folder(_prompt +
 			"Total membres",
 			"Invoices_Soci.count(): " + str(Soci.objects.all().count() )
 			) )
@@ -228,50 +246,56 @@ class statics_object(object):
 		links_coops = []
 		for coop in coops_per_member:
 			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
-		links_members.append(_folder("Socios por cooperativa madre", _links_list_to_ul(links_coops)))
+		links_members.append(_folder(_prompt +"Socios por cooperativa madre", _links_list_to_ul(links_coops)))
 
 		#Section 2
 		links_companies = []
 		from Invoices.models import Client, Provider
-		links_companies.append(_folder("Invoices_Client.count()", str(Client.objects.all().count())))
-		links_companies.append(_folder("Invoices_Provider.count()", str(Provider.objects.all().count())))
+		links_companies.append(_folder(_prompt +"Invoices_Client.count()", str(Client.objects.all().count())))
+		links_companies.append(_folder(_prompt +"Invoices_Provider.count()", str(Provider.objects.all().count())))
 
 		#Section 3
+		links_periods =[]
+		from Invoices.models import period
+		caption = _prompt_ico(upgrader_tool(self.request).check_period(period))
+		caption += " periods: " + str(period.objects.all().count())
+		content = _links_list_to_ul(period.objects.all())
+		links_periods.append(_folder(caption, content))
 		#3.0
 		links_taxs =[]
 		from Invoices.models import periodTaxes
-		links_taxs.append(_folder( "Tax", str(periodTaxes.objects.all().count()) ))
+		links_taxs.append(_folder(_prompt + "Tax", str(periodTaxes.objects.all().count()) ))
 		#3.1
 		from Invoices.models import VATS
 		links_vats = []
-		links_vats.append(_folder("Invoices_VATS", _links_list_to_ul(VATS.objects.all().values("value"))))
+		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(VATS.objects.all().values("value"))))
 		#3.2
 		links_invoices = []
 		from Invoices.models import SalesInvoice, PurchaseInvoice
-		links_invoices.append(_folder("Invoices_SalesInvoice.count()", str(SalesInvoice.objects.all().count())))
-		links_invoices.append(_folder("-", _links_list_to_ul(SalesInvoice.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))) ))
+		links_invoices.append(_folder(_prompt +"Invoices_SalesInvoice.count()", str(SalesInvoice.objects.all().count())))
+		links_invoices.append(_folder(_prompt +"-", _links_list_to_ul(SalesInvoice.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))) ))
 
-		links_invoices.append(_folder("Invoices_PurchaseInvoice.count()", str(PurchaseInvoice.objects.all().count())))
-		links_invoices.append(_folder("-", _links_list_to_ul(PurchaseInvoice.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))) ))
+		links_invoices.append(_folder(_prompt +"Invoices_PurchaseInvoice.count()", str(PurchaseInvoice.objects.all().count())))
+		links_invoices.append(_folder(_prompt +"-", _links_list_to_ul(PurchaseInvoice.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))) ))
 
 		#Section 4
 		links_coop = []
 		links_coop.append(_section("Cooperativas madre") )
 		from Invoices.models import Coop
 		for coop in Coop.objects.all():
-			links_coop.append(_folder(coop.name + " id: " + str(coop.id), "Invoices.models,coop") )
+			links_coop.append(_folder(_prompt +coop.name + " id: " + str(coop.id), "Invoices.models,coop") )
 
 		#Section 5
 		links_balances = []
 		from Invoices.models import PeriodClose
-		links_balances.append(_folder("Invoices_PeriodClose.count()", str(PeriodClose.objects.all().count())))
+		links_balances.append(_folder(_prompt +"Invoices_PeriodClose.count()", str(PeriodClose.objects.all().count())))
 		periods = PeriodClose.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))
-		links_balances.append(_folder( "-", _links_list_to_ul(periods) ))
+		links_balances.append(_folder(_prompt + "-", _links_list_to_ul(periods) ))
 
 		#Render
 		links.append( _folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append( _folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_taxs + links_vats + links_invoices + links_balances )) )
+		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_periods + links_taxs + links_vats + links_invoices + links_balances )) )
 		links.append( _folder(_section("Mother Coops"), _links_list_to_ul(links_coop)))
 
 		return links
@@ -281,7 +305,7 @@ class statics_object(object):
 		#Section 1
 		from Finances.models import cooper
 		links_members = []
-		links_members.append(_folder(
+		links_members.append(_folder(_prompt +
 			"Total membres",
 			"Finances_cooper.count(): " + str(cooper.objects.all().count() ) 
 			) )
@@ -290,36 +314,35 @@ class statics_object(object):
 		links_coops = []
 		for coop in coops_per_member:
 			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
-		links_members.append(_folder("Socios por cooperativa madre", _links_list_to_ul(links_coops)))
+		links_members.append(_folder(_prompt +"Socios por cooperativa madre", _links_list_to_ul(links_coops)))
 
 		#Section 2
 		links_companies = []
 		from Finances.models import company
-		links_companies.append(_folder("Finances_company.c	ount()", str(company.objects.all().count())))
-
+		links_companies.append(_folder(_prompt +"Finances_company.count()", str(company.objects.all().count())))
 		#Section 3
 		#3.0
 		from Finances.models import tax
 		links_taxs = []
-		links_taxs.append(_folder( "Tax", str(tax.objects.all().count()) ))
+		links_taxs.append(_folder(_prompt + "Tax", str(tax.objects.all().count()) ))
 		#3.1
 		from Finances.models import vats
 		links_vats = []
-		links_vats.append(_folder("Invoices_VATS", _links_list_to_ul(vats.objects.all().values("value"))))
+		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(vats.objects.all().values("value"))))
 		#3.2
 		links_invoices = []
 		from Finances.models import purchases_invoice, sales_invoice
-		links_invoices.append(_folder("Finances_sales_invoice.count()", str(sales_invoice.objects.all().count())))
-		links_invoices.append(_folder("Finances_purchases_invoice.count()", str(purchases_invoice.objects.all().count())))
+		links_invoices.append(_folder(_prompt +"Finances_sales_invoice.count()", str(sales_invoice.objects.all().count())))
+		links_invoices.append(_folder(_prompt +"Finances_purchases_invoice.count()", str(purchases_invoice.objects.all().count())))
 		from Finances.models import purchases_line, sales_line
-		links_invoices.append(_folder("Finances_sales_line.count()", str(sales_line.objects.all().count())))
-		links_invoices.append(_folder("Finances_purchases_line.count()", str(purchases_line.objects.all().count())))
+		links_invoices.append(_folder(_prompt +"Finances_sales_line.count()", str(sales_line.objects.all().count())))
+		links_invoices.append(_folder(_prompt +"Finances_purchases_line.count()", str(purchases_line.objects.all().count())))
 
 		#Section 5
 		links_balances = []
 		from Finances.models import period_close
 		periods = period_close.objects.values("period").annotate(count=Count('period'))
-		links_balances.append(_folder( "Periodes", _links_list_to_ul(periods) ))
+		links_balances.append(_folder(_prompt + "Periodes", _links_list_to_ul(periods) ))
 
 		links.append(_folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append(_folder(_section("Companies"), _links_list_to_ul(links_companies)))
@@ -357,7 +380,7 @@ class statics_object(object):
 		#Section 5
 		links_types = []
 		from Welcome.models import Fee
-		links_types.append( _folder( "Welcome.Fee", 
+		links_types.append( _folder(_prompt + "Welcome.Fee", 
 							_links_list_to_ul( Fee.objects.values("record_type__name").annotate(count=Count("record_type__name") ) )
 							)
 						)
@@ -396,6 +419,8 @@ class statics_object(object):
 	def avatar(self ):
 		return _avatar(width="15", clas="Anon") 
 	def groups_list(self):
+		if not _get_GET("statics", self.request):
+			return ""
 		output_list = []
 		groups_list = ["Invoices", "Finances", "Welcome"]
 
@@ -418,11 +443,11 @@ class tool_upgrader_tag_node(template.Node):
 
 			menu_list = []
 			context['importer'] = upgrader_tool(obj)
-			menu_list.append(_links_list_to_ul(upgrader_tool(obj).menus))
+			menu_list.append(_folder("/admin/?", _links_list_to_ul(upgrader_tool(obj).menus)))
 
 			statics = statics_object(obj, obj.user)
 
-			context['menu'] = mark_safe( _folder( "[tool_upgrader] Menu", _links_list_to_ul(menu_list ))) 
+			context['menu'] = mark_safe( _folder( "[tool_upgrader] Menu", _links_list_to_ul(menu_list))) 
 			context['statics'] = statics
 			return ''
 
