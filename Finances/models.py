@@ -144,6 +144,23 @@ class cooper_proxy_balance(cooper):
 		verbose_name_plural= _(u'L - Balanç projectes')
 		proxy = True
 
+class iC_Period(iC_Record):
+	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
+	label=models.CharField(verbose_name=_(u"Títol"), max_length=200)
+	first_day=models.DateField(verbose_name=_(u"Inici"), help_text=_(u"Primer dia del període"))
+	date_open=models.DateField(verbose_name=_(u"Obert"))
+	date_close=models.DateField(verbose_name=_(u"Tancat"))
+	exported=models.BooleanField (verbose_name=_("Archivat"), help_text=_(u"Administració ha exportat els registres CSV del període."), default=False)
+
+	def __unicode__(self):
+		return ('%s %s') % (self.first_day.year, self.label)
+
+	def __getitem__(self, value):
+		return self.id
+
+	class Meta:
+		verbose_name= _(u"G - Trimestres")
+		verbose_name_plural= _(u"G - Trimestres")
 
 class period(models.Model):
 	label=models.CharField(verbose_name=_(u"Títol"), max_length=200)

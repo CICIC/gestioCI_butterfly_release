@@ -59,7 +59,7 @@ class bot_cooper( object ):
 
 from Finances.models import period
 class bot_period( object ):
-	def __init__(self, user):
+	def __init__(self, user=None):
 		self.user = user
 	def period(self, notify=True, request=None):
 		qs_opened_periods = self.get_opened_periods ( self.user )
@@ -75,30 +75,21 @@ class bot_period( object ):
 				if not request.user.is_superuser:
 					messages.error(request, Error)
 		return None
+
 	@staticmethod
 	def get_opened_periods(user):
-		#Get current user cooper record
-		from Finances.models import cooper, period
-
-		nExtraDays = 0
-		if user.is_superuser:
-			obj_cooper = None
-		else:
-			obj_cooper = cooper.objects.filter(user=user)
-			if obj_cooper.count()>0:
-				nExtraDays = obj_cooper[0].extra_days if obj_cooper else 0
+		#Get extradays that this user has to close
+		from Finances.models import cooper, iC_Period
+		try:
+			nExtraDays = 0 if user.is_superuser else cooper.objects.get(user=user).extra_days 
+		except:
+			nExtraDays = 0
 
 		#Return queryset
-		from Finances.models import period
-		qs_Period =  period.objects.filter( 
+		return 	period.objects.filter( 
 				first_day__lte=datetime.now(), 
 				date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
 				)
-		if qs_Period.count() > 1:
-			return period.objects.filter(pk=qs_Period[0].pk) 
-		else:
-			return qs_Period
-		return period.objects.filter(pk=-1) 
 
 class bot_assigned_vat(object):
 	def __init__(self, current_cooper, percent_invoiced_vat):
@@ -263,7 +254,6 @@ from datetime import date
 class bot_period_payment(object):
 	def __init__(self, period_close):
 		self.period_close = period_close
-
 	def create_sales_movements_for_period(self):
 		current_payments = period_payment.objects.filter( period_close = self.period_close )
 		for payment in current_payments:
@@ -284,7 +274,6 @@ class bot_balance(object):
 	def __init__(self, period, cooper):
 		self.period = period
 		self.cooper = cooper
-
 	def total(self, currency = None ):
 		sales_invoice_total = 0
 		purchases_invoice_total = 0

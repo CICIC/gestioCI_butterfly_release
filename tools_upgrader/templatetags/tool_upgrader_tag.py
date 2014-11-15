@@ -24,6 +24,13 @@ from General.models import Human
 from Invoices.models import Soci
 from Invoices.models import v7_auth_user
 from django.db.models import Count
+
+def _error(str):
+	try:
+		return "<font style='color:red'>%s</font>" % (__(str).encode("utf-8"))
+	except:
+		return "<font style='color:red'>%s</font>" % (str)
+
 _prompt = " ⊙:> ".decode("utf-8")
 def _prompt_ico(ico=None):
 	output = _prompt
@@ -95,8 +102,13 @@ def _get_GET(key, request):
 		return False
 
 class upgrader_tool(object):
-	def check_period(self, period):
-		return ico_no
+	def check_periods(self):
+		from Finances.models import iC_Period
+		from Invoices.models import period
+		checked = False
+		for period in period.objects.all():
+			checked = checked and period in iC_Period.objects.all()
+		return ico_yes if checked else ico_no
 
 	def __init__(self, request):
 		self.request = request
@@ -164,7 +176,6 @@ class upgrader_tool(object):
 
 		folder_content = " INVOICES: %s <b>USER: -- %s</b> WELCOME: -- %s " % (soci.__unicode__(), user_title,  _links_list_to_ul(recs_list) )
 		return _folder( folder_title, folder_content ) 
-
 
 	def execute(self):
 		result_list = []
@@ -255,9 +266,10 @@ class statics_object(object):
 		links_companies.append(_folder(_prompt +"Invoices_Provider.count()", str(Provider.objects.all().count())))
 
 		#Section 3
+		#3.-1
 		links_periods =[]
 		from Invoices.models import period
-		caption = _prompt_ico(upgrader_tool(self.request).check_period(period))
+		caption = _prompt_ico(upgrader_tool(self.request).check_periods())
 		caption += " periods: " + str(period.objects.all().count())
 		content = _links_list_to_ul(period.objects.all())
 		links_periods.append(_folder(caption, content))
@@ -321,6 +333,10 @@ class statics_object(object):
 		from Finances.models import company
 		links_companies.append(_folder(_prompt +"Finances_company.count()", str(company.objects.all().count())))
 		#Section 3
+		links_section3 = []
+		#3.-1
+		from Welcome.templatetags import cooper_folder_tag
+		links_section3.append(cooper_folder_tag._invoicing_periods_folder(self))
 		#3.0
 		from Finances.models import tax
 		links_taxs = []
@@ -346,7 +362,7 @@ class statics_object(object):
 
 		links.append(_folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append(_folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append(_folder(_section("Invoices"), _links_list_to_ul(links_taxs + links_vats + links_invoices + links_balances)))
+		links.append(_folder(_section("Invoices"), _links_list_to_ul(links_section3 + links_taxs + links_vats + links_invoices + links_balances)))
 
 		return links
 	def group_welcome(self):
@@ -371,6 +387,8 @@ class statics_object(object):
 		links_companies.append(_folder("General_company.count()", str(Company.objects.all().count())))
 
 		#Section 3
+
+		#Section 4
 		links_coop = []
 		links_coop.append(_section("Cooperativas madre") )
 		from General.models import Company

@@ -46,6 +46,29 @@ def _member_folder(object):
 	value = object.print_certificate()
 	return "<h5>%s</h5> %s" % ( caption, value ) 
 
+def _invoicing_periods_folder(object):
+	from Welcome.admin import ico_no
+	from Finances.models import iC_Period
+	from Finances.bots import bot_period
+	from tools_upgrader.templatetags.tool_upgrader_tag import _error, _prompt_ico, _prompt
+
+	folder_list  = []
+
+
+	str = _(u"Periodes:")
+	caption = _prompt + str.encode("utf-8")
+	total = __(u"(total) %s") % (iC_Period.objects.all().count())
+	content = _prompt + total
+	folder_list.append(_folder( caption,content))
+
+	str = _(u"Periodes en curs:")
+	caption = _prompt + str.encode("utf-8")
+	opened_list = bot_period().get_opened_periods(object.request.user)
+	content = _links_list_to_ul(opened_list) if opened_list.count() > 0 else ( _prompt_ico(ico_no)+ _error(_(u"[Falta periode en curs]")))
+	folder_list.append(_folder( caption,content))
+
+	return _folder("Invoicing", _links_list_to_ul(folder_list) )
+
 def _fees_folder(object):
 	caption = _(u"Quotes").encode("utf-8")
 	value = object._rel_fees("/cooper/")
