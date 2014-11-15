@@ -17,8 +17,11 @@ register = template.Library()
 from django.utils.safestring import mark_safe
 from django.core import urlresolvers
 from django.db.models.loading import get_model
-from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership, iC_Akin_Membership
+
+from Welcome.models import *
 from General.models import Human
+from Invoices.models import Soci
+from Invoices.models import v7_auth_user
 from django.db.models import Count
 
 def _links_list_to_ul(links):
@@ -74,54 +77,89 @@ def _folder(caption, value):
 	except:
 		output = "<h5>%s</h5> %s" % ( caption, value.decode("utf-8") ) 
 	return output  
-
+def _avatar(width="15", clas="Anon_user"):
+	return mark_safe("<img src='/static/%s_user.png' width='%spx'>" % (clas,width))
 
 class upgrader_tool(object):
-
 	def __init__(self, request):
 		self.request = request
 		self.counters = {}
+
+		self.menus = []
+		self.menus_add()
+	def _get_GET(self, key):
+		if key in self.request.GET:
+			return self.request.GET.get(key)
+		else:
+			return False
+
+	def menus_add(self, menu=None):
+		if menu:
+			self.menus.append( menu )
+		else:
+			self.menus.append( _link( "/admin/?execution=1", " ⊙:> execution: [boolean]"))
+			self.menus.append( _link( "/admin/?execution=1&counters=1", " ⊙:> counters: [boolean]"))
+			self.menus.append( _link( "/admin/?execution=1&list=1", " ⊙:> list: [boolean]"))
+			self.menus.append( _link( "/admin/?execution=1&counters=1&list=1&limit_loop_query=10", " ⊙:> limit_loop_query: [objects.all() queryset slice]"))
 
 	def counter_plus(self, counter_name):
 		if counter_name in self.counters:
 			self.counters[counter_name] += 1
 		else:
 			self.counters[counter_name] = 1
-
 	def counter_render(self):
 		list = []
 		for k,v in self.counters.iteritems():
 			list.append(_folder(k,v))
-		return mark_safe(_links_list_to_ul(list))
-
-	def import_soci(self, soci):
-
+		return _folder("Counters", mark_safe(_links_list_to_ul(list)))
+	def sync_soci_cooper(self, soci):
 		self.counter_plus("processed")
-		v7_num_coop = soci.__unicode__()
-		from Invoices.models import v7_auth_user
-		for user in v7_auth_user.objects.raw("SELECT * FROM v7_auth_user WHERE id=%s", [soci.user_id]):
-			v7_user = user
-
-		from Welcome.models import iC_Membership
 		try:
-			v8_num_coop = iC_Membership.objects.get(ic_CESnum=v7_num_coop)
-			self.counter_plus("correlateds")
+			v8 = iC_Membership.objects.get(ic_CESnum=soci.__unicode__())
+			self.counter_plus("iC_Membership.ic_CESnum || Invoices.soci.__unicode__")
+			folder_title = _avatar("20", v8.record_type.clas.lower() ) + v8._self_link()
 		except:
-			v8_num_coop = "[missing in welcome]"
+			v8 = folder_title = None
+		try:
+			for user in v7_auth_user.objects.raw("SELECT * FROM v7_auth_user WHERE id=%s", [soci.user_id]):
+				v7 = user
+		except:
+			v7 = None
 
-		return _folder(v7_num_coop, " %s -- %s -- %s " % (v7_num_coop, v7_user.username, v8_num_coop) ) 
+		user_title = v7.username if v7 else "[user not in v7_auth_user]"
+		try:
+			welcome_title = v8._ic_selfemployed_list_extended(True) if v8 else "[missing]"
+		except:
+			try:
+				welcome_title = v8._ic_selfemployed_list(True) if v8 else "[missing]"
+			except:
+				welcome_title = "[Missing]"
 
-	def process(self):
-		from Invoices.models import Soci
+		folder_content = " INVOICES: %s <b>USER: -- %s</b> WELCOME: -- %s " % (soci.__unicode__(), user_title, welcome_title)
+		return _folder( folder_title, folder_content ) 
+
+
+	def execute(self):
 		result_list = []
 
-		for soci in Soci.objects.all():
+		if "limit_loop_query" in self.request.GET:
+			loop_query = Soci.objects.all()[:self.request.GET.get("limit_loop_query")]
+		else:
+			loop_query = Soci.objects.all()
+
+		for soci in loop_query:
 			try:
-				result_list.append( self.import_soci(soci, ) )
+				result_list.append(self.sync_soci_cooper(soci))
 			except Exception as e:
-				return e
-		return mark_safe( self.counter_render() )
-		return mark_safe( _links_list_to_ul(result_list) ) + self.counter_render()
+				return e.message
+		return _folder( "List", _links_list_to_ul(result_list))
+
+	def process(self):
+		execution = self.execute() if self._get_GET("execution") else ""
+		counters = self.counter_render() if self._get_GET("counters") else ""
+		list = execution if self._get_GET("list") else ""
+		return mark_safe(counters+list)
+
 class statics_object(object):
 	def __init__(self, request, user):
 		self.user = user
@@ -345,9 +383,8 @@ class statics_object(object):
 			return obj
 		return None
 
-	def avatar(self):
-		return mark_safe("<img src='/static/Anon_user.png' width='15px'>")
-
+	def avatar(self ):
+		return _avatar(width="15", clas="Anon_user") 
 	def groups_list(self):
 		output_list = []
 		groups_list = ["Invoices", "Finances", "Welcome"]
@@ -370,15 +407,12 @@ class tool_upgrader_tag_node(template.Node):
 			# obj now is the object you passed the tag
 
 			menu_list = []
-			if obj.GET.has_key("execution"):
-				context['importer'] = upgrader_tool(obj)
-			else:
-				context['importer'] = None
-				menu_list.append( _link( "/admin/?execution=1", " ⊙:> [/admin/?execution=1] Comença migració")) 
+			context['importer'] = upgrader_tool(obj)
+			menu_list.append(_links_list_to_ul(upgrader_tool(obj).menus))
 
 			statics = statics_object(obj, obj.user)
 
-			context['menu'] = mark_safe(_links_list_to_ul(menu_list ))
+			context['menu'] = mark_safe( _folder( "[tool_upgrader] Menu", _links_list_to_ul(menu_list ))) 
 			context['statics'] = statics
 			return ''
 @register.tag
