@@ -123,7 +123,7 @@ class upgrader_tool(object):
 		checked = False
 		for period in period.objects.all():
 			#... is this entity migrated?
-			checked = checked or iC_Period.objects.filter(first_day=period.first_day).count()>0
+			checked = iC_Period.objects.filter(first_day=period.first_day).count()>0
 			from Finances.bots import bot_object
 			#... if need migration, migrate
 			if not checked:
@@ -164,7 +164,7 @@ class upgrader_tool(object):
 		checked = False
 		for tax in periodTaxes.objects.all():
 			#... is this entity migrated?
-			checked = checked or iC_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
+			checked = iC_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
 			from Finances.bots import bot_object
 			#... if need migration, migrate
 			if not checked:
