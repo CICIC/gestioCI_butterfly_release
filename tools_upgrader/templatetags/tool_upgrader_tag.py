@@ -427,7 +427,8 @@ class statics_object(object):
 		#3.0
 		from Finances.models import iC_Tax
 		links_taxes = []
-		links_taxes.append(_folder(_prompt + "Tax", _links_list_to_ul(iC_Tax.objects.all()) ))
+		total_str = "Tax: (total %s)" % (iC_Tax.objects.all().count())
+		links_section3.append(_folder(_prompt + total_str, _links_list_to_ul(iC_Tax.objects.all())))
 		#3.1
 		from Finances.models import vats
 		links_vats = []
@@ -449,7 +450,7 @@ class statics_object(object):
 
 		links.append(_folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append(_folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append(_folder(_section("Invoices"), _links_list_to_ul(links_section3 + links_taxes + links_vats + links_invoices + links_balances)))
+		links.append(_folder(_section("Invoices"), _links_list_to_ul(links_section3 + links_vats + links_invoices + links_balances)))
 
 		return links
 	def group_welcome(self):
