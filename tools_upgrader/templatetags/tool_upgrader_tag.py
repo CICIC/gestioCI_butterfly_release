@@ -80,40 +80,48 @@ class upgrader_tool(object):
 
 	def __init__(self, request):
 		self.request = request
+		self.counters = {}
+
+	def counter_plus(self, counter_name):
+		if counter_name in self.counters:
+			self.counters[counter_name] += 1
+		else:
+			self.counters[counter_name] = 1
+
+	def counter_render(self):
+		list = []
+		for k,v in self.counters.iteritems():
+			list.append(_folder(k,v))
+		return mark_safe(_links_list_to_ul(list))
 
 	def import_soci(self, soci):
 
-		try:
-			v7_num_coop = soci.coop_number
-			v7_user = soci.user
-		except:
-			return soci
+		self.counter_plus("processed")
+		v7_num_coop = soci.__unicode__()
+		from Invoices.models import v7_auth_user
+		for user in v7_auth_user.objects.raw("SELECT * FROM v7_auth_user WHERE id=%s", [soci.user_id]):
+			v7_user = user
 
 		from Welcome.models import iC_Membership
 		try:
-			v8_num_coop = iC_Membership.objects.filter(ic_CESnum=v7_num_coop)
+			v8_num_coop = iC_Membership.objects.get(ic_CESnum=v7_num_coop)
+			self.counter_plus("correlateds")
 		except:
-			v8_num_coop = "[missing]"
+			v8_num_coop = "[missing in welcome]"
 
-		from django.contrib.auth.models import User
-		v8_user = "[missing]"
-		users = User.objects.filter(username=v7_user.username)
-		if users.count()>0:
-			#v8_user = User.objects.filter(username=v7_user.username)
-			pass
-
-		return _folder(v7_num_coop, "From %s %s to %s %s" % (v7_num_coop, v7_user, v8_user, v8_num_coop) ) 
+		return _folder(v7_num_coop, " %s -- %s -- %s " % (v7_num_coop, v7_user.username, v8_num_coop) ) 
 
 	def process(self):
 		from Invoices.models import Soci
 		result_list = []
+
 		for soci in Soci.objects.all():
 			try:
-				result_list.append( self.import_soci(soci) )
+				result_list.append( self.import_soci(soci, ) )
 			except Exception as e:
 				return e
-
-		return mark_safe( _links_list_to_ul(result_list) )
+		return mark_safe( self.counter_render() )
+		return mark_safe( _links_list_to_ul(result_list) ) + self.counter_render()
 class statics_object(object):
 	def __init__(self, request, user):
 		self.user = user
