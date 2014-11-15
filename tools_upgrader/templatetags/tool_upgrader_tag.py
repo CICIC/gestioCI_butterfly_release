@@ -107,7 +107,18 @@ class upgrader_tool(object):
 		from Invoices.models import period
 		checked = False
 		for period in period.objects.all():
-			checked = checked and period in iC_Period.objects.all()
+			checked = checked or iC_Period.objects.filter(first_day=period.first_day).count()>0
+			from Finances.bots import bot_object
+			if not checked:
+				p = iC_Period()
+				for field in period._meta.get_all_field_names():
+					try:
+						value = getattr(period,field)
+						setattr(p, field, value) 
+					except:
+						pass
+				p.save()
+			checked = checked or iC_Period.objects.filter(label=period.label).count()>0
 		return ico_yes if checked else ico_no
 
 	def __init__(self, request):

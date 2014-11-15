@@ -9,7 +9,7 @@ from django.core import urlresolvers
 from django.db.models.loading import get_model
 from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership, iC_Akin_Membership
 from General.models import Human
-
+from datetime import date, timedelta, datetime
 def _links_list_to_ul(links):
 	output = "<ul>"
 	for link in links:
@@ -54,17 +54,21 @@ def _invoicing_periods_folder(object):
 
 	folder_list  = []
 
-
 	str = _(u"Periodes:")
 	caption = _prompt + str.encode("utf-8")
 	total = __(u"(total) %s") % (iC_Period.objects.all().count())
-	content = _prompt + total
+	content = _prompt + total + _links_list_to_ul(iC_Period.objects.values("label", "first_day", "date_close").all())
 	folder_list.append(_folder( caption,content))
 
+	opened_list = bot_period().get_opened_periods(object.request.user)
+	periods_list = []
+	for period in opened_list:
+		caption = period.__unicode__()
+		content = " Estat: Obert per facturacions fins %s. " % ( period.date_close )
+		periods_list.append(_folder( caption,content))
 	str = _(u"Periodes en curs:")
 	caption = _prompt + str.encode("utf-8")
-	opened_list = bot_period().get_opened_periods(object.request.user)
-	content = _links_list_to_ul(opened_list) if opened_list.count() > 0 else ( _prompt_ico(ico_no)+ _error(_(u"[Falta periode en curs]")))
+	content = _links_list_to_ul(periods_list) if periods_list else ( _prompt_ico(ico_no)+ _error(_(u"[Falta periode en curs]")))
 	folder_list.append(_folder( caption,content))
 
 	return _folder("Invoicing", _links_list_to_ul(folder_list) )

@@ -86,11 +86,25 @@ class bot_period( object ):
 			nExtraDays = 0
 
 		#Return queryset
-		return 	period.objects.filter( 
+		return 	iC_Period.objects.filter( 
 				first_day__lte=datetime.now(), 
 				date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
 				)
+	@staticmethod
+	def get_opened_periods_list(user):
+		bot_
+		#Get extradays that this user has to close
+		from Finances.models import cooper, iC_Period
+		try:
+			nExtraDays = 0 if user.is_superuser else cooper.objects.get(user=user).extra_days 
+		except:
+			nExtraDays = 0
 
+		#Return queryset
+		return 	iC_Period.objects.filter( 
+				first_day__lte=datetime.now(), 
+				date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
+				)
 class bot_assigned_vat(object):
 	def __init__(self, current_cooper, percent_invoiced_vat):
 		if current_cooper:
