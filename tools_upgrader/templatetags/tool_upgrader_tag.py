@@ -25,18 +25,17 @@ from Invoices.models import Soci
 from Invoices.models import v7_auth_user
 from django.db.models import Count
 
-def _error(str):
-	try:
-		return "<font style='color:red'>%s</font>" % (__(str).encode("utf-8"))
-	except:
-		return "<font style='color:red'>%s</font>" % (str)
-
 _prompt = " ⊙:> ".decode("utf-8")
 def _prompt_ico(ico=None):
 	output = _prompt
 	if ico:
 		output = "[%s] %s " % (ico, _prompt)
 	return output
+def _error(str):
+	try:
+		return "<font style='color:red'>%s</font>" % (__(str).encode("utf-8"))
+	except:
+		return "<font style='color:red'>%s</font>" % (str)
 def _links_list_to_ul(links):
 	output = "<ul>"
 	for link in links:
@@ -91,7 +90,10 @@ def _folder(caption, value):
 		try:
 			output = "<h5>%s</h5> %s" % ( caption, value.decode("utf-8") ) 
 		except:
-			output = "<h5>%s</h5> %s" % ( caption, value ) 
+			try:
+				output = "<h5>%s</h5> %s" % ( caption, value ) 
+			except:
+				output = "<h5>%s</h5> %s" % ( caption, value ) 
 	return output  
 def _avatar(width="15", clas="Anon"):
 	return mark_safe("<img src='/static/%s_user.png' width='%spx'>" % (clas,width))
@@ -103,22 +105,88 @@ def _get_GET(key, request):
 
 class upgrader_tool(object):
 	def check_periods(self):
+		#Main entity type
+		#... loop to process each entity
+		try:
+			period_type = iC_Record_Type.objects.get(clas="iC_Period")
+		except:
+			#Create if initializationg
+			period_type = iC_Record_Type(clas="iC_Period", 
+					name="Trimestre", 
+					description=_(u'Periode de facturació'))
+			if _get_GET("commit", self.request):
+				period_type.save()
+
+		#Entities of this type
 		from Finances.models import iC_Period
 		from Invoices.models import period
 		checked = False
 		for period in period.objects.all():
+			#... is this entity migrated?
 			checked = checked or iC_Period.objects.filter(first_day=period.first_day).count()>0
 			from Finances.bots import bot_object
+			#... if need migration, migrate
 			if not checked:
+				#... create new object
 				p = iC_Period()
+				#... map fields
 				for field in period._meta.get_all_field_names():
 					try:
 						value = getattr(period,field)
 						setattr(p, field, value) 
 					except:
 						pass
-				p.save()
+				#...save object
+				p.record_type = period_type
+				if _get_GET("commit", self.request):
+					p.save()
+			#...refresh existence flag
 			checked = checked or iC_Period.objects.filter(label=period.label).count()>0
+		#...
+		return ico_yes if checked else ico_no
+	def check_taxes(self):
+		#Main entity type
+		try:
+			tax_type = iC_Record_Type.objects.get(clas="iC_Taxes")
+		except:
+			#Create if initializationg
+			tax_type = iC_Record_Type(clas="iC_Taxes", 
+					name="Tasa", 
+					description=_(u'Càlcul Quota Trimestral, taula de quotes de ponderación segons facturació.).')
+				)
+			if _get_GET("commit", self.request):
+				tax_type.save()
+
+		#Entities of this type
+		from Finances.models import iC_Tax
+		from Invoices.models import periodTaxes
+		#... loop to process each entity
+		checked = False
+		for tax in periodTaxes.objects.all():
+			#... is this entity migrated?
+			checked = checked or iC_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
+			from Finances.bots import bot_object
+			#... if need migration, migrate
+			if not checked:
+
+				#... create new object
+				p = iC_Tax()
+				#... map fields
+				for field in tax._meta.get_all_field_names():
+					try:
+						value = getattr(tax,field)
+						if field=="taxId":
+							field="value"
+						setattr(p, field, value) 
+					except:
+						pass
+				#...save object
+				p.record_type = tax_type
+				if _get_GET("commit", self.request):
+					p.save()
+			#...refresh existence flag
+			checked = checked or iC_Tax.objects.filter(min_base=tax.min_base, max_base=tax.min_base).count()>0
+		#...
 		return ico_yes if checked else ico_no
 
 	def __init__(self, request):
@@ -138,6 +206,7 @@ class upgrader_tool(object):
 			self.menus.append( _link( "/admin/?statics=1&execution=1&list=1", _prompt + "list" ) + ": [boolean] => Will show or not list displays." )
 	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
 	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10&query_offset=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
+			self.menus.append( _link( "/admin/?commit", _prompt + "commit") + ": [boolean] => Will execute the process also against BBDD. This flag is before every CRUD action is going to be performed.")
 
 	def counter_plus(self, counter_name):
 		if counter_name in self.counters:
@@ -285,9 +354,16 @@ class statics_object(object):
 		content = _links_list_to_ul(period.objects.all())
 		links_periods.append(_folder(caption, content))
 		#3.0
-		links_taxs =[]
+		links_taxes =[]
 		from Invoices.models import periodTaxes
-		links_taxs.append(_folder(_prompt + "Tax", str(periodTaxes.objects.all().count()) ))
+		caption = _prompt_ico(upgrader_tool(self.request).check_taxes())
+		caption += " taxes: " + str(periodTaxes.objects.all().count())
+		l = {}
+		L = []
+		for tax in periodTaxes.objects.all():
+			l["Valor_" +str(tax.taxId)]= tax
+		content = _links_list_to_ul(l)
+		links_taxes.append(_folder(caption, content))
 		#3.1
 		from Invoices.models import VATS
 		links_vats = []
@@ -318,7 +394,7 @@ class statics_object(object):
 		#Render
 		links.append( _folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append( _folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_periods + links_taxs + links_vats + links_invoices + links_balances )) )
+		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_periods + links_taxes + links_vats + links_invoices + links_balances )) )
 		links.append( _folder(_section("Mother Coops"), _links_list_to_ul(links_coop)))
 
 		return links
@@ -349,9 +425,9 @@ class statics_object(object):
 		from Welcome.templatetags import cooper_folder_tag
 		links_section3.append(cooper_folder_tag._invoicing_periods_folder(self))
 		#3.0
-		from Finances.models import tax
-		links_taxs = []
-		links_taxs.append(_folder(_prompt + "Tax", str(tax.objects.all().count()) ))
+		from Finances.models import iC_Tax
+		links_taxes = []
+		links_taxes.append(_folder(_prompt + "Tax", _links_list_to_ul(iC_Tax.objects.all()) ))
 		#3.1
 		from Finances.models import vats
 		links_vats = []
@@ -373,7 +449,7 @@ class statics_object(object):
 
 		links.append(_folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append(_folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append(_folder(_section("Invoices"), _links_list_to_ul(links_section3 + links_taxs + links_vats + links_invoices + links_balances)))
+		links.append(_folder(_section("Invoices"), _links_list_to_ul(links_section3 + links_taxes + links_vats + links_invoices + links_balances)))
 
 		return links
 	def group_welcome(self):

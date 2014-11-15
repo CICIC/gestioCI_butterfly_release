@@ -59,11 +59,14 @@ class vats(iC_Record):
 		verbose_name_plural= _(u'IVAs')
 
 
-class tax(iC_Record):
+class iC_Tax(iC_Record):
 	ic_record = models.OneToOneField('Welcome.iC_Record', primary_key=True, parent_link=True)
 	value=models.DecimalField(verbose_name=_(u'Quota Trimestral'), decimal_places=2, max_digits=10, unique=True, db_index=True)
 	min_base=models.IntegerField(verbose_name= _(u"Base imposable Mínima"))
 	max_base=models.IntegerField(verbose_name= _(u"Base imposable Màxima"))
+	def __unicode__(self):
+		if self.id:
+			return _("Cuota de %s por base entre %s y %s (Eur)") %( str(self.value), str(self.min_base), str(self.max_base))
 
 	class Meta:
 		verbose_name=_(u'A - Taula quotes')

@@ -9,7 +9,7 @@ from localflavor.es.forms import *
 from django.db.models import F
 
 from Finances.bots import *
-from models import cooper, sales_invoice, purchases_invoice, client, provider, period, tax
+from models import cooper, sales_invoice, purchases_invoice, client, provider, iC_Period, iC_Tax
 class cooper_admin_form(forms.ModelForm):
 	model = cooper
 	class Meta:

@@ -238,7 +238,7 @@ class tax_admin(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
 	list_display = ('value', 'min_base', 'max_base')
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
-admin.site.register(tax, tax_admin)
+admin.site.register(iC_Tax, tax_admin)
 
 class EmailNotificationAdmin(ModelAdmin):
 	class Media:
@@ -395,7 +395,7 @@ class tax_user(ModelAdmin):
 	# to hide change and add buttons on main page:
 	def get_model_perms(self, request): 
 		return {'view': True}
-user_admin_site.register(tax, tax_user)
+user_admin_site.register(iC_Tax, tax_user)
 
 class invoice_admin(ModelAdmin):
 	list_filter = ('period',)
