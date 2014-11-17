@@ -79,14 +79,14 @@ class bot_period( object ):
 	@staticmethod
 	def get_opened_periods(user):
 		#Get extradays that this user has to close
-		from Finances.models import iCf_Cooper, iC_Period
+		from Finances.models import iCf_Cooper, iCf_Period
 		try:
 			nExtraDays = 0 if user.is_superuser else iCf_Cooper.objects.get(user=user).extra_days 
 		except:
 			nExtraDays = 0
 
 		#Return queryset
-		return 	iC_Period.objects.filter( 
+		return 	iCf_Period.objects.filter( 
 				first_day__lte=datetime.now(), 
 				date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
 				)
@@ -94,14 +94,14 @@ class bot_period( object ):
 	def get_opened_periods_list(user):
 		bot_
 		#Get extradays that this user has to close
-		from Finances.models import iCf_Cooper, iC_Period
+		from Finances.models import iCf_Cooper, iCf_Period
 		try:
 			nExtraDays = 0 if user.is_superuser else iCf_Cooper.objects.get(user=user).extra_days 
 		except:
 			nExtraDays = 0
 
 		#Return queryset
-		return 	iC_Period.objects.filter( 
+		return 	iCf_Period.objects.filter( 
 				first_day__lte=datetime.now(), 
 				date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
 				)

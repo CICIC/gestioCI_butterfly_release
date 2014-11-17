@@ -76,7 +76,7 @@ class iCf_Record(Artwork):	# create own ID's
 				return "Not present"
 	_selflink.allow_tags = True
 	def __init__(self, *args, **kwargs):
-		super(icf_record, self).__init__(*args, **kwargs)
+		super(iCf_Record, self).__init__(*args, **kwargs)
 class iCf_Type(Concept):	# create own ID's
 	clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200, help_text=_(u"Model de django o classe python associada al Tipus financer de CI"))
 	class Meta:

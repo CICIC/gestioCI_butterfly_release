@@ -23,17 +23,18 @@ class Email(models.Model):
 	def __unicode__(self):
 		return self.subject
 
-from Finances.models import iCf_Period
+#from Finances.models import iCf_Period ==> [Notice 1:>] Will fail if Finances module is not installed. Better work this issue in a generic way. Will mark
 from django.contrib.auth.models import User
 class EmailNotification(Email):
-	period = models.ForeignKey(iCf_Period)
-
+	#period = models.ForeignKey(iCf_Period) see first ocurrence of [Notice 1:>] in this document.
 	notification_sent_tos = (
 		(0, _(u'Tots els socis')),
 		(1, _(u'Socis que han tancat')),
 		(2, _(u'Socis que NO han tancat')),
 		(3, _(u'Usuari')),
 	)
+	period = models.IntegerField(verbose_name=_(u"Id de iCf_Periode"), help_text=_(u"Te que ser un id de Finances.iCf_Period"), choices=notification_sent_tos)
+
 	sent_to_user = models.ForeignKey(User, related_name="Email to", null=True, blank=True, verbose_name=_(u"A Soci"), help_text=_(u"Per la opció -Usuari-"))
 	notification_types = (
 		(0, _(u'El primer dia del periode')),
