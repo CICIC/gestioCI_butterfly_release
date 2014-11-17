@@ -226,7 +226,59 @@ class upgrader_tool(object):
 			checked = checked or iC_Duty.objects.filter(value=duty.value).count()>0
 		#...
 		return ico_yes if checked else ico_no
-
+	def check_invoices(self):
+		return ico_no
+		#Main entity type
+		try:
+			duty_type = iC_Record_Type.objects.get(clas="iC_Duty")
+		except:
+			#Create if initializationg
+			duty_type = iC_Record_Type(clas="iC_Duty", 
+					name="Impuesto oficial del Estado", 
+					description=_(u'Impuestos oficiales como el I.V.A. o el I.A.E.')
+				)
+			if _get_GET("commit", self.request):
+				duty_type.save()
+	def check_balance(self):
+		return ico_no
+		#Main entity type
+		try:
+			duty_type = iC_Record_Type.objects.get(clas="iC_Duty")
+		except:
+			#Create if initializationg
+			duty_type = iC_Record_Type(clas="iC_Duty", 
+					name="Impuesto oficial del Estado", 
+					description=_(u'Impuestos oficiales como el I.V.A. o el I.A.E.')
+				)
+			if _get_GET("commit", self.request):
+				duty_type.save()
+		#Entities of this type
+		from Finances.models import iC_Duty
+		from Invoices.models import VATS
+		#... loop to process each entity
+		checked = False
+		for duty in VATS.objects.all():
+			#... is this entity migrated?
+			checked = iC_Duty.objects.filter(value=duty.value).count()>0
+			#... if need migration, migrate
+			if not checked:
+				#... create new object
+				p = iC_Duty()
+				#... map fields
+				for field in duty._meta.get_all_field_names():
+					try:
+						value = getattr(duty,field)
+						setattr(p, field, value) 
+					except:
+						pass
+				#...save object
+				p.record_type = duty_type
+				if _get_GET("commit", self.request):
+					p.save()
+			#...refresh existence flag
+			checked = checked or iC_Duty.objects.filter(value=duty.value).count()>0
+		#...
+		return ico_yes if checked else ico_no
 	def __init__(self, request):
 		self.request = request
 		self.counters = {}
@@ -411,13 +463,27 @@ class statics_object(object):
 		links_duties.append(_folder(caption, content))
 
 		#3.2
-		links_invoices = []
+		links_invoices =[]
 		from Invoices.models import SalesInvoice, PurchaseInvoice
-		links_invoices.append(_folder(_prompt +"Invoices_SalesInvoice.count()", str(SalesInvoice.objects.all().count())))
-		links_invoices.append(_folder(_prompt +"-", _links_list_to_ul(SalesInvoice.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))) ))
+		caption = _prompt_ico(upgrader_tool(self.request).check_invoices())
+		caption += " Invoices: " 
+		caption2 = " { Emeses: " + str(SalesInvoice.objects.all().count())
+		caption2 += " }, {Despeses: " + str(PurchaseInvoice.objects.all().count()) + "}"
+		content = _folder("Emeses",_links_list_to_ul(SalesInvoice.objects.all()[:5]))
+		content += _folder( "Despeses", _links_list_to_ul(PurchaseInvoice.objects.all()[:5]))
+		links_invoices.append(_folder(caption, content))
 
-		links_invoices.append(_folder(_prompt +"Invoices_PurchaseInvoice.count()", str(PurchaseInvoice.objects.all().count())))
-		links_invoices.append(_folder(_prompt +"-", _links_list_to_ul(PurchaseInvoice.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))) ))
+		#section 3.3
+		links_balances =[]
+		from Invoices.models import PeriodClose
+		caption = _prompt_ico(upgrader_tool(self.request).check_balance())
+		caption += " Periods Trimestres: " 
+		content = " { Tancats > exportats: " + str(PeriodClose.objects.all().filter(closed=False).count())
+		content += " }, {Tancats > sense exportar: " + "???" + "}"
+		content += " }, {Oberts: " + str(PeriodClose.objects.all().filter(closed=False).count()) + "}"
+		content = _folder(  "-", content)
+		content += _folder("Periods",_links_list_to_ul(PeriodClose.objects.all()[:5]))
+		links_invoices.append(_folder(caption, content))
 
 		#Section 4
 		links_coop = []
@@ -428,7 +494,7 @@ class statics_object(object):
 
 		#Section 5
 		links_balances = []
-		from Invoices.models import PeriodClose
+		
 		links_balances.append(_folder(_prompt +"Invoices_PeriodClose.count()", str(PeriodClose.objects.all().count())))
 		periods = PeriodClose.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))
 		links_balances.append(_folder(_prompt + "-", _links_list_to_ul(periods) ))
@@ -476,14 +542,27 @@ class statics_object(object):
 		links_vats = []
 		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(iC_Duty.objects.all().values("value"))))
 		#3.2
-		links_invoices = []
+		links_invoices =[]
 		from Finances.models import purchases_invoice, sales_invoice
-		links_invoices.append(_folder(_prompt +"Finances_sales_invoice.count()", str(sales_invoice.objects.all().count())))
-		links_invoices.append(_folder(_prompt +"Finances_purchases_invoice.count()", str(purchases_invoice.objects.all().count())))
-		from Finances.models import purchases_line, sales_line
-		links_invoices.append(_folder(_prompt +"Finances_sales_line.count()", str(sales_line.objects.all().count())))
-		links_invoices.append(_folder(_prompt +"Finances_purchases_line.count()", str(purchases_line.objects.all().count())))
+		caption = _prompt_ico(upgrader_tool(self.request).check_invoices())
+		caption += " Finances: " 
+		caption2 = " { Emeses: " + str(sales_invoice.objects.all().count())
+		caption2 += " }, {Despeses: " + str(purchases_invoice.objects.all().count()) + "}"
+		content = _folder("Emeses",_links_list_to_ul(sales_invoice.objects.all()[:5]))
+		content += _folder( "Despeses", _links_list_to_ul(purchases_invoice.objects.all()[:5]))
+		links_invoices.append(_folder(caption, content))
 
+		#section 3.3
+		links_balances =[]
+		from Finances.models import PeriodClose
+		caption = _prompt_ico(upgrader_tool(self.request).check_balance())
+		caption += " Periods Trimestres: " 
+		content = " { Tancats > exportats: " + str(PeriodClose.objects.all().filter(closed=False).count())
+		content += " }, {Tancats > sense exportar: " + "???" + "}"
+		content += " }, {Oberts: " + str(PeriodClose.objects.all().filter(closed=False).count()) + "}"
+		content = _folder(  "-", content)
+		content += _folder("Periods",_links_list_to_ul(PeriodClose.objects.all()[:5]))
+		links_invoices.append(_folder(caption, content))
 		#Section 5
 		links_balances = []
 		from Finances.models import period_close
