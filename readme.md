@@ -1,7 +1,7 @@
 Hello
 ---------------
 This is [unestable geeconv08](https://wiki.enredaos.net/index.php?title=Talk:CICICdev/november#Road_Mapa_4) aka <b>[GestioCI](https://wiki.enredaos.net/index.php?title=GestioCI)</b> aka '<i>[Butterfly](https://wiki.enredaos.net/index.php?title=Talk:CICICdev/november#Plan_butterfly)</i>' release. 
-Won't install it on demo server, but will last using this point to syncronize with [revisions](https://wiki.enredaos.net/index.php?search=Talk%3ACICICdev_butterfly_rev%2F)-task lists.
+Won't install it on production while not finished [revisions](https://wiki.enredaos.net/index.php?search=Talk%3ACICICdev_butterfly_rev%2F)-task lists.
 
 Doc
 ----------------
