@@ -14,7 +14,7 @@ from datetime import date, timedelta, datetime
 from csvimport.models import CSVImport
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from General.models import Concept, Company
-
+from public_form import RegistrationProfile
 '''
 Section 0 >> global const and vars
 '''
@@ -101,29 +101,27 @@ Section 2 >> Semantic model entities to link GENERAL MPTT Tree
 https://wiki.enredaos.net/index.php?title=GestioCI-Codi#
 '''
 #Humans 
-class company(Company):
+class iCf_Company(Company):
 	name=models.CharField(verbose_name=_(u"Nom Fiscal"), help_text=_(u"El nom fiscal del client a qui es factura. Ex. SOM EL QUE SOM SL"), max_length=200)
 	CIF=models.CharField(verbose_name=_(u"CIF/NIF/NIE"), blank=True, null=True, help_text=_(u"NIF:12345678A - CIF: A12345678 - NIE: X12345678A del client a qui es factura."), max_length=30)
 	otherCIF=models.CharField(verbose_name=_(u"Altres identificadors"), null=True, blank=True, help_text=_(u"Camps no NIF/CIF/NIE del client a qui es factura."), max_length=50)
-
 	def __unicode__(self):
 		if self.CIF is None or self.CIF == "":
 			idcode=self.otherCIF
 		else:
 			idcode=self.CIF
 		return self.name + ' - ' + idcode
-class iCf_Client(Company):
+class iCf_Client(iC_Company):
 	class Meta:
 		model = Company #TODO: FILTER General.Company to Finances module
 		verbose_name=_(u'B - Client')
 		verbose_name_plural=_(u'B - Clients')
 		proxy = True
-class client(company):
 	class Meta:
 		model = company #TODO
 		verbose_name=_(u'B - Client')
 		verbose_name_plural=_(u'B - Clients')
-class iCf_Provider(Company):
+class iCf_Provider(iC_Company):
 	def accounts(self):
 		return self._my_accounts()
 	class Meta:
@@ -131,11 +129,10 @@ class iCf_Provider(Company):
 		verbose_name=_(u'C - Proveïdor')
 		verbose_name_plural=_(u'C - Proveïdors')
 		proxy = True
-class provider(company):
 	class Meta:
 		verbose_name=_(u'C - Proveïdor')
 		verbose_name_plural=_(u'C - Proveïdors')
-class iCf_Cooper(iC_Self_Employed):
+class iCf_Cooper(RegistrationProfile):
 	ic_Self_Employed = models.OneToOneField('Welcome.iC_Self_Employed', primary_key=True, parent_link=True)
 	membership = models.ForeignKey('Welcome.iC_Membership', verbose_name=_(u"rel_to_new_system"), blank=True, null=True)
 	def user(self):
@@ -173,7 +170,6 @@ class iCf_Cooper(iC_Self_Employed):
 	class Meta:
 		verbose_name= _(u'D - Socia')
 		verbose_name_plural= _(u'D -  Socies')
-class cooper(models.Model):
 	user=models.OneToOneField(User, verbose_name=_(u"Nom"))
 	coop=models.ForeignKey(coop, verbose_name=_(u"Cooperativa"))
 	coop_number=models.IntegerField(verbose_name=_(u"nº COOP"), unique=True, db_index=True, max_length=4)
@@ -209,7 +205,6 @@ class iCf_Duty(iCf_Record):
 	class Meta:
 		verbose_name= _(u'IVA')
 		verbose_name_plural= _(u'IVAs')
-class vats(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
 	value=models.IntegerField(verbose_name=_(u'IVA'), unique=True, db_index=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
@@ -246,36 +241,13 @@ class iCf_Coop(Company):
 		#Interprofesionals - http://cicicdev.enredaos.net:8082/admin/General/company/2341/
 		verbose_name= _(u'I - Cooperativa')
 		verbose_name_plural= _(u'I - Cooperatives')
-class coop(models.Model):
 	name=models.CharField(verbose_name=_(u"Nom"), unique=True, db_index=True, max_length=200)
 	def __unicode__(self):
 		return self.name
 	class Meta:
 		verbose_name= _(u'I - Cooperativa')
 		verbose_name_plural= _(u'I - Cooperatives')
-#undocumented
-class type(Concept):	# create own ID's
-	clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200,
-													help_text=_(u"Model de django o classe python associada al Tipus CI"))
-	class Meta:
-		verbose_name = _(u"c- Tipus ")
 
-	def __unicode__(self):
-		if self.clas is None or self.clas == '':
-			if self:
-				return self.name
-			else:
-				return "iC_Type vacio"
-		else:
-			return self.name+' ('+self.clas+')'
-class currencies(models.Model):
-	name=models.CharField(verbose_name=_(u"Nom"), max_length=20, help_text=_(u"Nom del tipus de moneda"))
-	def __unicode__(self):
-		return unicode(self.name)
-
-	class Meta:
-		verbose_name= _(u'H - Moneda')
-		verbose_name_plural= _(u'H - Monedes')
 '''
 Section 3 >> Invoicing and currency movements and period closing
 https://wiki.enredaos.net/index.php?title=GestioCI-Codi#Facturaci.C3.B3n
@@ -360,7 +332,6 @@ class iCf_Invoice(iCf_Record):
 			status = status_CHOICE_DONE  
 		return status
 	status.short_description = _(u"Estat")
-class invoice(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
 	cooper= models.ForeignKey(cooper, verbose_name=_(u"nº COOP"))	
 	human = models.ForeignKey('General.Human', related_name='out_invoices', verbose_name=_(u"Ens pagador"))
@@ -442,7 +413,7 @@ class invoice(iCf_Record):
 		verbose_name = _(u"Factura")
 		verbose_name_plural = _(u"Factures")
 #
-class iCf_Sale(invoice):
+class iCf_Sale(iC_Invoice):
 	invoice = models.OneToOneField('Finances.iC_Invoice', primary_key=True, parent_link=True)
 	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."))
 	client=models.ForeignKey(client, related_name="sales_invoice_clients", verbose_name=_(u"Client"))
@@ -489,7 +460,7 @@ class iCf_Sale(invoice):
 		verbose_name=_(u'01 - Factura Emesa')
 		verbose_name_plural=_(u'01 - Factures Emeses')
 		unique_together=('cooper', 'period', 'num')
-class sales_invoice(invoice):
+
 	invoice = models.OneToOneField('Finances.invoice', primary_key=True, parent_link=True)
 	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."))
 	client=models.ForeignKey(client, related_name="sales_invoice_clients", verbose_name=_(u"Client"))
@@ -536,7 +507,7 @@ class sales_invoice(invoice):
 		verbose_name=_(u'01 - Factura Emesa')
 		verbose_name_plural=_(u'01 - Factures Emeses')
 		unique_together=('cooper', 'period', 'num')
-class iC_Purchase(invoice):
+class iC_Purchase(iC_Invoice):
 	invoice = models.OneToOneField('invoice', primary_key=True, parent_link=True)
 	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura."),  validators=[alphanumeric])
 	provider=models.ForeignKey(provider, verbose_name=_(u"Proveïdor"))
@@ -580,7 +551,6 @@ class iC_Purchase(invoice):
 	class Meta:
 		verbose_name=_(u'02 - Factura Despesa')
 		verbose_name_plural=_(u'02 - Factures Despeses')
-class purchases_invoice(invoice):
 	invoice = models.OneToOneField('invoice', primary_key=True, parent_link=True)
 	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura."),  validators=[alphanumeric])
 	provider=models.ForeignKey(provider, verbose_name=_(u"Proveïdor"))
@@ -625,10 +595,10 @@ class purchases_invoice(invoice):
 		verbose_name=_(u'02 - Factura Despesa')
 		verbose_name_plural=_(u'02 - Factures Despeses')
 #
-class invoice_line(iCf_Record):
+class iC_Invoice_line(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
 	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la factura. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
-class iC_Sales_line (invoice_line):
+class iC_Sales_line (iC_Invoice_line):
 	line = models.OneToOneField('Finances.invoice_line', primary_key=True, parent_link=True)
 	percent_invoiced_vat=models.ForeignKey(iC_Duty, verbose_name=_(u"IVA Facturat (%)"), help_text=_(u"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"))
 
@@ -661,7 +631,7 @@ class iC_Sales_line (invoice_line):
 	class Meta:
 		verbose_name=_(u'Línia de factura emesa')
 		verbose_name_plural=_(u'Línies de factura emesa')
-class iC_Purchase_line (invoice_line):
+class iC_Purchase_line (iC_Invoice_line):
 	line = models.OneToOneField('Finances.invoice_line', primary_key=True, parent_link=True)
 	percent_vat=models.ForeignKey(iC_Duty, verbose_name=_(u'IVA (%)'), help_text=_(u"El % d'IVA que s'aplica en la factura."))
 	percent_irpf=models.IntegerField(verbose_name=_(u'IRPF (%)'), help_text=_(u"El % de retenció de IRPF (Només en lloguers i factures de persones físiques)."), default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
@@ -690,7 +660,7 @@ class iC_Purchase_line (invoice_line):
 		verbose_name=_(u'Línia de factura despesa')
 		verbose_name_plural=_(u'Línies de factura despesa')
 #Transactions
-class movement (iCf_Record):
+class iC_Movement (iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
 	cooper=models.ForeignKey(cooper, null=False, blank=False, verbose_name=_(u"nº COOP"))
 	concept=models.CharField(verbose_name=_(u"Concept"), max_length=200, null=False, 
@@ -723,7 +693,8 @@ class movement (iCf_Record):
 		return bot_currency(self.currency).get_change(self.value)
 	class Meta:
 		abstract=True
-class iC_Sales_movement( movement ):
+#
+class iC_Sales_movement( iC_Movement ):
 	planned_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data prevista. Exemple dd/mm/aaaa"))
 	who_manage= models.IntegerField(
 		verbose_name=_(u"Forma de pagament"), 
@@ -734,7 +705,7 @@ class iC_Sales_movement( movement ):
 	class Meta:
 		verbose_name=_(u'L - Abonament')
 		verbose_name_plural=_(u'L - Abonaments')
-class iC_Purchase_movement( movement ):
+class iC_Purchase_movement( iC_Movement ):
 	petition_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data de petició. Exemple dd/mm/aaaa"))
 	acceptation_date=models.DateField(verbose_name=_(u"Data d'acceptament"), help_text=_(u"La data en que s'accepta. Exemple dd/mm/aaaa"), null=True, blank=True)
 	class Meta:
@@ -758,7 +729,7 @@ class iCf_Period(iCf_Record):
 	class Meta:
 		verbose_name= _(u"G - Trimestres")
 		verbose_name_plural= _(u"G - Trimestres")
-class period(models.Model):
+#
 	label=models.CharField(verbose_name=_(u"Títol"), max_length=200)
 	first_day=models.DateField(verbose_name=_(u"Inici"), help_text=_(u"Primer dia del període"))
 	date_open=models.DateField(verbose_name=_(u"Obert"))
@@ -881,7 +852,7 @@ class iC_Period_close(iCf_Record):
 		unique_together = ('cooper', 'period')
 '''
 Section 4 >> Finance filigraning and computations above section 3
-undocumented
+undocumented & pending
 '''
 #Balance & global member finances
 class period_payment(models.Model):
