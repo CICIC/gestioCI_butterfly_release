@@ -478,7 +478,7 @@ class period_close_user(admin.ModelAdmin):
 		current_period = bot_period(user).period(False)
 		current_cooper = bot_cooper(user).cooper(False)
 		if current_period is not None:
-			return iCf_Period_close.objects.filter(period=current_period, icf_cooper=current_cooper).count()>0
+			return iCf_Period_close.objects.filter(period=current_period, cooper=current_cooper).count()>0
 		return False
 
 	def exists_closed_period_done(self, pc):
