@@ -553,29 +553,6 @@ class statics_object(object):
 		links_invoices.append(_folder(_prompt +"Finances_iCf_Sale_line.count()", str(iCf_Sale_line.objects.all().count())))
 		links_invoices.append(_folder(_prompt +"Finances_iCf_Purchase_line.count()", str(iCf_Purchase_line.objects.all().count())))
 
-=======
-		links_invoices =[]
-		from Finances.models import purchases_invoice, sales_invoice
-		caption = _prompt_ico(upgrader_tool(self.request).check_invoices())
-		caption += " Finances: " 
-		caption2 = " { Emeses: " + str(sales_invoice.objects.all().count())
-		caption2 += " }, {Despeses: " + str(purchases_invoice.objects.all().count()) + "}"
-		content = _folder("Emeses",_links_list_to_ul(sales_invoice.objects.all()[:5]))
-		content += _folder( "Despeses", _links_list_to_ul(purchases_invoice.objects.all()[:5]))
-		links_invoices.append(_folder(caption, content))
-
-		#section 3.3
-		links_balances =[]
-		from Finances.models import PeriodClose
-		caption = _prompt_ico(upgrader_tool(self.request).check_balance())
-		caption += " Periods Trimestres: " 
-		content = " { Tancats > exportats: " + str(PeriodClose.objects.all().filter(closed=False).count())
-		content += " }, {Tancats > sense exportar: " + "???" + "}"
-		content += " }, {Oberts: " + str(PeriodClose.objects.all().filter(closed=False).count()) + "}"
-		content = _folder(  "-", content)
-		content += _folder("Periods",_links_list_to_ul(PeriodClose.objects.all()[:5]))
-		links_invoices.append(_folder(caption, content))
->>>>>>> master
 		#Section 5
 		links_balances = []
 		from Finances.models import iCf_Period_close
