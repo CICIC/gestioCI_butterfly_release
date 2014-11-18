@@ -11,6 +11,8 @@ DEPENDENCIES
 ------------------
 Prepare your python-django 1.7 installation with listed [dependencies] (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#Dependencias).
 
+But much better get in touch and start a custom [RFC procedure] (http://projects.cooperativa.cat/projects/gestioci/wiki/RFC_procedure_for_deploying_a_django_project?back_url=http://projects.cooperativa.cat/projects/gestioci/wiki/RFC_procedure_for_deploying_a_django_project) to deploy your own Butterfly aka GestioCI.
+
 SETUP
 --------------------
 Use [update.sh] (https://github.com/CICIC/gestioCI_butterfly_release/blob/master/update.sh) to get started. Migrating APPs in proper order is good!
@@ -28,4 +30,4 @@ Follow [gestioci v08 deployment progress](https://wiki.enredaos.net/index.php?ti
 INFO
 --------------------
 Browse to [current dev group working progress page] (https://wiki.enredaos.net/index.php?title=Desarrollo#GESTIO-DEV) to get in touch.
-![GestioCI v08](https://wiki.enredaos.net/images/c/c9/Logo.png)
+![GestioCI v08](https://raw.githubusercontent.com/CICIC/gestioCI_butterfly_release/master/templates/design_gestioci/logo_gestiociv08.png)
