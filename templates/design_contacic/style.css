@@ -1,0 +1,178 @@
+@font-face
+{
+font-family: nanum;
+src: url(fonts/NanumGothic.ttf);
+}
+
+
+body {
+	background:white;
+	color: #222;
+	font-size: 87.5%;
+/*	font-family: Arial, 'Lucida Sans Unicode';*/
+	font-family: nanum;
+	line-height: 1.5;
+	text-align: left;
+}
+
+.body {
+	margin: 0 auto;
+	width: 80%;
+	clear: both;
+	height: 100%;
+}
+
+a {
+	text-decoration: none;
+	color:#16a989;
+}
+
+a:link, a:visited {
+		color:#16a989;	
+}
+
+a:hover, a:active {
+		color:#333;
+}
+
+.main-header img {
+	display:block;
+	width: 20%;
+	height: auto;
+	margin: 2% auto;
+}
+
+.main-header h1 {
+	text-align:center;
+	font-weight: lighter;
+	font-size:1.3em;
+}
+
+.main-content {
+
+}
+
+.content {
+	width: 100%;
+
+}
+
+.topcontent {
+	padding: 1% 5%;
+	margin: 1% auto;
+	text-align: center;
+}
+
+.topcontent h2 {
+	font-weight: lighter;
+}
+
+
+.form-socio input {
+	padding: 10px;
+	margin: 1%;
+	width: 10%;
+	min-width:300px;
+	font-size: 1.3em;
+	border: 1px solid #bbb;
+}
+
+.btn-ingreso {
+	background: #222;
+	border: 0;
+	color:#37c8ab;
+	width: 8% !important;
+	min-width: 100px !important;
+}
+
+.btn-ingreso:hover {
+	background: #37c8ab;
+	color: #222;
+}
+
+.bottomcontent {
+	padding: 3% 5%;
+	margin-top: 2%;
+	text-align: center;
+}
+
+.bclinks {
+	width: 100%;
+	height: 60px;
+	margin: 0 auto;
+}
+
+.informatica, .economia {
+	width: 44%;
+	float:left;
+	margin: 1% 2%;
+}
+
+
+.main-footer {
+	width: 100%;
+	height: 90px;
+	float: left;
+	background: #333;
+	margin: 0;
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;	
+	webkit-border-top-left-radius: 4px;
+	moz-border-top-right-radius: 4px;	
+}
+
+.main-footer p {
+	width: 92%;
+	margin: 2% auto;
+	text-align:center;
+	color: #eee; 
+} 
+
+@media only screen and (min-width: 150px) and (max-width: 600px)
+{
+
+	.body {
+		width: 90%;
+		font-size: 95%;
+	}
+
+	.main-header img {
+		display: block;
+		width: 50%;
+		margin:5% auto;
+	}
+
+	.main-header h1 {
+		font-size: 1.2em;
+	}
+
+
+	.content {
+		width: 100%;
+		margin-top: 2%;
+	}
+
+	.topcontent {
+		margin-bottom: 3%;
+		position: relative;
+		bottom: 0;
+	}
+
+	.bottomcontent {
+		margin-top: 4%;
+	}
+
+	.bclinks {
+		margin-bottom: 10%;	
+	}
+
+	.informatica, .economia {
+		float: none;
+		display:block;
+		margin: 3% auto;
+		min-width: 300px;
+	}
+
+
+}
+
