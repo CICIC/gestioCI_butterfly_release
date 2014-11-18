@@ -544,7 +544,7 @@ class statics_object(object):
 		links_vats = []
 		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(iCf_Duty.objects.all().values("value"))))
 		#3.2
-<<<<<<< HEAD
+
 		links_invoices = []
 		from Finances.models import iCf_Purchase, iCf_Sale
 		links_invoices.append(_folder(_prompt +"Finances_iCf_Sale.count()", str(iCf_Sale.objects.all().count())))
