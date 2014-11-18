@@ -28,4 +28,4 @@ Follow [gestioci v08 deployment progress](https://wiki.enredaos.net/index.php?ti
 INFO
 --------------------
 Browse to [current dev group working progress page] (https://wiki.enredaos.net/index.php?title=Desarrollo#GESTIO-DEV) to get in touch.
-![GestioCI v08](https://wiki.enredaos.net/images/c/c9/Logo.png)
+![GestioCI v08](https://raw.githubusercontent.com/CICIC/gestioCI_butterfly_release/master/templates/design_gestioci/logo_gestiociv08.png)
