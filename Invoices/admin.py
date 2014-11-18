@@ -119,14 +119,6 @@ class CoopAdmin(admin.ModelAdmin):
 	list_display = ('name', )
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
 
-class EmailNotificationAdmin(admin.ModelAdmin):
-	class Media:
-			js = (
-				'EmailNotification.js',   # app static folder
-			)
-	fields = ['efrom', 'eto', 'ento', 'sent_to_user', 'subject', 'body', 'period', 'is_active', 'notification_type', 'offset_days', 'pointed_date'  ]
-	list_display = ('efrom', 'ento', 'sent_to_user_filter', 'subject', 'period', 'is_active', 'on_time','execution_date', 'notification_type', 'pointed_date_filter' )
-	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
 
 class First_Period_Filter (admin.SimpleListFilter):
 	title = _(u'primer període')
@@ -1238,7 +1230,7 @@ admin.site.register(PeriodClose, PeriodCloseAdmin)
 admin.site.register(periodTaxes, periodTaxesAdmin)
 admin.site.register(refundEntities, refundEntitiesAdmin)
 admin.site.register(paymentEntities, paymentEntitiesAdmin)
-admin.site.register(EmailNotification, EmailNotificationAdmin)
+
 admin.site.register(Soci, SociAdmin)
 admin.site.register(Coop, CoopAdmin)
 admin.site.register(VATS)
@@ -1254,130 +1246,3 @@ user_admin_site.register(periodTaxes, periodTaxesUser)
 user_admin_site.register(paymentEntities, paymentEntitiesUser)
 user_admin_site.register(refundEntities, refundEntitiesUser)
 
-
-class CSVImportAdmin(ModelAdmin):
-	''' Custom model to not have much editable! '''
-	readonly_fields = ['file_name',
-					   'upload_method',
-					   'error_log_html',
-					   'import_user']
-	fields = [
-				'model_name',
-				'field_list',
-				'upload_file',
-				'file_name',
-				'encoding',
-				'upload_method',
-				'error_log_html',
-				'import_user']
-	formfield_overrides = {
-		models.CharField: {'widget': forms.Textarea(attrs={'rows':'4',
-			   'cols':'60'})},
-		}
-
-	def save_model(self, request, obj, form, change):
-		""" Do save and process command - cant commit False
-	since then file wont be found for reopening via right charset
-"""
-		form.save()
-		#from soci.management.commands.sociimport import Command
-		#cmd = Command()
-		if obj.upload_file:
-			obj.file_name = obj.upload_file.name
-			obj.encoding = ''
-			defaults = self.filename_defaults(obj.file_name)
-
-			print obj.upload_file
-
-			members = open(settings.MEDIA_BASE + str(obj.upload_file))
-
-			data = csv.DictReader(members)
-				 
-			default_password = 'tsc_eclub'
-			errors = [] 
-			error = False
-			coopnum = None
-			for row in data:
-				try:
-					name = row['name'][0:29]
-					lastname = row['lastname'][0:29]
-					print lastname
-					email = row['email']
-					coop = row['coop']
-					coopnum = row['coopnum']
-					coopnum=coopnum.replace("COOP","")
-					passw = row['password']
-					vat = row['iva']
-					vat = vat.replace("%","")
-					tax = row['tax']
-				except:
-					errors.append("\n S'han de revisar les columnes")
-					error = True
-				
-				if not error and not coopnum:
-					errors.append("\n Falta num soci")
-				
-				r_coop= Coop.objects.filter(name=coop)
-				if not error and not r_coop:
-					errors.append("\n Per %s no trobem la cooperativa %s" % (coopnum, coop))
-
-				if not vat:
-					vat = 0
-				if not tax:
-					tax = 0
-
-				if coopnum and r_coop:
-					user = None
-					with transaction.atomic():
-						try:
-							try:
-								user = User.objects.get(username = coopnum)
-							except:
-								print "not existing " + coopnum
-								user = None
-							
-							if user:
-								user.first_name = name
-								user.last_name = lastname
-								user.save()
-							else:
-								user = User.objects.create_user(coopnum, email, passw)
-								user.is_staff = False
-								user.first_name = name
-								user.last_name = lastname
-								user.save()
-
-								if user:
-									from django.contrib.auth.models import Group
-									g = Group.objects.get(name='SOCI') 
-									g.user_set.add(user)
-									
-									soci = Soci (user=user, coop=r_coop[0], coop_number=coopnum, IVA_assignat=vat, preTAX=tax)
-									soci.save()
-						except IntegrityError as e:
-							errors.append("\n" + str(e))
-							errors.append("\n" + str(row))
-						except Exception as e:
-							print e
-							print lastname
-							print name
-
-			#errors = ["Finalitzat el procés"]
-			if errors or error:
-				obj.error_log = '\n'.join(errors)
-
-			obj.import_user = str(request.user)
-			obj.import_date = datetime.now()
-			obj.save()
-			
-
-	def filename_defaults(self, filename):
-		""" Override this method to supply filename based data """
-		defaults = []
-		splitters = {'/':-1, '.':0, '_':0}
-		for splitter, index in splitters.items():
-			if filename.find(splitter)>-1:
-				filename = filename.split(splitter)[index]
-		return defaults
-
-admin.site.register(CSVImport, CSVImportAdmin)

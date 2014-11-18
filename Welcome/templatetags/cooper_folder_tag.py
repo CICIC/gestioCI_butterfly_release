@@ -48,7 +48,7 @@ def _member_folder(object):
 
 def _invoicing_periods_folder(object):
 	from Welcome.admin import ico_no
-	from Finances.models import iC_Period
+	from Finances.models import iCf_Period
 	from Finances.bots import bot_period
 	from tools_upgrader.templatetags.tool_upgrader_tag import _error, _prompt_ico, _prompt
 
@@ -56,8 +56,8 @@ def _invoicing_periods_folder(object):
 
 	str = _(u"Periodes:")
 	caption = _prompt + str.encode("utf-8")
-	total = __(u"(total) %s") % (iC_Period.objects.all().count())
-	content = _prompt + total + _links_list_to_ul(iC_Period.objects.values("label", "first_day", "date_close").all())
+	total = __(u"(total) %s") % (iCf_Period.objects.all().count())
+	content = _prompt + total + _links_list_to_ul(iCf_Period.objects.values("label", "first_day", "date_close").all())
 	folder_list.append(_folder( caption,content))
 
 	opened_list = bot_period().get_opened_periods(object.request.user)

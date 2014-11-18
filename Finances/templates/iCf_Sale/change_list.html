@@ -1,0 +1,31 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls admin_static admin_list %}
+
+  {% block result_list %}
+	  {% if action_form and actions_on_top and cl.full_result_count %}{% admin_actions %}{% endif %}
+	 <div id="toolbar">
+		<table>
+			<tr>
+				<td>{% trans "Base Imposable (€)" %}</td>
+				<td>{% trans "IVA Facturat (€)" %}</td>
+				<td>{% trans "IVA Assignat (€)" %}</td>
+				<td>{% trans "Total Factura  (€)" %} </td>
+			</tr>
+			<tr>
+				<td> {{sales_base}}</td>
+				<td>{{sales_invoiced_vat}}</td>
+				<td>{{sales_assigned_vat}}</td>
+				<td>{{sales_total}}</td>
+			</tr>
+			<tr>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+			</tr>
+		</table>
+	</div>
+	  {% result_list cl %}
+	  {% if action_form and actions_on_bottom and cl.full_result_count %}{% admin_actions %}{% endif %}
+  {% endblock %}
+   

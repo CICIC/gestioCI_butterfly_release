@@ -30,34 +30,34 @@ class bot_purchases_invoice ( object ):
 			self.purchases_irpf += item.irpf()
 			self.purchases_total += item.total()
 
-from Finances.models import cooper, client, provider
+from Finances.models import iCf_Cooper, iCf_Client, iCf_Provider
 class bot_cooper( object ):
 	def __init__(self, user):
 		self.user = user
 	def cooper(self, request=None):
 		c = None
 		try:
-			c = cooper.objects.get(user=self.user)
-		except (KeyError, cooper.DoesNotExist):
+			c = iCf_Cooper.objects.get(user=self.user)
+		except (KeyError, iCf_Cooper.DoesNotExist):
 			if request:
 				from django.contrib import messages
 				if not request.user.is_superuser:
 					messages.error(request, 'El teu usuari ha sigut creat però el teu perfil de soci encara no està creat.')
-				return cooper.objects.filter(id=-1)
+				return iCf_Cooper.objects.filter(id=-1)
 		else:
 			return c
 	def clients(self):
 		try:
 			return self.cooper().clients.select_related()
 		except:
-			return client.objects.filter(id=-1)
+			return iCf_Client.objects.filter(id=-1)
 	def providers(self):
 		try:
 			return self.cooper().providers.select_related()
 		except:
-			return provider.objects.filter(id=-1)
+			return iCf_Provider.objects.filter(id=-1)
 
-from Finances.models import period
+from Finances.models import iCf_Period
 class bot_period( object ):
 	def __init__(self, user=None):
 		self.user = user
@@ -79,14 +79,14 @@ class bot_period( object ):
 	@staticmethod
 	def get_opened_periods(user):
 		#Get extradays that this user has to close
-		from Finances.models import cooper, iC_Period
+		from Finances.models import iCf_Cooper, iCf_Period
 		try:
-			nExtraDays = 0 if user.is_superuser else cooper.objects.get(user=user).extra_days 
+			nExtraDays = 0 if user.is_superuser else iCf_Cooper.objects.get(user=user).extra_days 
 		except:
 			nExtraDays = 0
 
 		#Return queryset
-		return 	iC_Period.objects.filter( 
+		return 	iCf_Period.objects.filter( 
 				first_day__lte=datetime.now(), 
 				date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
 				)
@@ -94,14 +94,14 @@ class bot_period( object ):
 	def get_opened_periods_list(user):
 		bot_
 		#Get extradays that this user has to close
-		from Finances.models import cooper, iC_Period
+		from Finances.models import iCf_Cooper, iCf_Period
 		try:
-			nExtraDays = 0 if user.is_superuser else cooper.objects.get(user=user).extra_days 
+			nExtraDays = 0 if user.is_superuser else iCf_Cooper.objects.get(user=user).extra_days 
 		except:
 			nExtraDays = 0
 
 		#Return queryset
-		return 	iC_Period.objects.filter( 
+		return 	iCf_Period.objects.filter( 
 				first_day__lte=datetime.now(), 
 				date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
 				)
@@ -172,9 +172,9 @@ class bot_period_close( object ):
 		if cooper and period:
 			self.period_close = self.load_period_close( obj, recalculate )
 	def load_period_close(self, obj=None, recalculate = False):
-		from Finances.models import period_close
+		from Finances.models import iCf_Period_close
 		if obj is None:
-			pc = period_close(self.period, self.cooper)
+			pc = iCf_Period_close(self.period, self.cooper)
 			pc.period = self.period
 			pc.cooper = self.cooper
 			pc.advanced_tax = self.cooper.advanced_tax
@@ -183,9 +183,9 @@ class bot_period_close( object ):
 
 		if recalculate:
 			from bots import bot_sales_invoice
-			from Finances.models import sales_invoice, purchases_invoice, tax
+			from Finances.models import iCf_Sale, iCf_Purchase, tax
 			bot = bot_sales_invoice( 
-				sales_invoice.objects.filter(
+				iCf_Sale.objects.filter(
 					period=self.period, 
 					cooper=self.cooper )
 				)
@@ -196,7 +196,7 @@ class bot_period_close( object ):
 
 			from bots import bot_purchases_invoice
 			bot = bot_purchases_invoice( 
-				purchases_invoice.objects.filter(
+				iCf_Purchase.objects.filter(
 					period=self.period, 
 					cooper=self.cooper) 
 				)
@@ -263,7 +263,7 @@ class bot_currency(object):
 	def get_change(self, value):
 		return (u"%s raó de canvi: Pendiente { moneda: [%s] moneda: [%s] moneda: [%s]}") % (value, value, value, value)
 
-from Finances.models import period_payment, sales_movement, status_CHOICE_PENDING, manage_CHOICE_COOPER
+from Finances.models import period_payment, iCf_Sales_movement, status_CHOICE_PENDING, manage_CHOICE_COOPER
 from datetime import date
 class bot_period_payment(object):
 	def __init__(self, period_close):
@@ -271,7 +271,7 @@ class bot_period_payment(object):
 	def create_sales_movements_for_period(self):
 		current_payments = period_payment.objects.filter( period_close = self.period_close )
 		for payment in current_payments:
-			new_sales_movement = sales_movement( 
+			new_sales_movement = iCf_Sales_movement( 
 							cooper = self.period_close.cooper,
 							concept = self.period_close.period.label,
 							value = payment.value,
@@ -281,7 +281,7 @@ class bot_period_payment(object):
 			new_sales_movement.save()
 
 from django.db.models import Sum
-from Finances.models import period_close, sales_invoice, purchases_invoice,  sales_movement, purchases_movement
+from Finances.models import iCf_Period_close, iCf_Sale, iCf_Purchase,  iCf_Sales_movement, iCf_Purchase_movement
 
 DEFAULT_CURRENCY = "EURO"
 class bot_balance(object):
@@ -293,25 +293,25 @@ class bot_balance(object):
 		purchases_invoice_total = 0
 
 		if currency is None:
-			sales_invoice_total = period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
-			purchase_invoice_total = period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
-			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
-			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+			sales_invoice_total = iCf_Period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
+			purchase_invoice_total = iCf_Period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
+			sales_movement_total = iCf_Sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+			purchase_movement_total = iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
 		else:
-			sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day, currency = currency, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
-			purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day, currency = currency,execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+			sales_movement_total = iCf_Sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day, currency = currency, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+			purchase_movement_total = iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day, currency = currency,execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
 		sales_movement_total = bot_object.get_value_or_zero(sales_movement_total)
 		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)
 		purchases_invoice_total = bot_object.get_value_or_zero(purchases_invoice_total)
 		purchase_movement_total = bot_object.get_value_or_zero(purchase_movement_total)
 		return sales_invoice_total - purchases_invoice_total + sales_movement_total - purchase_movement_total
 	def total_previous(self, currency = None):
-		sales_invoice_total = period_close.objects.exclude(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
-		purchase_invoice_total = period_close.objects.exclude(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
-		purchases_invoice.objects.filter(cooper=self.cooper.pk).exclude(period=self.period).purchases_base
+		sales_invoice_total = iCf_Period_close.objects.exclude(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
+		purchase_invoice_total = iCf_Period_close.objects.exclude(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
+		iCf_Purchase.objects.filter(cooper=self.cooper.pk).exclude(period=self.period).purchases_base
 
-		sales_movement_total = sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
-		purchase_movement_total = purchases_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+		sales_movement_total = iCf_Sales_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+		purchase_movement_total = iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
 
 		sales_movement_total = bot_object.get_value_or_zero(sales_movement_total)
 		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)

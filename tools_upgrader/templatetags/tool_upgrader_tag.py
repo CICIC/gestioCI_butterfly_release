@@ -24,6 +24,7 @@ from General.models import Human
 from Invoices.models import Soci
 from Invoices.models import v7_auth_user
 from django.db.models import Count
+from Finances.models import iCf_Record_Type, iCf_Record
 
 _prompt = " ⊙:> ".decode("utf-8")
 def _prompt_ico(ico=None):
@@ -103,31 +104,32 @@ def _get_GET(key, request):
 	else:
 		return False
 
+
 class upgrader_tool(object):
 	def check_periods(self):
 		#Main entity type
 		#... loop to process each entity
 		try:
-			period_type = iC_Record_Type.objects.get(clas="iC_Period")
+			period_type = iCf_Record_Type.objects.get(clas="iCf_Period")
 		except:
 			#Create if initializationg
-			period_type = iC_Record_Type(clas="iC_Period", 
+			period_type = iCf_Record_Type(clas="iCf_Period", 
 					name="Trimestre", 
 					description=_(u'Periode de facturació'))
 			if _get_GET("commit", self.request):
 				period_type.save()
 
 		#Entities of this type
-		from Finances.models import iC_Period
+		from Finances.models import iCf_Period
 		from Invoices.models import period
 		checked = False
 		for period in period.objects.all():
 			#... is this entity migrated?
-			checked = iC_Period.objects.filter(first_day=period.first_day).count()>0
+			checked = iCf_Period.objects.filter(first_day=period.first_day).count()>0
 			#... if need migration, migrate
 			if not checked:
 				#... create new object
-				p = iC_Period()
+				p = iCf_Period()
 				#... map fields
 				for field in period._meta.get_all_field_names():
 					try:
@@ -140,16 +142,16 @@ class upgrader_tool(object):
 				if _get_GET("commit", self.request):
 					p.save()
 			#...refresh existence flag
-			checked = checked or iC_Period.objects.filter(label=period.label).count()>0
+			checked = checked or iCf_Period.objects.filter(label=period.label).count()>0
 		#...
 		return ico_yes if checked else ico_no
 	def check_taxes(self):
 		#Main entity type
 		try:
-			tax_type = iC_Record_Type.objects.get(clas="iC_Taxes")
+			tax_type = iCf_Record_Type.objects.get(clas="iCf_Taxes")
 		except:
 			#Create if initializationg
-			tax_type = iC_Record_Type(clas="iC_Taxes", 
+			tax_type = iCf_Record_Type(clas="iCf_Taxes", 
 					name="Tasa", 
 					description=_(u'Càlcul Quota Trimestral, taula de quotes de ponderación segons facturació.).')
 				)
@@ -157,18 +159,18 @@ class upgrader_tool(object):
 				tax_type.save()
 
 		#Entities of this type
-		from Finances.models import iC_Tax
+		from Finances.models import iCf_Tax
 		from Invoices.models import periodTaxes
 		#... loop to process each entity
 		checked = False
 		for tax in periodTaxes.objects.all():
 			#... is this entity migrated?
-			checked = iC_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
+			checked = iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
 			#... if need migration, migrate
 			if not checked:
 
 				#... create new object
-				p = iC_Tax()
+				p = iCf_Tax()
 				#... map fields
 				for field in tax._meta.get_all_field_names():
 					try:
@@ -183,16 +185,16 @@ class upgrader_tool(object):
 				if _get_GET("commit", self.request):
 					p.save()
 			#...refresh existence flag
-			checked = checked or iC_Tax.objects.filter(min_base=tax.min_base, max_base=tax.min_base).count()>0
+			checked = checked or iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.min_base).count()>0
 		#...
 		return ico_yes if checked else ico_no
 	def check_duties(self):
 		#Main entity type
 		try:
-			duty_type = iC_Record_Type.objects.get(clas="iC_Duty")
+			duty_type = iCf_Record_Type.objects.get(clas="iCf_Duty")
 		except:
 			#Create if initializationg
-			duty_type = iC_Record_Type(clas="iC_Duty", 
+			duty_type = iCf_Record_Type(clas="iCf_Duty", 
 					name="Impuesto oficial del Estado", 
 					description=_(u'Impuestos oficiales como el I.V.A. o el I.A.E.')
 				)
@@ -200,17 +202,17 @@ class upgrader_tool(object):
 				duty_type.save()
 
 		#Entities of this type
-		from Finances.models import iC_Duty
+		from Finances.models import iCf_Duty
 		from Invoices.models import VATS
 		#... loop to process each entity
 		checked = False
 		for duty in VATS.objects.all():
 			#... is this entity migrated?
-			checked = iC_Duty.objects.filter(value=duty.value).count()>0
+			checked = iCf_Duty.objects.filter(value=duty.value).count()>0
 			#... if need migration, migrate
 			if not checked:
 				#... create new object
-				p = iC_Duty()
+				p = iCf_Duty()
 				#... map fields
 				for field in duty._meta.get_all_field_names():
 					try:
@@ -223,7 +225,7 @@ class upgrader_tool(object):
 				if _get_GET("commit", self.request):
 					p.save()
 			#...refresh existence flag
-			checked = checked or iC_Duty.objects.filter(value=duty.value).count()>0
+			checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
 		#...
 		return ico_yes if checked else ico_no
 	def check_invoices(self):
@@ -510,14 +512,14 @@ class statics_object(object):
 		links = []
 
 		#Section 1
-		from Finances.models import cooper
+		from Finances.models import iCf_Cooper
 		links_members = []
 		links_members.append(_folder(_prompt +
 			"Total membres",
-			"Finances_cooper.count(): " + str(cooper.objects.all().count() ) 
+			"Finances_iCf_Cooper.count(): " + str(iCf_Cooper.objects.all().count() ) 
 			) )
 		#1.1
-		coops_per_member = cooper.objects.values("coop__name").annotate(count=Count("coop"))
+		coops_per_member = iCf_Cooper.objects.values("ic_membership__ic_company__name").annotate(count=Count("ic_membership__ic_company__name"))
 		links_coops = []
 		for coop in coops_per_member:
 			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
@@ -525,23 +527,33 @@ class statics_object(object):
 
 		#Section 2
 		links_companies = []
-		from Finances.models import company
-		links_companies.append(_folder(_prompt +"Finances_company.count()", str(company.objects.all().count())))
+		from Finances.models import iCf_Company
+		links_companies.append(_folder(_prompt +"Finances_company.count()", str(iCf_Company.objects.all().count())))
 		#Section 3
 		links_section3 = []
 		#3.-1
 		from Welcome.templatetags import cooper_folder_tag
 		links_section3.append(cooper_folder_tag._invoicing_periods_folder(self))
 		#3.0
-		from Finances.models import iC_Tax
+		from Finances.models import iCf_Tax
 		links_taxes = []
-		total_str = "Tax: (total %s)" % (iC_Tax.objects.all().count())
-		links_section3.append(_folder(_prompt + total_str, _links_list_to_ul(iC_Tax.objects.all())))
+		total_str = "Tax: (total %s)" % (iCf_Tax.objects.all().count())
+		links_section3.append(_folder(_prompt + total_str, _links_list_to_ul(iCf_Tax.objects.all())))
 		#3.1
-		from Finances.models import iC_Duty
+		from Finances.models import iCf_Duty
 		links_vats = []
-		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(iC_Duty.objects.all().values("value"))))
+		links_vats.append(_folder(_prompt +"Invoices_VATS", _links_list_to_ul(iCf_Duty.objects.all().values("value"))))
 		#3.2
+<<<<<<< HEAD
+		links_invoices = []
+		from Finances.models import iCf_Purchase, iCf_Sale
+		links_invoices.append(_folder(_prompt +"Finances_iCf_Sale.count()", str(iCf_Sale.objects.all().count())))
+		links_invoices.append(_folder(_prompt +"Finances_iCf_Purchase.count()", str(iCf_Purchase.objects.all().count())))
+		from Finances.models import iCf_Purchase_line, iCf_Sale_line
+		links_invoices.append(_folder(_prompt +"Finances_iCf_Sale_line.count()", str(iCf_Sale_line.objects.all().count())))
+		links_invoices.append(_folder(_prompt +"Finances_iCf_Purchase_line.count()", str(iCf_Purchase_line.objects.all().count())))
+
+=======
 		links_invoices =[]
 		from Finances.models import purchases_invoice, sales_invoice
 		caption = _prompt_ico(upgrader_tool(self.request).check_invoices())
@@ -563,10 +575,11 @@ class statics_object(object):
 		content = _folder(  "-", content)
 		content += _folder("Periods",_links_list_to_ul(PeriodClose.objects.all()[:5]))
 		links_invoices.append(_folder(caption, content))
+>>>>>>> master
 		#Section 5
 		links_balances = []
-		from Finances.models import period_close
-		periods = period_close.objects.values("period").annotate(count=Count('period'))
+		from Finances.models import iCf_Period_close
+		periods = iCf_Period_close.objects.values("period").annotate(count=Count('period'))
 		links_balances.append(_folder(_prompt + "Periodes", _links_list_to_ul(periods) ))
 
 		links.append(_folder(_section("Coopers"), _links_list_to_ul(links_members)))
@@ -613,9 +626,9 @@ class statics_object(object):
 						)
 
 		#Section 6
-		from Welcome.models import iC_Record_Type, iC_Record
-		for type in iC_Record_Type.objects.all():
-			links_types.append( type.name + " | " + type.clas + "| #" + str( iC_Record.objects.filter(record_type = type).count()))
+		from Finances.models import iCf_Record_Type, iCf_Record
+		for type in iCf_Record_Type.objects.all():
+			links_types.append( type.name + " | " + type.clas + "| #" + str( iCf_Record.objects.filter(record_type = type).count()))
 		links.append( _folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append( _folder(_section("Companies"), _links_list_to_ul(links_companies)))
 		links.append( _folder(_section("Mother Coops"), _links_list_to_ul(links_coop)))
