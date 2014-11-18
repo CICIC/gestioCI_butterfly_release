@@ -23,6 +23,8 @@ Developer group renders some monthly papers [Dev group plan] (https://wiki.enred
 
 There is specific current [Butterfly plan] (https://wiki.enredaos.net/index.php?title=Talk:CICICdev/november#Plan_butterfly) on the road.
 
+Follow [gestioci v08 deployment progress](https://wiki.enredaos.net/index.php?title=CICICdev/november#GESTIO_DEV:_Butterfly_Deploying) in November paper.
+
 INFO
 --------------------
 Browse to [current dev group working progress page] (https://wiki.enredaos.net/index.php?title=Desarrollo#GESTIO-DEV) to get in touch.
