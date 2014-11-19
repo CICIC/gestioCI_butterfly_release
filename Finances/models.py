@@ -289,7 +289,7 @@ class iCf_Invoice(iCf_Record):
 	unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
 
 	lines = models.ForeignKey('Finances.iCf_Invoice_line', related_name='rel_lines', blank=True, null=True, verbose_name=_(u"Línes"))
-	value = models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la factura. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=65)
+
 	def _ic_membership(self):
 		#print 'ic_MEMBERSHIP'
 		#print self.membership.all()

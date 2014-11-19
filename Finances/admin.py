@@ -328,6 +328,8 @@ class purchases_invoice_admin (purchases_invoice_user):
 admin.site.register(iCf_Purchase, purchases_invoice_admin)
 
 class company_admin(ModelAdmin):
+	from General.forms import company_form
+	form = company_form
 	fields = ['name', 'CIF', 'otherCIF']
 	list_display = ('name', 'CIF', 'otherCIF')
 	search_fields = ['name', 'CIF', 'otherCIF']
