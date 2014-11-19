@@ -119,12 +119,18 @@ def _counter_plus(counters, key):
 	else:
 		counters[key] = 1
 # - Invoice to Finances parser
+def _get_company(company):
+	CIF
+	otherCIF
+	icf_company = iCf_Company()
+	return icf_company
 class tool_invoice_upgrader(object):
-	def __init__(self, invoices, invoice, commit, counters):
+	def __init__(self, invoices, icf_invoices, invoice, commit, counters):
 		self.invoice = invoice
 		self.commit = commit
 		self.counters = counters
-		self.icf_invoice_set = invoices
+		self.invoice_set = invoices
+		self.icf_invoice_set = icf_invoices
 		from Invoices.models import Soci
 		try:
 			self.v7_cooper = Soci.objects.get(user=invoice.user)
@@ -139,6 +145,8 @@ class tool_invoice_upgrader(object):
 			except ObjectDoesNotExist as e:
 				_counter_plus(counters, "invoices_missing_cooper_v8")
 				self.v8_cooper = None
+		#
+		self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
 
 	def need_to_migrate(self):
 		try:
@@ -149,21 +157,54 @@ class tool_invoice_upgrader(object):
 			return False
 	def has_lines(self):
 		try:
-			rows = self.icf_invoice_set.objects.filter(icf_cooper = self.v8_cooper, num = self.invoice.num)
+			rows = self.invoice_set.objects.filter(
+								period=self.invoice.period, 
+								user=self.invoice.user, 
+								num=self.invoice.num) 
 			rows = rows.values("num").annotate(count=Count("num"))
 			return rows.count() > 1
 		except Exception as e:
-			print "tool_invoice_upgrader - error - hsa_lines"
+			print "tool_invoice_upgrader - error - on has_lines"
 			print e
 			return False
 	def save_lines(self):
 		return False
+
 	def migrate(self):
-		return False
+		#
+		uncommited_invoice = ui = iCf_Invoice()
+		try:
+			#
+			ui.icf_cooper = self.v8_cooper
+			ui.period = self.icf_period
+			#Warning: Duplicate fields
+			ui.date= self.invoice.date
+			ui.issue_date = self.invoice.date
+			ui.expiring_date=self.icf_period.date_close
+			ui.deadline_date = self.icf_period.date_close
+			#who_manage= ???
+			ui.payment_date = self.icf_period.date_close
+			ui.payment_type = Welcome.Payment_Type.objects.get(name,"euro o transferencia fiduciaria")
+			ui.transfer_date = self.icf_period.date_close
+			#rel_account = None
+			#
+			ui.unit = General.Unit.objects.get("euro")
+			ui.lines = None
+			#
+			uncommited_invoice = ui
+		except Exception as e
+			print "tool_invoice_upgrader - error - on: migrate()"
+			print e
+			return False
+		return uncommmited_invoice
+
 class tool_sales_upgrader(tool_invoice_upgrader):
 	def __init__(self, invoice, commit, counters):
 		from Finances.models import iCf_Sale
-		super(tool_sales_upgrader, self).__init__(iCf_Sale, invoice, commit, counters)
+		from Invoices.models import SalesInvoice
+		super(tool_sales_upgrader, self).__init__(SalesInvoice, iCf_Sale, invoice, commit, counters)
+		#
+		self.icf_company = _get_company(invoice.client)
 	def need_to_migrate(self ):
 		return super(tool_sales_upgrader, self).need_to_migrate()
 	def has_lines(self):
@@ -172,12 +213,18 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		super(tool_sales_upgrader, self).save_lines()
 		return False
 	def migrate(self):
-		super(tool_sales_upgrader, self).migrate()
-		return False
+		iCf_Invoice = super(tool_sales_upgrader, self).save_lines()
+		s = iCf_Sale(iCf_Invoice)
+		s.invoice = models.OneToOneField('Finances.iCf_Invoice', primary_key=True, parent_link=True)
+		s.num=self.num
+		s.client = self.company
+
 class tool_purchases_upgrader(tool_invoice_upgrader):
 	def __init__(self, invoice, commit, counters):
 		from Finances.models import iCf_Purchase
-		super(tool_purchases_upgrader, self).__init__(iCf_Purchase, invoice, commit, counters)
+		from Invoices.models import PurchaseInvoice
+		super(tool_purchases_upgrader, self).__init__(PurchaseInvoice, iCf_Purchase, invoice, commit, counters)
+		self.icf_company = _get_company(invoice.provider)
 	def need_to_migrate(self ):
 		return super(tool_purchases_upgrader, self).need_to_migrate()
 	def has_lines(self):
@@ -190,6 +237,9 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		return False
 # - Main Tool
 class upgrader_tool(object):
+	def _print(self, text):
+		if _get_GET("prints", self.request):
+			print "[upgrader_tool_ %s]" % (text)
 	def _break(self,break_=True):
 		_break(_get_GET("breaks", self.request) and break_)
 	def __init__(self, request):
@@ -210,6 +260,8 @@ class upgrader_tool(object):
 	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
 	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10&query_offset=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
 			self.menus.append( _link( "/admin/?commit", _prompt + "commit") + ": [boolean] => Will execute the process also against BBDD. This flag is before every CRUD action is going to be performed.")
+			#breaks = bool
+			#prints = bool
 
 	def counters_plus(self, counter_name):
 		self._break()
@@ -349,68 +401,56 @@ class upgrader_tool(object):
 			checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
 		#...
 		return ico_yes if checked else ico_no
-	def check_sales(self, invoices):
+	def check_invoice_loop(self, label, invoices):
 		all_invoices_are_ok = False
 		_v8_missing_list = []
 		for invoice in invoices:
+			self._print("[%s: loop invoices for: %s]" % (label, str(invoice.number())) )
 			try:
-				tsu = tool_sales_upgrader(invoice, self.commit(), self.counters)
+				if label == "check_sales":
+					tsu = tool_sales_upgrader(invoice, self.commit(), self.counters)
+				else:
+					tsu = tool_purchases_upgrader(invoice, self.commit(), self.counters)
+				self._print("[%s: have tsu" % (label))
 			except:
+				self._print("[%s: error creating tsu" % (label))
 				result = False
 			else:
 				if not tsu.v8_cooper:
 					caption = "Soci: %s Fact: %s" % (tsu.v7_cooper.__unicode__(), str(invoice.num) )
+					self._print("[%s: don't have v8_cooper >> %s]" % (label, caption) )
 					_v8_missing_list.append(caption)
-				if tsu.need_to_migrate():
-					all_invoices_are_ok = False
-					self.counters_plus("Sales_need_to_migrate")
-					all_lines_are_ok = not tsu.has_lines()
-					if tsu.has_lines():
-						self.counters_plus("Sales_need_to_migrate_plus_has_lines")
-						if self.commit:
-							all_lines_are_ok = tsu.save_lines()
-					else:
-						self.counters_plus("Sales_need_to_migrate_plus_NO_has_lines")
-					if all_lines_are_ok:
-						if self.commit:
-							all_invoices_are_ok = all_invoices_are_ok and tsu.migrate()
 				else:
-					self.counters_plus("Sales_matching")
-					all_invoices_are_ok = True
-		c = _prompt_ico(ico_yes if all_invoices_are_ok else ico_no) + "Sales (total " + str(invoices.all().count()) + ")"
-		cc = _links_list_to_ul(_v8_missing_list)
-		folder = _folder(c, cc)
-		return all_invoices_are_ok, folder
-	def check_purchases(self, invoices):
-		all_invoices_are_ok = False
-		_v8_missing_list = []
-		for invoice in invoices:
-			try:
-				tsu = tool_purchases_upgrader(invoice, self.commit(), self.counters)
-			except:
-				result = False
-			else:
-				if not tsu.v8_cooper:
-					caption = "Soci: %s Fact: %s" % (tsu.v7_cooper.__unicode__(), str(invoice.num) )
-					_v8_missing_list.append(caption)
-				if tsu.need_to_migrate():
-					all_invoices_are_ok = False
-					self.counters_plus("purchases_need_to_migrate")
-					all_lines_are_ok = not tsu.has_lines()
-					if tsu.has_lines():
-						self.counters_plus("purchases_need_to_migrate_plus_has_lines")
-						if self.commit:
-							all_lines_are_ok = tsu.save_lines()
+					self._print("[%s: search for existing migrated..." % (label))
+					if tsu.need_to_migrate():
+						self._print("[%s: needs to migrate!" % (label))
+						all_invoices_are_ok = False
+						self.counters_plus("%s_need_to_migrate" % (label))
+						if self.commit():
+							self._print("[%s: migrating process >> attempt to save invoice" % (label))
+							result = tsu.migrate()
+							self._print("[%s: save invoice: migrating process >> saved with result %s" % (label, result) )
+						else:
+							self._print("[%s: migrating process >> Commit not activated" % (label) )
+						self._print("[%s: migrating process >> search for lines" % (label))
+						if tsu.has_lines():
+							self._print("[%s: migrating process >> has lines!")
+							self.counters_plus("%s_has_lines" % (label))
+							if self.commit():
+								self._print("[%s: migrating process >> attempt to save lines" % (label))
+								all_lines_are_ok = tsu.save_lines()
+								self._print("[%s: migrating process >> saved with result %s" % (all_lines_are_ok) )
+							else:
+								self._print("[%s: save lines >> Commit not activated" % (label) )
+						else:
+							self._print("[%s: migrating process >> has no lines!" % (label))
+							self.counters_plus("%s_NO_has_lines" % (label))
+
 					else:
-						self.counters_plus("purchases_need_to_migrate_plus_NO_has_lines")
-					if all_lines_are_ok:
-						if self.commit:
-							all_invoices_are_ok = all_invoices_are_ok and tsu.migrate()
-				else:
-					import pdb; pdb.set_trace()
-					self.counters_plus("purchases_matching")
-					all_invoices_are_ok = True
-		c = _prompt_ico(ico_yes if all_invoices_are_ok else ico_no) + "purchases (total " + str(invoices.all().count()) + ")"
+						self._print("[%s: migrating process >> no need to migrate!" % (label))
+						self.counters_plus("%s_matching" % (label))
+						all_invoices_are_ok = True
+		c = _prompt_ico(ico_yes if all_invoices_are_ok else ico_no) + ("%s (total " % (label)) + str(invoices.all().count()) + ")"
 		cc = _links_list_to_ul(_v8_missing_list)
 		folder = _folder(c, cc)
 		return all_invoices_are_ok, folder
@@ -419,10 +459,10 @@ class upgrader_tool(object):
 		offset = self.request.GET.get("query_offset", 0)
 
 		records = self.request.GET.get("query_count", SalesInvoice.objects.all().count()-1)
-		result_sales, sales_folder = self.check_sales(SalesInvoice.objects.all().order_by("user", "num")[offset:records])
+		result_sales, sales_folder = self.check_invoice_loop("check_sales", SalesInvoice.objects.all().order_by("user", "num")[offset:records])
 
 		records = self.request.GET.get("query_count", PurchaseInvoice.objects.all().count()-1)
-		result_purchases, purchases_folder = self.check_purchases(PurchaseInvoice.objects.all().order_by("user", "num")[offset:records])
+		result_purchases, purchases_folder = self.check_invoice_loop("check_purchases", PurchaseInvoice.objects.all().order_by("user", "num")[offset:records])
 
 		return result_sales, result_purchases, sales_folder, purchases_folder
 	def check_balance(self):
