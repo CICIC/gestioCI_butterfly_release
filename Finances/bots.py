@@ -1,5 +1,5 @@
 #encoding=utf-8
-
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.contrib.admin import ModelAdmin
 from decimal import Decimal
@@ -56,6 +56,15 @@ class bot_cooper( object ):
 			return self.cooper().providers.select_related()
 		except:
 			return iCf_Provider.objects.filter(id=-1)
+class bot_icf_cooper( bot_cooper ):
+	def __init__(self, num_ces):
+		self.num_ces = num_ces
+		from Finances.models import iCf_Cooper
+		try:
+			self.user = iCf_Cooper.objects.get(ic_membership__ic_CESnum = num_ces).user
+		except ObjectDoesNotExist:
+			self.user = None
+
 
 from Finances.models import iCf_Period
 class bot_period( object ):

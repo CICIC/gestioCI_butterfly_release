@@ -475,8 +475,8 @@ class iCf_Purchase_line (iCf_Invoice_line):
 #Transactions
 class iCf_Movement (iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
-	icf_cooper=models.ForeignKey(iCf_Cooper, null=False, blank=False, verbose_name=_(u"nº COOP"))
-	concept=models.CharField(verbose_name=_(u"Concept"), max_length=200, null=False, 
+	icf_cooper = models.ForeignKey(iCf_Cooper, null=False, blank=False, verbose_name=_(u"nº COOP"))
+	concept = models.CharField(verbose_name=_(u"Concept"), max_length=200, null=False, 
 		blank=False,)
 	execution_date=models.DateField(verbose_name=_(u"Data de realització"), null=True, blank=True, help_text=_(u"La data en que es realitza. Exemple dd/mm/aaaa"))
 	value=models.DecimalField(
@@ -635,13 +635,14 @@ class cooper_proxy_companies(iCf_Cooper):
 		verbose_name_plural= _(u'B - Els meus clients i proveïdors')
 		proxy = True
 class cooper_proxy_balance(iCf_Cooper):
-
 	class Meta:
 		verbose_name= _(u'L - Balanç projecte')
 		verbose_name_plural= _(u'L - Balanç projectes')
 		proxy = True
+
 class cooper_proxy_transactions(iCf_Cooper):
 	class Meta:
 		verbose_name= _(u'K - Transaccions')
 		verbose_name_plural= _(u'K - Transaccions')
-		proxy=True
+		proxy = True
+

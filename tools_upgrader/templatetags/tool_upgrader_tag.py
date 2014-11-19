@@ -25,7 +25,7 @@ from Invoices.models import Soci
 from Invoices.models import v7_auth_user
 from django.db.models import Count
 from Finances.models import iCf_Record_Type, iCf_Record
-
+from django.core.exceptions import ObjectDoesNotExist
 _prompt = " ⊙:> ".decode("utf-8")
 def _prompt_ico(ico=None):
 	output = _prompt
@@ -63,7 +63,6 @@ def _get_label_error( caption, field, required = True):
 			str_out = ""
 	return str_out
 def _render_person(rel, admin_path="/cooper/"):
-
 	out = ""
 	if hasattr(rel, 'person'):
 		person = rel.person
@@ -103,9 +102,110 @@ def _get_GET(key, request):
 		return request.GET.get(key)
 	else:
 		return False
+def _break(break_= True):
+	if not break_:
+		#import pdb;pdb.set_trace()
+		pass
+def _counter_plus(counters, key):
+	if key in counters:
+		counters[key] += 1
+	else:
+		counters[key] = 1
 
+class tool_invoice_upgrader(object):
+	def __init__(self, invoices, invoice, commit, counters):
+		self.invoice = invoice
+		self.commit = commit
+		self.counters = counters
+		self.icf_invoice_set = invoices
+		from Invoices.models import Soci
+		try:
+			self.v7_cooper = Soci.objects.get(user=invoice.user)
+		except ObjectDoesNotExist as e:
+			_counter_plus("invoices_missing_cooper_v7")
+			self.v7_cooper = None
+		else:
+			self.num_ces = self.v7_cooper.__unicode__()
+			from Welcome.models import iC_Membership
+			try:
+				self.v8_cooper = iC_Membership.objects.get(ic_CESnum=self.num_ces)
+			except ObjectDoesNotExist as e:
+				_counter_plus(counters, "invoices_missing_cooper_v8")
+				self.v8_cooper = None
+
+	def need_to_migrate(self):
+		try:
+			return self.icf_invoice_set.objects.filter(icf_cooper = self.v8_cooper, num = self.invoice.num).count() < 1
+		except Exception as e:
+			print "tool_invoice_upgrader - error - need_to_migrate"
+			print e
+			return False
+	def has_lines(self):
+		try:
+			rows = self.icf_invoice_set.objects.filter(icf_cooper = self.v8_cooper, num = self.invoice.num)
+			rows = rows.values("num").annotate(count=Count("num"))
+			return rows.count() > 1
+		except Exception as e:
+			print "tool_invoice_upgrader - error - hsa_lines"
+			print e
+			return False
+	def save_lines(self):
+		return False
+	def migrate(self):
+		return False
+class tool_sales_upgrader(tool_invoice_upgrader):
+	def __init__(self, invoice, commit, counters):
+		from Finances.models import iCf_Sale
+		super(tool_sales_upgrader, self).__init__(iCf_Sale, invoice, commit, counters)
+	def need_to_migrate(self ):
+		return super(tool_sales_upgrader, self).need_to_migrate()
+	def has_lines(self):
+		return super(tool_sales_upgrader, self).has_lines()
+	def save_lines(self):
+		super(tool_sales_upgrader, self).save_lines()
+		return False
+	def migrate(self):
+		super(tool_sales_upgrader, self).migrate()
+		return False
 
 class upgrader_tool(object):
+	def _break(self,break_=True):
+		_break(_get_GET("breaks", self.request) and break_)
+	def __init__(self, request):
+		self.request = request
+		self.counters = {}
+
+		self.menus = []
+		self.menus_add()
+
+	def menus_add(self, menu=None):
+		if menu:
+			self.menus.append( menu )
+		else:
+			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1", _prompt + "statics") + ": [boolean] => Shows full system upgrade statics info. One column for Invoices(gestio.cooperatica.cat); One column for Finances and one for Welcome(both butterfly APP's)")
+			self.menus.append( _link( "/admin/?statics=1&execution=1", _prompt + "execution") + ": [boolean] => Will execute the process. Filter query if it lasts too much.")
+			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1", _prompt + "counters") + ": [boolean] => Will show or not counters section,")
+			self.menus.append( _link( "/admin/?statics=1&execution=1&list=1", _prompt + "list" ) + ": [boolean] => Will show or not list displays." )
+	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
+	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10&query_offset=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
+			self.menus.append( _link( "/admin/?commit", _prompt + "commit") + ": [boolean] => Will execute the process also against BBDD. This flag is before every CRUD action is going to be performed.")
+
+	def counters_plus(self, counter_name):
+		self._break()
+		_counter_plus(self.counters, counter_name)
+	def counters_render(self):
+		list = []
+		for k,v in self.counters.iteritems():
+			try:
+				caption = _prompt + str(k)
+			except:
+				caption  = k
+			list.append(_folder( caption,v))
+		self._break()
+		return _folder("Counters", mark_safe(_links_list_to_ul(list)))
+
+	def commit(self):
+		return _get_GET("commit", self.request)
 	def check_periods(self):
 		#Main entity type
 		#... loop to process each entity
@@ -228,19 +328,51 @@ class upgrader_tool(object):
 			checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
 		#...
 		return ico_yes if checked else ico_no
+	def check_sales(self, invoices):
+		all_invoices_are_ok = False
+		_v8_missing_list = []
+		for invoice in invoices:
+			try:
+				tsu = tool_sales_upgrader(invoice, self.commit(), self.counters)
+			except:
+				result = False
+			else:
+				if not tsu.v8_cooper:
+					caption = "Soci: %s Fact: %s" % (tsu.v7_cooper.__unicode__(), str(invoice.num) )
+					_v8_missing_list.append(caption)
+				if tsu.need_to_migrate():
+					all_invoices_are_ok = False
+					self.counters_plus("Sales_need_to_migrate")
+					all_lines_are_ok = not tsu.has_lines()
+					if tsu.has_lines():
+						self.counters_plus("Sales_need_to_migrate_plus_has_lines")
+						if self.commit:
+							all_lines_are_ok = tsu.save_lines()
+					else:
+						self.counters_plus("Sales_need_to_migrate_plus_NO_has_lines")
+					if all_lines_are_ok:
+						if self.commit:
+							all_invoices_are_ok = all_invoices_are_ok and tsu.migrate()
+				else:
+					self.counters_plus("Sales_matching")
+					all_invoices_are_ok = True
+		c = _prompt_ico(ico_yes if all_invoices_are_ok else ico_no) + "Sales (total " + str(invoices.all().count()) + ")"
+		cc = _links_list_to_ul(_v8_missing_list)
+		folder = _folder(c, cc)
+		return all_invoices_are_ok, folder
+	def check_purchases(self, invoices):
+		return False, _folder("Purchases","-")
 	def check_invoices(self):
-		return ico_no
-		#Main entity type
-		try:
-			duty_type = iC_Record_Type.objects.get(clas="iC_Duty")
-		except:
-			#Create if initializationg
-			duty_type = iC_Record_Type(clas="iC_Duty", 
-					name="Impuesto oficial del Estado", 
-					description=_(u'Impuestos oficiales como el I.V.A. o el I.A.E.')
-				)
-			if _get_GET("commit", self.request):
-				duty_type.save()
+		from Invoices.models import SalesInvoice, PurchaseInvoice
+		offset = self.request.GET.get("query_offset", 0)
+
+		records = self.request.GET.get("query_count", SalesInvoice.objects.all().count()-1)
+		result_sales, sales_folder = self.check_sales(SalesInvoice.objects.all().order_by("user", "num")[offset:records])
+
+		records = self.request.GET.get("query_count", PurchaseInvoice.objects.all().count()-1)
+		result_purchases, purchases_folder = self.check_purchases(PurchaseInvoice.objects.all().order_by("user", "num")[offset:records])
+
+		return result_sales, result_purchases, sales_folder, purchases_folder
 	def check_balance(self):
 		return ico_no
 		#Main entity type
@@ -281,55 +413,23 @@ class upgrader_tool(object):
 			checked = checked or iC_Duty.objects.filter(value=duty.value).count()>0
 		#...
 		return ico_yes if checked else ico_no
-	def __init__(self, request):
-		self.request = request
-		self.counters = {}
-
-		self.menus = []
-		self.menus_add()
-
-	def menus_add(self, menu=None):
-		if menu:
-			self.menus.append( menu )
-		else:
-			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1", _prompt + "statics") + ": [boolean] => Shows full system upgrade statics info. One column for Invoices(gestio.cooperatica.cat); One column for Finances and one for Welcome(both butterfly APP's)")
-			self.menus.append( _link( "/admin/?statics=1&execution=1", _prompt + "execution") + ": [boolean] => Will execute the process. Filter query if it lasts too much.")
-			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1", _prompt + "counters") + ": [boolean] => Will show or not counters section,")
-			self.menus.append( _link( "/admin/?statics=1&execution=1&list=1", _prompt + "list" ) + ": [boolean] => Will show or not list displays." )
-	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
-	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10&query_offset=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
-			self.menus.append( _link( "/admin/?commit", _prompt + "commit") + ": [boolean] => Will execute the process also against BBDD. This flag is before every CRUD action is going to be performed.")
-
-	def counter_plus(self, counter_name):
-		if counter_name in self.counters:
-			self.counters[counter_name] += 1
-		else:
-			self.counters[counter_name] = 1
-	def counter_render(self):
-		list = []
-		for k,v in self.counters.iteritems():
-			try:
-				caption = _prompt + str(k)
-			except:
-				caption  = k
-			list.append(_folder( caption,v))
-		return _folder("Counters", mark_safe(_links_list_to_ul(list)))
 
 	def sync_soci_cooper(self, soci):
-		self.counter_plus("processed")
+		self._break()
+		self.counters_plus("processed")
 		recs_list = []
 		try:
 			v8 = iC_Membership.objects.get(ic_CESnum=soci.__unicode__())
-			self.counter_plus("iC_Membership.ic_CESnum || Invoices.soci.__unicode__")
+			self.counters_plus("iC_Membership.ic_CESnum || Invoices.soci.__unicode__")
 			if v8._is_selfemployed():
 				recs = v8.selfemployed_recs.all()
 				for rec in recs:
 					recs_list.append( _link( rec._get_next(), rec.__unicode__()) )
 					avatar = rec.record_type.clas.lower()
-					self.counter_plus(rec.record_type.clas.lower())
+					self.counters_plus(rec.record_type.clas.lower())
 			else:
 				avatar = v8.record_type.clas.lower()
-				self.counter_plus(v8.record_type.clas.lower())
+				self.counters_plus(v8.record_type.clas.lower())
 
 			recs_list.append(_render_person(v8.human))
 			folder_title = _avatar("20", avatar) + v8._self_link()
@@ -342,7 +442,7 @@ class upgrader_tool(object):
 			v7 = None
 
 		if not v8:
-			self.counter_plus("[Missing]")
+			self.counters_plus("[Missing]")
 
 		user_title = v7.username if v7 else "[user not in v7_auth_user]"
 
@@ -351,15 +451,16 @@ class upgrader_tool(object):
 
 	def execute(self):
 		result_list = []
-		records = self.request.GET.get("query_count", Soci.objects.all().count())
+		records = self.request.GET.get("query_count", Soci.objects.all().count()-1)
 		offset = self.request.GET.get("query_offset", 0)
 		loop_query = Soci.objects.all().order_by("coop_number")[offset:records]
-
+		self._break()
 		for soci in loop_query:
+			result_list.append("processing " + soci.__unicode__() )
 			try:
 				result_list.append(self.sync_soci_cooper(soci))
 			except Exception as e:
-				return "Error al procesar" #e.message
+				return "Error al procesar: >s " + e.message
 		g = self.request.GET
 		caption = "%s: (registros desde %s a %s)" % ("List", g.get("query_offset", "primero"), g.get("query_count", "último") )
 
@@ -367,7 +468,7 @@ class upgrader_tool(object):
 
 	def process(self):
 		execution = self.execute() if _get_GET("execution", self.request) else ""
-		counters = self.counter_render() if _get_GET("counters", self.request) else ""
+		counters = self.counters_render() if _get_GET("counters", self.request) else ""
 		list = execution if _get_GET("list", self.request) else ""
 		return mark_safe(counters+list)
 
@@ -463,17 +564,17 @@ class statics_object(object):
 		caption += " Duties: " + str(VATS.objects.all().count())
 		content = _links_list_to_ul(VATS.objects.all())
 		links_duties.append(_folder(caption, content))
-
 		#3.2
-		links_invoices =[]
 		from Invoices.models import SalesInvoice, PurchaseInvoice
-		caption = _prompt_ico(upgrader_tool(self.request).check_invoices())
-		caption += " Invoices: " 
-		caption2 = " { Emeses: " + str(SalesInvoice.objects.all().count())
-		caption2 += " }, {Despeses: " + str(PurchaseInvoice.objects.all().count()) + "}"
-		content = _folder("Emeses",_links_list_to_ul(SalesInvoice.objects.all()[:5]))
-		content += _folder( "Despeses", _links_list_to_ul(PurchaseInvoice.objects.all()[:5]))
-		links_invoices.append(_folder(caption, content))
+		links_invoices =[]
+		ut = upgrader_tool(self.request)
+		sales_ok, purchase_ok, sales_folder, purchase_folder = ut.check_invoices()
+
+		caption = _prompt_ico(ico_yes if sales_ok and purchase_ok else ico_no)
+		caption += " Invoices"
+		content = _links_list_to_ul((sales_folder,purchase_folder))
+		links_invoices.append(_folder(caption, content + ut.counters_render()))
+
 
 		#section 3.3
 		links_balances =[]
@@ -496,15 +597,15 @@ class statics_object(object):
 
 		#Section 5
 		links_balances = []
-		
+
 		links_balances.append(_folder(_prompt +"Invoices_PeriodClose.count()", str(PeriodClose.objects.all().count())))
 		periods = PeriodClose.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))
 		links_balances.append(_folder(_prompt + "-", _links_list_to_ul(periods) ))
 
 		#Render
+		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_invoices + links_periods + links_taxes + links_duties +  links_balances )) )
 		links.append( _folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append( _folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_periods + links_taxes + links_duties + links_invoices + links_balances )) )
 		links.append( _folder(_section("Mother Coops"), _links_list_to_ul(links_coop)))
 
 		return links
@@ -614,7 +715,6 @@ class statics_object(object):
 		return links
 
 	def render_group(self,group):
-
 		image = "<h2>%s</h2>" % (group)
 
 		if group == "Invoices":
