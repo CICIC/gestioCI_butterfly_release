@@ -1,4 +1,10 @@
 #encoding=utf-8
+
+# Uses:
+# App: {General, Welcome, Finances, tools_upgrader}
+# Templates = {/templates/admin/invoices_super.html}
+
+# - imports
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import gettext as __
 change_class = " class='changelink' "
@@ -26,6 +32,7 @@ from Invoices.models import v7_auth_user
 from django.db.models import Count
 from Finances.models import iCf_Record_Type, iCf_Record
 from django.core.exceptions import ObjectDoesNotExist
+# - vars and shortcuts
 _prompt = " ⊙:> ".decode("utf-8")
 def _prompt_ico(ico=None):
 	output = _prompt
@@ -111,7 +118,7 @@ def _counter_plus(counters, key):
 		counters[key] += 1
 	else:
 		counters[key] = 1
-
+# - Invoice to Finances parser
 class tool_invoice_upgrader(object):
 	def __init__(self, invoices, invoice, commit, counters):
 		self.invoice = invoice
@@ -167,7 +174,6 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 	def migrate(self):
 		super(tool_sales_upgrader, self).migrate()
 		return False
-
 class tool_purchases_upgrader(tool_invoice_upgrader):
 	def __init__(self, invoice, commit, counters):
 		from Finances.models import iCf_Purchase
@@ -182,7 +188,7 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 	def migrate(self):
 		super(tool_purchases_upgrader, self).migrate()
 		return False
-
+# - Main Tool
 class upgrader_tool(object):
 	def _break(self,break_=True):
 		_break(_get_GET("breaks", self.request) and break_)
@@ -517,7 +523,7 @@ class upgrader_tool(object):
 		counters = self.counters_render() if _get_GET("counters", self.request) else ""
 		list = execution if _get_GET("list", self.request) else ""
 		return mark_safe(counters+list)
-
+# - Statics Tool
 class statics_object(object):
 	def __init__(self, request, user):
 		self.user = user
@@ -790,7 +796,7 @@ class statics_object(object):
 		for group in groups_list:
 			output_list.append( self.render_group(group) )
 		return output_list
-
+# - TemplateTag
 class tool_upgrader_tag_node(template.Node):
 	def __init__(self, obj):
 			# saves the passed obj parameter for later use
@@ -813,7 +819,6 @@ class tool_upgrader_tag_node(template.Node):
 			context['menu'] = mark_safe( _folder( "[tool_upgrader] Menu", _links_list_to_ul(menu_list))) 
 			context['statics'] = statics
 			return ''
-
 @register.tag
 def upgrader_tag(parser, token):
 	# token is the string extracted from the template, e.g. "box_user_loader my_object"
