@@ -289,7 +289,9 @@ class iCf_Invoice(iCf_Record):
 	unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
 
 	lines = models.ForeignKey('Finances.iCf_Invoice_line', related_name='rel_lines', blank=True, null=True, verbose_name=_(u"Línes"))
-
+	def value(self):
+		total_query = self.lines.objects.values("value").annotate(value=Sum("value"))
+		return total_query[0]("value") if total_query.count() > 1 else 0
 	def _ic_membership(self):
 		#print 'ic_MEMBERSHIP'
 		#print self.membership.all()
