@@ -381,24 +381,24 @@ class bot_period_closer( object ):
 		#PURCHASES
 		from Finances.models import PurchaseInvoice
 		self.purchases = PurchaseInvoice.objects.filter(period=self.period, user=self.user)
-		purchases_total = purchases_expencedVAT = purchases_IRPFRetention = purchases_totalVAT = Decimal('0.00')
+		purchases_total = purchases_vat = purchases_irpf = purchases_totalVAT = Decimal('0.00')
 		for item in self.purchases.all():
 			purchases_total += item.value
-			purchases_expencedVAT += item.expencedVAT()
-			purchases_IRPFRetention += item.IRPFRetention()
+			purchases_vat += item.vat()
+			purchases_irpf += item.irpf()
 			purchases_totalVAT += item.total()
 
 		pc.Purchases_total =self. purchases_total )
-		pc.Purchases_expencedVAT =self. purchases_expencedVAT )
-		pc.Purchases_IRPFRetention =self. purchases_IRPFRetention )
+		pc.Purchases_vat =self. purchases_vat )
+		pc.Purchases_irpf =self. purchases_irpf )
 		pc.Purchases_totalVAT =self. purchases_totalVAT )
 
 		#VATS
-		totalVAT1 =self. (sales_invoicedVAT - purchases_expencedVAT) )
+		totalVAT1 =self. (sales_invoicedVAT - purchases_vat) )
 		totalVAT1 = totalVAT1 if totalVAT1 > 0 else 0
 		pc.VAT_1 =  totalVAT1
 
-		totalVAT2 =self. (sales_assignedVAT - purchases_expencedVAT) )
+		totalVAT2 =self. (sales_assignedVAT - purchases_vat) )
 		totalVAT1 = totalVAT2 if totalVAT2 > 0 else 0
 		pc.VAT_2 =  totalVAT2
 

@@ -168,6 +168,21 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		super(tool_sales_upgrader, self).migrate()
 		return False
 
+class tool_purchases_upgrader(tool_invoice_upgrader):
+	def __init__(self, invoice, commit, counters):
+		from Finances.models import iCf_Purchase
+		super(tool_purchases_upgrader, self).__init__(iCf_Purchase, invoice, commit, counters)
+	def need_to_migrate(self ):
+		return super(tool_purchases_upgrader, self).need_to_migrate()
+	def has_lines(self):
+		return super(tool_purchases_upgrader, self).has_lines()
+	def save_lines(self):
+		super(tool_purchases_upgrader, self).save_lines()
+		return False
+	def migrate(self):
+		super(tool_purchases_upgrader, self).migrate()
+		return False
+
 class upgrader_tool(object):
 	def _break(self,break_=True):
 		_break(_get_GET("breaks", self.request) and break_)
@@ -361,7 +376,38 @@ class upgrader_tool(object):
 		folder = _folder(c, cc)
 		return all_invoices_are_ok, folder
 	def check_purchases(self, invoices):
-		return False, _folder("Purchases","-")
+		all_invoices_are_ok = False
+		_v8_missing_list = []
+		for invoice in invoices:
+			try:
+				tsu = tool_purchases_upgrader(invoice, self.commit(), self.counters)
+			except:
+				result = False
+			else:
+				if not tsu.v8_cooper:
+					caption = "Soci: %s Fact: %s" % (tsu.v7_cooper.__unicode__(), str(invoice.num) )
+					_v8_missing_list.append(caption)
+				if tsu.need_to_migrate():
+					all_invoices_are_ok = False
+					self.counters_plus("purchases_need_to_migrate")
+					all_lines_are_ok = not tsu.has_lines()
+					if tsu.has_lines():
+						self.counters_plus("purchases_need_to_migrate_plus_has_lines")
+						if self.commit:
+							all_lines_are_ok = tsu.save_lines()
+					else:
+						self.counters_plus("purchases_need_to_migrate_plus_NO_has_lines")
+					if all_lines_are_ok:
+						if self.commit:
+							all_invoices_are_ok = all_invoices_are_ok and tsu.migrate()
+				else:
+					import pdb; pdb.set_trace()
+					self.counters_plus("purchases_matching")
+					all_invoices_are_ok = True
+		c = _prompt_ico(ico_yes if all_invoices_are_ok else ico_no) + "purchases (total " + str(invoices.all().count()) + ")"
+		cc = _links_list_to_ul(_v8_missing_list)
+		folder = _folder(c, cc)
+		return all_invoices_are_ok, folder
 	def check_invoices(self):
 		from Invoices.models import SalesInvoice, PurchaseInvoice
 		offset = self.request.GET.get("query_offset", 0)

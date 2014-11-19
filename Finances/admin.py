@@ -273,6 +273,7 @@ class purchases_line_inline(admin.TabularInline):
 	model = iCf_Purchase_line
 	fields = ['value', 'percent_vat', 'percent_irpf']
 	extra = 1
+
 from Finances.forms import purchases_invoice_form
 class purchases_invoice_user (invoice_admin):
 	form = purchases_invoice_form
@@ -317,7 +318,6 @@ class purchases_invoice_user (invoice_admin):
 		from Finances.bots import bot_filters
 		return bot_filters.filterbydefault(request, self, purchases_invoice_user, extra_context)
 user_admin_site.register(iCf_Purchase, purchases_invoice_user)
-
 class purchases_invoice_admin (purchases_invoice_user):
 	fields = ['icf_cooper'] + purchases_invoice_user.fields + ['status', 'transfer_date']
 	list_display = ('icf_cooper',) + purchases_invoice_user.list_display

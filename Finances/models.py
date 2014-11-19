@@ -289,7 +289,7 @@ class iCf_Invoice(iCf_Record):
 	unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
 
 	lines = models.ForeignKey('Finances.iCf_Invoice_line', related_name='rel_lines', blank=True, null=True, verbose_name=_(u"Línes"))
-
+	value = models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la factura. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=65)
 	def _ic_membership(self):
 		#print 'ic_MEMBERSHIP'
 		#print self.membership.all()
@@ -345,7 +345,6 @@ class iCf_Sale(iCf_Invoice):
 	invoice = models.OneToOneField('Finances.iCf_Invoice', primary_key=True, parent_link=True)
 	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."))
 	client=models.ForeignKey(iCf_Client, related_name="sales_invoice_clients", verbose_name=_(u"Client"))
-
 	def number(self):
 		return '%s/%s/%s'%( self.cooper, self.date.year, "%03d" % (self.num) )
 	number.short_description =_(u"Nº Factura")
@@ -380,50 +379,44 @@ class iCf_Sale(iCf_Invoice):
 	class Meta:
 		verbose_name=_(u'01 - Factura Emesa')
 		verbose_name_plural=_(u'01 - Factures Emeses')
-
 class iCf_Purchase(iCf_Invoice):
 	invoice = models.OneToOneField('iCf_Invoice', primary_key=True, parent_link=True)
-	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura."),  validators=[alphanumeric])
+	num = models.CharField(verbose_name=_(u"Nº Factura"), max_length=20, help_text=_(u"Número Factura proveïdor."), validators=[alphanumeric])
 	provider=models.ForeignKey(iCf_Provider, verbose_name=_(u"Proveïdor"))
 	def number(self):
-		return "%08d" % (self.num,)
+		return self.num
 	number.short_description =_(u"Nº Factura")
-	def value(self):
-		value=0
-		for line in purchases_line.objects.filter(purchases_invoice=self.pk):
-			value += line.value
-		return value
-	value.short_description=_(u"Base Imposable (€)")
+	number.admin_order_field = 'num'
 	def vat(self):
-		value=0
-		for line in purchases_line.objects.filter(purchases_invoice=self.pk):
-			value += line.vat()
-		return value
-	vat.short_description=_(u"IVA Facturat (€)")
+		amount = Decimal ( "%.2f" % ((self.percentvat.value*self.value) / 100))
+		return amount
+	vat.decimal = True
+	vat.short_description = _(u'IVA (€)')
 	def irpf(self):
-		value=0
-		for line in purchases_line.objects.filter(purchases_invoice=self.pk):
-			value += line.irpf()
-		return value
-	irpf.short_description=_(u"IRPF (€)")
+		amount = Decimal ( "%.2f" % ((self.percentirpf*self.value) / 100))
+		return amount
+	irpf.decimal = True
+	irpf.short_description = _(u'IRPF (€)')
 	def total(self):
-		value = Decimal("0.00")
-		for line in purchases_line.objects.filter(purchases_invoice=self.pk):
-			value += line.total()
-		return value
-	total.short_description=_(u'Total Factura (€)')
+		return self.value + self.vat() - self.irpf()
+	total.decimal = True
+	total.short_description = _(u'Total Factura (€)')
 	def __unicode__(self):
-		return  unicode(self.num) 
-		verbose_name=_(u'02 - Factura Despesa')
-		verbose_name_plural=_(u'02 - Factures Despeses')
+			return  self.num 
+	def __getitem__(self, value):
+			return self.pk
+	class Meta:
+		verbose_name = _(u'2 - Factura Despesa')
+		verbose_name_plural = _(u'2 - Factures Despeses')
+		unique_together = ('icf_cooper', 'period', 'num')
 #
 class iCf_Invoice_line(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
-	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la factura. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
+	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la línia. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
+#
 class iCf_Sale_line (iCf_Invoice_line):
 	line = models.OneToOneField('Finances.iCf_Invoice_line', primary_key=True, parent_link=True)
 	percent_invoiced_vat=models.ForeignKey(iCf_Duty, verbose_name=_(u"IVA Facturat (%)"), help_text=_(u"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"))
-
 	def percent_assigned_vat(self):
 		from Finances.bots import bot_assigned_vat
 		return bot_assigned_vat (self.sales_invoice.cooper, self.percent_invoiced_vat).assigned_vat
@@ -450,9 +443,8 @@ class iCf_Sale_line (iCf_Invoice_line):
 		verbose_name_plural=_(u'Línies de factura emesa')
 class iCf_Purchase_line (iCf_Invoice_line):
 	line = models.OneToOneField('Finances.iCf_Invoice_line', primary_key=True, parent_link=True)
-	percent_vat=models.ForeignKey(iCf_Duty, verbose_name=_(u'IVA (%)'), help_text=_(u"El % d'IVA que s'aplica en la factura."))
+	percent_vat=models.ForeignKey(iCf_Duty, verbose_name=_(u'IVA (%)'), help_text=_(u"El % d'IVA que s'aplica en la línia."))
 	percent_irpf=models.IntegerField(verbose_name=_(u'IRPF (%)'), help_text=_(u"El % de retenció de IRPF (Només en lloguers i factures de persones físiques)."), default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
-
 	def vat(self):
 		amount=Decimal ( "%.2f" % ((self.percent_vat.value*self.value) / 100))
 		return amount
