@@ -205,7 +205,7 @@ class AutoRecordName(admin.ModelAdmin):
 
 
 #---------	M E M B E R S H I P ' S
-from reverseadmin import ReverseModelAdmin
+from tools_upgrader.reverseadmin import ReverseModelAdmin
 
 class Public_AkinMembershipAdmin(ReverseModelAdmin):
 	model = iC_Akin_Membership
