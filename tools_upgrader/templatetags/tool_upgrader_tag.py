@@ -24,13 +24,12 @@ from django.utils.safestring import mark_safe
 from django.core import urlresolvers
 from django.db.models.loading import get_model
 from Welcome.models import ico_yes, ico_no
-from Welcome.models import ico_yes, ico_no
 from Welcome.models import *
 from General.models import Human
 from Invoices.models import Soci
 from Invoices.models import v7_auth_user
 from django.db.models import Count
-from Finances.models import iCf_Record_Type, iCf_Record, iCf_Period 
+from Finances.models import *
 from django.core.exceptions import ObjectDoesNotExist
 # - vars and shortcuts
 _prompt = " ⊙:> ".decode("utf-8")
@@ -121,7 +120,7 @@ def _counter_plus(counters, key):
 	else:
 		counters[key] = 1
 # - Invoice to Finances parser
-def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project = None):
+def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project = None, commit=False):
 
 	# ***********************************
 	# so, get v7 as [Invoices.{sales/purchase}Invoice] model then
@@ -135,26 +134,29 @@ def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project
 		# ... on url:
 		# ... (https://github.com/CICIC/gestioCI_butterfly_release/issues/3)
 		#
-		icf_company = Company.objects.get(CIF=v7.CIF)
+		icf_company = Company.objects.get(id_card_es=v7.CIF)
 		return icf_company
 	except ObjectDoesNotExist as e:
 		# ... Read previous note.
 		try:
-			icf_company = Company.objects.get(CIF=v7.otherCIF)
+			icf_company = Company.objects.get(id_card_non_es=v7.otherCIF)
 			return icf_company
 		except ObjectDoesNotExist as e:
 			# ... start iCf_Company object saving process...
 			#
 			# ... switch slug type
-			if type == "doesnotmatter":
-				c = iCf_Company()
-			elif type == "client":
+			c = iCf_Company()
+			if type == "Client":
 				c = iCf_Client()
-			elif type == "client":
+			elif type == "Provider":
 				c == iCf_Provider()
 			#
 			# ... Mapa fields
-			c.human = v8.human
+			try:
+				c.human = human
+			except:
+				c.Human = None
+				pass
 			c.nickname = v7.name
 			c.email = _get_default_no_mail()
 			#
@@ -164,7 +166,10 @@ def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project
 				c.projects.add(icf_project)
 			#
 			clas = "iCf_%s" % (type)
-			c.company_type = Company_Type.objects.get(clas=clas)
+			try:
+				c.company_type = Company_Type.objects.get(clas=clas)
+			except:
+				return "_get_company: Should exists Company ty"
 			#
 			c.legal_name = invoice.name
 			c.id_card_es = invoice.CIF
@@ -172,7 +177,8 @@ def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project
 			#
 			# ... ready to fly away insert query
 			try:
-				icf_company = c.save()
+				if commit:
+					icf_company = c.save()
 			except Exception as e:
 				icf_company = None
 				print "[tool_upgrader (templatetag)][_get_company()] Saving error:"
@@ -185,6 +191,7 @@ class tool_invoice_upgrader(object):
 		self.counters = counters
 		self.invoice_set = invoices
 		self.icf_invoice_set = icf_invoices
+		self.human = self.pers = self.proj = None
 		from Invoices.models import Soci
 		try:
 			self.v7_cooper = Soci.objects.get(user=invoice.user)
@@ -195,11 +202,23 @@ class tool_invoice_upgrader(object):
 			self.num_ces = self.v7_cooper.__unicode__()
 			from Welcome.models import iC_Membership
 			try:
-				self.v8_cooper = iC_Membership.objects.get(ic_CESnum=self.num_ces)
+				self.v8_cooper = iCf_Cooper.objects.get(ic_self_employed__ic_membership__ic_CESnum=self.num_ces)
 			except ObjectDoesNotExist as e:
 				_counter_plus(counters, "invoices_missing_cooper_v8")
 				self.v8_cooper = None
-		#
+			else:
+				if not hasattr(self.v8_cooper, "ic_self_employed"):
+					print "[tool_sales_upgrade]__init__ esto debería ser un icf_cooper, ¿qué és?"
+
+				else:
+					human = self.v8_cooper.ic_self_employed.human
+				#... ... swtich between person and projects
+				if isinstance(self.v8_cooper.ic_self_employed.ic_membership, "iC_Project_Membership"):
+					self.proj = self.v8_cooper.ic_self_employed.ic_membership.ic_project
+					self.pers = None
+				else:
+					self.proj = None
+					self.pers = self.v8_cooper.ic_self_employed.ic_membership.person
 		self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
 
 	def need_to_migrate(self):
@@ -223,7 +242,6 @@ class tool_invoice_upgrader(object):
 			return False
 	def save_lines(self):
 		return False
-
 	def migrate(self):
 		#
 		uncommited_invoice = ui = iCf_Invoice()
@@ -257,9 +275,13 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 	def __init__(self, invoice, commit, counters):
 		from Finances.models import iCf_Sale
 		from Invoices.models import SalesInvoice
+		# Call super to load common invoice fields
 		super(tool_sales_upgrader, self).__init__(SalesInvoice, iCf_Sale, invoice, commit, counters)
 		#
-		self.icf_company = _get_company(invoice.client)
+		# ... load specific sales data fields
+		# ... ... Companies
+		self.icf_company = _get_company(invoice.client, self.human, "Client", self.pers, self.proj, self.commit)
+
 	def need_to_migrate(self ):
 		return super(tool_sales_upgrader, self).need_to_migrate()
 	def has_lines(self):
@@ -268,7 +290,6 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		super(tool_sales_upgrader, self).save_lines()
 		return False
 	def migrate(self):
-		import pdb; pdb.set_trace()
 		iCf_Invoice = super(tool_sales_upgrader, self).migrate()
 		s = iCf_Sale(iCf_Invoice)
 		s.client = self.company("Client", self.invoice.company, self.v8_cooper.human)
@@ -280,14 +301,16 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 			print "tool_sales_upgrader - error - on: migrate()"
 		else:
 			self.counters_plus("sucessfully_saved_sales_invoice")
-
-
 class tool_purchases_upgrader(tool_invoice_upgrader):
 	def __init__(self, invoice, commit, counters):
 		from Finances.models import iCf_Purchase
 		from Invoices.models import PurchaseInvoice
-		super(tool_purchases_upgrader, self).__init__(PurchaseInvoice, iCf_Purchase, invoice, commit, counters)
-		self.icf_company = _get_company(invoice.provider)
+		# Call super to load common invoice fields
+		super(tool_purchases_upgrader, self).__init__(PurchaseInvoice, iCf_Sale, invoice, commit, counters)
+		#
+		# ... load specific sales data fields
+		# ... ... Companies
+		self.icf_company = _get_company(invoice.provider, self.human, "Provider", self.pers, self.proj, self.commit)
 	def need_to_migrate(self ):
 		return super(tool_purchases_upgrader, self).need_to_migrate()
 	def has_lines(self):
@@ -472,7 +495,7 @@ class upgrader_tool(object):
 			c_type = Company_Type.objects.get(being_type__clas=clas)
 		except ObjectDoesNotExist:
 			if self.commit():
-				being_type = being_Type(clas=clas)
+				being_type = Being_Type(clas=clas)
 				try:
 					c_type = Company_Type(being_type=being_type)
 				except Exception as e:
