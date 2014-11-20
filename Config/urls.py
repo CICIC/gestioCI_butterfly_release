@@ -29,8 +29,13 @@ url(r'^cooper/', include(user_admin_site.urls )),
 
 #Just to be removed, add backward compatibility with gestioCIv07 where Cooper APP where called Soci.
 url(r'^soci/', include(user_admin_site.urls)),
-#Our invoicing module
+# 
+# Section: FINANCES
+# Description: Our invoicing module.
+# WARNING(20112014): This App should only be expected to be available for iC_Self_Employed related Django.contrib.auth.users.
+# ... See [] .
 url(r'^finances/', include('Finances.urls', namespace='finances')),
+#
 #Our semantic entity sites
 url(r'^admin/', include(admin.site.urls)),
 #Our welcoming module
