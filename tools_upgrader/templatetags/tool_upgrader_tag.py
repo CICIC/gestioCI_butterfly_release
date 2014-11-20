@@ -316,6 +316,7 @@ class upgrader_tool(object):
 		if menu:
 			self.menus.append( menu )
 		else:
+			self.menus.append( _link("http://169.254.226.5:8082/admin/?statics=1&counters=1&query_count=10&breaks=1&prints=1&query_offset=5", "Best to run checks"))
 			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1", _prompt + "statics") + ": [boolean] => Shows full system upgrade statics info. One column for Invoices(gestio.cooperatica.cat); One column for Finances and one for Welcome(both butterfly APP's)")
 			self.menus.append( _link( "/admin/?statics=1&execution=1", _prompt + "execution") + ": [boolean] => Will execute the process. Filter query if it lasts too much.")
 			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1", _prompt + "counters") + ": [boolean] => Will show or not counters section,")
