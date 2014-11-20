@@ -1,3 +1,4 @@
+#encoding=utf-8
 from django.conf.urls import patterns, include, url
 
 from django.contrib import admin
@@ -24,9 +25,9 @@ urlpatterns =  cooper_patterns + patterns('',
 #Localization
 url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', js_info_dict),
 url(r'^i18n/', include('django.conf.urls.i18n')),
-
+#
 url(r'^cooper/', include(user_admin_site.urls )),
-
+#
 #Just to be removed, add backward compatibility with gestioCIv07 where Cooper APP where called Soci.
 url(r'^soci/', include(user_admin_site.urls)),
 # 
@@ -46,7 +47,6 @@ url(r'^welcome/', include('Welcome.urls', namespace='Welcome')),
 url(r'^public_form/', include('public_form.urls', namespace='public_form')),
 #Default http index --> redirect to soci space
 url(r'^', include(user_admin_site.urls)),
-
 #url(r'^media/',),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) #+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

@@ -37,7 +37,7 @@ class bot_cooper( object ):
 	def cooper(self, request=None):
 		c = None
 		try:
-			c = iCf_Cooper.objects.get(user=self.user)
+			c = iCf_Cooper.objects.get(user__id=self.user.id)
 		except (KeyError, iCf_Cooper.DoesNotExist):
 			if request:
 				from django.contrib import messages

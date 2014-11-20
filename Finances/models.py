@@ -145,11 +145,10 @@ class iCf_Provider(iCf_Company):
 from Welcome.models import iC_Self_Employed
 class iCf_Cooper(iC_Self_Employed):
 	ic_self_employed = models.OneToOneField('Welcome.iC_Self_Employed', primary_key=True, parent_link=True)
+	user = models.ForeignKey(User, null=True, blank=True, verbose_name=_(u"nº COOP"))
 	clients = models.ManyToManyField(iCf_Client, verbose_name=_(u"Clients"))
 	providers = models.ManyToManyField(iCf_Provider, verbose_name=_(u"Proveïdors"))
-	def user(self):
-		return RegistrationProfile.objects.filter(ic_membership=self.ic_membership)
-	user.short_description = _(u"Nom")
+
 	def coop(self):
 		return self.ic_membership.ic_company
 	coop.short_description = _(u"Cooperativa")
