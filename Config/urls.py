@@ -33,7 +33,9 @@ url(r'^soci/', include(user_admin_site.urls)),
 # Section: FINANCES
 # Description: Our invoicing module.
 # WARNING(20112014): This App should only be expected to be available for iC_Self_Employed related Django.contrib.auth.users.
-# ... See [] .
+# >  See Manual, reference [GestioCI-Codi] Section: Funcionalitats Modul_02 Faturació GestioCI.Finances (app) > Entrada socis (no autoocupats)
+# >  on url:
+# > (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#Entrada_socis_.28no_autoocupats.29)
 url(r'^finances/', include('Finances.urls', namespace='finances')),
 #
 #Our semantic entity sites
