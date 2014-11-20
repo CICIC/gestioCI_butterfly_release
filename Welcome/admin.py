@@ -17,11 +17,11 @@ from django.forms.models import BaseInlineFormSet
 
 from django.forms.formsets import formset_factory
 
-
-from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
-
-
+# ********************************************************************
+# See (tools_upgrader/admin.py)> NOTICE(20112014): Widget wrapper for foreign and m2m fields.
+#from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
 #class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
+# ********************************************************************
 class AutoRecordName(admin.ModelAdmin):
 	class Media:
 		css = {
@@ -205,7 +205,7 @@ class AutoRecordName(admin.ModelAdmin):
 
 
 #---------	M E M B E R S H I P ' S
-from reverseadmin import ReverseModelAdmin
+from tools_upgrader.reverseadmin import ReverseModelAdmin
 
 class Public_AkinMembershipAdmin(ReverseModelAdmin):
 	model = iC_Akin_Membership

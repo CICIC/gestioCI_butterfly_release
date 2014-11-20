@@ -113,12 +113,17 @@ class iCf_Company(Company):
 		else:
 			idcode=self.CIF
 		return self.name + ' - ' + idcode
+	class Meta:
+		#model = Company #TODO: FILTER General.Company to Finances module
+		verbose_name=_(u'B - Client')
+		verbose_name_plural=_(u'B - Clients')
+
 class iCf_Client(iCf_Company):
 	class Meta:
 		#model = Company #TODO: FILTER General.Company to Finances module
 		verbose_name=_(u'B - Client')
 		verbose_name_plural=_(u'B - Clients')
-		proxy = True
+
 class iCf_Provider(iCf_Company):
 	def iban(self):
 		return self.human._myaccounts()
@@ -126,7 +131,7 @@ class iCf_Provider(iCf_Company):
 		#model = Company #TODO: FILTER General.Company to Finances module
 		verbose_name=_(u'C - Proveïdor')
 		verbose_name_plural=_(u'C - Proveïdors')
-		proxy = True
+
 #
 class iCf_Cooper(RegistrationProfile):
 	ic_self_employed = models.OneToOneField('Welcome.iC_Self_Employed', primary_key=True, parent_link=True)
