@@ -30,7 +30,7 @@ from General.models import Human
 from Invoices.models import Soci
 from Invoices.models import v7_auth_user
 from django.db.models import Count
-from Finances.models import iCf_Record_Type, iCf_Record, iCf_Period, 
+from Finances.models import iCf_Record_Type, iCf_Record, iCf_Period 
 from django.core.exceptions import ObjectDoesNotExist
 # - vars and shortcuts
 _prompt = " ⊙:> ".decode("utf-8")
@@ -39,6 +39,8 @@ def _prompt_ico(ico=None):
 	if ico:
 		output = "[%s] %s " % (ico, _prompt)
 	return output
+def _get_default_no_mail():
+	return "registro@vacio.vocho"
 def _error(str):
 	try:
 		return "<font style='color:red'>%s</font>" % (__(str).encode("utf-8"))
@@ -119,47 +121,62 @@ def _counter_plus(counters, key):
 	else:
 		counters[key] = 1
 # - Invoice to Finances parser
-def _get_company(company, type="doesnotmatter"):
-	CIF
-	otherCIF
+def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project = None):
+
+	# ***********************************
+	# so, get v7 as [Invoices.{sales/purchase}Invoice] model then
+	# search it on v8 Finances. If not found
+	# insert v7 company in v8 bbdd.
+	#
+	# So...
 	try:
-		icf_company = Company.objects.get(CIF=company.CIF)
+		#
+		# ... Read labeled question issue: " Company primary key #3 " 
+		# ... on url:
+		# ... (https://github.com/CICIC/gestioCI_butterfly_release/issues/3)
+		#
+		icf_company = Company.objects.get(CIF=v7.CIF)
+		return icf_company
 	except ObjectDoesNotExist as e:
+		# ... Read previous note.
 		try:
-			icf_company = Company.objects.get(CIF=company.otherCIF)
+			icf_company = Company.objects.get(CIF=v7.otherCIF)
+			return icf_company
 		except ObjectDoesNotExist as e:
-			#Create
-				if type="doesnotmatter":
-					c = iCf_Company()
-				elif type="client":
-					c = iCf_Client()
-				elif type="client":
-					c = iCf_Provider()
-
-				human = models.OneToOneField('Human', primary_key=True, parent_link=True)
-				nickname = models.CharField(max_length=50, blank=True, verbose_name=_(u"Sobrenom"), help_text=_(u"El sobrenom (nickname) de l'entitat Humana"))
-	email = models.EmailField(max_length=100, blank=False, null=False, verbose_name=_(u"Email"), help_text=_(u"L'adreça d'email principal de l'entitat humana"))
-	telephone_cell = models.CharField(max_length=20, blank=True, null=True, verbose_name=_(u"Telèfon mòbil"), help_text=_(u"El telèfon principal de l'entitat Humana"))
-	telephone_land = models.CharField(max_length=20, blank=True, verbose_name=_(u"Telèfon fix"))
-	website = models.CharField(max_length=100, blank=True, verbose_name=_(u"Web"), help_text=_(u"L'adreça web principal de l'entitat humana"))
-	description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció entitat"))
-
-	jobs = TreeManyToManyField('Job', through='rel_Human_Jobs', verbose_name=_(u"Activitats, Oficis"), blank=True, null=True)
-	addresses = models.ManyToManyField('Address', through='rel_Human_Addresses', verbose_name=_(u"Adreçes"), blank=True, null=True)
-	regions = models.ManyToManyField('Region', through='rel_Human_Regions', verbose_name=_(u"Regions"), blank=True, null=True)
-	records = models.ManyToManyField('Record', through='rel_Human_Records', verbose_name=_(u"Registres"), blank=True, null=True)
-	materials = models.ManyToManyField('Material', through='rel_Human_Materials', verbose_name=_(u"obres Materials"), blank=True, null=True)
-	nonmaterials = models.ManyToManyField('Nonmaterial', through='rel_Human_Nonmaterials', verbose_name=_(u"obres Inmaterials"), blank=True, null=True)
-	persons = models.ManyToManyField('Person', through='rel_Human_Persons', related_name='hum_persons', verbose_name=_(u"Persones"), blank=True, null=True)
-	projects = models.ManyToManyField('Project', through='rel_Human_Projects', related_name='hum_projects', verbose_name=_(u"Projectes"), blank=True, null=True)
-	companies = models.ManyToManyField('Company', through='rel_Human_Companies', related_name='hum_companies', verbose_name=_(u"Empreses"), blank=True, null=True)
-				company_type = TreeForeignKey('Company_Type', null=True, blank=True, verbose_name=_(u"Tipus d'empresa"))
-				legal_name = models.CharField(max_length=200, blank=True, null=True, verbose_name=_(u"Nom Fiscal"))
-				id_card_es = models.CharField(verbose_name=_(u"CIF / NIF / NIE"), blank=True, null=True, help_text=_(u"NIF:12345678A - CIF: A12345678 - NIE: X12345678A del proveïdor a qui es factura."), max_length=200)
-				id_card_non_es = models.CharField(verbose_name=_(u"Altres identificadors"), null=True, blank=True, help_text=_(u"Camps no CIF / NIF / NIE del proveïdor a qui es factura."), max_length=50)
-	
-	
-			icf_company
+			# ... start iCf_Company object saving process...
+			#
+			# ... switch slug type
+			if type == "doesnotmatter":
+				c = iCf_Company()
+			elif type == "client":
+				c = iCf_Client()
+			elif type == "client":
+				c == iCf_Provider()
+			#
+			# ... Mapa fields
+			c.human = v8.human
+			c.nickname = v7.name
+			c.email = _get_default_no_mail()
+			#
+			if icf_person:
+				persons.add(icf_person)
+			if icf_project:
+				c.projects.add(icf_project)
+			#
+			clas = "iCf_%s" % (type)
+			c.company_type = Company_Type.objects.get(clas=clas)
+			#
+			c.legal_name = invoice.name
+			c.id_card_es = invoice.CIF
+			c.id_card_non_es = invoice.otherCIF
+			#
+			# ... ready to fly away insert query
+			try:
+				icf_company = c.save()
+			except Exception as e:
+				icf_company = None
+				print "[tool_upgrader (templatetag)][_get_company()] Saving error:"
+				print e
 	return icf_company
 class tool_invoice_upgrader(object):
 	def __init__(self, invoices, icf_invoices, invoice, commit, counters):
@@ -209,12 +226,12 @@ class tool_invoice_upgrader(object):
 
 	def migrate(self):
 		#
-		import pdb; pdb.set_trace();
 		uncommited_invoice = ui = iCf_Invoice()
 		try:
 			#
 			ui.icf_cooper = self.v8_cooper
 			ui.period = self.icf_period
+			ui.num = self.invoice.num
 			#Warning: Duplicate fields
 			ui.date= self.invoice.date
 			ui.issue_date = self.invoice.date
@@ -251,11 +268,19 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		super(tool_sales_upgrader, self).save_lines()
 		return False
 	def migrate(self):
-		iCf_Invoice = super(tool_sales_upgrader, self).save_lines()
+		import pdb; pdb.set_trace()
+		iCf_Invoice = super(tool_sales_upgrader, self).migrate()
 		s = iCf_Sale(iCf_Invoice)
-		s.invoice = models.OneToOneField('Finances.iCf_Invoice', primary_key=True, parent_link=True)
-		s.num=self.num
-		s.client = self.company
+		s.client = self.company("Client", self.invoice.company, self.v8_cooper.human)
+		try:
+			print "tool_sales_upgrader - tries to save - on: migrate()" 
+			self.counters_plus("tries_to_save_sales_invoice")
+			s.save()
+		except:
+			print "tool_sales_upgrader - error - on: migrate()"
+		else:
+			self.counters_plus("sucessfully_saved_sales_invoice")
+
 
 class tool_purchases_upgrader(tool_invoice_upgrader):
 	def __init__(self, invoice, commit, counters):
@@ -439,7 +464,7 @@ class upgrader_tool(object):
 			checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
 		#...
 		return ico_yes if checked else ico_no
-	def check_and_create_company(slug="Company"):
+	def check_and_create_company(self, slug="Company"):
 		c_type = False
 		try:
 			clas = "iCf_%s" % (slug)
@@ -456,8 +481,8 @@ class upgrader_tool(object):
 		return c_type
 	def check_companies(self):
 		#Check for basic types
-		ok_clients = check_and_create_company("Client")
-		ok_providers = check_and_create_company("Provider")
+		ok_clients = self.check_and_create_company("Client")
+		ok_providers = self.check_and_create_company("Provider")
 		#Check for ocurrencies
 		#TODO
 		return ico_yes if ok_clients and ok_providers else ico_no
@@ -467,7 +492,6 @@ class upgrader_tool(object):
 		for invoice in invoices:
 			self._print("[%s: loop invoices for: %s]" % (label, str(invoice.number())) )
 			try:
-				import pdb;pdb.set_trace()
 				if label == "check_sales":
 					tsu = tool_sales_upgrader(invoice, self.commit(), self.counters)
 				else:
@@ -690,7 +714,8 @@ class statics_object(object):
 		from Invoices.models import Client, Provider
 		caption = _prompt_ico(upgrader_tool(self.request).check_companies())
 		caption += " Companies: " + str(Client.objects.all().count()+Provider.objects.all().count())
-		content = _links_list_to_ul(Client.objects.all()[:10].join(Provider.objects.all()[:10]))
+		content =  _folder("Clients: (total %s)" % (Client.objects.all().count()), _links_list_to_ul(Client.objects.all()[:10]))
+		content += _folder("Providers: (total %s)" % (Provider.objects.all().count()), _links_list_to_ul(Provider.objects.all()[:10]))
 		links_companies.append(_folder(caption, content))
 		#Section 3
 		#3.-1
