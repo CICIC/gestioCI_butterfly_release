@@ -1,5 +1,5 @@
 #encoding=utf-8
-
+#
 from django.db import models
 from django.contrib import messages
 from mptt.models import MPTTModel
@@ -132,13 +132,21 @@ class iCf_Provider(iCf_Company):
 		verbose_name=_(u'C - Proveïdor')
 		verbose_name_plural=_(u'C - Proveïdors')
 
+#*************************************************************
+# See Manual, reference [GestioCI-Base_de_datos] Section: Entidades > Registres de soci (Afi, Individual, Col·lectiva, Autoocupat, firaire)
+# on url: 
+# (https://wiki.enredaos.net/index.php?title=GestioCI-Base_de_datos#Registres_de_soci_.28Afi.2C_Individual.2C_Col.C2.B7lectiva.2C_Autoocupat.2C_firaire.29)
 #
-class iCf_Cooper(RegistrationProfile):
+# So,
+# the fact that iCf_Cooper is inheriting iC_Self_Employed, excludes iC_Memberships to use Finances app as iCf_Cooper is foreignkey in invoices records.
+#
+# TODO:
+# a) Remove v7 fields after migration proces is over.
+from Welcome.models import iC_Self_Employed
+class iCf_Cooper(iC_Self_Employed):
 	ic_self_employed = models.OneToOneField('Welcome.iC_Self_Employed', primary_key=True, parent_link=True)
-	ic_membership = models.OneToOneField('Welcome.iC_Membership', verbose_name=_(u"rel_to_new_system"), blank=True, null=True)
 	clients = models.ManyToManyField(iCf_Client, verbose_name=_(u"Clients"))
 	providers = models.ManyToManyField(iCf_Provider, verbose_name=_(u"Proveïdors"))
-
 	def user(self):
 		return RegistrationProfile.objects.filter(ic_membership=self.ic_membership)
 	user.short_description = _(u"Nom")
@@ -166,12 +174,14 @@ class iCf_Cooper(RegistrationProfile):
 	def email( self ):
 		return self.user.email
 	email.short_description=_(u"Email")
-
 	def __unicode__(self):
 		return "COOP%s" % ("%04d" % (self.coop_number))
 	def __getitem__(self, value):
 		return self.id
 	class Meta:
+		verbose_name= _(u'D - Socia')
+		verbose_name_plural= _(u'D -  Socies')
+
 		verbose_name= _(u'D - Socia')
 		verbose_name_plural= _(u'D -  Socies')
 #Taxes & duties & other inmaterial terms ---------------------------
