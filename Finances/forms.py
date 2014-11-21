@@ -11,7 +11,7 @@ from Finances.bots import *
 from Finances.models import *
 
 class cooper_admin_form(forms.ModelForm):
-	model = iCf_Cooper
+	model = iCf_Self_Employed
 	class Meta:
 		localized_fields = ('preTAX', )
 
