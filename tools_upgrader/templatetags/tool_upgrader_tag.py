@@ -32,6 +32,7 @@ from django.db.models import Count
 from Finances.models import *
 from public_form.models import *
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 # - vars and shortcuts
 _prompt = " ⊙:> ".decode("utf-8")
 def _prompt_ico(ico=None):
@@ -113,7 +114,7 @@ def _get_GET(key, request):
 		return False
 def _break(break_= True):
 	if not break_:
-		#import pdb;pdb.set_trace()
+		#import s;pdb.set_trace()
 		pass
 def _counter_plus(counters, key):
 	if key in counters:
@@ -186,7 +187,7 @@ def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project
 				print e
 	return icf_company
 class tool_invoice_upgrader(object):
-	def __init__(self, invoices, icf_invoices, invoice, commit, counters):
+	def initialice(self, invoices, icf_invoices, invoice, commit, counters):
 		self.invoice = invoice
 		self.commit = commit
 		self.counters = counters
@@ -198,60 +199,63 @@ class tool_invoice_upgrader(object):
 		self.v8_user = None
 		self.num_ces = None
 		self.v8_se = None
+	def set_v7(self):
 		from Invoices.models import Soci
 		try:
-			self.v7_cooper = Soci.objects.get(user=invoice.user)
+			self.v7_cooper = Soci.objects.get(user=self.invoice.user)
 		except ObjectDoesNotExist as e:
-			_counter_plus("invoices_missing_cooper_v7")
+			_counter_plus(self.counters, "invoices_missing_cooper_v7")
 			self.v7_cooper = None
 		else:
 			self.num_ces = self.v7_cooper.__unicode__()
-			from Welcome.models import iC_Membership
-			try:
-				self.v8_se = iC_Self_Employed.objects.get(ic_membership__ic_CESnum=self.num_ces)
-			except ObjectDoesNotExist as e:
-				print e
-				print "Missing num_ces: %s" % (self.num_ces)
-				_counter_plus(counters, "invoices_missing_cooper_v8")
-				self.v8_cooper = None
-			else:
-				import pdb; pdb.set_trace()
-				if self.v8_se:
-					try:
-						iCf_Cooper.objects.get(ic_self_employed=self.v8_se)
-					except ObjectDoesNotExist:
-						try:
-							self.v8_user = RegistrationProfile.objects.get(person=self.v8_se.ic_membership.human).user
-						except ObjectDoesNotExist:
-							self.v8_user = RegistrationProfile.objects.get(project=self.v8_se.ic_membership.human).user
-						if self.v8_user:
-							icf_c = iCf_Cooper(user=self.v8_user, ic_self_employed=self.v8_se)
-						if icf_c and commit:
-							print "tendría que grabarse icf_cooper en __init__"
-							try:
-								self.v8_cooper = icf_c.save()
-								#... ... swtich between person and projects
-								if isinstance(self.v8_cooper.ic_self_employed.ic_membership, "iC_Project_Membership"):
-									self.proj = self.v8_cooper.ic_self_employed.ic_membership.ic_project
-									self.pers = None
-								else:
-									self.proj = None
-									self.pers = self.v8_cooper.ic_self_employed.ic_membership.person
-							except Exception as e:
-								print e
-								pass
-				else:
-					human = self.v8_cooper.ic_self_employed.human
-				
-		self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
-
-	def need_to_migrate(self):
+	def set_v8_se(self):
+		from Welcome.models import iC_Membership
 		try:
-			return self.icf_invoice_set.objects.filter(icf_cooper = self.v8_cooper, num = self.invoice.num).count() < 1
-		except Exception as e:
-			print "tool_invoice_upgrader - error - need_to_migrate"
+			self.v8_se = iC_Self_Employed.objects.get(ic_membership__ic_CESnum=self.num_ces)
+		except ObjectDoesNotExist as e:
+			print "Missing num_ces: %s" % (self.num_ces)
 			print e
-			return False
+			_counter_plus(self.counters, "invoices_missing_cooper_v8")
+			self.v8_se = None
+	def set_or_create_v8(self):
+
+		# ... load self.v8_user field
+		if self.v8_se:
+			try:
+				self.v8_user = RegistrationProfile.objects.get(Q(person=self.v8_se.ic_membership.human) | Q(project=self.v8_se.ic_membership.human)).user
+			except ObjectDoesNotExist as e:
+				print "set_or_create_v8() error:"
+				print e
+				pass
+			except Exception as e:
+				print "set_or_create_v8() error:"
+				pass
+		# ... load self.v8_cooper field.
+		if self.v8_se and self.v8_user:
+			try:
+				v8 = iCf_Self_Employed(user=self.v8_user, ic_self_employed=self.v8_se)
+				v8.ic_membership = self.v8_se.ic_membership
+				self.v8_coop = v8.save()
+			except ObjectDoesNotExist as e:
+				print "set_or_create_v8() error:"
+				print e
+				pass
+			except Exception as e:
+				print "set_or_create_v8() error:"
+				print e
+				pass
+		else:
+			print "set_or_create_v8() error:"
+			self.counters.counter_plus("faltan_v8")
+
+	def __init__(self, invoices, icf_invoices, invoice, commit, counters):
+		self.initialice(invoices, icf_invoices, invoice, commit, counters)
+		self.set_v7()
+		self.set_v8_se()
+		self.set_or_create_v8()
+		self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
+	def need_to_migrate(self):
+		return False
 	def has_lines(self):
 		try:
 			rows = self.invoice_set.objects.filter(
@@ -271,7 +275,7 @@ class tool_invoice_upgrader(object):
 		uncommited_invoice = ui = iCf_Invoice()
 		try:
 			#
-			ui.icf_cooper = self.v8_cooper
+			ui.icf_self_employed = self.v8_cooper
 			ui.period = self.icf_period
 			ui.num = self.invoice.num
 			#Warning: Duplicate fields
@@ -307,7 +311,12 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		self.icf_company = _get_company(invoice.client, self.human, "Client", self.pers, self.proj, self.commit)
 
 	def need_to_migrate(self ):
-		return super(tool_sales_upgrader, self).need_to_migrate()
+		r = super(tool_sales_upgrader, self).need_to_migrate()
+		try:
+			return self.v8_cooper.icf_sales.filter(period=self.invoice.period, num = self.invoice.num).count() < 1
+		except Exception as e:
+			print "tool_invoice_upgrader - error - need_to_migrate"
+			print e
 	def has_lines(self):
 		return super(tool_sales_upgrader, self).has_lines()
 	def save_lines(self):
@@ -330,7 +339,7 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		from Finances.models import iCf_Purchase
 		from Invoices.models import PurchaseInvoice
 		# Call super to load common invoice fields
-		super(tool_purchases_upgrader, self).__init__(PurchaseInvoice, iCf_Sale, invoice, commit, counters)
+		super(tool_purchases_upgrader, self).__init__(PurchaseInvoice, iCf_Purchase, invoice, commit, counters)
 		#
 		# ... load specific sales data fields
 		# ... ... Companies
@@ -396,12 +405,7 @@ class upgrader_tool(object):
 		try:
 			period_type = iCf_Record_Type.objects.get(clas="iCf_Period")
 		except:
-			#Create if initializationg
-			period_type = iCf_Record_Type(clas="iCf_Period", 
-					name="Trimestre", 
-					description=_(u'Periode de facturació'))
-			if _get_GET("commit", self.request):
-				period_type.save()
+			pass
 
 		#Entities of this type
 		from Finances.models import iCf_Period
@@ -434,84 +438,70 @@ class upgrader_tool(object):
 		try:
 			tax_type = iCf_Record_Type.objects.get(clas="iCf_Taxes")
 		except:
-			#Create if initializationg
-			tax_type = iCf_Record_Type(clas="iCf_Taxes", 
-					name="Tasa", 
-					description=_(u'Càlcul Quota Trimestral, taula de quotes de ponderación segons facturació.).')
-				)
-			if _get_GET("commit", self.request):
-				tax_type.save()
-
-		#Entities of this type
-		from Finances.models import iCf_Tax
-		from Invoices.models import periodTaxes
-		#... loop to process each entity
-		checked = False
-		for tax in periodTaxes.objects.all():
-			#... is this entity migrated?
-			checked = iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
-			#... if need migration, migrate
-			if not checked:
-
-				#... create new object
-				p = iCf_Tax()
-				#... map fields
-				for field in tax._meta.get_all_field_names():
-					try:
-						value = getattr(tax,field)
-						if field=="taxId":
-							field="value"
-						setattr(p, field, value) 
-					except:
-						pass
-				#...save object
-				p.record_type = tax_type
-				if _get_GET("commit", self.request):
-					p.save()
-			#...refresh existence flag
-			checked = checked or iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.min_base).count()>0
-		#...
-		return ico_yes if checked else ico_no
+			return ico_no
+		else:
+			#Entities of this type
+			from Finances.models import iCf_Tax
+			from Invoices.models import periodTaxes
+			#... loop to process each entity
+			checked = False
+			for tax in periodTaxes.objects.all():
+				#... is this entity migrated?
+				checked = iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
+				#... if need migration, migrate
+				if not checked:
+					#... create new object
+					p = iCf_Tax()
+					#... map fields
+					for field in tax._meta.get_all_field_names():
+						try:
+							value = getattr(tax,field)
+							if field=="taxId":
+								field="value"
+							setattr(p, field, value) 
+						except:
+							pass
+					#...save object
+					if _get_GET("commit", self.request):
+						p.save()
+				#...refresh existence flag
+				checked = checked or iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.min_base).count()>0
+			#...
+			return ico_yes if checked else ico_no
 	def check_duties(self):
 		#Main entity type
 		try:
 			duty_type = iCf_Record_Type.objects.get(clas="iCf_Duty")
 		except:
-			#Create if initializationg
-			duty_type = iCf_Record_Type(clas="iCf_Duty", 
-					name="Impuesto oficial del Estado", 
-					description=_(u'Impuestos oficiales como el I.V.A. o el I.A.E.')
-				)
-			if _get_GET("commit", self.request):
-				duty_type.save()
-
-		#Entities of this type
-		from Finances.models import iCf_Duty
-		from Invoices.models import VATS
-		#... loop to process each entity
-		checked = False
-		for duty in VATS.objects.all():
-			#... is this entity migrated?
-			checked = iCf_Duty.objects.filter(value=duty.value).count()>0
-			#... if need migration, migrate
-			if not checked:
-				#... create new object
-				p = iCf_Duty()
-				#... map fields
-				for field in duty._meta.get_all_field_names():
-					try:
-						value = getattr(duty,field)
-						setattr(p, field, value) 
-					except:
-						pass
-				#...save object
-				p.record_type = duty_type
-				if _get_GET("commit", self.request):
-					p.save()
-			#...refresh existence flag
-			checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
-		#...
-		return ico_yes if checked else ico_no
+			return ico_no
+		else:
+			#Entities of this type
+			from Finances.models import iCf_Duty
+			from Invoices.models import VATS
+			#... loop to process each entity
+			checked = False
+			for duty in VATS.objects.all():
+				#... is this entity migrated?
+				checked = iCf_Duty.objects.filter(value=duty.value).count()>0
+				#... if need migration, migrate
+				if not checked:
+					#... create new object
+					p = iCf_Duty()
+					#... map fields
+					for field in duty._meta.get_all_field_names():
+						try:
+							value = getattr(duty,field)
+							setattr(p, field, value) 
+						except:
+							pass
+					#...save object
+					p.record_type = duty_type
+					if _get_GET("commit", self.request):
+						p.save()
+				#...refresh existence flag
+				checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
+			#...
+			return ico_yes if checked else ico_no
 	def check_and_create_company(self, slug="Company"):
 		c_type = False
 		try:
@@ -604,13 +594,7 @@ class upgrader_tool(object):
 		try:
 			duty_type = iC_Record_Type.objects.get(clas="iC_Duty")
 		except:
-			#Create if initializationg
-			duty_type = iC_Record_Type(clas="iC_Duty", 
-					name="Impuesto oficial del Estado", 
-					description=_(u'Impuestos oficiales como el I.V.A. o el I.A.E.')
-				)
-			if _get_GET("commit", self.request):
-				duty_type.save()
+			pass
 		#Entities of this type
 		from Finances.models import iC_Duty
 		from Invoices.models import VATS
@@ -840,17 +824,20 @@ class statics_object(object):
 		links = []
 
 		#Section 1
-		from Finances.models import iCf_Cooper
+		from Finances.models import iCf_Self_Employed
 		links_members = []
 		links_members.append(_folder(_prompt +
 			"Total membres",
-			"Finances_iCf_Cooper.count(): " + str(iCf_Cooper.objects.all().count() ) 
+			"Finances_iCf_Self_Employed.count(): " + str(iCf_Self_Employed.objects.all().count() ) 
 			) )
 		#1.1
-		coops_per_member = iCf_Cooper.objects.values("ic_membership__ic_company__name").annotate(count=Count("ic_membership__ic_company__name"))
+		coops_per_member = iCf_Self_Employed.objects.values("ic_membership__ic_company__name").annotate(count=Count("ic_membership__ic_company__name"))
 		links_coops = []
 		for coop in coops_per_member:
-			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
+			try:
+				links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
+			except:
+				links_coops.append( "statics_object.group_finances() Error" )
 		links_members.append(_folder(_prompt +"Socios por cooperativa madre", _links_list_to_ul(links_coops)))
 
 		#Section 2
