@@ -54,6 +54,33 @@ movement_STATUSES=(
 		(status_CHOICE_DONE, _(u'Executat')),
 	)
 
+def _check_icf_record_type( clas, name, description):
+	#
+	# MPTT - record_type set up.
+	# See basic explanation about MPTT types on Manual - [GestioCI-Base_de_datos][Breve visita acompañada por el bosque MPTT]
+	# on url:
+	# (https://wiki.enredaos.net/index.php?title=GestioCI-Base_de_datos#Breve_visita_acompa.C3.B1ada_por_el_bosque_MPTT)
+	#
+	# This is to set icf_Record_Type clas on icf_Record, by calling this function, will also check for existing parent type and creating it if needed.
+	# Basic_Data.sql file in Dabase directory of aplication, must load types for you, so this may be just in case bad Basic_Data.sql
+	# You can upgrade this function once every thing goes fine by harcoded icf_Record_Type indexings over clas map, so you get a bit performance.
+	#
+	#Main entity type
+	#... loop to process each entity
+	try:
+		t = iCf_Record_Type.objects.get(clas=clas)
+	except ObjectDoesNotExist:
+		t = iCf_Record_Type(clas=clas, 
+				name=name, 
+				description=_(description))
+		t.save()
+	except Exception as e:
+		print "Finances.models.py | _check_icf_record_type | a new type found: %s, error:" % (clas)
+		t = None	
+		print e
+		pass
+	return t
+
 '''
 Section 1 >> Structural model entities to link GENERAL MPTT Tree
 https://wiki.enredaos.net/index.php?title=GestioCI-Codi#MPTT
@@ -77,13 +104,10 @@ class iCf_Record(Artwork):	# create own ID's
 		else:
 				return "Not present"
 	_selflink.allow_tags = True
-	def __init__(self, *args, **kwargs):
-		super(iCf_Record, self).__init__(*args, **kwargs)
 class iCf_Type(Concept):	# create own ID's
 	clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200, help_text=_(u"Model de django o classe python associada al Tipus financer de CI"))
 	class Meta:
 		verbose_name = _(u"c- Tipus financer CI")
-
 	def __unicode__(self):
 		if self.clas is None or self.clas == '':
 			if self:
@@ -140,6 +164,9 @@ class iCf_Provider(iCf_Company):
 class iCf_Duty(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
 	value=models.IntegerField(verbose_name=_(u'IVA'), unique=True, db_index=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
+	def __init__(self, *args, **kwargs):
+		self.record_type = _check_icf_record_type("iCf_Duty", u"Impost oficial del Estat", u'Impuestos oficiales como el I.V.A. o el I.A.E.' )
+		super(iCf_Duty, self).__init__(*args, **kwargs)
 	def __unicode__(self):
 		return unicode(self.value)
 	def __getitem__(self, value):
@@ -155,6 +182,9 @@ class iCf_Tax(iCf_Record):
 	value=models.DecimalField(verbose_name=_(u'Quota Trimestral'), decimal_places=2, max_digits=10, unique=True, db_index=True)
 	min_base=models.IntegerField(verbose_name= _(u"Base imposable Mínima"))
 	max_base=models.IntegerField(verbose_name= _(u"Base imposable Màxima"))
+	def __init__(self, *args, **kwargs):
+		self.record_type = _check_icf_record_type("iCf_Tax", u'Tasa', u'Càlcul Quota Trimestral, taula de quotes de ponderación segons facturació.', )
+		super(iCf_Tax, self).__init__(*args, **kwargs)
 	def __unicode__(self):
 		if self.id:
 			return _("Cuota de %s por base entre %s y %s (Eur)") %( str(self.value), str(self.min_base), str(self.max_base))
@@ -164,18 +194,19 @@ class iCf_Tax(iCf_Record):
 
 class iCf_Period(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
-	label=models.CharField(verbose_name=_(u"Títol"), max_length=200)
-	first_day=models.DateField(verbose_name=_(u"Inici"), help_text=_(u"Primer dia del període"))
-	date_open=models.DateField(verbose_name=_(u"Obert"))
-	date_close=models.DateField(verbose_name=_(u"Tancat"))
-	exported=models.BooleanField (verbose_name=_("Archivat"), help_text=_(u"Administració ha exportat els registres CSV del període."), default=False)
-
+	label = models.CharField(verbose_name=_(u"Títol"), max_length=200)
+	first_day = models.DateField(verbose_name=_(u"Inici"), help_text=_(u"Primer dia del període"))
+	date_open = models.DateField(verbose_name=_(u"Obert"))
+	date_close = models.DateField(verbose_name=_(u"Tancat"))
+	exported = models.BooleanField (verbose_name=_("Archivat"), help_text=_(u"Administració ha exportat els registres CSV del període."), default=False)
+	def __init__(self, *args, **kwargs):
+		super(iCf_Period, self).__init__(*args, **kwargs)
+		self.record_type = _check_icf_record_type("iCf_Period", u'Periode de facturació', u'Trimestres. Liquidació y tancament del període.' )
 	def __unicode__(self):
-		return ('%s %s') % (self.first_day.year, self.label)
-
-	def __getitem__(self, value):
-		return self.id
-
+		if hasattr(self, "id"):
+			return ('%s %s') % (self.first_day.year, self.label)
+		else:
+			return _("periode buit").encode("utf-8")
 	class Meta:
 		verbose_name= _(u"G - Trimestres")
 		verbose_name_plural= _(u"G - Trimestres")
@@ -210,6 +241,9 @@ class iCf_Invoice(iCf_Record):
 	unit = models.ForeignKey('General.Unit', verbose_name=_(u"Unitat"))
 
 	lines = models.ForeignKey('Finances.iCf_Invoice_line', related_name='rel_lines', blank=True, null=True, verbose_name=_(u"Línes"))
+	def __init__(self, *args, **kwargs):
+		self.record_type = _check_icf_record_type("iCf_Invoice", u'Factura', u'Les factures es liquiden cada trimestre i es tanca del període.', )
+		super(iCf_Invoice, self).__init__(*args, **kwargs)
 	def value(self):
 		total_query = self.lines.objects.values("value").annotate(value=Sum("value"))
 		return total_query[0]("value") if total_query.count() > 1 else 0
@@ -219,16 +253,16 @@ class iCf_Invoice(iCf_Record):
 		else:
 			return 'none'
 	_icf_self_employed.allow_tags = True
-	_icf_self_employed.short_description = _(u"Registre de Soci")
-	def _icf_self_employed(self):
+	_icf_self_employed.short_description = _(u"Autoocupat que factura")
+	def _ic_self_employed(self):
 		#print 'ic_SELFEMPLOYED'
-		if hasattr(self, 'icf_self_employed'):
+		if hasattr(self, 'ic_self_employed'):
 			#print self.selfemployed.all()
-			return self.icf_self_employed
+			return self.ic_self_employed
 		else:
 			return 'none'
-	_icf_self_employed.allow_tags = True
-	_icf_self_employed.short_description = _(u"Registre d'Autoocupat")
+	_ic_self_employed.allow_tags = True
+	_ic_self_employed.short_description = _(u"Registre d'Autoocupat")
 	def status(self):
 		if self.who_manage == manage_CHOICE_COOPER:
 			return status_CHOICE_NONE
@@ -265,7 +299,7 @@ class iCf_Invoice(iCf_Record):
 class iCf_Sale(iCf_Invoice):
 	invoice = models.OneToOneField('Finances.iCf_Invoice', primary_key=True, parent_link=True)
 	num=models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."))
-	client=models.ForeignKey(iCf_Client, related_name="sale_invoices_clients", verbose_name=_(u"Client"))
+	client=models.ForeignKey("Finances.iCf_Client", related_name="sale_invoices_clients", verbose_name=_(u"Client"))
 	def number(self):
 		return '%s/%s/%s'%( self.cooper, self.date.year, "%03d" % (self.num) )
 	number.short_description =_(u"Nº Factura")
@@ -334,6 +368,9 @@ class iCf_Purchase(iCf_Invoice):
 class iCf_Invoice_line(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
 	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la línia. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
+	def __init__(self, *args, **kwargs):
+		self.record_type = _check_icf_record_type("iCf_Invoice_line", u'Línea de factura' )
+		super(iCf_Invoice_line, self).__init__(*args, **kwargs)
 #
 class iCf_Sale_line (iCf_Invoice_line):
 	line = models.OneToOneField('Finances.iCf_Invoice_line', primary_key=True, parent_link=True)
@@ -408,6 +445,9 @@ class iCf_Movement (iCf_Record):
 		verbose_name=_("Moneda"), 
 		help_text=_(u"Indica el tipus de moneda del moviment")
 	)
+	def __init__(self, *args, **kwargs):
+		self.record_type = _check_icf_record_type("iCf_Movement", u'Moviment', u'Transacció o abonament.', )
+		super(iCf_Movement, self).__init__(*args, **kwargs)
 	def _icf_self_employed(self):
 		if hasattr(self, 'icf_self_employed') and self.membership:
 			return self.icf_self_employed
@@ -469,6 +509,26 @@ class iCf_Period_close(iCf_Record):
 	period = models.ForeignKey(iCf_Period, null=True, blank=True, verbose_name=_(u'Trimestre'))
 	closed = models.BooleanField (verbose_name=_("closed"), help_text=_("closed_help_text"), default=False)
 	system_closed = models.BooleanField (verbose_name=_("admin closed"), help_text=_("closed by bot after expiring time"), default=False)
+	def __init__(self, *args, **kwargs):
+		self.record_type = _check_icf_record_type("iCf_Period_close", u'Sumatori i totals del periode de facturació.', u'Durant el trismestre els autoocupats asignen factures a un registre de Sumatori i totals. Un cop arribada la data de tancament, un procés automátic ha de tancar els registres no tancats pels usuaris.')
+		super(iCf_Period_close, self).__init__(*args, **kwargs)
+	def _icf_self_employed(self):
+		if hasattr(self, 'icf_self_employed') and self.membership:
+			return self.icf_self_employed
+		else:
+			return 'none'
+	_icf_self_employed.allow_tags = True
+	_icf_self_employed.short_description = _(u"Autoocupat que factura")
+	def _ic_self_employed(self):
+		#print 'ic_SELFEMPLOYED'
+		if hasattr(self, 'ic_self_employed'):
+			#print self.selfemployed.all()
+			return self.ic_self_employed
+		else:
+			return 'none'
+	_ic_self_employed.allow_tags = True
+	_ic_self_employed.short_description = _(u"Registre d'Autoocupat")
+
 	#sales
 	sales_base = models.DecimalField(verbose_name=_(u"Base Imposable Emeses (€)"), decimal_places=2, max_digits=10, blank=True)
 	sales_invoiced_vat = models.DecimalField(verbose_name=_(u"IVA Facturat (€)"), decimal_places=2, max_digits=10, blank=True)
@@ -553,49 +613,18 @@ class iCf_Period_close(iCf_Record):
 #
 # TODO:
 # a) Remove v7 fields after migration proces is over.
-from Welcome.models import iC_Self_Employed
+from Welcome.models import iC_Self_Employed, iC_Record_Type
 class iCf_Self_Employed(iC_Self_Employed):
 	ic_self_employed = models.OneToOneField('Welcome.iC_Self_Employed', primary_key=True, parent_link=True)
-	user = models.ForeignKey(User, verbose_name=_(u"nº COOP"))
+	user = models.ForeignKey(User, verbose_name=_(u"nº COOP"), related_name="fk_icf_self_employed")
 	clients = models.ManyToManyField(iCf_Client, verbose_name=_(u"Clients"))
 	providers = models.ManyToManyField(iCf_Provider, verbose_name=_(u"Proveïdors"))
 	icf_sales  = models.ManyToManyField(iCf_Invoice, related_name="cooper_sale_invoices", verbose_name=_(u"Factures Emeses"))
 	icf_purchases = models.ManyToManyField(iCf_Invoice, related_name="cooper_purchase_invoices", verbose_name=_(u"Factures Despeses"))
+	icf_periods_closed = models.ManyToManyField(iCf_Invoice, related_name="cooper_periods_closed", verbose_name=_(u"Factures Despeses"))
 	def __init__(self, *args, **kwargs):
 		super(iCf_Self_Employed, self).__init__(*args, **kwargs)
-		#
-		# MPTT - record_type set up.
-		# See basic explanation about MPTT types on Manual - [GestioCI-Base_de_datos][Breve visita acompañada por el bosque MPTT]
-		# on url:
-		# (https://wiki.enredaos.net/index.php?title=GestioCI-Base_de_datos#Breve_visita_acompa.C3.B1ada_por_el_bosque_MPTT)
-		try:
-			type = iCf_Record_Type.objects.get(clas='iCf_Self_Employed')
-		except ObjectDoesNotExist:
-			# 
-			# ALERT: iCf_Self_Employed as record_type is missing in your basic_data.sql or you didn't import it!
-			#   See issue #13 to review basic_data.sql file 
-			#   on url:
-			#   (https://github.com/CICIC/gestioCI_butterfly_release/issues/13#issuecomment-63660710)
-			#
-			#   Check Finances app basic data types 
-			#   on url:
-			#   (https://wiki.enredaos.net/index.php?title=GestioCI-Base_de_datos#APP:Finances)
-			#
-			#Main entity type
-			#... loop to process each entity
-			try:
-				type = iCf_Record_Type.objects.get(clas="iCf_Self_Employed")
-			except:
-				#Create if initializationg
-				type = iCf_Record_Type(clas="iCf_Self_Employed", 
-					name="Perfil facturació d'un autoocupat.", 
-					description=_(u'La entitat iCf_Self_Employed hereda iC_Self_Employed per fer de embut a la entrada a Finances.'))
-				try:
-					type.save()
-				except:
-					print "[Finances.models.py]Class iC_Record[__ini__] "
-					type = None
-		self.record_type = type
+		_check_icf_record_type("iCf_Self_Employed", u"Autoocupats - usuari a Factures i Trimestres", u"Aquest registre indica que el Autoocupat vinculat pot utilitzar l'entorno de Factures i Trimestres")
 
 	def coop(self):
 		return self.ic_membership.ic_company
