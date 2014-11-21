@@ -30,6 +30,7 @@ from Invoices.models import Soci
 from Invoices.models import v7_auth_user
 from django.db.models import Count
 from Finances.models import *
+from public_form.models import *
 from django.core.exceptions import ObjectDoesNotExist
 # - vars and shortcuts
 _prompt = " ⊙:> ".decode("utf-8")
@@ -192,6 +193,11 @@ class tool_invoice_upgrader(object):
 		self.invoice_set = invoices
 		self.icf_invoice_set = icf_invoices
 		self.human = self.pers = self.proj = None
+		self.v7_cooper = None
+		self.v8_cooper = None
+		self.v8_user = None
+		self.num_ces = None
+		self.v8_se = None
 		from Invoices.models import Soci
 		try:
 			self.v7_cooper = Soci.objects.get(user=invoice.user)
@@ -202,23 +208,41 @@ class tool_invoice_upgrader(object):
 			self.num_ces = self.v7_cooper.__unicode__()
 			from Welcome.models import iC_Membership
 			try:
-				self.v8_cooper = iCf_Cooper.objects.get(ic_self_employed__ic_membership__ic_CESnum=self.num_ces)
+				self.v8_se = iC_Self_Employed.objects.get(ic_membership__ic_CESnum=self.num_ces)
 			except ObjectDoesNotExist as e:
+				print e
+				print "Missing num_ces: %s" % (self.num_ces)
 				_counter_plus(counters, "invoices_missing_cooper_v8")
 				self.v8_cooper = None
 			else:
-				if not hasattr(self.v8_cooper, "ic_self_employed"):
-					print "[tool_sales_upgrade]__init__ esto debería ser un icf_cooper, ¿qué és?"
-
+				import pdb; pdb.set_trace()
+				if self.v8_se:
+					try:
+						iCf_Cooper.objects.get(ic_self_employed=self.v8_se)
+					except ObjectDoesNotExist:
+						try:
+							self.v8_user = RegistrationProfile.objects.get(person=self.v8_se.ic_membership.human).user
+						except ObjectDoesNotExist:
+							self.v8_user = RegistrationProfile.objects.get(project=self.v8_se.ic_membership.human).user
+						if self.v8_user:
+							icf_c = iCf_Cooper(user=self.v8_user, ic_self_employed=self.v8_se)
+						if icf_c and commit:
+							print "tendría que grabarse icf_cooper en __init__"
+							try:
+								self.v8_cooper = icf_c.save()
+								#... ... swtich between person and projects
+								if isinstance(self.v8_cooper.ic_self_employed.ic_membership, "iC_Project_Membership"):
+									self.proj = self.v8_cooper.ic_self_employed.ic_membership.ic_project
+									self.pers = None
+								else:
+									self.proj = None
+									self.pers = self.v8_cooper.ic_self_employed.ic_membership.person
+							except Exception as e:
+								print e
+								pass
 				else:
 					human = self.v8_cooper.ic_self_employed.human
-				#... ... swtich between person and projects
-				if isinstance(self.v8_cooper.ic_self_employed.ic_membership, "iC_Project_Membership"):
-					self.proj = self.v8_cooper.ic_self_employed.ic_membership.ic_project
-					self.pers = None
-				else:
-					self.proj = None
-					self.pers = self.v8_cooper.ic_self_employed.ic_membership.person
+				
 		self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
 
 	def need_to_migrate(self):
