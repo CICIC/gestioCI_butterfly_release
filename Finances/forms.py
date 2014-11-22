@@ -17,10 +17,10 @@ class cooper_admin_form(forms.ModelForm):
 
 from General.forms import company_form
 class client_form(company_form):
-	model = iCf_Client
+	model = Company
 
 class provider_form(company_form):
-	model = iCf_Provider
+	model = Company
 
 from Finances.models import manage_CHOICE_COOPER, manage_CHOICE_COOP, status_CHOICE_NONE, status_CHOICE_PENDING, status_CHOICE_DONE, status_CHOICE_WAITING
 

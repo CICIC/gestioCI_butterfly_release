@@ -122,7 +122,7 @@ def _counter_plus(counters, key):
 	else:
 		counters[key] = 1
 # - Invoice to Finances parser
-def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project = None, commit=False):
+def _get_company(v7, icf_se, type="doesnotmatter", icf_person = None, icf_project = None, commit=False):
 
 	# ***********************************
 	# so, get v7 as [Invoices.{sales/purchase}Invoice] model then
@@ -142,50 +142,37 @@ def _get_company(v7, human, type="doesnotmatter", icf_person = None, icf_project
 		# ... Read previous note.
 		try:
 			icf_company = Company.objects.get(id_card_non_es=v7.otherCIF)
-			return icf_company
 		except ObjectDoesNotExist as e:
 			# ... start iCf_Company object saving process...
 			#
-			# ... switch slug type
-			c = iCf_Company()
-			if type == "Client":
-				c = iCf_Client()
-			elif type == "Provider":
-				c == iCf_Provider()
-			#
-			# ... Mapa fields
-			try:
-				c.human = human
-			except:
-				c.Human = None
-				pass
+
+			c = Company()
+			c.telephone_cell = 66666666
 			c.nickname = v7.name
 			c.email = _get_default_no_mail()
 			#
 			if icf_person:
-				persons.add(icf_person)
+				c.persons.add(icf_person)
 			if icf_project:
 				c.projects.add(icf_project)
 			#
-			clas = "iCf_%s" % (type)
-			try:
-				c.company_type = Company_Type.objects.get(clas=clas)
-			except:
-				return "_get_company: Should exists Company ty"
+			c.legal_name =  v7.name
+			c.id_card_es =  v7.name
+			c.id_card_non_es = v7.otherCIF
 			#
-			c.legal_name = invoice.name
-			c.id_card_es = invoice.CIF
-			c.id_card_non_es = invoice.otherCIF
-			#
-			# ... ready to fly away insert query
+			# ... ready to fly away insrt query
 			try:
 				if commit:
 					icf_company = c.save()
+					if icf_se and type == "Client":
+						icf_se.icf_clients.add(c)
+					elif icf_se and type == "Provider":
+						icf_se.icf_providers.add(c)
 			except Exception as e:
 				icf_company = None
 				print "[tool_upgrader (templatetag)][_get_company()] Saving error:"
 				print e
-	return icf_company
+	return c	
 class tool_invoice_upgrader(object):
 	def initialice(self, invoices, icf_invoices, invoice, commit, counters):
 		self.invoice = invoice
@@ -218,7 +205,6 @@ class tool_invoice_upgrader(object):
 			_counter_plus(self.counters, "invoices_missing_cooper_v8")
 			self.v8_se = None
 	def set_or_create_v8(self):
-
 		# ... load self.v8_user field
 		if self.v8_se:
 			try:
@@ -236,6 +222,11 @@ class tool_invoice_upgrader(object):
 				v8 = iCf_Self_Employed(user=self.v8_user, ic_self_employed=self.v8_se)
 				v8.ic_membership = self.v8_se.ic_membership
 				self.v8_coop = v8.save()
+				if not self.v8_coop:
+					v8.ic_self_employed =self.v8_se
+					v8.ic_membership = self.v8_se.ic_membership
+					v8.user = self.v8_user
+					v8.save()
 			except ObjectDoesNotExist as e:
 				print "set_or_create_v8() error:"
 				print e
@@ -254,8 +245,7 @@ class tool_invoice_upgrader(object):
 		self.set_v8_se()
 		self.set_or_create_v8()
 		self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
-	def need_to_migrate(self):
-		return False
+
 	def has_lines(self):
 		try:
 			rows = self.invoice_set.objects.filter(
@@ -308,15 +298,19 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		#
 		# ... load specific sales data fields
 		# ... ... Companies
-		self.icf_company = _get_company(invoice.client, self.human, "Client", self.pers, self.proj, self.commit)
+		self.icf_company = _get_company(self.invoice.client, self.v8_coop, "Client", self.pers, self.proj, self.commit)
 
 	def need_to_migrate(self ):
-		r = super(tool_sales_upgrader, self).need_to_migrate()
+		if not self.v8_cooper and self.v8_se and self.v8_user:
+			print "caso extranísssssssssssssssssssssssssimo"
+			return True
 		try:
-			return self.v8_cooper.icf_sales.filter(period=self.invoice.period, num = self.invoice.num).count() < 1
+			a = self.v8_cooper.icf_sale.filter(period=self.invoice.period, num = self.invoice.num)
+			return a.count() < 1
 		except Exception as e:
 			print "tool_invoice_upgrader - error - need_to_migrate"
 			print e
+			return True
 	def has_lines(self):
 		return super(tool_sales_upgrader, self).has_lines()
 	def save_lines(self):
@@ -325,7 +319,8 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 	def migrate(self):
 		iCf_Invoice = super(tool_sales_upgrader, self).migrate()
 		s = iCf_Sale(iCf_Invoice)
-		s.client = self.company("Client", self.invoice.company, self.v8_cooper.human)
+		import pdb;pdb.set_trace()
+		s.client = _get_company(self.invoice.client, self.v8_coop, "Client", self.pers, self.proj, self.commit)
 		try:
 			print "tool_sales_upgrader - tries to save - on: migrate()" 
 			self.counters_plus("tries_to_save_sales_invoice")
@@ -343,7 +338,7 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		#
 		# ... load specific sales data fields
 		# ... ... Companies
-		self.icf_company = _get_company(invoice.provider, self.human, "Provider", self.pers, self.proj, self.commit)
+		self.icf_company = _get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
 	def need_to_migrate(self ):
 		return super(tool_purchases_upgrader, self).need_to_migrate()
 	def has_lines(self):
@@ -352,8 +347,17 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		super(tool_purchases_upgrader, self).save_lines()
 		return False
 	def migrate(self):
-		super(tool_purchases_upgrader, self).migrate()
-		return False
+		iCf_Invoice = super(tool_purchases_upgrader, self).migrate()
+		s = iCf_Purchase(iCf_Invoice)
+		s.provider = _get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
+		try:
+			print "tool_purchase_upgrader - tries to save - on: migrate()" 
+			self.counters_plus("tries_to_save_sales_invoice")
+			s.save()
+		except:
+			print "tool_purchase_upgrader - error - on: migrate()"
+		else:
+			self.counters_plus("sucessfully_saved_purchases_invoice")
 # - Main Tool
 class upgrader_tool(object):
 	def _print(self, text):
@@ -434,14 +438,16 @@ class upgrader_tool(object):
 		#...
 		return ico_yes if checked else ico_no
 	def check_taxes(self):
+		from Finances.models import iCf_Tax
 		#Main entity type
 		try:
-			tax_type = iCf_Record_Type.objects.get(clas="iCf_Taxes")
+			tax_type = iCf_Record_Type.objects.get(clas="iCf_Tax")
 		except:
+			t = iCf_Tax()
 			return ico_no
 		else:
 			#Entities of this type
-			from Finances.models import iCf_Tax
+			
 			from Invoices.models import periodTaxes
 			#... loop to process each entity
 			checked = False
@@ -469,14 +475,17 @@ class upgrader_tool(object):
 			#...
 			return ico_yes if checked else ico_no
 	def check_duties(self):
+		from Finances.models import iCf_Duty
 		#Main entity type
 		try:
 			duty_type = iCf_Record_Type.objects.get(clas="iCf_Duty")
 		except:
+			d = iCf_Duty()
+			self.check_duties(s)
 			return ico_no
 		else:
 			#Entities of this type
-			from Finances.models import iCf_Duty
+
 			from Invoices.models import VATS
 			#... loop to process each entity
 			checked = False
@@ -503,20 +512,7 @@ class upgrader_tool(object):
 			#...
 			return ico_yes if checked else ico_no
 	def check_and_create_company(self, slug="Company"):
-		c_type = False
-		try:
-			clas = "iCf_%s" % (slug)
-			c_type = Company_Type.objects.get(being_type__clas=clas)
-		except ObjectDoesNotExist:
-			if self.commit():
-				being_type = Being_Type(clas=clas)
-				try:
-					c_type = Company_Type(being_type=being_type)
-				except Exception as e:
-					print self._print("Error creating %s Being_type with error:" % (slug))
-					print e
-					return False
-		return c_type
+		return ico_no
 	def check_companies(self):
 		#Check for basic types
 		ok_clients = self.check_and_create_company("Client")
@@ -539,7 +535,7 @@ class upgrader_tool(object):
 				self._print("[%s: error creating tsu" % (label))
 				result = False
 			else:
-				if not tsu.v8_cooper:
+				if tsu.v8_cooper:
 					caption = "Soci: %s Fact: %s" % (tsu.v7_cooper.__unicode__(), str(invoice.num) )
 					self._print("[%s: don't have v8_cooper >> %s]" % (label, caption) )
 					_v8_missing_list.append(caption)
@@ -568,7 +564,6 @@ class upgrader_tool(object):
 						else:
 							self._print("[%s: migrating process >> has no lines!" % (label))
 							self.counters_plus("%s_NO_has_lines" % (label))
-
 					else:
 						self._print("[%s: migrating process >> no need to migrate!" % (label))
 						self.counters_plus("%s_matching" % (label))

@@ -112,7 +112,7 @@ class coop_admin(ModelAdmin):
 	fields = ['name', ]
 	list_display = ('name', )
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
-admin.site.register(iCf_Company, coop_admin)
+admin.site.register(Company, coop_admin)
 
 class tax_admin(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
@@ -191,13 +191,13 @@ class invoice_admin(ModelAdmin):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "client":
 			if request.user.is_superuser:
-				clients = iCf_Client.objects.all()
+				clients = Company.objects.all()
 			else:
 				clients = bot_cooper(request.user).clients()
 			kwargs["queryset"] = clients
-		if db_field.name == "iCf_Provider":
+		if db_field.name == "Company":
 			if request.user.is_superuser:
-				providers = iCf_Provider.objects.all()
+				providers = Company.objects.all()
 			else:
 				providers = bot_cooper(request.user).providers()
 			kwargs["queryset"] = providers
@@ -338,7 +338,7 @@ class company_admin(ModelAdmin):
 from Finances.forms import client_form
 class client_admin(company_admin):
 	form = client_form
-	model = iCf_Client
+	model = Company
 class client_user(client_admin):
 	def save_model(self, request, obj, form, change):
 		obj.save()
@@ -348,16 +348,16 @@ class client_user(client_admin):
 				c.clients.add(obj)
 	def get_model_perms(self, request): 
 		return {'skip':True }
-admin.site.register(iCf_Client, client_admin)
-user_admin_site.register(iCf_Client, client_user)
+admin.site.register(Company, client_admin)
+user_admin_site.register(Company, client_user)
 
 from Finances.forms import provider_form
-from Finances.models import iCf_Provider
+from Finances.models import Company
 class provider_admin(company_admin):
 	fields = company_admin.fields + ['iban', ]
 	list_display = company_admin.list_display + ('iban', )
 	search_fields = company_admin.search_fields + ['iban', ]
-	model = iCf_Provider
+	model = Company
 
 class provider_user(provider_admin):
 	def save_model(self, request, obj, form, change):
@@ -368,8 +368,8 @@ class provider_user(provider_admin):
 				c.providers.add(obj)
 	def get_model_perms(self, request): 
 		return {'skip':True }
-admin.site.register(iCf_Provider, provider_admin)
-user_admin_site.register(iCf_Provider, provider_user)
+admin.site.register(Company, provider_admin)
+user_admin_site.register(Company, provider_user)
 
 from Finances.forms import period_payment_inline_form
 class period_payment_inline(admin.TabularInline):
@@ -677,8 +677,8 @@ class cooper_admin(ModelAdmin):
 	form = cooper_admin_form
 	model = 'iCf_Self_Employed'
 	list_per_page = 600
-	fields = ['user', 'coop_number', 'assigned_vat', 'iCf_Company', 'extra_days', 'advanced_tax']
-	list_display = ('user','coopnumber', 'email', 'assigned_vat', 'iCf_Company', 'extra_days', 'advanced_tax', 'date_joined')
+	fields = ['user', 'coop_number', 'assigned_vat', 'Company', 'extra_days', 'advanced_tax']
+	list_display = ('user','coopnumber', 'email', 'assigned_vat', 'Company', 'extra_days', 'advanced_tax', 'date_joined')
 	list_display_links = ('user','coopnumber')
 	search_fields = ['coop_number', 'user__username', 'user__first_name']
 	list_filter = (First_Period_Filter, Closing_Filter )

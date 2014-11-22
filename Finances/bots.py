@@ -30,7 +30,7 @@ class bot_purchases_invoice ( object ):
 			self.purchases_irpf += item.irpf()
 			self.purchases_total += item.total()
 
-from Finances.models import iCf_Self_Employed, iCf_Client, iCf_Provider
+from Finances.models import iCf_Self_Employed, Company, Company
 class bot_cooper( object ):
 	def __init__(self, user):
 		self.user = user
@@ -50,12 +50,12 @@ class bot_cooper( object ):
 		try:
 			return self.cooper().clients.select_related()
 		except:
-			return iCf_Client.objects.filter(id=-1)
+			return Company.objects.filter(id=-1)
 	def providers(self):
 		try:
 			return self.cooper().providers.select_related()
 		except:
-			return iCf_Provider.objects.filter(id=-1)
+			return Company.objects.filter(id=-1)
 class bot_icf_self_employed( bot_cooper ):
 	def __init__(self, num_ces):
 		self.num_ces = num_ces

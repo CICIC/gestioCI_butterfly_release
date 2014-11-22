@@ -18,42 +18,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='iCf_Company',
-            fields=[
-                ('company_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='General.Company')),
-                ('name', models.CharField(help_text='El nom fiscal del client a qui es factura. Ex. SOM EL QUE SOM SL', max_length=200, verbose_name='Nom Fiscal')),
-                ('CIF', models.CharField(help_text='NIF:12345678A - CIF: A12345678 - NIE: X12345678A del client a qui es factura.', max_length=30, null=True, verbose_name='CIF/NIF/NIE', blank=True)),
-                ('otherCIF', models.CharField(help_text='Camps no NIF/CIF/NIE del client a qui es factura.', max_length=50, null=True, verbose_name='Altres identificadors', blank=True)),
-            ],
-            options={
-                'verbose_name': 'B - Client',
-                'verbose_name_plural': 'B - Clients',
-            },
-            bases=('General.company',),
-        ),
-        migrations.CreateModel(
-            name='iCf_Client',
-            fields=[
-                ('icf_company_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='Finances.iCf_Company')),
-            ],
-            options={
-                'verbose_name': 'B - Client',
-                'verbose_name_plural': 'B - Clients',
-            },
-            bases=('Finances.icf_company',),
-        ),
-        migrations.CreateModel(
-            name='iCf_Provider',
-            fields=[
-                ('icf_company_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='Finances.iCf_Company')),
-            ],
-            options={
-                'verbose_name': 'C - Prove\xefdor',
-                'verbose_name_plural': 'C - Prove\xefdors',
-            },
-            bases=('Finances.icf_company',),
-        ),
-        migrations.CreateModel(
             name='iCf_Record',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
@@ -181,7 +145,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('invoice', models.OneToOneField(parent_link=True, primary_key=True, serialize=False, to='Finances.iCf_Invoice')),
                 ('num', models.CharField(help_text='N\xfamero Factura prove\xefdor.', max_length=20, verbose_name='N\xba Factura', validators=[django.core.validators.RegexValidator(b'^[0-9a-zA-Z]*$', 'Nom\xe8s n\xfameros i lletres')])),
-                ('provider', models.ForeignKey(related_name=b'purchase_invoices_providers', verbose_name='Prove\xefdor', to='Finances.iCf_Provider')),
+                ('provider', models.ForeignKey(related_name=b'purchase_invoices_providers', verbose_name='Prove\xefdor', to='General.Company')),
             ],
             options={
                 'verbose_name': '2 - Factura Despesa',
@@ -206,7 +170,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('invoice', models.OneToOneField(parent_link=True, primary_key=True, serialize=False, to='Finances.iCf_Invoice')),
                 ('num', models.IntegerField(help_text='N\xfamero Factura: COOPXXXX/any/XXXX. Introdu\xefu nom\xe9s el n\xfamero final.', verbose_name='N\xba Factura')),
-                ('client', models.ForeignKey(related_name=b'sale_invoices_clients', verbose_name='Client', to='Finances.iCf_Client')),
+                ('client', models.ForeignKey(related_name=b'sale_invoices_clients', verbose_name='Client', to='General.Company')),
             ],
             options={
                 'verbose_name': '01 - Factura Emesa',
@@ -243,13 +207,13 @@ class Migration(migrations.Migration):
             name='iCf_Self_Employed',
             fields=[
                 ('ic_self_employed', models.OneToOneField(parent_link=True, primary_key=True, serialize=False, to='Welcome.iC_Self_Employed')),
-                ('clients', models.ManyToManyField(to='Finances.iCf_Client', verbose_name='Clients')),
+                ('clients', models.ManyToManyField(related_name=b'fk_icse_client', verbose_name='Clients', to='General.Company')),
                 ('icf_periods_closed', models.ManyToManyField(related_name=b'icf_self_employed_periods_closed', verbose_name='Factures Despeses', to='Finances.iCf_Invoice')),
                 ('icf_purchase_movements', models.ManyToManyField(related_name=b'icf_self_employed_purchase_movements', verbose_name='Factures Despeses', to='Finances.iCf_Purchase_movement')),
                 ('icf_purchases', models.ManyToManyField(related_name=b'icf_self_employed_purchase_invoices', verbose_name='Factures Despeses', to='Finances.iCf_Purchase')),
                 ('icf_sale_movements', models.ManyToManyField(related_name=b'icf_self_employed_sale_movements', verbose_name='Factures Emeses', to='Finances.iCf_Sale_movement')),
                 ('icf_sales', models.ManyToManyField(related_name=b'icf_self_employed_sale_invoices', verbose_name='Factures Emeses', to='Finances.iCf_Sale')),
-                ('providers', models.ManyToManyField(to='Finances.iCf_Provider', verbose_name='Prove\xefdors')),
+                ('providers', models.ManyToManyField(related_name=b'fk_icse_provider', verbose_name='Prove\xefdors', to='General.Company')),
                 ('user', models.ForeignKey(related_name=b'fk_icf_self_employed', verbose_name='n\xba COOP', to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -346,18 +310,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='icf_invoice',
-            name='lines',
-            field=models.ForeignKey(related_name=b'rn_invoice_line', verbose_name='L\xednes', blank=True, to='Finances.iCf_Invoice_line', null=True),
-            preserve_default=True,
-        ),
-        migrations.AddField(
-            model_name='icf_invoice',
-            name='movements',
-            field=models.ForeignKey(related_name=b'rn_invoice_movement', verbose_name='Moviments', to='Finances.iCf_Movement'),
-            preserve_default=True,
-        ),
-        migrations.AddField(
-            model_name='icf_invoice',
             name='payment_type',
             field=mptt.fields.TreeForeignKey(verbose_name='Forma de pagament', blank=True, to='Welcome.Payment_Type', null=True),
             preserve_default=True,
@@ -371,7 +323,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='icf_invoice',
             name='rel_account',
-            field=models.ForeignKey(related_name=b'rel_invoices', verbose_name='Compte relacionat', blank=True, to='General.Record', null=True),
+            field=models.ForeignKey(related_name=b'rel_invoice_account', verbose_name='Compte relacionat', blank=True, to='General.Record', null=True),
             preserve_default=True,
         ),
         migrations.AddField(
