@@ -193,6 +193,9 @@ class tool_invoice_upgrader(object):
 		self.v8_user = None
 		self.num_ces = None
 		self.v8_se = None
+		self.v8_period = None
+		self.v8_period_close = None
+		self.v8_invoice = None
 	def set_v7(self):
 		from Invoices.models import Soci
 		try:
@@ -250,7 +253,6 @@ class tool_invoice_upgrader(object):
 		self.set_v7()
 		self.set_v8_se()
 		self.set_or_create_v8()
-		import pdb; pdb.set_trace()
 		try:
 			self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
 		except:
@@ -311,7 +313,7 @@ class tool_invoice_upgrader(object):
 			ui.unit = Unit.objects.get(name="Euro")
 			#
 		except Exception as e:
-			import pdb; pdb.set_trace()
+
 			print "tool_invoice_upgrader - error - on: migrate()"
 			print e
 			return ui
@@ -336,7 +338,6 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 			a =  self.v8_cooper.icf_periods_closed.filter(icf_sale__period__name = self.invoice.period.label, icf_sale__num = self.invoice.num)
 			return a.count() < 1
 		except Exception as e:
-			import pdb;pdb.set_trace()
 			print "tool_invoice_upgrader - error - need_to_migrate"
 			print e
 			return True
@@ -344,7 +345,19 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		return super(tool_sales_upgrader, self).has_lines()
 	def save_lines(self):
 		super(tool_sales_upgrader, self).save_lines()
-		return False
+		rows = self.invoice_set.objects.filter(
+				period=self.invoice.period, 
+				user=self.invoice.user, 
+				num=self.invoice.num
+		) 
+		for line in lines:
+			li = iCf_Sales_line()
+			li.value = row.value
+			li.percent_invoiced_vat = row.percent_invoiced_vat
+			return li.save()
+			self.v8_invoice.lines.add(li)
+		return True
+
 	def migrate(self):
 		sale = super(tool_sales_upgrader, self).migrate(iCf_Sale())
 		sale.client = _get_company(self.invoice.client, self.v8_coop, "Client", self.pers, self.proj, self.commit)
@@ -352,9 +365,9 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		try:
 			print "tool_sales_upgrader - tries to save - on: migrate()" 
 			_counter_plus(self.counters,"tries_to_save_sales_invoice")
-			sale.save()
+			self.v8_invoice = sale.save()
 			sale.name = sale.number()
-			sale.save()
+			self.v8_invoice.save()
 		except Exception as e:
 			print "tool_sales_upgrader - error - on: migrate()"
 			print e
@@ -386,8 +399,21 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 	def has_lines(self):
 		return super(tool_purchases_upgrader, self).has_lines()
 	def save_lines(self):
+	def save_lines(self):
 		super(tool_purchases_upgrader, self).save_lines()
-		return False
+		rows = self.invoice_set.objects.filter(
+				period=self.invoice.period, 
+				user=self.invoice.user, 
+				num=self.invoice.num
+		) 
+		for line in rows:
+			li = iCf_Purchase_line()
+			li.value = row.value
+			li.percent_vat = row.percent_vat
+			li.percent_irpf = row.percent_irpf
+			return li.save()
+			self.v8_invoice.lines.add(li)
+		return True
 	def migrate(self):
 		purchase = super(tool_purchases_upgrader, self).migrate(iCf_Purchase())
 		purchase.provider = _get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
@@ -448,7 +474,6 @@ class upgrader_tool(object):
 	def commit(self):
 		return _get_GET("commit", self.request)
 	def check_periods(self):
-		import pdb; pdb.set_trace
 		#
 		from Finances.models import iCf_Period
 		#

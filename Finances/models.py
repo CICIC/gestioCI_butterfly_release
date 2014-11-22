@@ -171,8 +171,13 @@ class iCf_Duty(iCf_Record):
 	value=models.IntegerField(verbose_name=_(u'IVA'), unique=True, db_index=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
 	def __init__(self, *args, **kwargs):
 		super(iCf_Duty, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Duties", u"Impost oficial del Estat", u'Impuestos oficiales como el I.V.A. o el I.A.E.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Duty", u"IVA", u'Impuesto oficial I.V.A.', t )
+		#t = _check_icf_record_type("iCf_Duties", u"Impost oficial del Estat", u'Impuestos oficiales como el I.V.A. o el I.A.E.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Duty", u"IVA", u'Impuesto oficial I.V.A.', t )
+		try:
+			self.record_type = iCf_Record_Type.objects.get(clas="iCf_Duties")
+		except ObjectDoesNotExist:
+			print "iCf_Duties.__init__():" + " missing type"
+			pass
 	def __unicode__(self):
 		return unicode(self.value)
 	class Meta:
@@ -246,8 +251,9 @@ class iCf_Movement (iCf_Record):
 	)
 	def __init__(self, *args, **kwargs):
 		super(iCf_Movement, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Movements", _(u"Moviments"), u'Files de transaccions i moviments de moneda.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Movement", u'Moviment', u'Transacció o abonament.', t)
+		#t = _check_icf_record_type("iCf_Movements", _(u"Moviments"), u'Files de transaccions i moviments de moneda.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Movement", u'Moviment', u'Transacció o abonament.', t)
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Movements")
 	def _icf_self_employed(self):
 		if hasattr(self, 'icf_self_employed') and self.membership:
 			return self.icf_self_employed
@@ -333,8 +339,9 @@ class iCf_Invoice(iCf_Record):
 	lines=models.ManyToManyField('Finances.iCf_Invoice_line', related_name="rn_invoice_lines", verbose_name=_(u"Línies"),blank=True, null=True)
 	def __init__(self, *args, **kwargs):
 		super(iCf_Invoice, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Invoice", u"Factura", u'', t )
+		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Invoice", u"Factura", u'', t )
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoices")
 	def __getitem__(self, value):
 		if has_attr(self,"id"):
 			return self.id
@@ -396,8 +403,7 @@ class iCf_Invoice_line(iCf_Record):
 	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la línia. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
 	def __init__(self, *args, **kwargs):
 		super(iCf_Sale, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Invoice_line", u"Línia de factura", u'', t )
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoices")
 
 class iCf_Sale(iCf_Invoice):
 	invoice = models.OneToOneField('Finances.iCf_Invoice', primary_key=True, parent_link=True)
@@ -410,8 +416,9 @@ class iCf_Sale(iCf_Invoice):
 			return ""
 	def __init__(self, *args, **kwargs):
 		super(iCf_Sale, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Sale", u"Factura emesa", u'', t )
+		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Sale", u"Factura emesa", u'', t )
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoices")
 	def number(self):
 		se = self.rel_icfe_sales
 		if se.first():
@@ -453,8 +460,9 @@ class iCf_Purchase(iCf_Invoice):
 	provider=models.ForeignKey("General.Company", related_name="purchase_invoices_providers", verbose_name=_(u"Proveïdor"))
 	def __init__(self, *args, **kwargs):
 		super(iCf_Purchase, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Purchase", u"Factura despesa", u'', t )
+		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Purchase", u"Factura despesa", u'', t )
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Purchase")
 	def number(self):
 		return '%s/%s/%s'%( self.icf_self_employed, self.date.year, "%03d" % (self.num) )
 	number.short_description =_(u"Nº Factura")
@@ -483,8 +491,9 @@ class iCf_Sale_line (iCf_Invoice_line):
 	percent_invoiced_vat=models.ForeignKey(iCf_Duty, verbose_name=_(u"IVA Facturat (%)"), help_text=_(u"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"))
 	def __init__(self, *args, **kwargs):
 		super(iCf_Sale_line, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Sale_line", u"Línia de factura emesa", u'', t )
+		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Sale_line", u"Línia de factura emesa", u'', t )
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Sale_line")
 	def percent_assigned_vat(self):
 		from Finances.bots import bot_assigned_vat
 		return bot_assigned_vat (self.sales_invoice.icf_self_employed, self.percent_invoiced_vat).assigned_vat
@@ -516,9 +525,9 @@ class iCf_Purchase_line (iCf_Invoice_line):
 	percent_irpf=models.IntegerField(verbose_name=_(u'IRPF (%)'), help_text=_(u"El % de retenció de IRPF (Només en lloguers i factures de persones físiques)."), default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
 	def __init__(self, *args, **kwargs):
 		super(iCf_Purchase_line, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Purchase_line", u"Línia de factura despesa", u'', t )
-		
+		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Purchase_line", u"Línia de factura despesa", u'', t )
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Purchase_line")
 	def vat(self):
 		amount=Decimal ( "%.2f" % ((self.percent_vat.value*self.value) / 100))
 		return amount
@@ -564,8 +573,9 @@ class iCf_Period_close(iCf_Record):
 			return ""
 	def __init__(self, *args, **kwargs):
 		super(iCf_Period_close, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Period", "","", None, True)
-		self.record_type = _check_icf_record_type("iCf_Period_close", u'Sumatori i totals del periode de facturació.', u'Durant el trismestre els autoocupats asignen factures a un registre de Sumatori i totals. Un cop arribada la data de tancament, un procés automátic ha de tancar els registres no tancats pels usuaris.', t)
+		#t = _check_icf_record_type("iCf_Period", "","", None, True)
+		#self.record_type = _check_icf_record_type("iCf_Period_close", u'Sumatori i totals del periode de facturació.', u'Durant el trismestre els autoocupats asignen factures a un registre de Sumatori i totals. Un cop arribada la data de tancament, un procés automátic ha de tancar els registres no tancats pels usuaris.', t)
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Period_close")
 	def _icf_self_employed(self):
 		if hasattr(self, 'icf_self_employed') and self.membership:
 			return self.icf_self_employed
