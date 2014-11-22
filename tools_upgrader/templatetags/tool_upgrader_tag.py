@@ -178,7 +178,6 @@ def _get_company(v7, icf_se, type="doesnotmatter", icf_person = None, icf_projec
 				print e
 	return c
 def _v7_xipu_inter(v7):
-	import pdb; pdb.set_trace()
 	return Company.objects.get(name=v7.name)
 
 class tool_invoice_upgrader(object):
@@ -213,6 +212,7 @@ class tool_invoice_upgrader(object):
 			_counter_plus(self.counters, "invoices_missing_cooper_v8")
 			self.v8_se = None
 	def set_or_create_v8(self):
+
 		# ... load self.v8_user field
 		if self.v8_se:
 			try:
@@ -231,7 +231,9 @@ class tool_invoice_upgrader(object):
 				self.v8_cooper = iCf_Self_Employed.objects.get(user=self.v8_user, ic_self_employed=self.v8_se)
 			except ObjectDoesNotExist as e:
 				print "set_or_create_v8() need to create"
+
 				v8 = iCf_Self_Employed(user=self.v8_user, ic_self_employed=self.v8_se)
+				v8.record_type = iCf_Record_Type.objects.get(clas="iCf_Self_Employed")
 				v8.ic_membership = self.v8_se.ic_membership
 				self.v8_cooper = v8.save()
 				pass
@@ -248,7 +250,31 @@ class tool_invoice_upgrader(object):
 		self.set_v7()
 		self.set_v8_se()
 		self.set_or_create_v8()
-		self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
+		import pdb; pdb.set_trace()
+		try:
+			self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
+		except:
+			t_type = iCf_Type.objects.get(clas="iCf_Period")
+			period = invoice.period
+			p = iCf_Period()
+			#... map fields
+			for field in ['date_close', 'date_open', 'first_day','label'] :
+				try:
+					value = getattr(period,field)
+					setattr(p, field, value) 
+				except:
+					pass
+			value = getattr(period,"label")
+			setattr(p, "name", value) 
+			#...save object
+			if commit:
+				try:
+					p.icf_type = t_type
+					p.save()
+				except Exception as e:
+					print "error en init tool_invoice_upgrader"
+					print e
+			print invoice.period.label
 
 	def has_lines(self):
 		try:
@@ -264,9 +290,8 @@ class tool_invoice_upgrader(object):
 			return False
 	def save_lines(self):
 		return False
-	def migrate(self):
+	def migrate(self, ui):
 		#
-		ui = iCf_Invoice()
 		try:
 			ui.period = self.icf_period
 			ui.num = self.invoice.num
@@ -285,12 +310,11 @@ class tool_invoice_upgrader(object):
 			# See Manual itle=GestioCI-Base_de_datos#Unidades_de_medida:_Class_General.Unit.28Artwork.29
 			ui.unit = Unit.objects.get(name="Euro")
 			#
-			ui.save()
 		except Exception as e:
 			import pdb; pdb.set_trace()
 			print "tool_invoice_upgrader - error - on: migrate()"
 			print e
-			return False
+			return ui
 		return ui
 
 class tool_sales_upgrader(tool_invoice_upgrader):
@@ -309,9 +333,10 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 			print "caso extranísssssssssssssssssssssssssimo"
 			return True
 		try:
-			a = self.v8_cooper.icf_sale.filter(period=self.invoice.period, num = self.invoice.num)
+			a =  self.v8_cooper.icf_periods_closed.filter(icf_sale__period__name = self.invoice.period.label, icf_sale__num = self.invoice.num)
 			return a.count() < 1
 		except Exception as e:
+			import pdb;pdb.set_trace()
 			print "tool_invoice_upgrader - error - need_to_migrate"
 			print e
 			return True
@@ -321,18 +346,22 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		super(tool_sales_upgrader, self).save_lines()
 		return False
 	def migrate(self):
-		i = super(tool_sales_upgrader, self).migrate()
-		s = iCf_Sale(i)
-		s.client = _get_company(self.invoice.client, self.v8_coop, "Client", self.pers, self.proj, self.commit)
-		s.name = s.name
+		sale = super(tool_sales_upgrader, self).migrate(iCf_Sale())
+		sale.client = _get_company(self.invoice.client, self.v8_coop, "Client", self.pers, self.proj, self.commit)
+		sale.save()
 		try:
 			print "tool_sales_upgrader - tries to save - on: migrate()" 
 			_counter_plus(self.counters,"tries_to_save_sales_invoice")
-			s.save()
-		except:
+			sale.save()
+			sale.name = sale.number()
+			sale.save()
+		except Exception as e:
 			print "tool_sales_upgrader - error - on: migrate()"
+			print e
+			pass
 		else:
 			_counter_plus(self.counters,"sucessfully_saved_sales_invoice")
+
 class tool_purchases_upgrader(tool_invoice_upgrader):
 	def __init__(self, invoice, commit, counters):
 		from Finances.models import iCf_Purchase
@@ -348,7 +377,7 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 			print "caso extranísssssssssssssssssssssssssimo"
 			return True
 		try:
-			a = self.v8_cooper.icf_purchase.filter(period=self.invoice.period, num = self.invoice.num)
+			a = self.v8_cooper.icf_periods_closed.filter(icf_purchase_period__name=self.invoice.period.label, icf_sale_num = self.invoice.num)
 			return a.count() < 1
 		except Exception as e:
 			print "tool_invoice_upgrader - error - need_to_migrate"
@@ -360,15 +389,17 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		super(tool_purchases_upgrader, self).save_lines()
 		return False
 	def migrate(self):
-		iCf_Invoice = super(tool_purchases_upgrader, self).migrate()
-		s = iCf_Purchase(iCf_Invoice)
-		s.provider = _get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
+		purchase = super(tool_purchases_upgrader, self).migrate(iCf_Purchase())
+		purchase.provider = _get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
+		purchase.save()
 		try:
 			print "tool_purchase_upgrader - tries to save - on: migrate()" 
 			self.counters.counter_plus("tries_to_save_sales_invoice")
-			s.save()
-		except:
+			purchase.save()
+		except Exception as e:
 			print "tool_purchase_upgrader - error - on: migrate()"
+			print e
+			pass
 		else:
 			_counter_plus(self.counters, "sucessfully_saved_purchases_invoice")
 # - Main Tool
@@ -417,13 +448,21 @@ class upgrader_tool(object):
 	def commit(self):
 		return _get_GET("commit", self.request)
 	def check_periods(self):
+		import pdb; pdb.set_trace
+		#
+		from Finances.models import iCf_Period
+		#
 		#Main entity type
 		#... loop to process each entity
 		try:
-			period_type = iCf_Record_Type.objects.get(clas="iCf_Period")
+			t_type = iCf_Type.objects.get(clas="iCf_Period")
 		except:
-			pass
-
+			t_type = iCf_Period() # will inove model, __init__() with save method in it
+			try:
+				t_type = iCf_Type.objects.get(clas="iCf_Period")
+			except:
+				print "re run process"
+				return ico_no
 		#Entities of this type
 		from Finances.models import iCf_Period
 		from Invoices.models import period
@@ -436,94 +475,108 @@ class upgrader_tool(object):
 				#... create new object
 				p = iCf_Period()
 				#... map fields
-				for field in period._meta.get_all_field_names():
+				for field in ['date_close', 'date_open', 'first_day','label'] :
 					try:
 						value = getattr(period,field)
 						setattr(p, field, value) 
 					except:
-						pass
+						value = getattr(period,"label")
+						setattr(p, "name", value) 
 				#...save object
-				p.record_type = period_type
 				if _get_GET("commit", self.request):
-					p.save()
+					try:
+						p.parent = t_type
+						p.save()
+					except Exception as e:
+						print "error"
+						print e
+						return ico_no
 			#...refresh existence flag
 			checked = checked or iCf_Period.objects.filter(label=period.label).count()>0
 		#...
 		return ico_yes if checked else ico_no
 	def check_taxes(self):
-		from Finances.models import iCf_Tax
-		#Main entity type
-		try:
-			tax_type = iCf_Record_Type.objects.get(clas="iCf_Tax")
-		except:
-			t = iCf_Tax()
-			return ico_no
-		else:
-			#Entities of this type
-			
-			from Invoices.models import periodTaxes
-			#... loop to process each entity
-			checked = False
-			for tax in periodTaxes.objects.all():
-				#... is this entity migrated?
-				checked = iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
-				#... if need migration, migrate
-				if not checked:
-					#... create new object
-					p = iCf_Tax()
-					#... map fields
-					for field in tax._meta.get_all_field_names():
-						try:
-							value = getattr(tax,field)
-							if field=="taxId":
-								field="value"
-							setattr(p, field, value) 
-						except:
-							pass
-					#...save object
-					if _get_GET("commit", self.request):
-						p.save()
-				#...refresh existence flag
-				checked = checked or iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.min_base).count()>0
-			#...
-			return ico_yes if checked else ico_no
-	def check_duties(self):
-		from Finances.models import iCf_Duty
-		#Main entity type
-		try:
-			duty_type = iCf_Record_Type.objects.get(clas="iCf_Duty")
-		except:
-			d = iCf_Duty()
-			self.check_duties(s)
-			return ico_no
-		else:
-			#Entities of this type
+		# Basic Type
 
-			from Invoices.models import VATS
-			#... loop to process each entity
-			checked = False
-			for duty in VATS.objects.all():
-				#... is this entity migrated?
-				checked = iCf_Duty.objects.filter(value=duty.value).count()>0
-				#... if need migration, migrate
-				if not checked:
-					#... create new object
-					p = iCf_Duty()
-					#... map fields
-					for field in duty._meta.get_all_field_names():
-						try:
-							value = getattr(duty,field)
-							setattr(p, field, value) 
-						except:
-							pass
-					#...save object
-					p.record_type = duty_type
-					if _get_GET("commit", self.request):
-						p.save()
-				#...refresh existence flag
-				checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
-			#...
-			return ico_yes if checked else ico_no
+		from Finances.models import _check_icf_record_type
+		t = _check_icf_record_type("iCf_Patterns", u"Taules", u'Taules i patrons de dades', None, True)
+		r = _check_icf_record_type("iCf_Tax", u"Tasa", u'Càlcul Quota Trimestral, taula de quotes de ponderación segons facturació.', t)
+		if not (t and r):
+			return ico_no
+
+		#Entities of this type
+		from Invoices.models import periodTaxes
+		#... loop to process each entity
+		checked = False
+		for tax in periodTaxes.objects.all():
+			#... is this entity migrated?
+			checked = iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.max_base).count()>0
+			#... if need migration, migrate
+			if not checked:
+				#... create new object
+				p = iCf_Tax()
+				#... map fields
+				for field in tax._meta.get_all_field_names():
+					try:
+						value = getattr(tax,field)
+						if field=="taxId":
+							field="value"
+						setattr(p, field, value) 
+					except Exception as e:
+						print "mapping taxes"
+						print e
+						return ico_no
+
+				#...save object
+				if _get_GET("commit", self.request):
+					p.record_type = r
+					p.save()
+			#...refresh existence flag
+			checked = checked or iCf_Tax.objects.filter(min_base=tax.min_base, max_base=tax.min_base).count()>0
+		#...
+		return ico_yes if checked else ico_no
+	def check_duties(self):
+		#
+		from Finances.models import iCf_Duty
+		#
+		#Main entity type
+		#... loop to process each entity
+		try:
+			t_type = iCf_Record_Type.objects.get(clas="iCf_Duty")
+		except:
+			t_type = iCf_Duty()
+			try:
+				t_type = iCf_Record_Type.objects.get(clas="iCf_Duty")
+			except:
+				print "re run process"
+				return ico_no
+		#Main entity type
+
+		from Invoices.models import VATS
+		#... loop to process each entity
+		checked = False
+		for duty in VATS.objects.all():
+			#... is this entity migrated?
+			checked = iCf_Duty.objects.filter(value=duty.value).count()>0
+			#... if need migration, migrate
+			if not checked:
+				#... create new object
+				p = iCf_Duty()
+				#... map fields
+				for field in duty._meta.get_all_field_names():
+					try:
+						value = getattr(duty,field)
+						setattr(p, field, value) 
+					except:
+						pass
+				#...save object
+				if _get_GET("commit", self.request):
+					p.record_type = t_type
+					p.save()
+			#...refresh existence flag
+			checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
+		#...
+		return ico_yes if checked else ico_no
 	def check_and_create_company(self, slug="Company"):
 		return ico_no
 	def check_companies(self):
@@ -735,28 +788,6 @@ class statics_object(object):
 	def group_invoices(self):
 		links = []
 
-		#Section 1
-		from Invoices.models import Soci
-		links_members = []
-		links_members.append(_folder(_prompt +
-			"Total membres",
-			"Invoices_Soci.count(): " + str(Soci.objects.all().count() )
-			) )
-		#1.1
-		coops_per_member = Soci.objects.values("coop__name").annotate(count=Count("coop"))
-		links_coops = []
-		for coop in coops_per_member:
-			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
-		links_members.append(_folder(_prompt +"Socios por cooperativa madre", _links_list_to_ul(links_coops)))
-
-		#Section 2
-		links_companies = []
-		from Invoices.models import Client, Provider
-		caption = _prompt_ico(upgrader_tool(self.request).check_companies())
-		caption += " Companies: " + str(Client.objects.all().count()+Provider.objects.all().count())
-		content =  _folder("Clients: (total %s)" % (Client.objects.all().count()), _links_list_to_ul(Client.objects.all()[:10]))
-		content += _folder("Providers: (total %s)" % (Provider.objects.all().count()), _links_list_to_ul(Provider.objects.all()[:10]))
-		links_companies.append(_folder(caption, content))
 		#Section 3
 		#3.-1
 		links_periods =[]
@@ -794,6 +825,28 @@ class statics_object(object):
 		content = _links_list_to_ul((sales_folder,purchase_folder))
 		links_invoices.append(_folder(caption, content + ut.counters_render()))
 
+		#Section 1
+		from Invoices.models import Soci
+		links_members = []
+		links_members.append(_folder(_prompt +
+			"Total membres",
+			"Invoices_Soci.count(): " + str(Soci.objects.all().count() )
+			) )
+		#1.1
+		coops_per_member = Soci.objects.values("coop__name").annotate(count=Count("coop"))
+		links_coops = []
+		for coop in coops_per_member:
+			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
+		links_members.append(_folder(_prompt +"Socios por cooperativa madre", _links_list_to_ul(links_coops)))
+
+		#Section 2
+		links_companies = []
+		from Invoices.models import Client, Provider
+		caption = _prompt_ico(upgrader_tool(self.request).check_companies())
+		caption += " Companies: " + str(Client.objects.all().count()+Provider.objects.all().count())
+		content =  _folder("Clients: (total %s)" % (Client.objects.all().count()), _links_list_to_ul(Client.objects.all()[:10]))
+		content += _folder("Providers: (total %s)" % (Provider.objects.all().count()), _links_list_to_ul(Provider.objects.all()[:10]))
+		links_companies.append(_folder(caption, content))
 
 		#section 3.3
 		links_balances =[]
@@ -868,6 +921,8 @@ class statics_object(object):
 		#3.2
 
 		links_invoices = []
+		from Finances.models import iCf_Purchase, iCf_Invoice
+		links_invoices.append(_folder(_prompt +"Finances_iCf_Invoice.count()", str(iCf_Invoice.objects.all().count())))
 		from Finances.models import iCf_Purchase, iCf_Sale
 		links_invoices.append(_folder(_prompt +"Finances_iCf_Sale.count()", str(iCf_Sale.objects.all().count())))
 		links_invoices.append(_folder(_prompt +"Finances_iCf_Purchase.count()", str(iCf_Purchase.objects.all().count())))
@@ -878,12 +933,12 @@ class statics_object(object):
 		#Section 5
 		links_balances = []
 		from Finances.models import iCf_Period_close
-		periods = iCf_Period_close.objects.values("period").annotate(count=Count('period'))
+		periods = iCf_Period_close.objects.values("record_type").annotate(count=Count('record_type'))
 		links_balances.append(_folder(_prompt + "Periodes", _links_list_to_ul(periods) ))
-
+		links.append(_folder(_section("Invoices"), _links_list_to_ul(links_invoices + links_section3 + links_vats +  links_balances)))
 		links.append(_folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append(_folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append(_folder(_section("Invoices"), _links_list_to_ul(links_section3 + links_vats + links_invoices + links_balances)))
+
 
 		return links
 	def group_welcome(self):
