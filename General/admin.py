@@ -80,8 +80,6 @@ class AutoNameMixin(admin.ModelAdmin):
 		form.save_m2m()
 		return instance
 
-from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
-#class Css_Mixin(ForeignKeyRawIdWidgetWrapperAdmin):
 class Css_Mixin(admin.ModelAdmin):
 	class Media:
 		css = {

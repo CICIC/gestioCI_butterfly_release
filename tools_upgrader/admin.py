@@ -1,45 +1,29 @@
 #encoding=utf-8
-#encoding=utf-8
-
 from django.contrib.auth import *
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import admin
 from django.contrib.auth.models import *
-#from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib import messages
-
-#To read settings.MEDIA_URL
 from django.conf import settings
-
 from django.core.exceptions import ValidationError
 from django.core.exceptions import FieldError
-
 from django import forms
-
 from django.forms.util import ErrorList
-
 from django.db import models
 from django.db import IntegrityError, transaction
 from django.db.models import Sum, Max, Count
 from django.db import connection
-
 from django.core.validators import *
-
 from django.utils.translation import ugettext_lazy as _
-
-
-#Generic import
+#
+#Generic export/import CSV
 import csv
 from csvimport.models import CSVImport
-#Soci special import
-from Invoices.models import CSVImport
-
 #Application
 from Invoices.models import *
-
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -64,4 +48,12 @@ class EmailNotificationAdmin(ModelAdmin):
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
 #admin.site.register(EmailNotification, EmailNotificationAdmin)
 
-
+#****************************************************************
+# Widget wraper for foreign and m2m fields.
+# See manual: https://wiki.enredaos.net/index.php?title=GestioCI-Codi&section=44#.28widget.29_RelatedFieldWidgetWrapper
+# Exemple of inovaction:
+#
+# from tool_upgrade.widgets import ForeignKeyRawIdWidgetWrapperAdmin
+# class my_RelatedWidgetWrapperAdmin (ForeignKeyRawIdWidgetWrapperAdmin):
+# 	pass
+#****************************************************************
