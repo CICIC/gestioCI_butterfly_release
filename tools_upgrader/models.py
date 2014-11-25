@@ -11,7 +11,7 @@ from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from csvimport.models import CSVImport
 from django.contrib.auth.models import AbstractUser
-
+from Invoices.models import *
 # Create your models here.
 class Email(models.Model):
 	efrom = models.EmailField(verbose_name=_(u"Remitent"), help_text="", max_length=75, default="gee@gestion.org")
@@ -170,7 +170,7 @@ class CSVImport(models.Model):
 
 	def error_log_html(self):
 		return self.error_log
-		error_log_html.allow_tags = True
+	error_log_html.allow_tags = True
 
 	def __unicode__(self):
 		return self.upload_file.name

@@ -23,7 +23,7 @@ from csvimport.models import CSVImport
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from General.models import Concept, Company
 from public_form.models import RegistrationProfile
-from django.db.models import Q
+from django.db.models import Q, Sum
 # end IMPORTS ********************************************
 
 # begin TOOLS and VARS and CONSTs ************************
@@ -141,7 +141,7 @@ class iCf_Record(Artwork):	# create own ID's
 			return self.name
 	def _selflink(self):
 		if self.id:
-				return a_strG + "icf_record/" + str(self.id) + a_str2 + a_edit + "</a>"# % str(self.id)
+			return a_strG + "icf_record/" + str(self.id) + a_str2 + "</a>"# % str(self.id)
 		else:
 				return "Not present"
 	_selflink.allow_tags = True
@@ -181,7 +181,7 @@ class iCf_Duty(iCf_Record):
 			print ("iCf_Duties.__init__():" + " missing type")
 			pass
 	def __unicode__(self):
-		return unicode(self.value)
+		return self.value
 	class Meta:
 		verbose_name= _(u'IVA')
 		verbose_name_plural= _(u'IVAs')
@@ -262,13 +262,6 @@ class iCf_Movement (iCf_Record):
 			return 'none'
 	_icf_self_employed.allow_tags = True
 	_icf_self_employed.short_description = _(u"Registre de Soci")
-	def _icf_self_employed(self):
-		if hasattr(self, 'icf_self_employed'):
-			return self.icf_self_employed
-		else:
-			return 'none'
-	_icf_self_employed.allow_tags = True
-	_icf_self_employed.short_description = _(u"Registre d'Autoocupat")
 	def status(self):
 		if self.execution_date is None:
 			return status_CHOICE_PENDING
@@ -342,7 +335,7 @@ class iCf_Invoice(iCf_Record):
 		#self.record_type = _check_icf_record_type("iCf_Invoice", u"Factura", u'', t )
 		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoices")
 	def __getitem__(self, value):
-		if has_attr(self,"id"):
+		if hasattr(self,"id"):
 			return self.id
 		else:
 			return ""
@@ -407,7 +400,7 @@ class iCf_Sale(iCf_Invoice):
 	num = models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."))
 	client = models.ForeignKey("General.Company", related_name="sale_invoices_clients", verbose_name=_(u"Client"))
 	def __getitem__(self, value):
-		if has_attr(self,"id"):
+		if hasattr(self,"id"):
 			return self.id
 		else:
 			return ""
@@ -426,25 +419,25 @@ class iCf_Sale(iCf_Invoice):
 	number.short_description =_(u"Nº Factura")
 	def value(self):
 		value=0
-		for line in sales_line.objects.filter(sales_invoice=self.pk):
+		for line in self.lines.objects.filter(sales_invoice=self.pk):
 			value += line.value
 		return value
 	value.short_description=_(u"Base Imposable (€)")
 	def invoiced_vat(self):
 		value=0
-		for line in sales_line.objects.filter(sales_invoice=self.pk):
+		for line in self.lines.objects.filter(sales_invoice=self.pk):
 			value += line.invoiced_vat()
 		return value
 	invoiced_vat.short_description=_(u"IVA Facturat (€)")
 	def assigned_vat(self):
 		value=0
-		for line in sales_line.objects.filter(sales_invoice=self.pk):
+		for line in self.lines.objects.filter(sales_invoice=self.pk):
 			value += line.assigned_vat()
 		return value
 	assigned_vat.short_description=_(u"IVA Assignat (€)")
 	def total(self):
 		value = Decimal("0.00")
-		for line in sales_line.objects.filter(sales_invoice=self.pk):
+		for line in self.lines.objects.filter(sales_invoice=self.pk):
 			value += line.total() 
 		return value
 	total.short_description=_(u'Total Factura (€)')
@@ -654,8 +647,7 @@ class iCf_Period_close(iCf_Record):
 		return self.total_to_pay() - self.total_balance()
 	total_acumulated.decimal = True
 	total_acumulated.short_description = (u"TOTAL A ABONAR - SALDO (€)")
-  	def __unicode__(self):
-		return self.period
+
 	class Meta:
 		#unique_together = ('icf_self_employed', 'period')
 		verbose_name= _(u'03 - Resultats')
@@ -672,6 +664,20 @@ class iCf_Period_close(iCf_Record):
 #
 # TODO:
 # a) Remove v7 fields after migration proces is over.
+from django.db import models
+from django.contrib.auth.models import User
+from addressbook.models import Address
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    addresses = models.ManyToManyField(Address)
+
+    def __unicode__(self):
+        return self.user.email
+
+    @property
+    def address(self):
+        return self.addresses.latest()
 from Welcome.models import iC_Self_Employed, iC_Record_Type
 class iCf_Self_Employed(iC_Self_Employed):
 	ic_self_employed = models.OneToOneField('Welcome.iC_Self_Employed', primary_key=True, parent_link=True)

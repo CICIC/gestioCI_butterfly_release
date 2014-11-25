@@ -802,7 +802,6 @@ class iC_Self_Employed(iC_Record):
 		return out
 
 	def _akin_members(self, buttons=True, admin_site="/admin/"):
-		from Welcome.models import iC_Akin_Membership
 		out = ""
 		if self.id:
 			current_memberships = iC_Akin_Membership.objects.filter(ic_membership=self.ic_membership)
@@ -897,6 +896,7 @@ class iC_Self_Employed(iC_Record):
 		return link.encode("utf-8")
 
 	def _render_address_field(self, label, field, required=False):
+		out = ""
 		try:
 			if field.encode("utf-8"):
 				return "<li>%s: %s </li>" % (label.encode("utf-8"), field.encode("utf-8"))
@@ -1417,7 +1417,7 @@ class iC_Insurance(iC_Document):
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de final de l'assegurança"))
 	rel_address = models.ForeignKey('General.Address', blank=True, null=True, verbose_name=_(u"Adreça assegurada"))
 	rel_job = models.ForeignKey('General.Job', blank=True, null=True, verbose_name=_(u"Ofici assegurat"))
- 	payed_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data pagament de l'assegurança"))
+	payed_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data pagament de l'assegurança"))
 	#description = models.TextField(blank=True, null=True, verbose_name=_(u"Descripció assegurança"))
 
 	def __unicode__(self):

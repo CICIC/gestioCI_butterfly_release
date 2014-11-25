@@ -43,7 +43,7 @@ from Invoices.models import *
 from datetime import date, timedelta
 from decimal import Decimal
 
-from action import *
+from tools_upgrader.action import *
 
 #For cardid validation
 from localflavor.es.forms import *

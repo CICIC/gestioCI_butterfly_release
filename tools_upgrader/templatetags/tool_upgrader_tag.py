@@ -398,7 +398,7 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 			return True
 	def has_lines(self):
 		return super(tool_purchases_upgrader, self).has_lines()
-	def save_lines(self):
+
 	def save_lines(self):
 		super(tool_purchases_upgrader, self).save_lines()
 		rows = self.invoice_set.objects.filter(
