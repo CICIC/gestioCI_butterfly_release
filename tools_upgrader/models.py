@@ -128,7 +128,7 @@ class EmailNotification(Email):
 IMPORT SOCI
 '''
 from django.db import models
-from csvimport.conf import settings
+from Config import settings
 from copy import deepcopy
 from django.core.files.storage import FileSystemStorage
 import re

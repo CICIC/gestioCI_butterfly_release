@@ -5,6 +5,7 @@
 # Templates = {/templates/admin/invoices_super.html}
 
 # - imports
+
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import gettext as __
 change_class = " class='changelink' "
@@ -15,6 +16,7 @@ delete_class = " class='deletelink' "
 delete_caption = __("Treu").encode("utf-8")
 general_href = "<a href='/admin/General/"
 welcome_href = "<a href='/admin/Welcome/"
+from Invoices.models import *
 from django import template
 from datetime import date, timedelta, datetime
 from django.utils.translation import ugettext_lazy as _
@@ -34,7 +36,7 @@ from public_form.models import *
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 # - vars and shortcuts
-_prompt = " ⊙:> ".decode("utf-8")
+_prompt = " ⊙:> "
 def _prompt_ico(ico=None):
 	output = _prompt
 	if ico:
@@ -174,8 +176,8 @@ def _get_company(v7, icf_se, type="doesnotmatter", icf_person = None, icf_projec
 						icf_se.icf_providers.add(c)
 			except Exception as e:
 				c = None
-				print "[tool_upgrader (templatetag)][_get_company()] Saving error:"
-				print e
+				print ("[tool_upgrader (templatetag)][_get_company()] Saving error:")
+				print (e)
 	return c
 def _v7_xipu_inter(v7):
 	return Company.objects.get(name=v7.name)
@@ -210,8 +212,8 @@ class tool_invoice_upgrader(object):
 		try:
 			self.v8_se = iC_Self_Employed.objects.get(ic_membership__ic_CESnum=self.num_ces)
 		except ObjectDoesNotExist as e:
-			print "Missing num_ces: %s" % (self.num_ces)
-			print e
+			print ("Missing num_ces: %s" % (self.num_ces))
+			print (e)
 			_counter_plus(self.counters, "invoices_missing_cooper_v8")
 			self.v8_se = None
 	def set_or_create_v8(self):
@@ -221,11 +223,11 @@ class tool_invoice_upgrader(object):
 			try:
 				self.v8_user = RegistrationProfile.objects.get(Q(person=self.v8_se.ic_membership.human) | Q(project=self.v8_se.ic_membership.human)).user
 			except ObjectDoesNotExist as e:
-				print "set_or_create_v8() error:"
-				print e
+				print ("set_or_create_v8() error:")
+				print (e)
 				pass
 			except Exception as e:
-				print "set_or_create_v8() error:"
+				print ("set_or_create_v8() error:")
 				pass
 		# ... load self.v8_cooper field.
 		if self.v8_se and self.v8_user:
@@ -233,7 +235,7 @@ class tool_invoice_upgrader(object):
 			try:
 				self.v8_cooper = iCf_Self_Employed.objects.get(user=self.v8_user, ic_self_employed=self.v8_se)
 			except ObjectDoesNotExist as e:
-				print "set_or_create_v8() need to create"
+				print ("set_or_create_v8() need to create")
 
 				v8 = iCf_Self_Employed(user=self.v8_user, ic_self_employed=self.v8_se)
 				v8.record_type = iCf_Record_Type.objects.get(clas="iCf_Self_Employed")
@@ -241,11 +243,11 @@ class tool_invoice_upgrader(object):
 				self.v8_cooper = v8.save()
 				pass
 			except Exception as e:
-				print "set_or_create_v8() error:"
-				print e
+				print ("set_or_create_v8() error:")
+				print (e)
 				pass
 		else:
-			print "set_or_create_v8() error:"
+			print ("set_or_create_v8() error:")
 			_counter_plus(self.counters, "faltan_v8")
 
 	def __init__(self, invoices, icf_invoices, invoice, commit, counters):
@@ -274,9 +276,9 @@ class tool_invoice_upgrader(object):
 					p.icf_type = t_type
 					p.save()
 				except Exception as e:
-					print "error en init tool_invoice_upgrader"
-					print e
-			print invoice.period.label
+					print ("error en init tool_invoice_upgrader")
+					print (e)
+			print (invoice.period.label)
 
 	def has_lines(self):
 		try:
@@ -287,8 +289,8 @@ class tool_invoice_upgrader(object):
 			rows = rows.values("num").annotate(count=Count("num"))
 			return rows.count() > 1
 		except Exception as e:
-			print "tool_invoice_upgrader - error - on has_lines"
-			print e
+			print ("tool_invoice_upgrader - error - on has_lines")
+			print (e)
 			return False
 	def save_lines(self):
 		return False
@@ -314,8 +316,8 @@ class tool_invoice_upgrader(object):
 			#
 		except Exception as e:
 
-			print "tool_invoice_upgrader - error - on: migrate()"
-			print e
+			print ("tool_invoice_upgrader - error - on: migrate()")
+			print (e)
 			return ui
 		return ui
 
@@ -332,14 +334,14 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 
 	def need_to_migrate(self ):
 		if not self.v8_cooper and self.v8_se and self.v8_user:
-			print "caso extranísssssssssssssssssssssssssimo"
+			print ("caso extranísssssssssssssssssssssssssimo")
 			return True
 		try:
 			a =  self.v8_cooper.icf_periods_closed.filter(icf_sale__period__name = self.invoice.period.label, icf_sale__num = self.invoice.num)
 			return a.count() < 1
 		except Exception as e:
-			print "tool_invoice_upgrader - error - need_to_migrate"
-			print e
+			print ("tool_invoice_upgrader - error - need_to_migrate")
+			print (e)
 			return True
 	def has_lines(self):
 		return super(tool_sales_upgrader, self).has_lines()
@@ -350,10 +352,11 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 				user=self.invoice.user, 
 				num=self.invoice.num
 		) 
-		for line in lines:
-			li = iCf_Sales_line()
-			li.value = row.value
-			li.percent_invoiced_vat = row.percent_invoiced_vat
+		from Finances.models import iCf_Sale_line
+		for line in rows:
+			li = iCf_Sale_line()
+			li.value = line.value
+			li.percent_invoiced_vat = line.percent_invoiced_vat
 			return li.save()
 			self.v8_invoice.lines.add(li)
 		return True
@@ -363,14 +366,14 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		sale.client = _get_company(self.invoice.client, self.v8_coop, "Client", self.pers, self.proj, self.commit)
 		sale.save()
 		try:
-			print "tool_sales_upgrader - tries to save - on: migrate()" 
+			print ("tool_sales_upgrader - tries to save - on: migrate()") 
 			_counter_plus(self.counters,"tries_to_save_sales_invoice")
 			self.v8_invoice = sale.save()
 			sale.name = sale.number()
 			self.v8_invoice.save()
 		except Exception as e:
-			print "tool_sales_upgrader - error - on: migrate()"
-			print e
+			print ("tool_sales_upgrader - error - on: migrate()")
+			print (e)
 			pass
 		else:
 			_counter_plus(self.counters,"sucessfully_saved_sales_invoice")
@@ -387,14 +390,14 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		self.icf_company = _get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
 	def need_to_migrate(self ):
 		if not self.v8_cooper and self.v8_se and self.v8_user:
-			print "caso extranísssssssssssssssssssssssssimo"
+			print ("caso extranísssssssssssssssssssssssssimo")
 			return True
 		try:
 			a = self.v8_cooper.icf_periods_closed.filter(icf_purchase_period__name=self.invoice.period.label, icf_sale_num = self.invoice.num)
 			return a.count() < 1
 		except Exception as e:
-			print "tool_invoice_upgrader - error - need_to_migrate"
-			print e
+			print ("tool_invoice_upgrader - error - need_to_migrate")
+			print (e)
 			return True
 	def has_lines(self):
 		return super(tool_purchases_upgrader, self).has_lines()
@@ -406,7 +409,7 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 				user=self.invoice.user, 
 				num=self.invoice.num
 		) 
-		for line in rows:
+		for row in rows:
 			li = iCf_Purchase_line()
 			li.value = row.value
 			li.percent_vat = row.percent_vat
@@ -419,12 +422,12 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		purchase.provider = _get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
 		purchase.save()
 		try:
-			print "tool_purchase_upgrader - tries to save - on: migrate()" 
+			print ("tool_purchase_upgrader - tries to save - on: migrate()") 
 			self.counters.counter_plus("tries_to_save_sales_invoice")
 			purchase.save()
 		except Exception as e:
-			print "tool_purchase_upgrader - error - on: migrate()"
-			print e
+			print ("tool_purchase_upgrader - error - on: migrate()")
+			print (e)
 			pass
 		else:
 			_counter_plus(self.counters, "sucessfully_saved_purchases_invoice")
@@ -432,7 +435,7 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 class upgrader_tool(object):
 	def _print(self, text):
 		if _get_GET("prints", self.request):
-			print "[upgrader_tool_ %s]" % (text)
+			print ("[upgrader_tool_ %s]" % (text))
 	def _break(self,break_=True):
 		_break(_get_GET("breaks", self.request) and break_)
 	def __init__(self, request):
@@ -451,8 +454,8 @@ class upgrader_tool(object):
 			self.menus.append( _link( "/admin/?statics=1&execution=1", _prompt + "execution") + ": [boolean] => Will execute the process. Filter query if it lasts too much.")
 			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1", _prompt + "counters") + ": [boolean] => Will show or not counters section,")
 			self.menus.append( _link( "/admin/?statics=1&execution=1&list=1", _prompt + "list" ) + ": [boolean] => Will show or not list displays." )
-	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
-	 		self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10&query_offset=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
+			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
+			self.menus.append( _link( "/admin/?statics=1&execution=1&counters=1&list=1&query_count=10&query_offset=10", _prompt + "query_count") + ": [integer] => This is to limit_loop_query: [objects.all()[query_offset:query_count]]")
 			self.menus.append( _link( "/admin/?commit", _prompt + "commit") + ": [boolean] => Will execute the process also against BBDD. This flag is before every CRUD action is going to be performed.")
 			#breaks = bool
 			#prints = bool
@@ -462,7 +465,7 @@ class upgrader_tool(object):
 		_counter_plus(self.counters, counter_name)
 	def counters_render(self):
 		list = []
-		for k,v in self.counters.iteritems():
+		for k,v in self.counters.items():
 			try:
 				caption = _prompt + str(k)
 			except:
@@ -486,7 +489,7 @@ class upgrader_tool(object):
 			try:
 				t_type = iCf_Type.objects.get(clas="iCf_Period")
 			except:
-				print "re run process"
+				print ("re run process")
 				return ico_no
 		#Entities of this type
 		from Finances.models import iCf_Period
@@ -513,8 +516,8 @@ class upgrader_tool(object):
 						p.parent = t_type
 						p.save()
 					except Exception as e:
-						print "error"
-						print e
+						print ("error")
+						print (e)
 						return ico_no
 			#...refresh existence flag
 			checked = checked or iCf_Period.objects.filter(label=period.label).count()>0
@@ -548,8 +551,8 @@ class upgrader_tool(object):
 							field="value"
 						setattr(p, field, value) 
 					except Exception as e:
-						print "mapping taxes"
-						print e
+						print ("mapping taxes")
+						print (e)
 						return ico_no
 
 				#...save object
@@ -573,7 +576,7 @@ class upgrader_tool(object):
 			try:
 				t_type = iCf_Record_Type.objects.get(clas="iCf_Duty")
 			except:
-				print "re run process"
+				print ("re run process")
 				return ico_no
 		#Main entity type
 
@@ -668,7 +671,8 @@ class upgrader_tool(object):
 		offset = self.request.GET.get("query_offset", 0)
 
 		records = self.request.GET.get("query_count", SalesInvoice.objects.all().count()-1)
-		result_sales, sales_folder = self.check_invoice_loop("check_sales", SalesInvoice.objects.all().order_by("user", "num")[offset:records])
+		objs = SalesInvoice.objects.all()
+		result_sales, sales_folder = self.check_invoice_loop("check_sales", objs.order_by("user", "num"))
 
 		records = self.request.GET.get("query_count", PurchaseInvoice.objects.all().count()-1)
 		result_purchases, purchases_folder = self.check_invoice_loop("check_purchases", PurchaseInvoice.objects.all().order_by("user", "num")[offset:records])
@@ -682,17 +686,17 @@ class upgrader_tool(object):
 		except:
 			pass
 		#Entities of this type
-		from Finances.models import iC_Duty
+		from Finances.models import iCf_Duty
 		from Invoices.models import VATS
 		#... loop to process each entity
 		checked = False
 		for duty in VATS.objects.all():
 			#... is this entity migrated?
-			checked = iC_Duty.objects.filter(value=duty.value).count()>0
+			checked = iCf_Duty.objects.filter(value=duty.value).count()>0
 			#... if need migration, migrate
 			if not checked:
 				#... create new object
-				p = iC_Duty()
+				p = iCf_Duty()
 				#... map fields
 				for field in duty._meta.get_all_field_names():
 					try:
@@ -705,7 +709,7 @@ class upgrader_tool(object):
 				if _get_GET("commit", self.request):
 					p.save()
 			#...refresh existence flag
-			checked = checked or iC_Duty.objects.filter(value=duty.value).count()>0
+			checked = checked or iCf_Duty.objects.filter(value=duty.value).count()>0
 		#...
 		return ico_yes if checked else ico_no
 
@@ -773,8 +777,7 @@ class statics_object(object):
 		self.request = request
 
 	def invoices_lines_links(self, links):
-		links.append( _folder(_section("Detalls factures"), _links_list_to_ul(links_lines + links_vats)))
-
+		
 		links_lines = []
 		links_lines.append(_folder(_prompt +u"Factures amb més d'una linea", str( SalesInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1).count())))
 
@@ -796,6 +799,7 @@ class statics_object(object):
 			
 		links_lines = []
 		links_lines.append(_folder(_prompt +u"Factures amb més d'una linea", str( PurchaseInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1).count())))
+		links.append( _folder(_section("Detalls factures"), _links_list_to_ul(links_lines + links_vats)))
 
 		links_vats = []
 		invoices_per_vat_list = PurchaseInvoice.objects.values("user", "period", "num").annotate(count=Count('num')).filter(count__gt=1)
@@ -1006,8 +1010,8 @@ class statics_object(object):
 
 		#Section 6
 		from Finances.models import iCf_Record_Type, iCf_Record
-		for type in iCf_Record_Type.objects.all():
-			links_types.append( type.name + " | " + type.clas + "| #" + str( iCf_Record.objects.filter(record_type = type).count()))
+		for tt in iCf_Record_Type.objects.all():
+			links_types.append( type.name + " | " + tt.clas + "| #" + str( iCf_Record.objects.filter(record_type = tt).count()))
 		links.append( _folder(_section("Coopers"), _links_list_to_ul(links_members)))
 		links.append( _folder(_section("Companies"), _links_list_to_ul(links_companies)))
 		links.append( _folder(_section("Mother Coops"), _links_list_to_ul(links_coop)))
@@ -1076,5 +1080,5 @@ def upgrader_tag(parser, token):
 	try:
 		tag_name, obj = token.split_contents()
 	except ValueError:
-		raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+		raise template.TemplateSyntaxError( "%r tag requires exactly one argument" % token.contents.split()[0])
 	return tool_upgrader_tag_node(obj)

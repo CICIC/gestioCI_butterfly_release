@@ -68,7 +68,7 @@ from django.forms.formsets import all_valid
 from django.forms.models import BaseModelFormSet
 from django.forms.models import (modelform_factory, formset_factory, modelformset_factory,
 	inlineformset_factory, BaseInlineFormSet, modelform_defines_fields)
-from django.utils.encoding import force_unicode
+
 from django.utils.functional import curry
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _

@@ -1,0 +1,14 @@
+"22","Autoocupats - Perfil d'un usuari a l'entorn virtual de gestió económica.","Aquests tipus de registre indiquen que el Autoocupat vinculat pot utilitzar l'entorn de facturació i tancament trimestral de l'IVA.
+","1","2","3","0","iCf_Finances",NULL
+"23","Elements de factures","Tipus de factures y subelements.","1","10","4","0","iCf_Invoices",NULL
+"24","Impost oficial del Estat","Impuestos oficiales como el I.V.A. o el I.A.E.","1","4","5","0","iCf_Duties",NULL
+"25","Taules","Taules i patrons de dades","1","6","6","0","iCf_Patterns",NULL
+"30","Tasa","Càlcul Quota Trimestral, taula de quotes de ponderación segons facturació.","2","3","6","1","iCf_Tax","25"
+"33","IVA","Impuesto oficial I.V.A.","2","3","5","1","iCf_Duty","24"
+"36","Factura",,"4","5","4","1","iCf_Invoice","23"
+"37","T1","Períodes de facturació de l'any 2014","1","2","19","1","iCf_Period","42"
+"38","Factura despesa",,"6","7","4","1","iCf_Purchase","23"
+"39","T3","Períodes de facturació de l'any 2014","1","2","21","1","iCf_Period","42"
+"40","Factura emesa",,"8","9","4","1","iCf_Sale","23"
+"41","T4","Períodes de facturació de l'any 2014","1","2","23","1","iCf_Period","42"
+"42","Període de facturació","Period management totals, and balances.","1","2","24","0","iCf_Periods",NULL

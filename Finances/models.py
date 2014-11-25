@@ -215,8 +215,11 @@ class iCf_Period(iCf_Record_Type):
 	exported = models.BooleanField (verbose_name=_("Archivat"), help_text=_(u"Administració ha exportat els registres CSV del període."), default=False)
 	def __init__(self, *args, **kwargs):
 		super(iCf_Period, self).__init__(*args, **kwargs)
-		self.icf_type = _check_icf_record_type("iCf_Period", u'Facturation period', u'Period management totals, and balances.', None,True )
+		self.icf_type = _check_icf_record_type("iCf_Periods", u'Facturation period', u'Period management totals, and balances.', None,True )
 	def __unicode__(self):
+		import pydevd;pydevd.settrace()
+		if not self:
+			return ""
 		if hasattr(self, "id"):
 			return ('%s %s') % (self.first_day.year, self.label)
 		else:
@@ -664,21 +667,7 @@ class iCf_Period_close(iCf_Record):
 #
 # TODO:
 # a) Remove v7 fields after migration proces is over.
-from django.db import models
-from django.contrib.auth.models import User
-from addressbook.models import Address
-
-class UserProfile(models.Model):
-    user = models.ForeignKey(User, unique=True)
-    addresses = models.ManyToManyField(Address)
-
-    def __unicode__(self):
-        return self.user.email
-
-    @property
-    def address(self):
-        return self.addresses.latest()
-from Welcome.models import iC_Self_Employed, iC_Record_Type
+from Welcome.models import iC_Self_Employed
 class iCf_Self_Employed(iC_Self_Employed):
 	ic_self_employed = models.OneToOneField('Welcome.iC_Self_Employed', primary_key=True, parent_link=True)
 	user = models.ForeignKey(User, verbose_name=_(u"nº COOP"), related_name="fk_icf_self_employed")

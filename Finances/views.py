@@ -35,15 +35,15 @@ def print_period_close(request, period_close_id):
 
 
 
-import ho.pisa as pisa
-import cStringIO as StringIO
+import xhtml2pdf as pisa
+from io import StringIO
 import cgi
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 
 def render_pdf(html):
-	result = StringIO.StringIO()
+	result = StringIO()
 	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result)
 	if not pdf.err:
 		return HttpResponse(result.getvalue(), mimetype='application/pdf')

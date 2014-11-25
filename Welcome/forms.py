@@ -133,7 +133,7 @@ class public_form(forms.ModelForm):
 		('3', 'Soci Cooperatiu Individual',),
 		('4', 'Soci Afí Individual',),
 	)
- 	CHOICES_public = (
+	CHOICES_public = (
 		('1', 'Projecte Col·lectiu',),
 		('2', 'Soci Cooperatiu Individual',),
 		('3', 'Soci Afí Individual',),

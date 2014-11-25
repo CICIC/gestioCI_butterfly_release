@@ -21,7 +21,7 @@ def public_form(request):
 		# Have we been provided with a valid form?
 		if form.is_valid():
 			selected_type = request.POST['type']
-			print selected_type
+			print (selected_type)
 			if selected_type == "1" :
 				to_url = 'Welcome:public_view_project'
 			elif selected_type == "2":
@@ -30,11 +30,10 @@ def public_form(request):
 				to_url = 'Welcome:public_view_person'
 			else:
 				to_url = "Welcome:public_form"
-			print to_url
 			return HttpResponseRedirect( reverse(to_url) )
 		else:
 			# The supplied form contained errors - just print them to the terminal.
-			print form.errors
+			pass
 	else:
 		# If the request was not a POST, display the form to enter details.
 		form = public_form()
@@ -43,10 +42,8 @@ def public_form(request):
 	return render_to_response('public_form.html', {'form': form}, context)
 
 def public_view_person(request):
-	print "dsdg"
 	# Get the context from the request.
 	context = RequestContext(request)
-	print "dentro"
 	# A HTTP POST?
 	from Welcome.forms import public_form_person
 	if request.method == 'POST':
@@ -57,7 +54,7 @@ def public_view_person(request):
 			pass
 		else:
 			# The supplied form contained errors - just print them to the terminal.
-			print form.errors
+			pass
 	else:
 		# If the request was not a POST, display the form to enter details.
 		form = public_form_person()
@@ -79,7 +76,7 @@ def public_view_project(request):
 			pass
 		else:
 			# The supplied form contained errors - just print them to the terminal.
-			print form.errors
+			print (form.errors)
 	else:
 		# If the request was not a POST, display the form to enter details.
 		form = public_form_project()
@@ -102,7 +99,7 @@ def public_view_company(request):
 			pass
 		else:
 			# The supplied form contained errors - just print them to the terminal.
-			print form.errors
+			print (form.errors)
 	else:
 		# If the request was not a POST, display the form to enter details.
 		form = public_form_company()
@@ -309,6 +306,7 @@ def print_task_list(request, icse):
 		obj.quarter_fee = "%s: [%s %s]" % (name.decode("utf-8"), str(fee.amount), fee.unit.code)	
 	from django.conf.urls.static import static
 	html = render_to_string( 'task_list.html', {'obj': obj})
+	from tools_upgrader.views import render_pdf
 	return render_pdf(html.encode("utf-8"), request)
 
 @login_required
@@ -352,7 +350,7 @@ def print_certificate(request, icse, type, cooperative):
 
 	html = render_to_string( template, {'obj': obj})
 	#return HttpResponse(html)
-	from tools_upgrade.views import render_pdf
+	from tools_upgrader.views import render_pdf
 	return render_pdf(html.encode("utf-8"), request)
 
 
