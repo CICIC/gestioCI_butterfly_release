@@ -1,5 +1,10 @@
 #encoding=utf-8
 '''
+  See model map on [GestioCI][Manual][Base de Datos][Facturación]
+  https://wiki.enredaos.net/index.php?title=GestioCI-Base_de_datos#Facturaci.C3.B3n
+'''
+# 
+'''
 Section 0 >> global const and vars
 '''
 from django.core.exceptions import ObjectDoesNotExist
@@ -107,19 +112,18 @@ def _check_icf_record_type( clas, name, description, tt, check_type=False):
 					t = iCf_Record_Type.objects.get(clas=clas )
 				except Exception as e:
 					t = None
-					#import pdb; pdb.set_trace()
-					print e
+					print (e)
 					pass
 			return t
 	except Exception as e:
-		print "Finances.models.py | _check_icf_record_type | a new type found: %s, error:" % (clas)
+		print ("Finances.models.py | _check_icf_record_type | a new type found: %s, error:" % (clas))
 		t = None
-		print e
+		print (e)
 		pass
 	return t
 
 '''
-Section 1 >> Structural model entities to link GENERAL MPTT Tree
+Section 1 >> Abstract model entities to link GENERAL MPTT Tree
 https://wiki.enredaos.net/index.php?title=GestioCI-Codi#MPTT
 '''
 from General.models import Artwork, Concept
@@ -160,10 +164,8 @@ class iCf_Record_Type(iCf_Type):
 		verbose_name_plural= _(u'c-> Tipus de Registres financers CI')
 
 '''
-Section 2 >> Semantic model entities to link GENERAL MPTT Tree
-https://wiki.enredaos.net/index.php?title=GestioCI-Codi#
+Section 2 >> Semantic models
 '''
-
 # ************************************************
 # Taxes & duties & other inmaterial terms ---------------------------
 class iCf_Duty(iCf_Record):
@@ -176,7 +178,7 @@ class iCf_Duty(iCf_Record):
 		try:
 			self.record_type = iCf_Record_Type.objects.get(clas="iCf_Duties")
 		except ObjectDoesNotExist:
-			print "iCf_Duties.__init__():" + " missing type"
+			print ("iCf_Duties.__init__():" + " missing type")
 			pass
 	def __unicode__(self):
 		return unicode(self.value)
@@ -195,7 +197,7 @@ class iCf_Tax(iCf_Record):
 		try:
 			self.record_type = iCf_Record_Type.objects.get(clas="iCf_Tax")
 		except ObjectDoesNotExist:
-			print "iCf_Tax.__init__():" + " missing type"
+			print ("iCf_Tax.__init__():" + " missing type")
 			pass
 
 	def __unicode__(self):
@@ -224,7 +226,6 @@ class iCf_Period(iCf_Record_Type):
 		verbose_name_plural= _(u"G - Trimestres")
 '''
 Section 3 >> Invoicing and currency movements and period closing
-https://wiki.enredaos.net/index.php?title=GestioCI-Codi#Facturaci.C3.B3n
 '''
 # ************************************************
 # Transactions
@@ -262,9 +263,7 @@ class iCf_Movement (iCf_Record):
 	_icf_self_employed.allow_tags = True
 	_icf_self_employed.short_description = _(u"Registre de Soci")
 	def _icf_self_employed(self):
-		#print 'ic_SELFEMPLOYED'
 		if hasattr(self, 'icf_self_employed'):
-			#print self.selfemployed.all()
 			return self.icf_self_employed
 		else:
 			return 'none'
@@ -359,9 +358,7 @@ class iCf_Invoice(iCf_Record):
 	_icf_self_employed.short_description = _(u"Autoocupat que factura")
 	icf_self_employed = property(_icf_self_employed)
 	def _ic_self_employed(self):
-		#print 'ic_SELFEMPLOYED'
 		if hasattr(self, 'ic_self_employed'):
-			#print self.selfemployed.all()
 			return self.ic_self_employed
 		else:
 			return 'none'
@@ -482,9 +479,9 @@ class iCf_Purchase(iCf_Invoice):
 	total.decimal = True
 	total.short_description = _(u'Total Factura (€)')
 	class Meta:
+		#unique_together = ('icf_self_employed', 'period', 'num')
 		verbose_name = _(u'2 - Factura Despesa')
 		verbose_name_plural = _(u'2 - Factures Despeses')
-		#unique_together = ('icf_self_employed', 'period', 'num')
 #
 class iCf_Sale_line (iCf_Invoice_line):
 	line = models.OneToOneField('Finances.iCf_Invoice_line', primary_key=True, parent_link=True)
@@ -585,9 +582,7 @@ class iCf_Period_close(iCf_Record):
 	_icf_self_employed.short_description = _(u"Autoocupat que factura")
 	icf_self_employed = property(_icf_self_employed)
 	def _ic_self_employed(self):
-		#print 'ic_SELFEMPLOYED'
 		if hasattr(self, 'ic_self_employed'):
-			#print self.selfemployed.all()
 			return self.ic_self_employed
 		else:
 			return 'none'
@@ -662,10 +657,9 @@ class iCf_Period_close(iCf_Record):
   	def __unicode__(self):
 		return self.period
 	class Meta:
+		#unique_together = ('icf_self_employed', 'period')
 		verbose_name= _(u'03 - Resultats')
 		verbose_name_plural= _(u'03 - Resultats')
-		#unique_together = ('icf_self_employed', 'period')
-
 #*************************************************************
 # See Manual, reference [GestioCI-Base_de_datos] Section: Entidades > Registres de soci (Afi, Individual, Col·lectiva, Autoocupat, firaire)
 # on url: 
@@ -673,6 +667,8 @@ class iCf_Period_close(iCf_Record):
 #
 # So,
 # the fact that iCf_Self_Employed is inheriting iC_Self_Employed, excludes iC_Memberships to use Finances app as iCf_Self_Employed is foreignkey in invoices records.
+# follow whateve on url:
+# http://projects.cooperativa.cat/issues/109#change-115
 #
 # TODO:
 # a) Remove v7 fields after migration proces is over.
@@ -710,7 +706,6 @@ class iCf_Self_Employed(iC_Self_Employed):
 	class Meta:
 		verbose_name= _(u'D - Socia')
 		verbose_name_plural= _(u'D -  Socies')
-
 '''
 Section 4 >> Finance filigraning and computations above section 3
 undocumented & pending
