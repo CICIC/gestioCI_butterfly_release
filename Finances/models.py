@@ -190,12 +190,12 @@ class iCf_Duty(iCf_Record):
 		#t = _check_icf_record_type("iCf_Duties", u"Impost oficial del Estat", u'Impuestos oficiales como el I.V.A. o el I.A.E.', None, True)
 		#self.record_type = _check_icf_record_type("iCf_Duty", u"IVA", u'Impuesto oficial I.V.A.', t )
 		try:
-			self.record_type = iCf_Record_Type.objects.get(clas="iCf_Duties")
+			self.record_type = iCf_Record_Type.objects.get(clas="iCf_Duty")
 		except ObjectDoesNotExist:
 			print ("iCf_Duties.__init__():" + " missing type")
 			pass
 	def __unicode__(self):
-		return self.value
+		return str(self.value)
 	class Meta:
 		verbose_name= _(u'IVA')
 		verbose_name_plural= _(u'IVAs')
