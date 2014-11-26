@@ -11,4 +11,6 @@
 "39","T3","Períodes de facturació de l'any 2014","1","2","21","1","iCf_Period","42"
 "40","Factura emesa",,"8","9","4","1","iCf_Sale","23"
 "41","T4","Períodes de facturació de l'any 2014","1","2","23","1","iCf_Period","42"
-"42","Període de facturació","Period management totals, and balances.","1","2","24","0","iCf_Periods",NULL
+"42","T2","Períodes de facturació de l'any 2014","1","2","25","1","iCf_Period","42"
+"43","Facturation period","Period management totals, and balances.","1","2","26","0","iCf_Periods",NULL
+"44","Proveidor","Perfil de companyies que són proveidors a l'entorn de facturació","1","2","27","0","Proveidor",NULL
