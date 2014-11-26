@@ -111,10 +111,8 @@ class purchases_invoice_form(invoice_form):
 				raise forms.ValidationError(_(u"El proveedor no té assignat un IBAN vàlid."))
 		return self.cleaned_data.get('who_manage')
 	def clean_expiring_date(self):
-		print "cleanin"
 		if self.cleaned_data.get('who_manage') == manage_CHOICE_COOPER:
 			return None
-		print self.cleaned_data.get('expiring_date')
 		if  self.cleaned_data.get('expiring_date') is None:
 				raise forms.ValidationError(_(u"Has d'introduïr una data de venciment"))
 		return self.cleaned_data.get('expiring_date')

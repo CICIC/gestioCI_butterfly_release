@@ -22,7 +22,6 @@
 
 	{% if app_list %}
 		{% for app in app_list %}
-
 		<!--	<div class="app-{{ app.app_label }} module">
 			   <caption>
 					<a href="{{ app.app_url }}" class="section" title="Visualizadores">Visualizadores</a>
@@ -38,39 +37,11 @@
 					{% blocktrans with name=app.name %} {{ name}} {% endblocktrans %}
 				</a>
 			</caption>
-
+			{% load getattribute %}
 			{% for model in app.models %}
-				{% if model.perms.direct_to_change_form %}
-						<!-- WARNING, AD HOC, No access to change_list, direct to change_form model. -->
+				
 						<tr class="model-{{ model.object_name|lower }}">
-							<th scope="row"><a href="{{ app.app_url }}{{ model.object_name|lower }}/{{ model.perms.change_form_url }}">{{ model.name }}</a></th>
-						</tr>
-				{% elif model.perms.view %}
-						<!-- WARNING, AD HOC, Read only model -->
-						<tr class="model-{{ model.object_name|lower }}">
-							<th scope="row"><a href="{{ app.app_url }}{{ model.object_name|lower }}">{{ model.name }}</a></th>
-						</tr>
-				{% elif model.perms.skip %}
-						<!-- do nothing-->
-				{% elif model.perms.historial %}
-						<tr class="model-{{ model.object_name|lower }}">
-							<th scope="row"><a href="{{ app.app_url }}{{ model.object_name|lower }}">{{ model.name }}</a></th>
-								{% if model.perms.canAdd %}
-									<td><a href="{{ app.app_url }}{{ model.object_name|lower }}/add" class="addlink">{% trans 'Add' %}</a></td>
-								{% else %}
-									<td>&nbsp;</td>
-								{% endif %}
-								
-								{% if model.perms.canEdit %}
-									<td><a href="{{ app.app_url }}{{ model.object_name|lower }}" class="changelink">{% trans 'Change' %}</a></td>
-								{% else %}
-									<td>&nbsp;</td>
-								{% endif %}
-						</tr>
-
-				 {% else %}
-						<tr class="model-{{ model.object_name|lower }}">
-						{% if model.admin_url %}
+						{% if model.admin_url  %}
 							<th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
 						{% else %}
 							<th scope="row">{{ model.name }}</th>
@@ -88,7 +59,7 @@
 							<td>&nbsp;</td>
 						{% endif %}
 						</tr>
-				{% endif %}
+	
 			{% endfor %}
 			</table>
 			</div>

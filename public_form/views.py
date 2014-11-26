@@ -369,7 +369,7 @@ def entry_page_to_gestioci(request, user_id = None):
 				moment_img = "welcome_flow_self5.png"
 			elif membership_self._has_assisted_welcome() != ico_no:
 				moment_img = "welcome_flow_self4.png"
-			elif membership_self._rel_licences() != str_none:
+			elif membership_self._rel_licences() != "":
 				moment_img = "welcome_flow_self3.png"
 			else:
 				moment_img = "welcome_flow_self2.png"

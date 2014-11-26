@@ -21,7 +21,7 @@ from django.contrib.auth.models import  User
 from datetime import date, timedelta, datetime
 from csvimport.models import CSVImport
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-from General.models import Concept, Company
+from General.models import Concept, Company, Type
 from public_form.models import RegistrationProfile
 from django.db.models import Q, Sum
 # end IMPORTS ********************************************
@@ -62,7 +62,7 @@ movement_STATUSES=(
 		(status_CHOICE_DONE, _(u'Executat')),
 	)
 
-def _check_icf_record_type( clas, name, description, tt, check_type=False):
+def _check_icf_record_type( clas, name, description, tt, check_type=False, check_type2=False):
 	#
 	# MPTT - record_type set up.
 	# See basic explanation about MPTT types on Manual - [GestioCI-Base_de_datos][Breve visita acompañada por el bosque MPTT]
@@ -80,12 +80,26 @@ def _check_icf_record_type( clas, name, description, tt, check_type=False):
 		pass
 		
 	try:
-		if check_type:
+		if check_type2:
+			t = Type.objects.get( clas=clas )
+		elif check_type:
 			t = iCf_Type.objects.get( clas=clas )
 		else:
 			t = iCf_Record_Type.objects.get(clas=clas) 
 		return t
 	except ObjectDoesNotExist:
+		if check_type2:
+			t = Type(clas=clas, 
+				name=name, 
+				description=_(description))
+			try:
+				t.save()
+			except:
+				try:
+					t = Type.objects.get( Q(clas=clas))
+				except:
+					pass
+			return t
 		if check_type:
 			t = iCf_Type(clas=clas, 
 				name=name, 
@@ -217,7 +231,6 @@ class iCf_Period(iCf_Record_Type):
 		super(iCf_Period, self).__init__(*args, **kwargs)
 		self.icf_type = _check_icf_record_type("iCf_Periods", u'Facturation period', u'Period management totals, and balances.', None,True )
 	def __unicode__(self):
-		import pydevd;pydevd.settrace()
 		if not self:
 			return ""
 		if hasattr(self, "id"):
@@ -257,7 +270,7 @@ class iCf_Movement (iCf_Record):
 		super(iCf_Movement, self).__init__(*args, **kwargs)
 		#t = _check_icf_record_type("iCf_Movements", _(u"Moviments"), u'Files de transaccions i moviments de moneda.', None, True)
 		#self.record_type = _check_icf_record_type("iCf_Movement", u'Moviment', u'Transacció o abonament.', t)
-		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Movements")
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Movement")
 	def _icf_self_employed(self):
 		if hasattr(self, 'icf_self_employed') and self.membership:
 			return self.icf_self_employed
@@ -278,10 +291,16 @@ class iCf_Movement (iCf_Record):
 #
 class iCf_Sale_movement( iCf_Movement ):
 	icf_movement = models.OneToOneField('Finances.iCf_Movement', primary_key=True, parent_link=True)
+	def icf_self_employed(self):
+		try:
+			se = self.icf_self_employed_sale_movements.icf_self_employed_periods_closed
+		except:
+			return None
 	def __init__(self, *args, **kwargs):
 		super(iCf_Sale_movement, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Movements", _(u"Moviments"), u'Files de transaccions i moviments de moneda.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Sale_movement", u'Abonament', u'Moviment per abonar un import.', t)
+		#t = _check_icf_record_type("iCf_Movements", _(u"Moviments"), u'Files de transaccions i moviments de moneda.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Sale_movement", u'Abonament', u'Moviment per abonar un import.', t)
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Sale_movement")
 	def execution_date(self):
 		pass
 	planned_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data prevista. Exemple dd/mm/aaaa"))
@@ -300,8 +319,15 @@ class iCf_Purchase_movement( iCf_Movement ):
 	acceptation_date=models.DateField(verbose_name=_(u"Data d'acceptament"), help_text=_(u"La data en que s'accepta. Exemple dd/mm/aaaa"), null=True, blank=True)
 	def __init__(self, *args, **kwargs):
 		super(iCf_Sale_movement, self).__init__(*args, **kwargs)
-		t = _check_icf_record_type("iCf_Movements", _(u"Moviments"), u'Files de transaccions i moviments de moneda.', None, True)
-		self.record_type = _check_icf_record_type("iCf_Purchase_movement", _(u'Reintegrament'), _(u'Moviment per reintegrar un import.'), t)
+		#t = _check_icf_record_type("iCf_Movements", _(u"Moviments"), u'Files de transaccions i moviments de moneda.', None, True)
+		#self.record_type = _check_icf_record_type("iCf_Purchase_movement", _(u'Reintegrament'), _(u'Moviment per reintegrar un import.'), t)
+
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Purchase_movement")
+	def icf_self_employed(self):
+		try:
+			se = self.icf_self_employed_purchase_movements.icf_self_employed_periods_closed
+		except:
+			return None
 	class Meta:
 		verbose_name=_(u'M - Reintegrament')
 		verbose_name_plural=_(u'M - Reintegraments')
@@ -336,7 +362,7 @@ class iCf_Invoice(iCf_Record):
 		super(iCf_Invoice, self).__init__(*args, **kwargs)
 		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
 		#self.record_type = _check_icf_record_type("iCf_Invoice", u"Factura", u'', t )
-		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoices")
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoice")
 	def __getitem__(self, value):
 		if hasattr(self,"id"):
 			return self.id
@@ -396,12 +422,17 @@ class iCf_Invoice_line(iCf_Record):
 	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la línia. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
 	def __init__(self, *args, **kwargs):
 		super(iCf_Sale, self).__init__(*args, **kwargs)
-		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoices")
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoice_line")
 
 class iCf_Sale(iCf_Invoice):
 	invoice = models.OneToOneField('Finances.iCf_Invoice', primary_key=True, parent_link=True)
 	num = models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."))
 	client = models.ForeignKey("General.Company", related_name="sale_invoices_clients", verbose_name=_(u"Client"))
+	def icf_self_employed(self):
+		try:
+			se = self.rel_icfe_sales.icf_self_employed_periods_closed
+		except:
+			return None
 	def __getitem__(self, value):
 		if hasattr(self,"id"):
 			return self.id
@@ -411,7 +442,7 @@ class iCf_Sale(iCf_Invoice):
 		super(iCf_Sale, self).__init__(*args, **kwargs)
 		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
 		#self.record_type = _check_icf_record_type("iCf_Sale", u"Factura emesa", u'', t )
-		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoices")
+		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Sale")
 	def number(self):
 		se = self.rel_icfe_sales
 		if se.first():
@@ -451,6 +482,11 @@ class iCf_Purchase(iCf_Invoice):
 	invoice = models.OneToOneField('iCf_Invoice', primary_key=True, parent_link=True)
 	num = models.CharField(verbose_name=_(u"Nº Factura"), max_length=20, help_text=_(u"Número Factura proveïdor."), validators=[alphanumeric])
 	provider=models.ForeignKey("General.Company", related_name="purchase_invoices_providers", verbose_name=_(u"Proveïdor"))
+	def icf_self_employed(self):
+		try:
+			se = self.rel_icfe_purchases.icf_self_employed_periods_closed
+		except:
+			return None
 	def __init__(self, *args, **kwargs):
 		super(iCf_Purchase, self).__init__(*args, **kwargs)
 		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
@@ -559,6 +595,10 @@ class iCf_Period_close(iCf_Record):
 	icf_purchases = models.ManyToManyField(iCf_Purchase, related_name="rel_icfe_purchases", verbose_name=_(u"Factures Despeses"))
 	icf_sale_movements  = models.ManyToManyField(iCf_Sale_movement, related_name="icf_self_employed_sale_movements", verbose_name=_(u"Factures Emeses"))
 	icf_purchase_movements = models.ManyToManyField(iCf_Purchase_movement, related_name="icf_self_employed_purchase_movements", verbose_name=_(u"Factures Despeses"))
+	def period(self):
+		return self.record_type
+	def cooper(self):
+		return self._icf_self_employed()
 	def period(self):
 		if self:
 			return self.record_type
@@ -716,22 +756,23 @@ class period_payment(models.Model):
 	class Meta:
 		verbose_name= _(u'Pagament')
 		verbose_name_plural= _(u'Pagaments')
+
+# PROXIES ***************************************************************
 class icf_self_employed_proxy_companies(iCf_Self_Employed):
 	class Meta:
 		verbose_name= _(u'B - Els meus clients i proveïdors')
 		verbose_name_plural= _(u'B - Els meus clients i proveïdors')
 		proxy = True
-
 class icf_self_employed_proxy_balance(iCf_Self_Employed):
 	class Meta:
 		verbose_name= _(u'L - Balanç projecte')
 		verbose_name_plural= _(u'L - Balanç projectes')
 		proxy = True
-
 class icf_self_employed_proxy_transactions(iCf_Self_Employed):
 	class Meta:
 		verbose_name= _(u'K - Transaccions')
 		verbose_name_plural= _(u'K - Transaccions')
 		proxy = True
-
+# *************************************************************************
+																	
 																	

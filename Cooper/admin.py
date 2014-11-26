@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from Cooper.forms import UserAdminAuthenticationForm
-
+admin.site_header = "Socis"
 class UserAdmin(AdminSite):
 	login_form = UserAdminAuthenticationForm
 	# Anything we wish to add or override
