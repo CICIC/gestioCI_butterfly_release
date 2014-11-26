@@ -41,4 +41,4 @@ class company_form(forms.ModelForm):
 			raise forms.ValidationError(_(u"Ja existeix una companyia amb aquest identificador"))
 		if oID and self.model.objects.filter( otherCIF=oID).exclude(pk=pk).count() > 0:
 			raise forms.ValidationError(_(u"Ja existeix una companyia amb aquest identificador"))
-		return cleaned_data
+		return cleaned_data	
