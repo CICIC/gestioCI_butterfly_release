@@ -1,9 +1,0 @@
-django==1.6.8
-django-cron
-django-csvimport
-django-localflavor
-django-mptt
-django-mptt-admin
-south
-xhtml2pdf
-

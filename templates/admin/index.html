@@ -15,11 +15,6 @@
 	{% if request.path == "/cooper/" %}
 		{% include "admin/index_cooper.html" %}
 	{% endif %}
-
-	{% if request.user.is_superuser %}
-		{% include "admin/index_super.html" %}
-	{% endif %}
-
 	{% if app_list %}
 		{% for app in app_list %}
 
@@ -101,7 +96,7 @@
 
 
 	{% block sidebar %}
-	{% if request.path == "/admin/" and not request.user.is_superuser %}
+	{% if request.path == "/admin/" %}
 	<div id="content-related">
 		<div class="module" id="recent-actions-module">
 			<h2>{% trans 'Recent Actions' %}</h2>

@@ -1,5 +1,5 @@
 #encoding=utf-8
-from models import Soci, SalesInvoice, PurchaseInvoice, Client, Provider, PeriodClose, period, periodTaxes
+
 from django.utils.translation import ugettext_lazy as _
 from django import forms
 from datetime import *
@@ -8,119 +8,12 @@ from decimal import Decimal
 from localflavor.es.forms import *
 from django.db.models import F
 
-class PeriodManager(object):
-	@staticmethod
-	def get_opened_period(user):
-		#Get current user soci record
-		obj_Soci = Soci.objects.filter(user=user)
-		if obj_Soci.count()>0:
-			#Get extradays
-			nExtraDays = obj_Soci[0].extra_days if obj_Soci else 0
-			#Return queryset
-			qs_Period =  period.objects.filter( first_day__lte=datetime.now(), 
-											date_close__gte=datetime.now() - timedelta(days=nExtraDays) 
-										)
-			if qs_Period.count() > 1:
-				return period.objects.filter(pk=qs_Period[0].pk) 
-			else:
-				return qs_Period
-		return None
-	@staticmethod
-	def filterbydefault(request, instance, entity, extra_context):
-		referer = request.META.get('HTTP_REFERER', '')
-		showall = request.META['PATH_INFO'] in referer and not request.GET.has_key('timeframe')
-
-		if not showall and not request.GET.has_key('period__id__exact'):
-			qs_Period = PeriodManager.get_opened_period( request.user ) 
-
-			if qs_Period:
-				period_value = qs_Period[0].id if qs_Period.count() == 1 else 0
-				q = request.GET.copy()
-				q['period__id__exact'] = period_value
-				request.GET = q
-				request.META['QUERY_STRING'] = request.GET.urlencode()
-				return HttpResponseRedirect( request.path + "?" + request.GET.urlencode() )
-		return super(entity,instance).changelist_view(request, extra_context=extra_context)
-
-class SociAdminForm(forms.ModelForm):
-	model = Soci
+from Invoices.bots import *
+from models import cooper, sales_invoice, purchases_invoice, client, provider, period, tax
+class cooper_admin_form(forms.ModelForm):
+	model = cooper
 	class Meta:
 		localized_fields = ('preTAX', )
-
-class SalesInvoiceForm(forms.ModelForm):
-	model = SalesInvoice
-
-	def __init__(self, *args, **kwargs):
-		#Initialice to current period only if new (self.instance.user = none)
-		super(SalesInvoiceForm, self).__init__(*args, **kwargs)
-		qs_Period = PeriodManager.get_opened_period ( self.request.user )
-		if qs_Period and not self.instance.user:
-			self.initial['period'] = qs_Period[0].pk
-	def clean_date(self):
-		cleaned_data = self.cleaned_data
-		date = cleaned_data.get('date')
-		period = cleaned_data.get('period')
-		if date > period.date_close:
-			raise forms.ValidationError(_(u"La data ha de ser menor que el dia final del periode"))
-		return date
-
-	def clean(self):
-		cleaned_data = self.cleaned_data
-		#New or Edit
-		if self.instance.pk:
-			pk =self.instance.pk
-		else:
-			pk=0
-		#index unique = user, period, numfac + IVA
-		user = cleaned_data.get('user')
-		period = cleaned_data.get('period')
-		num = cleaned_data.get('num')
-		iva = cleaned_data.get('percentInvoicedVAT')
-		if SalesInvoice.objects.filter( user=user, 
-										period=period, 
-										num=num, percentInvoicedVAT=iva).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix una factura amb aquest número"))
-
-		return cleaned_data
-
-	class Meta:
-		localized_fields = ('value', 'invoicedVAT', 'assignedVAT', 'total')
-
-class PurchaseInvoiceForm(forms.ModelForm):
-	model = PurchaseInvoice
-	def __init__(self, *args, **kwargs):
-		#Initialice to current period only if new (self.instance.user = none)
-		super(PurchaseInvoiceForm, self).__init__(*args, **kwargs)
-		qs_Period = PeriodManager.get_opened_period ( self.request.user )
-		if qs_Period and not self.instance.user:
-			self.initial['period'] = qs_Period[0].pk
-	def clean_date(self):
-		cleaned_data = self.cleaned_data
-		date = cleaned_data.get('date')
-		period = cleaned_data.get('period')
-		if date > period.date_close:
-			raise forms.ValidationError(_(u"La data ha de ser menor que el dia final del periode"))
-		return date
-
-	def clean(self):
-		cleaned_data = self.cleaned_data
-		if self.instance.pk:
-			pk =self.instance.pk
-		else:
-			pk=0
-		user = self.cleaned_data.get('user')
-		period = cleaned_data.get('period')
-		num = cleaned_data.get('num')
-		iva = cleaned_data.get('percentExpencedVAT')
-		existing = PurchaseInvoice.objects.filter( user=user, 
-										period=period, 
-										num=num, percentExpencedVAT=iva).exclude(pk=pk)
-		if existing.count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix una factura amb aquest número"))
-		return cleaned_data
-
-	class Meta:
-		localized_fields = ('value', )
 
 class CardIDValidator():
 	def validate(self, CIF, oID):
@@ -132,157 +25,245 @@ class CardIDValidator():
 			myValidator = ESIdentityCardNumberField()
 			myValidator.clean(CIF)
 
-class ClientForm(forms.ModelForm):
-
+class company_form(forms.ModelForm):
+	def clean_name(self):
+		return self.cleaned_data.get('name').upper().replace("-", "").replace(".","").replace("/","").replace("-","").replace(",","")
 	def clean_CIF(self):
 		cleaned_data = self.cleaned_data
 		CIF = cleaned_data.get('CIF')
 		return CIF.replace(" ","").replace("-","")
-
 	def clean(self):
 		cleaned_data = self.cleaned_data
 		CIF = cleaned_data.get('CIF')
 		oID = cleaned_data.get('otherCIF')
-
 		validator = CardIDValidator()
 		validator.validate( CIF, oID)
-
 		if self.instance.pk:
 			pk =self.instance.pk
 		else:
 			pk=0
-			
-		if Client.objects.filter( user=self.request.user, name=cleaned_data.get('name')).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix un Proveïdor amb aquest Nom Fiscal"))
-		if CIF and Client.objects.filter( user=self.request.user, CIF=CIF).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix un Client amb aquest identificador"))
-		if oID and Client.objects.filter( user=self.request.user, otherCIF=oID).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix un Client amb aquest identificador"))
-
+		if self.model.objects.filter( name=cleaned_data.get('name')).exclude(pk=pk).count() > 0:
+			raise forms.ValidationError(_(u"Ja existeix una companyia amb aquest Nom Fiscal"))
+		if CIF and self.model.objects.filter( CIF=CIF).exclude(pk=pk).count() > 0:
+			raise forms.ValidationError(_(u"Ja existeix una companyia amb aquest identificador"))
+		if oID and self.model.objects.filter( otherCIF=oID).exclude(pk=pk).count() > 0:
+			raise forms.ValidationError(_(u"Ja existeix una companyia amb aquest identificador"))
 		return cleaned_data
 
-	class Meta:
-		model = Client
-		exclude = (None,)
+class client_form(company_form):
+	model = client
 
-class ProviderForm(forms.ModelForm):
+class provider_form(company_form):
+	model = provider
 
-	def clean_CIF(self):
-		cleaned_data = self.cleaned_data
-		CIF = cleaned_data.get('CIF')
-		return CIF.replace(" ","").replace("-","")
-
-	def clean(self):
-		cleaned_data = self.cleaned_data
-		CIF = cleaned_data.get('CIF')
-		oID = cleaned_data.get('otherCIF')
-		
-		validator = CardIDValidator()
-		validator.validate(CIF, oID)
-
-		if self.instance.pk:
-			pk =self.instance.pk
-		else:
-			pk=0
-
-		if Provider.objects.filter( user=self.request.user, name=cleaned_data.get('name')).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix un Proveïdor amb aquest Nom Fiscal"))
-		if CIF and Provider.objects.filter( user=self.request.user, CIF=CIF).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix un Proveïdor amb aquest identificador"))
-		if oID and Provider.objects.filter( user=self.request.user, otherCIF=oID).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix un Proveïdor amb aquest identificador"))
-
-		return cleaned_data
-
-	class Meta:
-		model = Provider
-		exclude = (None,)
-
-class PeriodCloseForm(forms.ModelForm):
-
-	VAT_1 = forms.DecimalField(label=_(u"IVA Facturat - Despeses (€)"), localize=True, required=False)
-	VAT_2 = forms.DecimalField(label=_(u"IVA Assignat - Despeses (€)"), localize=True, required=False)
-
-	Savings = forms.DecimalField(label=_(u"IVA Facturat - Assignat (€)"), localize=True, required=False)
-
-	TotalVAT = forms.DecimalField(label=_(u"Total IVA (€)"), localize=True, required=False)
-	TotalIRPF = forms.DecimalField(label=_(u"Total IRPF (€)"), localize=True, required=False)
-
-	subTotalEuro = forms.DecimalField(label=_(u"Total Quota i Aportació (€)"), localize=True, required=False)
-	subTotalEco = forms.DecimalField(label=_(u"Total Quota i Aportació (ECOS)"), localize=True, required=False)
-	TotalEuro = forms.DecimalField(label=_(u"TOTAL A ABONAR (€)"), help_text = _(u"Total a abonar trimestre (IVA, IRPF, Quota i Aportació) €"), localize=True, required=False)
-	TotalEco = forms.DecimalField(label=_(u"TOTAL A ABONAR (ECOS)"), help_text = _(u"Total a abonar trimestre (IVA, IRPF, Quota i Aportació) ECOS"), localize=True, required=False)
+from Invoices.models import manage_CHOICE_COOPER, manage_CHOICE_COOP, status_CHOICE_NONE, status_CHOICE_PENDING, status_CHOICE_DONE, status_CHOICE_WAITING
+from Invoices.models import invoice
+class invoice_form(forms.ModelForm):
+	model = invoice
+	statuses=(
+		(status_CHOICE_NONE, _(u'---------------------')),
+		(status_CHOICE_WAITING, _(u'Esperant data de venciment')),
+		(status_CHOICE_PENDING, _(u'Pendent de rebre la transferència')),
+		(status_CHOICE_DONE, _(u'Transferència rebuda')),
+	)
+	status = forms.CharField(label=_(u"Estat"), max_length=30,
+			widget=forms.Select(choices=statuses), required=False)
 
 	def __init__(self, *args, **kwargs):
-		super(PeriodCloseForm, self).__init__(*args, **kwargs)
+		super(invoice_form, self).__init__(*args, **kwargs)
+		if not hasattr(self,"request"):
+			return
+		current_period = bot_period(self.request.user).period( True, self.request )
+		if current_period and not hasattr(self.instance, 'period'):
+			self.initial['period'] = current_period
 
-		#Recalculate values if editing
-		user = self.instance.user
-		if user:
-			#PERIOD
-			qs_Sales = SalesInvoice.objects.filter(period=self.instance.period, user=user)
-			sales_total = sales_invoicedVAT = sales_assignedVAT = sales_totalVAT = Decimal('0.00')
-			for item in qs_Sales.all():
-				sales_total += item.value
-				sales_invoicedVAT += item.invoicedVAT()
-				sales_assignedVAT += item.assignedVAT()
-				sales_totalVAT += item.total()
+		if hasattr(self.instance, 'status'):
+			self.initial['status'] = self.instance.status
+		else:
+			self.initial['status'] = None
+		self.base_fields["status"].widget.attrs["disabled"] = True
+		current_cooper = bot_cooper(self.request.user).cooper(self.request)
+		if current_cooper and not hasattr(self.instance, 'cooper'):
+			self.instance.cooper  = current_cooper 
 
-			self.initial['Sales_total'] = Decimal ( "%.2f" % sales_total )
-			self.initial['Sales_invoicedVAT'] = Decimal ( "%.2f" % sales_invoicedVAT )
-			self.initial['Sales_assignedVAT'] = Decimal ( "%.2f" % sales_assignedVAT )
-			self.initial['Sales_totalVAT'] = Decimal ( "%.2f" % sales_totalVAT )
+	def clean_num(self):
+		pk=0
+		if self.instance.pk:
+			pk =self.instance.pk
 
-			qs_Purchase = PurchaseInvoice.objects.filter(period=self.instance.period, user=self.instance.user)
-			purchases_total = purchases_expencedVAT = purchases_IRPFRetention = purchases_totalVAT = Decimal('0.00')
-			for item in qs_Purchase.all():
-				purchases_total += item.value
-				purchases_expencedVAT += item.expencedVAT()
-				purchases_IRPFRetention += item.IRPFRetention()
-				purchases_totalVAT += item.total()
+		num = self.cleaned_data.get('num')
 
-			self.initial['Purchases_total'] = Decimal ( "%.2f" % purchases_total )
-			self.initial['Purchases_expencedVAT'] = Decimal ( "%.2f" % purchases_expencedVAT )
-			self.initial['Purchases_IRPFRetention'] = Decimal ( "%.2f" % purchases_IRPFRetention )
-			self.initial['Purchases_totalVAT'] = Decimal ( "%.2f" % purchases_totalVAT )
+		cooper = self.cleaned_data.get('cooper')
+		if cooper is None:
+			if hasattr(self.instance, 'cooper'):
+				cooper = self.instance.cooper 
 
-			#VATS
-			totalVAT1 = Decimal ( "%.2f" % (sales_invoicedVAT - purchases_expencedVAT) )
-			if totalVAT1 < 0:
-				totalVAT1 = 0
-			totalVAT2 = Decimal ( "%.2f" % (sales_assignedVAT - purchases_expencedVAT) )
-			if totalVAT2 < 0:
-				totalVAT2 = 0
-			self.initial['VAT_1'] =  totalVAT1
-			self.initial['VAT_2'] =  totalVAT2
+		period = self.cleaned_data.get('period')
+		if period is None:
+			if hasattr(self.instance, 'period'):
+				period = self.instance.period 
+		query = self.model.objects.filter(cooper=cooper, 
+										period=period, 
+										num=num)
+		if self.model == "provider":
+			provider = self.cleaned_data("provider")
+			query = query.filter(provider, provider)
 
-			#QUOTA
-			qs_Tax = periodTaxes.objects.filter(min_base__lte=sales_total, max_base__gte=sales_total)
-			value = Decimal('0.00')
-			if qs_Tax.count() == 1:
-				value = Decimal ( "%.2f" % qs_Tax[0].taxId ) 
-			else:
-				value = 'Consultar'
-			self.initial['periodTAX'] = value
+		query = query.exclude(pk=pk)
+		exists_another_inovice_with_same_num = query.count() > 0
+		if exists_another_inovice_with_same_num:
+			raise forms.ValidationError(_(u"Ja existeix una factura amb aquest número"))
+		return num
 
-	def clean_CESnumber(self):
+	def clean_date(self):
 		cleaned_data = self.cleaned_data
-		ptax= cleaned_data.get('periodTAXeco')
-		donation = cleaned_data.get('donation_eco')
-		ces = cleaned_data.get('CESnumber')
+		date = cleaned_data.get('date')
+		period = cleaned_data.get('period')
+		if period is None:
+			if hasattr(self, "period"):
+				period = self.period
+		if period is not None:
+			if date > period.date_close:
+				raise forms.ValidationError(_(u"La data ha de ser menor que el dia final del periode"))
+		return date
 
-		mustInputCes = Decimal ( ptax ) > 0 or Decimal ( donation ) > 0
-		print mustInputCes
-		print ces == ""
-		if mustInputCes and ces == "":
-			raise forms.ValidationError(_(u"Tens que especificar el teu compte CES"))
-		return ces
+	def clean_transfer_date(self):
+		if self.cleaned_data.get('who_manage') == manage_CHOICE_COOPER:
+			return None
+		return self.cleaned_data.get("transfer_date")
+
+class sales_invoice_form(invoice_form):
+	model = sales_invoice
+	class Meta:
+		localized_fields = ('value', 'invoiced_vat', 'assigned_vat', 'total')
+
+class purchases_invoice_form(invoice_form):
+	model = purchases_invoice
+	def clean_who_manage(self):
+		if self.cleaned_data.get('who_manage') == manage_CHOICE_COOP:
+			if not self.cleaned_data.get('provider').iban:
+				raise forms.ValidationError(_(u"El proveedor no té assignat un IBAN vàlid."))
+		return self.cleaned_data.get('who_manage')
+	def clean_expiring_date(self):
+		print "cleanin"
+		if self.cleaned_data.get('who_manage') == manage_CHOICE_COOPER:
+			return None
+		print self.cleaned_data.get('expiring_date')
+		if  self.cleaned_data.get('expiring_date') is None:
+				raise forms.ValidationError(_(u"Has d'introduïr una data de venciment"))
+		return self.cleaned_data.get('expiring_date')
+	class Meta:
+		localized_fields = ('value', 'vat', 'irpf', 'total')
+
+class invoice_form_balance(purchases_invoice_form):
+	total = forms.DecimalField(label=_(u'Total Factura (€)'), localize=True, required=False)
+	def __init__(self, *args, **kwargs):
+		super(purchases_invoice_form, self).__init__(*args, **kwargs)
+		if hasattr(self.instance, 'total'):
+			self.initial['total'] = self.instance.total
+		else:
+			self.initial['total'] = 0
+
+		if hasattr(self.instance, 'status'):
+			self.initial['status'] = self.instance.status
+		else:
+			self.initial['status'] = None
+		self.base_fields['status'].widget.attrs['disabled'] = True
+
+from Invoices.models import movement_STATUSES
+class movement_form_balance(forms.ModelForm):
+	status = forms.CharField(label=_(u"Estat"), max_length=30,
+			widget=forms.Select(choices=movement_STATUSES), required=False)
+	def __init__(self, *args, **kwargs):
+		super(movement_form_balance, self).__init__(*args, **kwargs)
+		if hasattr(self.instance, 'status'):
+			self.initial['status'] = self.instance.status
+		else:
+			self.initial['status'] = None
+		self.base_fields['status'].widget.attrs['disabled'] = True
+	class Meta:
+		exclude = ['status',]
+		localized_fields = ["value",]
+
+from Invoices.models import period_close
+class period_close_form(forms.ModelForm):
+
+	oficial_vat_total = forms.DecimalField(label=_(u"IVA Facturat - Despeses (€)"), localize=True, required=False)
+	assigned_vat_total = forms.DecimalField(label=_(u"IVA Assignat - Despeses (€)"), localize=True, required=False)
+
+	savings_with_assigned_vat= forms.DecimalField(label=_(u"IVA Facturat - Assignat (€)"), localize=True, required=False)
+
+	total_vat= forms.DecimalField(label=_(u"Total IVA (€)"), localize=True, required=False)
+	total_irpf= forms.DecimalField(label=_(u"Total IRPF (€)"), localize=True, required=False)
+
+	total = forms.DecimalField(label=_(u"Total Quota i Aportacions (€)"), localize=True, required=False)
+	total_to_pay = forms.DecimalField(label=_(u"TOTAL A ABONAR (€)"),  localize=True, required=False)
+	total_balance = forms.DecimalField(label=_(u"TOTAL SALDO(€)"), localize=True, required=False)
+	total_acumulated = forms.DecimalField(label=_(u"TOTAL A ABONAR - SALDO(€)"), localize=True, required=False)
+
+	def __init__(self, *args, **kwargs):
+		super(period_close_form, self).__init__(*args, **kwargs)
+		self.current_fields = self.current_fields + ('cooper', 'total_to_pay' )
+		if self.is_new:
+			current_cooper = bot_cooper(self.request.user).cooper(self.request)
+			current_period = bot_period(self.request.user).period( True, self.request )
+
+			if current_cooper and current_period:
+				bot = bot_period_close( current_period, current_cooper, self.instance, True)
+				bot.load_period_close_form( self, self.current_fields )
+			else:
+				pass
+		else:
+			if self.base_fields["period"].initial is None: #protect against multiple call, if we are loaded don't load again
+				bot = bot_period_close( self.obj.period, self.obj.cooper, self.obj)
+				bot.load_period_close_form(self, self.current_fields, False)
+
+	def get_period_display(self):
+		return self.obj.period.__unicode__()
+	def get_cooper_display(self):
+		return self.obj.cooper.__unicode__()
+	def get_vat_type_display(self):
+		from Invoices.models import vat_TYPES
+		return vat_TYPES[self.base_fields["vat_type"].initial][1]
+
 
 	class Meta:
-		model = PeriodClose
-		localized_fields = ('Sales_total', 'Sales_invoicedVAT', 'Sales_assignedVAT', 'Sales_totalVAT',
-							'Purchases_total', 'Purchases_expencedVAT', 'Purchases_IRPFRetention', 'Purchases_totalVAT',
-							'Savings', 'TotalVAT', 'TotalIRPF', 'Savings',
-							'Savings_donation', 'periodTAX', 'preTAX', 'periodTAXeuro', 'periodTAXeco', 'donation_euro', 'donation_eco',
-							'subTotalEuro', 'subTotalEco', 'TotalEuro', 'TotalEco', 'payment_entity')
-		exclude = (None,)
+		model = period_close
+		from Invoices.models import period_close_base_fields
+		localized_fields = period_close_base_fields
+		exclude = ()
+from Invoices.models import period_payment
+class period_payment_inline_form(forms.ModelForm):
+	model = period_payment
+	def clean_currency(self):
+		pk = self.instance.pk if self.instance.pk else 0
+		if self.model.objects.filter( period_close = self.cleaned_data.get('period_close'), currency = self.cleaned_data.get("currency")).exclude(pk=pk).count()>0:
+			raise forms.ValidationError(_(u"La mateixa moneda només ha d'apareixer una vegada.") )
+		return self.cleaned_data.get("currency")
+
+	def clean_value(self):
+		pk = self.instance.pk if self.instance.pk else 0
+		total_to_pay = self.cleaned_data.get('period_close').total_to_pay()
+		from django.db.models import Sum
+		total_other = self.model.objects.filter( 
+									period_close = self.cleaned_data.get('period_close')
+										).exclude(
+									pk=pk
+										).aggregate(
+									Sum('value')
+												)
+		if total_other['value__sum']:
+			total_other = total_other['value__sum'] - self.cleaned_data.get("value")
+		else:
+			total_other = 0
+
+		if ( total_other +  self.cleaned_data.get('value') ) > total_to_pay:
+			raise forms.ValidationError(
+				("%s %s / %s") % ( 
+					(u"La quantitat sumada a la de les altres monedes execedeix el total a abonar."), 
+					str( total_other +  self.cleaned_data.get('value') ),
+					str(total_to_pay) 
+				)
+			)
+		return self.cleaned_data.get('value')
+

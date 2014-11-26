@@ -1,4 +1,3 @@
-
 #encoding=utf-8
 
 """
@@ -55,8 +54,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	#gestioCI APPS
-	'Invoices', 	# This is gestioCI block1 Selfoccupated coopers APP	
-    'Finances', 	# This is gestioCI block1 Selfoccupated coopers APP
+    #'Invoices', 	# This is gestioCI block1 Selfoccupated coopers APP
     'Cooper', 		# This is gestioCI block1 Selfoccupated coopers APP
     'General',  # This is the general models APP including five main types of data
     'Welcome',   # This is the membership maker APP
@@ -70,7 +68,6 @@ INSTALLED_APPS = (
     #'feincms',
     #'feincms.module.page',
     #'feincms.module.medialibrary'
-	'tools_upgrader'
 
 )
 MIDDLEWARE_CLASSES = (
@@ -102,7 +99,7 @@ DEFAULT_INDEX_TABLESPACE = 'indexes'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'gestiociv08',
+        'NAME': 'gestioCI_butterfly',
         'USER' : 'root',
         'PASSWORD': 'si',
         'HOST': 'localhost',
@@ -169,8 +166,8 @@ SUIT_CONFIG = {
 #public_form
 ACCOUNT_ACTIVATION_DAYS = 5
 #SITE_URL = "http://gestio.cooperativa.cat:8082"
-SITE_URL = "http://169.254.226.5:8081"
-#SITE_URL = "http://localhost:8000"
+SITE_URL = "http://cicicdev.enredaos.net:8082"
+SITE_URL = "http://169.254.226.5:8082"
 
 '''
 5 Templates
@@ -227,8 +224,7 @@ TIME_ZONE = 'Europe/Madrid'
 USE_L10N = True
 USE_I18N = True
 USE_TZ = False
-DEFAULT_CHARSET = "UTF-8"
-
+DEFAULT_CHARSET = "utf-8"
 
 '''
 7 EMail

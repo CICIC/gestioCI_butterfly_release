@@ -695,9 +695,7 @@ class iC_Self_Employed(iC_Record):
 	_member_link.allow_tags = True
 	_member_link.short_description = ''
 
-	def _human_link(self, edit_caption = None):
-		if edit_caption == None:
-			edit_caption = a_edit
+	def _human_link(self):
 		if hasattr(self.ic_membership, 'human') and self.ic_membership.human.id:
 			#print 'HUMAN ID: '+str(self.ic_membership.human.id)
 			slug = 'human'
@@ -710,7 +708,7 @@ class iC_Self_Employed(iC_Record):
 			else:
 				return slug+'!!'
 
-			link = "<a href='/admin/Welcome/%s/%s/%s'>%s</a>" % (slug, self.ic_membership.human.id, self._get_next(), edit_caption)
+			link = "<a href='/admin/Welcome/%s/%s/%s'>%s</a>" % (slug, self.ic_membership.human.id, self._get_next(), a_edit)
 			out = self.ic_membership.human.__unicode__()
 			return '<strong>'+out+'</strong> &nbsp; <- '+link
 		else:
