@@ -11,9 +11,9 @@ from django.db.models import F
 class CardIDValidator():
 	def validate(self, CIF, oID):
 		if CIF == "" and oID == "":
-			raise forms.ValidationError(_(u"Has d'introdu�r o CIF/NIF/NIE o Altres identificadors. Un dels dos."))
+			raise forms.ValidationError(_(u"Has d'introduir o CIF/NIF/NIE o Altres identificadors. Un dels dos."))
 		if CIF != "" and oID != "":
-			raise forms.ValidationError(_(u"Has d'introdu�r o CIF/NIF/NIE o Altres identificadors. No tots dos."))
+			raise forms.ValidationError(_(u"Has d'introduir o CIF/NIF/NIE o Altres identificadors. No tots dos."))
 		if CIF != "":
 			myValidator = ESIdentityCardNumberField()
 			myValidator.clean(CIF)
