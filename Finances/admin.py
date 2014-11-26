@@ -97,275 +97,28 @@ from django.contrib.admin import ModelAdmin
 from Finances.models import *
 
 # Export csv plugin
-from Finances.action import export_as_csv_action, export_all_as_csv_action
+from tools_upgrader.action import export_as_csv_action, export_all_as_csv_action
 
-#Use this by registrating of ModelAdmin in admin.site to specific cooper csv import
-from django import forms
-class CSVImportAdmin(ModelAdmin):
-	''' Custom model to not have much editable!'''
-	readonly_fields = ['file_name',
-					   'upload_method',
-					   'error_log_html',
-					   'import_user']
-	fields = [
-				'model_name',
-				'field_list',
-				'upload_file',
-				'file_name',
-				'encoding',
-				'upload_method',
-				'error_log_html',
-				'import_user']
-	formfield_overrides = {
-		models.CharField: {'widget': forms.Textarea(attrs={'rows':'4',
-			   'cols':'60'})},
-		}
-
-	def save_model(self, request, obj, form, change):
-		form.save()
-		#TODO: Use a command  from App.management.commands.myCSVimporterLib import Command
-		#      cmd = Command()
-		if obj.upload_file:
-			obj.file_name = obj.upload_file.name
-			obj.encoding = ''
-			defaults = self.filename_defaults(obj.file_name)
-			members = open(settings.MEDIA_BASE + str(obj.upload_file))
-			data = csv.DictReader(members)
-			default_password = 'tsc_eclub'
-			errors = [] 
-			error = False
-			coopnum = None
-			for row in data:
-				try:
-					name = row['name'][0:29]
-					lastname = row['lastname'][0:29]
-					email = row['email']
-					coop = row['coop']
-					coopnum = row['coopnum']
-					coopnum=coopnum.replace("COOP","")
-					passw = row['password']
-					vat = row['iva']
-					vat = vat.replace("%","")
-					tax = row['tax']
-				except:
-					errors.append("\n S'han de revisar les columnes")
-					error = True
-				
-				if not error and not coopnum:
-					errors.append("\n Falta num cooper")
-				
-				r_coop= Coop.objects.filter(name=coop)
-				if not error and not r_coop:
-					errors.append("\n Per %s no trobem la cooperativa %s" % (coopnum, coop))
-
-				if not vat:
-					vat = 0
-				if not tax:
-					tax = 0
-
-				if coopnum and r_coop:
-					user = None
-					with transaction.atomic():
-						try:
-							try:
-								user = User.objects.get(username = coopnum)
-							except:
-								print "not existing " + coopnum
-								user = None
-							
-							if user:
-								user.first_name = name
-								user.last_name = lastname
-								user.save()
-							else:
-								user = User.objects.create_user(coopnum, email, passw)
-								user.is_staff = False
-								user.first_name = name
-								user.last_name = lastname
-								user.save()
-
-								if user:
-									from django.contrib.auth.models import Group
-									g = Group.objects.get(name='cooper') 
-									g.user_set.add(user)
-									
-									cooper = cooper (user=user, coop=r_coop[0], coop_number=coopnum, assigned_vat=vat, advanced_tax=tax)
-									cooper.save()
-						except IntegrityError as e:
-							errors.append("\n" + str(e))
-							errors.append("\n" + str(row))
-						except Exception as e:
-							print e
-							print lastname
-							print name
-
-			#errors = ["Finalitzat el procés"]
-			if errors or error:
-				obj.error_log = '\n'.join(errors)
-
-			obj.import_user = str(request.user)
-			obj.import_date = datetime.now()
-			obj.save()
-
-	def filename_defaults(self, filename):
-		""" Override this method to supply filename based data """
-		defaults = []
-		splitters = {'/':-1, '.':0, '_':0}
-		for splitter, index in splitters.items():
-			if filename.find(splitter)>-1:
-				filename = filename.split(splitter)[index]
-		return defaults
-
-#GENERATE CONTROL PANEL MENU
 '''
 3.1) ADMIN
 '''
-#Add any Invoice new Entity for ADMIN  below:
 from django.contrib import admin
 
 from Finances.bots import *
 
-admin.site.register(iC_Duty)
-admin.site.register(currencies)
+admin.site.register(iCf_Duty)
 
 class coop_admin(ModelAdmin):
 	fields = ['name', ]
 	list_display = ('name', )
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
-admin.site.register(coop, coop_admin)
+admin.site.register(iCf_Company, coop_admin)
 
 class tax_admin(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
 	list_display = ('value', 'min_base', 'max_base')
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
-admin.site.register(iC_Tax, tax_admin)
-
-class EmailNotificationAdmin(ModelAdmin):
-	class Media:
-			js = (
-				'EmailNotification.js',   # app static folder
-			)
-	fields = ['efrom', 'eto', 'ento', 'sent_to_user', 'subject', 'body', 'period', 'is_active', 'notification_type', 'offset_days', 'pointed_date'  ]
-	list_display = ('efrom', 'ento', 'sent_to_user_filter', 'subject', 'period', 'is_active', 'on_time','execution_date', 'notification_type', 'pointed_date_filter' )
-	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
-admin.site.register(EmailNotification, EmailNotificationAdmin)
-
-#Use this by registrating of ModelAdmin in admin.site to specific cooper csv import
-class CSVImportAdmin(ModelAdmin):
-	''' Custom model to not have much editable!'''
-	readonly_fields = ['file_name',
-					   'upload_method',
-					   'error_log_html',
-					   'import_user']
-	fields = [
-				'model_name',
-				'field_list',
-				'upload_file',
-				'file_name',
-				'encoding',
-				'upload_method',
-				'error_log_html',
-				'import_user']
-	formfield_overrides = {
-		models.CharField: {'widget': forms.Textarea(attrs={'rows':'4',
-			   'cols':'60'})},
-		}
-
-	def save_model(self, request, obj, form, change):
-		form.save()
-		#TODO: Use a command  from App.management.commands.myCSVimporterLib import Command
-		#      cmd = Command()
-		if obj.upload_file:
-			obj.file_name = obj.upload_file.name
-			obj.encoding = ''
-			defaults = self.filename_defaults(obj.file_name)
-			members = open(settings.MEDIA_BASE + str(obj.upload_file))
-			data = csv.DictReader(members)
-			default_password = 'tsc_eclub'
-			errors = [] 
-			error = False
-			coopnum = None
-			for row in data:
-				try:
-					name = row['name'][0:29]
-					lastname = row['lastname'][0:29]
-					email = row['email']
-					coop = row['coop']
-					coopnum = row['coopnum']
-					coopnum=coopnum.replace("COOP","")
-					passw = row['password']
-					vat = row['iva']
-					vat = vat.replace("%","")
-					tax = row['tax']
-				except:
-					errors.append("\n S'han de revisar les columnes")
-					error = True
-				
-				if not error and not coopnum:
-					errors.append("\n Falta num cooper")
-				
-				r_coop= Coop.objects.filter(name=coop)
-				if not error and not r_coop:
-					errors.append("\n Per %s no trobem la cooperativa %s" % (coopnum, coop))
-
-				if not vat:
-					vat = 0
-				if not tax:
-					tax = 0
-
-				if coopnum and r_coop:
-					user = None
-					with transaction.atomic():
-						try:
-							try:
-								user = User.objects.get(username = coopnum)
-							except:
-								print "not existing " + coopnum
-								user = None
-							
-							if user:
-								user.first_name = name
-								user.last_name = lastname
-								user.save()
-							else:
-								user = User.objects.create_user(coopnum, email, passw)
-								user.is_staff = False
-								user.first_name = name
-								user.last_name = lastname
-								user.save()
-
-								if user:
-									from django.contrib.auth.models import Group
-									g = Group.objects.get(name='cooper') 
-									g.user_set.add(user)
-									
-									cooper = cooper (user=user, coop=r_coop[0], coop_number=coopnum, assigned_vat=vat, advanced_tax=tax)
-									cooper.save()
-						except IntegrityError as e:
-							errors.append("\n" + str(e))
-							errors.append("\n" + str(row))
-						except Exception as e:
-							print e
-							print lastname
-							print name
-
-			#errors = ["Finalitzat el procés"]
-			if errors or error:
-				obj.error_log = '\n'.join(errors)
-
-			obj.import_user = str(request.user)
-			obj.import_date = datetime.now()
-			obj.save()
-
-	def filename_defaults(self, filename):
-		""" Override this method to supply filename based data """
-		defaults = []
-		splitters = {'/':-1, '.':0, '_':0}
-		for splitter, index in splitters.items():
-			if filename.find(splitter)>-1:
-				filename = filename.split(splitter)[index]
-		return defaults
-admin.site.register(CSVImport, CSVImportAdmin)
+admin.site.register(iCf_Tax, tax_admin)
 
 '''
 3.1) USER
@@ -395,11 +148,11 @@ class tax_user(ModelAdmin):
 	# to hide change and add buttons on main page:
 	def get_model_perms(self, request): 
 		return {'view': True}
-user_admin_site.register(iC_Tax, tax_user)
+user_admin_site.register(iCf_Tax, tax_user)
 
 class invoice_admin(ModelAdmin):
 	list_filter = ('period',)
-	model = invoice
+	model = iCf_Invoice
 	def status(self, obj):
 		return obj.status()
 	status.short_description = _(u"Estat")
@@ -429,8 +182,8 @@ class invoice_admin(ModelAdmin):
 			current_form.status = None
 
 		current_cooper = bot_cooper(request.user).cooper(request)
-		if current_cooper and not hasattr(self.model, 'cooper'):
-			current_form.cooper  = current_cooper 
+		if current_cooper and not hasattr(self.model, 'icf_cooper'):
+			current_form.icf_cooper  = current_cooper 
 
 		kwargs['form'] = current_form
 		return super(invoice_admin, self).get_changelist_form(request, **kwargs)
@@ -438,13 +191,13 @@ class invoice_admin(ModelAdmin):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "client":
 			if request.user.is_superuser:
-				clients = client.objects.all()
+				clients = iCf_Client.objects.all()
 			else:
 				clients = bot_cooper(request.user).clients()
 			kwargs["queryset"] = clients
-		if db_field.name == "provider":
+		if db_field.name == "iCf_Provider":
 			if request.user.is_superuser:
-				providers = provider.objects.all()
+				providers = iCf_Provider.objects.all()
 			else:
 				providers = bot_cooper(request.user).providers()
 			kwargs["queryset"] = providers
@@ -456,7 +209,7 @@ class invoice_admin(ModelAdmin):
 
 from django.contrib import admin
 class sales_line_inline(admin.TabularInline):
-	model = sales_line
+	model = iCf_Sale_line
 	fields = ['value', 'percent_invoiced_vat']
 	list_display = ('value', 'percent_invoiced_vat', 'assigned_vat')
 	def assigned_vat(self,obj):
@@ -466,8 +219,8 @@ class sales_line_inline(admin.TabularInline):
 from Finances.forms import sales_invoice_form
 class sales_invoice_user (invoice_admin):
 	form = sales_invoice_form
-	model = sales_invoice
-	change_list_template = 'admin/Invoices/salesInvoices/change_list.html'
+	model = iCf_Sale
+	change_list_template = 'Finances/templates/iCf_Sale/change_list.html'
 	fields = ['client',] + ['period', 'num', 'date'] + ['who_manage',]
 	list_display =  ('client',) + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
 	list_editable =  ('client',) + ('num', 'date') + ('who_manage',)
@@ -504,26 +257,27 @@ class sales_invoice_user (invoice_admin):
 		#Filter by period
 		from Finances.bots import bot_filters
 		return bot_filters.filterbydefault(request, self, sales_invoice_user, extra_context)
-user_admin_site.register(sales_invoice, sales_invoice_user)
+user_admin_site.register(iCf_Sale, sales_invoice_user)
 
 class sales_invoice_admin(sales_invoice_user):
-	fields = ['cooper', ] + sales_invoice_user.fields + ['status', 'transfer_date']
-	list_display = ('cooper',) + sales_invoice_user.list_display  + ('status', 'transfer_date')
+	fields = ['icf_cooper', ] + sales_invoice_user.fields + ['status', 'transfer_date']
+	list_display = ('icf_cooper',) + sales_invoice_user.list_display  + ('status', 'transfer_date')
 	list_display_links = ( 'number', )
-	list_editable = ('cooper',) + sales_invoice_user.list_editable + ('transfer_date', )
-	list_export = ('cooper',) + sales_invoice_user.list_export 
-	list_filter = ('cooper','period', 'transfer_date')
+	list_editable = ('icf_cooper',) + sales_invoice_user.list_editable + ('transfer_date', )
+	list_export = ('icf_cooper',) + sales_invoice_user.list_export 
+	list_filter = ('icf_cooper','period', 'transfer_date')
 	actions = sales_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
-admin.site.register(sales_invoice, sales_invoice_admin)
+admin.site.register(iCf_Sale, sales_invoice_admin)
 
 class purchases_line_inline(admin.TabularInline):
-	model = purchases_line
+	model = iCf_Purchase_line
 	fields = ['value', 'percent_vat', 'percent_irpf']
 	extra = 1
+
 from Finances.forms import purchases_invoice_form
 class purchases_invoice_user (invoice_admin):
 	form = purchases_invoice_form
-	model = purchases_invoice
+	model = iCf_Purchase
 	change_list_template = 'admin/Invoices/purchasesInvoices/change_list.html'
 	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage', 'expiring_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
@@ -563,18 +317,19 @@ class purchases_invoice_user (invoice_admin):
 		#Filter by period
 		from Finances.bots import bot_filters
 		return bot_filters.filterbydefault(request, self, purchases_invoice_user, extra_context)
-user_admin_site.register(purchases_invoice, purchases_invoice_user)
-
+user_admin_site.register(iCf_Purchase, purchases_invoice_user)
 class purchases_invoice_admin (purchases_invoice_user):
-	fields = ['cooper'] + purchases_invoice_user.fields + ['status', 'transfer_date']
-	list_display = ('cooper',) + purchases_invoice_user.list_display
-	list_editable = ('cooper',) + purchases_invoice_user.list_editable + ('transfer_date',)
-	list_export = ('cooper',) + purchases_invoice_user.list_export
-	list_filter = ('cooper','period',)
+	fields = ['icf_cooper'] + purchases_invoice_user.fields + ['status', 'transfer_date']
+	list_display = ('icf_cooper',) + purchases_invoice_user.list_display
+	list_editable = ('icf_cooper',) + purchases_invoice_user.list_editable + ('transfer_date',)
+	list_export = ('icf_cooper',) + purchases_invoice_user.list_export
+	list_filter = ('icf_cooper','period',)
 	actions = purchases_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
-admin.site.register(purchases_invoice, purchases_invoice_admin)
+admin.site.register(iCf_Purchase, purchases_invoice_admin)
 
 class company_admin(ModelAdmin):
+	from General.forms import company_form
+	form = company_form
 	fields = ['name', 'CIF', 'otherCIF']
 	list_display = ('name', 'CIF', 'otherCIF')
 	search_fields = ['name', 'CIF', 'otherCIF']
@@ -583,7 +338,7 @@ class company_admin(ModelAdmin):
 from Finances.forms import client_form
 class client_admin(company_admin):
 	form = client_form
-	model = client
+	model = iCf_Client
 class client_user(client_admin):
 	def save_model(self, request, obj, form, change):
 		obj.save()
@@ -593,16 +348,16 @@ class client_user(client_admin):
 				c.clients.add(obj)
 	def get_model_perms(self, request): 
 		return {'skip':True }
-admin.site.register(client, client_admin)
-user_admin_site.register(client, client_user)
+admin.site.register(iCf_Client, client_admin)
+user_admin_site.register(iCf_Client, client_user)
 
 from Finances.forms import provider_form
-from Finances.models import provider
+from Finances.models import iCf_Provider
 class provider_admin(company_admin):
 	fields = company_admin.fields + ['iban', ]
 	list_display = company_admin.list_display + ('iban', )
 	search_fields = company_admin.search_fields + ['iban', ]
-	model = provider
+	model = iCf_Provider
 
 class provider_user(provider_admin):
 	def save_model(self, request, obj, form, change):
@@ -613,8 +368,8 @@ class provider_user(provider_admin):
 				c.providers.add(obj)
 	def get_model_perms(self, request): 
 		return {'skip':True }
-admin.site.register(provider, provider_admin)
-user_admin_site.register(provider, provider_user)
+admin.site.register(iCf_Provider, provider_admin)
+user_admin_site.register(iCf_Provider, provider_user)
 
 from Finances.forms import period_payment_inline_form
 class period_payment_inline(admin.TabularInline):
@@ -626,13 +381,13 @@ from Finances.forms import period_close_form
 from Finances.models import period_close_base_fields
 class period_close_user(admin.ModelAdmin):
 	form = period_close_form
-	change_form_template = 'admin/Invoices/period_close/change_form.html'
-	model = period_close
+	change_form_template = 'admin/Invoices/iCf_Period_close/change_form.html'
+	model = iCf_Period_close
 	inlines = [period_payment_inline]
 	list_display = ('edit_link', 'print_link') + period_close_base_fields
 	list_export = period_close_base_fields
 	fieldsets = (
-		(_(u'Període'), {'fields': ('period', 'cooper') }),
+		(_(u'Període'), {'fields': ('period', 'icf_cooper') }),
 		(_('Emeses'), {'fields': (('sales_base', 'sales_invoiced_vat'), ('sales_total', 'sales_assigned_vat'))}),
 		(_('Despeses'), {'fields': (('purchases_base', 'purchases_vat'), ('purchases_total', 'purchases_irpf'))}),
 		(_('Seleccio IVA'), { 'fields': (('oficial_vat_total', 'assigned_vat_total'), 'vat_type') }),
@@ -671,18 +426,18 @@ class period_close_user(admin.ModelAdmin):
 		self.list_display_links = (None, )
 
 	def get_queryset(self, request):
-		return period_close.objects.filter(cooper=bot_cooper(request.user).cooper(request))
+		return iCf_Period_close.objects.filter(icf_cooper=bot_cooper(request.user).cooper(request))
 
 	def save_model(self, request, obj, form, change):
 
 		#As we disable cooper and periods controls, we loaded their values in get_form so reload
 		if obj.period is None:
 			obj.period = form.period
-			obj.cooper = form.cooper
+			obj.icf_cooper = form.icf_cooper
 		obj.save()
 
 		if obj.closed and obj.advanced_tax > 0:
-			c = cooper.objects.get(pk=obj.cooper.id)
+			c = iCf_cooper.objects.get(pk=obj.icf_cooper.id)
 			c.advanced_tax = 0
 			c.save()
 
@@ -725,11 +480,11 @@ class period_close_user(admin.ModelAdmin):
 		current_period = bot_period(user).period(False)
 		current_cooper = bot_cooper(user).cooper(False)
 		if current_period is not None:
-			return period_close.objects.filter(period=current_period, cooper=current_cooper).count()>0
+			return iCf_Period_close.objects.filter(period=current_period, cooper=current_cooper).count()>0
 		return False
 
 	def exists_closed_period_done(self, pc):
-		return period_close.objects.get(pk=pc.id).closed
+		return iCf_Period_close.objects.get(pk=pc.id).closed
 
 	def has_add_permission(self, request):
 		if request.user.is_superuser:
@@ -742,7 +497,7 @@ class period_close_user(admin.ModelAdmin):
 		if obj is None:
 			return True
 		else:
-			return self.exists_opened_period( obj.cooper.user ) and self.exists_closed_period( obj.cooper.user ) and not self.exists_closed_period_done ( obj )
+			return self.exists_opened_period( obj.icf_cooper.user ) and self.exists_closed_period( obj.icf_cooper.user ) and not self.exists_closed_period_done ( obj )
 
 	def get_actions(self, request):
 		actions = super(period_close_user, self).get_actions(request)
@@ -764,20 +519,20 @@ class period_close_user(admin.ModelAdmin):
 		ModelForm.current_fields = self.list_export
 		if obj is not None:
 			ModelForm.period = obj.period
-			ModelForm.cooper = obj.cooper
-			bot_period_close( obj.period, obj.cooper, obj).set_period_close_form_readonly(ModelForm)
+			ModelForm.icf_cooper = obj.icf_cooper
+			bot_period_close( obj.period, obj.icf_cooper, obj).set_period_close_form_readonly(ModelForm)
 		return ModelForm
 
 
 
 	class Media:
 			js = (
-				'period_close.js',   # app static folder
+				'iCf_Period_close.js',   # app static folder
 			)
-user_admin_site.register(period_close, period_close_user)
+user_admin_site.register(iCf_Period_close, period_close_user)
 
 class period_close_admin (period_close_user):
-	change_list_template = 'admin/Invoices/period_close/change_list_admin.html'
+	change_list_template = 'admin/Invoices/iCf_Period_close/change_list_admin.html'
 	list_display = ('cooper', ) + period_close_user.list_display
 	list_export = ('cooper',) + period_close_user.list_export
 	list_per_page = 1000
@@ -797,7 +552,7 @@ class period_close_admin (period_close_user):
 	search_fields = ['coop_number', 'user__username', 'user__first_name']
 	list_filter = ('period',  First_Period_Filter, Closing_Filter )
 	def get_queryset(self, request):
-		return period_close.objects.all()
+		return iCf_Period_close.objects.all()
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
 		response = super(period_close_user, self).changelist_view(request, extra_context)
@@ -834,10 +589,10 @@ class period_close_admin (period_close_user):
 		#Filter by period
 		from Finances.bots import bot_filters
 		return bot_filters.filterbydefault(request, self, period_close_user, extra_context)
-admin.site.register(period_close, period_close_admin)
+admin.site.register(iCf_Period_close, period_close_admin)
 
 class balance_line_inline(admin.TabularInline):
-	model = invoice
+	model = iCf_Invoice
 	fields = ['status', 'date', 'transfer_date']
 	extra = 0
 	def status(self, obj):
@@ -860,7 +615,7 @@ class balance_line_inline(admin.TabularInline):
 
 from Finances.forms import invoice_form_balance 
 class sales_invoice_inline_balance(balance_line_inline):
-	model = sales_invoice
+	model = iCf_Sale
 	form = invoice_form_balance
 	fields = ['client', 'total'] + balance_line_inline.fields
 	def get_readonly_fields(self, request, obj=None):
@@ -869,7 +624,7 @@ class sales_invoice_inline_balance(balance_line_inline):
 		else:
 			return balance_line_inline.readonly_fields + ( 'client',) + ( 'date',  'total', 'transfer_date', )
 class purchases_invoice_inline_balance(balance_line_inline):
-	model = purchases_invoice
+	model = iCf_Purchase
 	form = invoice_form_balance
 	fields = ['provider', 'total', 'status', 'expiring_date', 'transfer_date']
 	def get_readonly_fields(self, request, obj=None):
@@ -883,7 +638,7 @@ class purchases_invoice_inline_balance(balance_line_inline):
 from Finances.forms import movement_form_balance
 class sales_movement_inline(admin.TabularInline):
 	form = movement_form_balance
-	model = sales_movement
+	model = iCf_Sales_movement
 	fields = ['value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
 	list_filter = ('status', 'currency')
 	extra = 0
@@ -897,7 +652,7 @@ class sales_movement_inline(admin.TabularInline):
 			#	rfields = balance_line_inline.readonly_fields + ( 'expiring_date', )
 			return ( 'execution_date', )
 class purchases_movement_inline(admin.TabularInline):
-	model = purchases_movement
+	model = iCf_Purchase_movement
 	form = movement_form_balance
 	fields = [ 'value', 'concept', 'petition_date', 'acceptation_date', 'execution_date', 'status', 'currency']
 	extra = 0
@@ -915,18 +670,18 @@ class period_admin(ModelAdmin):
 	fields = ['label', 'first_day', 'date_open', 'date_close']
 	list_display = ('label', 'first_day', 'date_open', 'date_close')
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
-admin.site.register(period, period_admin)
+admin.site.register(iCf_Period, period_admin)
 
 from Finances.forms import cooper_admin_form
 class cooper_admin(ModelAdmin):
 	form = cooper_admin_form
-	model = 'cooper'
+	model = 'iCf_Cooper'
 	list_per_page = 600
-	fields = ['user', 'coop_number', 'assigned_vat', 'coop', 'extra_days', 'advanced_tax']
-	list_display = ('user','coopnumber', 'email', 'assigned_vat', 'coop', 'extra_days', 'advanced_tax', 'date_joined')
+	fields = ['user', 'coop_number', 'assigned_vat', 'iCf_Company', 'extra_days', 'advanced_tax']
+	list_display = ('user','coopnumber', 'email', 'assigned_vat', 'iCf_Company', 'extra_days', 'advanced_tax', 'date_joined')
 	list_display_links = ('user','coopnumber')
 	search_fields = ['coop_number', 'user__username', 'user__first_name']
-	list_filter = ('coop',  First_Period_Filter, Closing_Filter )
+	list_filter = (First_Period_Filter, Closing_Filter )
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),] 
 
 	def date_joined(self,obj):
@@ -951,7 +706,7 @@ class cooper_admin(ModelAdmin):
 			return qs[0]
 		return None
 	first_period.short_description = _(u"Període inicial")
-admin.site.register(cooper, cooper_admin)
+admin.site.register(iCf_Cooper, cooper_admin)
 
 from Finances.forms import cooper_admin_form
 
@@ -1012,11 +767,11 @@ class cooper_user_balance(ModelAdmin):
 				'canAdd': False,
 				'canEdit': True }
 		else:
-			cooper = bot_cooper( request.user ).cooper( request )
+			icf_cooper = bot_cooper( request.user ).cooper( request )
 			perms = {}
-			if cooper:
+			if icf_cooper:
 				perms = {'direct_to_change_form':True, 
-						'change_form_url': cooper.id }
+						'change_form_url': icf_cooper.id }
 			return perms
 user_admin_site.register(cooper_proxy_balance, cooper_user_balance)
 
@@ -1028,24 +783,24 @@ admin.site.register(cooper_proxy_transactions, cooper_admin_transaction)
 from Finances.models import movement_STATUSES
 class movements_admin(ModelAdmin):
 	form = movement_form_balance
-	list_filter = ('cooper', 'currency',)
+	list_filter = ('icf_cooper', 'currency',)
 	list_editable = ('execution_date', 'currency')
 	def status(self, obj):
 		return movement_STATUSES[obj.status()][1]
 	status.short_description = (u"Estat")
 
 class sales_movements_admin(movements_admin):
-	model = sales_movement
-	fields = ['cooper', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
-	list_display = ('cooper', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency')
-admin.site.register(sales_movement, sales_movements_admin)
+	model = iCf_Sales_movement
+	fields = ['icf_cooper', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
+	list_display = ('icf_cooper', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency')
+admin.site.register(iCf_Sales_movement, sales_movements_admin)
 
 class purchases_movements_admin(movements_admin):
-	model = purchases_movement
-	fields = ['cooper', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency']
-	list_display = ('cooper', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency')
+	model = iCf_Purchase_movement
+	fields = ['icf_cooper', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency']
+	list_display = ('icf_cooper', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency')
 
-admin.site.register(purchases_movement, purchases_movements_admin)
+admin.site.register(iCf_Purchase_movement, purchases_movements_admin)
 
 class cooper_companies_user(ModelAdmin):
 	model = 'cooper_proxy_companies'
@@ -1055,7 +810,7 @@ class cooper_companies_user(ModelAdmin):
 	list_display_links = ('coop_number',)
 
 	def get_queryset(self, request):
-		return cooper.objects.filter(user=request.user)
+		return iCf_cooper.objects.filter(user=request.user)
 	def cooper_clients(self, obj):
 		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
 	cooper_clients.allow_tags = True
@@ -1065,11 +820,11 @@ class cooper_companies_user(ModelAdmin):
 	cooper_providers.allow_tags = True
 	cooper_providers.short_description = _(u"Els meus proveïdors")
 	def get_model_perms(self, request): 
-		cooper = bot_cooper( request.user ).cooper( request )
+		icf_cooper = bot_cooper( request.user ).cooper( request )
 		perms = {}
-		if cooper:
+		if icf_cooper:
 			perms = {'direct_to_change_form':True, 
-			'change_form_url': bot_cooper( request.user ).cooper().id }
+			'change_form_url': bot_cooper( request.user ).icf_cooper().id }
 		return perms
 user_admin_site.register(cooper_proxy_companies, cooper_companies_user)
 
@@ -1081,7 +836,7 @@ class cooper_companies_admin(cooper_companies_user):
 	list_display_links = ('coop_number',)
 
 	def get_queryset(self, request):
-		return cooper.objects.filter(user=request.user)
+		return iCf_Cooper.objects.filter(user=request.user)
 	def cooper_clients(self, obj):
 		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
 	cooper_clients.allow_tags = True

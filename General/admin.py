@@ -766,10 +766,9 @@ class PersonAdmin(Public_PersonAdmin):
 		H_accountCryptoInline,
 	]
 
-
-
-
 class Public_CompanyAdmin(HumanAdmin):
+	from General.forms import company_form
+	form = company_form
 	change_list_template = None
 	fieldsets = (
 		(None, {

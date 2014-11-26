@@ -7,59 +7,25 @@ from django.http import HttpResponseRedirect
 from decimal import Decimal
 from localflavor.es.forms import *
 from django.db.models import F
-
 from Finances.bots import *
-from models import cooper, sales_invoice, purchases_invoice, client, provider, iC_Period, iC_Tax
+from Finances.models import *
+
 class cooper_admin_form(forms.ModelForm):
-	model = cooper
+	model = iCf_Cooper
 	class Meta:
 		localized_fields = ('preTAX', )
 
-class CardIDValidator():
-	def validate(self, CIF, oID):
-		if CIF == "" and oID == "":
-			raise forms.ValidationError(_(u"Has d'introduïr o CIF/NIF/NIE o Altres identificadors. Un dels dos."))
-		if CIF != "" and oID != "":
-			raise forms.ValidationError(_(u"Has d'introduïr o CIF/NIF/NIE o Altres identificadors. No tots dos."))
-		if CIF != "":
-			myValidator = ESIdentityCardNumberField()
-			myValidator.clean(CIF)
-
-class company_form(forms.ModelForm):
-	def clean_name(self):
-		return self.cleaned_data.get('name').upper().replace("-", "").replace(".","").replace("/","").replace("-","").replace(",","")
-	def clean_CIF(self):
-		cleaned_data = self.cleaned_data
-		CIF = cleaned_data.get('CIF')
-		return CIF.replace(" ","").replace("-","")
-	def clean(self):
-		cleaned_data = self.cleaned_data
-		CIF = cleaned_data.get('CIF')
-		oID = cleaned_data.get('otherCIF')
-		validator = CardIDValidator()
-		validator.validate( CIF, oID)
-		if self.instance.pk:
-			pk =self.instance.pk
-		else:
-			pk=0
-		if self.model.objects.filter( name=cleaned_data.get('name')).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix una companyia amb aquest Nom Fiscal"))
-		if CIF and self.model.objects.filter( CIF=CIF).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix una companyia amb aquest identificador"))
-		if oID and self.model.objects.filter( otherCIF=oID).exclude(pk=pk).count() > 0:
-			raise forms.ValidationError(_(u"Ja existeix una companyia amb aquest identificador"))
-		return cleaned_data
-
+from General.forms import company_form
 class client_form(company_form):
-	model = client
+	model = iCf_Client
 
 class provider_form(company_form):
-	model = provider
+	model = iCf_Provider
 
 from Finances.models import manage_CHOICE_COOPER, manage_CHOICE_COOP, status_CHOICE_NONE, status_CHOICE_PENDING, status_CHOICE_DONE, status_CHOICE_WAITING
-from Finances.models import invoice
+
 class invoice_form(forms.ModelForm):
-	model = invoice
+	model = iCf_Invoice
 	statuses=(
 		(status_CHOICE_NONE, _(u'---------------------')),
 		(status_CHOICE_WAITING, _(u'Esperant data de venciment')),
@@ -133,12 +99,12 @@ class invoice_form(forms.ModelForm):
 		return self.cleaned_data.get("transfer_date")
 
 class sales_invoice_form(invoice_form):
-	model = sales_invoice
+	model = iCf_Sale
 	class Meta:
 		localized_fields = ('value', 'invoiced_vat', 'assigned_vat', 'total')
 
 class purchases_invoice_form(invoice_form):
-	model = purchases_invoice
+	model = iCf_Purchase
 	def clean_who_manage(self):
 		if self.cleaned_data.get('who_manage') == manage_CHOICE_COOP:
 			if not self.cleaned_data.get('provider').iban:
@@ -185,7 +151,7 @@ class movement_form_balance(forms.ModelForm):
 		exclude = ['status',]
 		localized_fields = ["value",]
 
-from Finances.models import period_close
+from Finances.models import iCf_Period_close
 class period_close_form(forms.ModelForm):
 
 	oficial_vat_total = forms.DecimalField(label=_(u"IVA Facturat - Despeses (€)"), localize=True, required=False)
@@ -228,7 +194,7 @@ class period_close_form(forms.ModelForm):
 
 
 	class Meta:
-		model = period_close
+		model = iCf_Period_close
 		from Finances.models import period_close_base_fields
 		localized_fields = period_close_base_fields
 		exclude = ()
