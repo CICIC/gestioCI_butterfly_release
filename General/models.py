@@ -304,12 +304,13 @@ class Company(Human):
 	human = models.OneToOneField('Human', primary_key=True, parent_link=True)
 	company_type = TreeForeignKey('Company_Type', null=True, blank=True, verbose_name=_(u"Tipus d'empresa"))
 	legal_name = models.CharField(max_length=200, blank=True, null=True, verbose_name=_(u"Nom Fiscal"))
-	vat_number = models.CharField(max_length=20, blank=True, null=True, verbose_name=_(u"CIF"))
 	id_card_es = models.CharField(verbose_name=_(u"CIF / NIF / NIE"), blank=True, null=True, help_text=_(u"NIF:12345678A - CIF: A12345678 - NIE: X12345678A del proveïdor a qui es factura."), max_length=200)
 	id_card_non_es = models.CharField(verbose_name=_(u"Altres identificadors"), null=True, blank=True, help_text=_(u"Camps no CIF / NIF / NIE del proveïdor a qui es factura."), max_length=50)
 	class Meta:
 		verbose_name = _(u"Empresa")
 		verbose_name_plural = _(u"e- Empreses")
+	def vat_number(self):
+		return self.id_card_es if self.id_card_es else (self.card_non_es if self.card_non_es else "<missing vat number>")
 
 class Company_Type(Being_Type):
 	being_type = models.OneToOneField('Being_Type', primary_key=True, parent_link=True)
