@@ -196,8 +196,7 @@ class iCf_Duty(iCf_Record):
 			pass
 	def __unicode__(self):
 		return str(self.value)
-	def get_model_perms(self, request): 
-		return {'view': True}
+
 	class Meta:
 		verbose_name= _(u'IVA')
 		verbose_name_plural= _(u'IVAs')
