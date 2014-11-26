@@ -17,11 +17,11 @@ from django.forms.models import BaseInlineFormSet
 
 from django.forms.formsets import formset_factory
 
-
-from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
-
-
+# ********************************************************************
+# See (tools_upgrader/admin.py)> NOTICE(20112014): Widget wrapper for foreign and m2m fields.
+#from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
 #class AutoRecordName(ForeignKeyRawIdWidgetWrapperAdmin):
+# ********************************************************************
 class AutoRecordName(admin.ModelAdmin):
 	class Media:
 		css = {
@@ -159,14 +159,14 @@ class AutoRecordName(admin.ModelAdmin):
 	def save_model(self, request, obj, form, change):
 		instance = form.save(commit=False)
 		if hasattr(instance, 'ic_project') and instance.ic_project is None:
-			print 'SAVE_MODEL: not ic_project! put CIC to '+instance.name
+			print ('SAVE_MODEL: not ic_project! put CIC to '+instance.name)
 			instance.ic_project = Project.objects.get(nickname='CIC')
 		if not hasattr(instance, 'human') or instance.human is None:
 			if hasattr(instance, 'project'):# and instance.project is not None:
-				print 'SAVE_MODEL: not human! put project...'
+				print ('SAVE_MODEL: not human! put project...')
 				instance.human = instance.project
 			if hasattr(instance, 'person'):# and instance.person is not None:
-				print 'SAVE_MODEL: not human! put person...'
+				print ('SAVE_MODEL: not human! put person...')
 				instance.human = instance.person
 
 		if hasattr(self, 'record_type') and self.record_type is not None:
@@ -177,11 +177,11 @@ class AutoRecordName(admin.ModelAdmin):
 					#print 'RECS: '+str(recs)
 					if recs.count() > 1: # TODO rise a real exeption
 						#print 'ERRORR!!! '
-						print "Hi ha més d'un registre d'autoocupat sense data de baixa ¿??"
+						print ("Hi ha més d'un registre d'autoocupat sense data de baixa ¿??")
 						return False
 					elif recs.count() > 0: # TODO rise a real exeption
-						print 'ERROR!! '
-						print "El soci ja te 1 registre d'autoocupat sense data de baixa!"
+						print ('ERROR!! ')
+						print ("El soci ja te 1 registre d'autoocupat sense data de baixa!")
 						return False
 
 			if instance.record_type.clas == 'iC_Person_Membership' or instance.record_type.clas == 'iC_Project_Membership':
@@ -191,11 +191,11 @@ class AutoRecordName(admin.ModelAdmin):
 						#print 'Update! ...instance.save() '
 						pass
 					else:
-						print 'ERROR!! '
-						print 'Ja tenim registre alta: '+str(icms)
+						print ('ERROR!! ')
+						print ('Ja tenim registre alta: '+str(icms))
 						return False
 		else:
-			print 'W.admin.AutoRecordName.save_model: No tenemos Record_Type!!'
+			print ('W.admin.AutoRecordName.save_model: No tenemos Record_Type!!')
 
 		#if not hasattr(instance,'name') or instance.name is None or instance.name == '':
 
@@ -274,7 +274,7 @@ class AutoRecordName(admin.ModelAdmin):
 
 
 #---------	M E M B E R S H I P ' S
-from reverseadmin import ReverseModelAdmin
+from tools_upgrader.reverseadmin import ReverseModelAdmin
 
 class Public_AkinMembershipAdmin(ReverseModelAdmin):
 	model = iC_Akin_Membership
@@ -913,7 +913,7 @@ class LearnSessionAdmin(AutoRecordName):
 
 		if db_field.name == 'nonmaterial':
 			from General.models import Type
-			typ = Type.objects.filter(clas='ic_learn')
+			typ = General.models.Type.objects.filter(clas='ic_learn')
 			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
 			try:
 				nonmat = Nonmaterial.objects.get(id=nonmaterial_id)

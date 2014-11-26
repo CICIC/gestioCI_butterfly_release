@@ -55,8 +55,8 @@ def entry_page_to_gestioci(request, user_id = None):
 		login(request, current_user )
 
 	#REGISTRATION: Retrieve registration info for this user
-	print "User:"
-	print current_user.id
+	print ("User:")
+	print (current_user.id)
 	try:
 		current_registration = RegistrationProfile.objects.get(user=current_user.id)
 		record_type_id = current_registration.record_type.id
@@ -70,7 +70,6 @@ def entry_page_to_gestioci(request, user_id = None):
 	from Welcome.models import iC_Membership, iC_Akin_Membership, iC_Project_Membership, iC_Person_Membership, iC_Self_Employed, iC_Stallholder
 	qobjects = iC_Membership
 	if current_registration:
-		print current_registration.record_type
 		if current_registration.record_type:
 			type = current_registration.record_type.clas
 			try:
@@ -81,8 +80,6 @@ def entry_page_to_gestioci(request, user_id = None):
 					qobjects = iC_Person_Membership
 					membership = qobjects.objects.get( person=current_registration.person)
 				elif type == "iC_Akin_Membership":
-					print "person"
-					print current_registration.person.id
 					qobjects = iC_Akin_Membership
 					membership = qobjects.objects.get( person=current_registration.person)
 					membership_id = membership.id if membership else 0
@@ -224,7 +221,6 @@ def entry_page_to_gestioci(request, user_id = None):
 
 			if not membership and not group.name == "iC_Self_Employed" and not group.name=="iC_Stallholder":
 				if not current_user.is_anonymous() and not current_user.is_active:
-					print activation_message
 					links.append( mark_safe(activation_message) )
 
 			if membership and type.lower() != "ic_welcome":
@@ -330,7 +326,6 @@ def entry_page_to_gestioci(request, user_id = None):
 					desc = group.name
 				link = "<a href=/admin/Welcome/" + type.lower() + "> _: " + desc + "</a>"
 				links.append( mark_safe(link) )
-				print link
 
 			title = _(group.name).encode("utf-8")
 			new_action = Action_block( title, group, form, action, links, membership_id, show_form, can_edit)
@@ -371,11 +366,10 @@ def entry_page_to_gestioci(request, user_id = None):
 		if membership_self:
 			from Welcome.models import ico_no
 			if membership_self._has_assisted_socialcoin() != ico_no:
-				print "has"
 				moment_img = "welcome_flow_self5.png"
 			elif membership_self._has_assisted_welcome() != ico_no:
 				moment_img = "welcome_flow_self4.png"
-			elif membership_self._rel_licences() != str_none:
+			elif membership_self._rel_licences() != "":
 				moment_img = "welcome_flow_self3.png"
 			else:
 				moment_img = "welcome_flow_self2.png"
@@ -522,9 +516,6 @@ def create_membership(request, record_type_id=4):
 			"type" : record_type_id ,
 			"type_person": "public"
 		})
-		
-		
-		print "#Load extra data--------------------------------------------------------------"
 	extra_context = {}
 		#Registration url
 
@@ -567,10 +558,8 @@ def create_membership(request, record_type_id=4):
 	)
 
 def wait_membership(request, user_id = 0):
-	print "#Load registration-------------------------------------------------------------"
 	from public_form.models import RegistrationProfile
 	current_registration = get_object_or_404(RegistrationProfile, user=user_id)
-	print "#Load extra data--------------------------------------------------------------"
 	extra_context = {}
 	extra_context['record_type'] = current_registration.record_type
 	extra_context['moment'] = _(u"Esperant activació d'usuari")
@@ -581,7 +570,6 @@ def wait_membership(request, user_id = 0):
 	context = RequestContext(request)
 	for key, value in extra_context.items():
 		context[key] = callable(value) and value() or value
-	print "#Render WAIT form -----------------------------------------------------------------"
 	return render_to_response(
 		'waiting_membership.html',
 		{'RegistrationProfile' : current_registration},
@@ -595,8 +583,9 @@ def activate_membership(request, activation_key):
 	account = urb.activate(request, activation_key)
 
 	if not account:
-		print "no account"
+		pass
 	else:
+
 		record_type_string = account.record_type.clas.lower()
 		from General.models import Project
 		try:
@@ -604,7 +593,6 @@ def activate_membership(request, activation_key):
 		except:
 			project = Project()
 
-		print "proceso: "+record_type_string
 		if record_type_string == "ic_akin_membership":
 			from Welcome.models import iC_Akin_Membership
 			#from General.models import Project
@@ -638,7 +626,6 @@ def activate_membership(request, activation_key):
 				issue_date = datetime.now(),
 				deadline_date = datetime.now() + timedelta(days=5) ,
 			)
-			print '### guardant quota alta: '+str(current_fee)
 			current_fee.save()
 
 			if record_type_string == "ic_person_membership":
@@ -654,7 +641,6 @@ def activate_membership(request, activation_key):
 				from Welcome.models import Person
 				from Welcome.models import Relation
 
-				print 'iC_Project_Membership: ic:'+str(project)+' proj:'+str(account.project)
 				ic_m = iC_Project_Membership( ic_project=project, human=account.project, project=account.project, join_fee=current_fee, join_date=datetime.now())
 
 				ref_typ = Relation.objects.get(clas='reference')
@@ -662,7 +648,6 @@ def activate_membership(request, activation_key):
 				ic_m.human_id = account.project.id
 
 			else:
-				print '(activate_membership) RECORD_TYPE_STRING no reconegut!, esborro Quota !'
 				current_fee.delete()
 				return 'FALSE'
 
@@ -697,7 +682,6 @@ def save_form_profile(request):
 	form = None
 	if membership_type == "iC_Akin_Membership":
 		from Welcome.models import iC_Membership, iC_Project_Membership
-		print "akin"
 		from Welcome.forms import iC_Akin_Membership_form
 		form = iC_Akin_Membership_form(request.POST)
 		from Welcome.models import iC_Akin_Membership
@@ -724,7 +708,6 @@ def save_form_profile(request):
 			membership.join_fee.save()
 			messages.success(request, _(u"S'ha guardat el tipus de pagament. ") + pt.name)
 		except ObjectDoesNotExist:
-			print "not found"
 			messages.error(request, _(u"No s'ha guardat el tipus de pagament."))
 	elif membership_type == "iC_Project_Membership":
 		from Welcome.forms import iC_Project_Membership_form
@@ -743,8 +726,6 @@ def save_form_profile(request):
 			membership.project = new_project
 			register.save()
 			membership.save()
-
-		print membership.project.id
 		try:
 			if request.POST.has_key("payment_type"):
 				pt = Payment_Type.objects.get(id=request.POST["payment_type"])
@@ -752,7 +733,6 @@ def save_form_profile(request):
 				membership.join_fee.save()
 			messages.success(request, _(u"S'ha guardat. "))
 		except ObjectDoesNotExist:
-			print "not found"
 			messages.error(request, _(u"No s'ha guardat."))
 	return HttpResponseRedirect(
 				reverse('public_form:entry_page_to_gestioci')

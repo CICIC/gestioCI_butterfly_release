@@ -50,7 +50,6 @@ from itertools import chain
 from django import forms
 from django.conf import settings
 from django.contrib.admin import widgets
-from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.html import escape, conditional_escape
 
@@ -73,15 +72,13 @@ class AutoNameMixin(admin.ModelAdmin):
 	def save_model(self, request, obj, form, change):
 		instance = form.save(commit=False)
 		if not hasattr(instance, 'name'):
-			print 'AUTO NAME SAVE hasnot name!! '+str(obj)
+			print ('AUTO NAME SAVE hasnot name!! '+str(obj))
 		#if instance.name is None or instance.name == '':
 		instance.name = instance.__unicode__()
 		instance.save()
 		form.save_m2m()
 		return instance
 
-from General.widgets import ForeignKeyRawIdWidgetWrapperAdmin
-#class Css_Mixin(ForeignKeyRawIdWidgetWrapperAdmin):
 class Css_Mixin(admin.ModelAdmin):
 	class Media:
 		css = {
