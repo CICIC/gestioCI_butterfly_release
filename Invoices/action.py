@@ -3,7 +3,7 @@ import csv
 from django.http import HttpResponse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.utils.encoding import force_unicode
+
 
 class bot_exporter(object):
 	def __init__(self, description="Export selected objects as CSV file", fields=None, exclude=None, header=True, force_fields=None):
@@ -35,7 +35,6 @@ class bot_exporter(object):
 
 		response = HttpResponse(content_type='text/csv')
 		response['Content-Disposition'] = 'attachment; filename=%s.csv' % unicode(opts).replace('.', '_')
-
 		writer = csv.writer(response)
 
 		if self.header:
@@ -85,7 +84,6 @@ def export_all_as_csv_action(description="Export selected objects as CSV file", 
 	def export_all_as_csv(modeladmin, request, queryset):
 		if request.GET.has_key('period__id__exact'):
 			queryset = modeladmin.model.objects.filter(period=request.GET['period__id__exact'])
-			print "pasa"
 			return bot_exporter(description, fields, exclude, header, force_fields).export_as_csv(modeladmin, request, queryset)
 		else:
 			from django.contrib import messages
