@@ -801,14 +801,14 @@ class Public_CompanyAdmin(HumanAdmin):
 		H_accountBankInline,
 		H_accountCryptoInline,
 	]
-
+from General.forms import company_form
 class CompanyAdmin(Public_CompanyAdmin): # admin.ModelAdmin):
 	#class Media:
 	#	js = ('mselect-to-mcheckbox.js', 'jquery-ui-1.10.2.custom.js',)
 	#	css = {
 	#		'all': ('css/mselect-to-mcheckbox.css',)
 	#	}
-
+	form = company_form
 	list_display = ['name', 'nickname', 'email', 'company_type']
 	list_filter = ('company_type',)
 	search_fields = ('name', 'nickname', 'email', 'company_type')
