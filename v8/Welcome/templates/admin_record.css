@@ -1,0 +1,12 @@
+input.vManyToManyRawIdAdminField {
+  display: none;
+}
+
+input.vForeignKeyRawIdAdminField {
+  display: none;
+}
+
+
+ul.error {
+  color: #c00;
+}

@@ -1,0 +1,27 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls admin_static admin_list %}
+
+ {% block object-tools %}
+      {% if has_add_permission %}
+        <ul class="object-tools">
+          {% block object-tools-items %}
+            <li>
+              {% url cl.opts|admin_urlname:'add' as add_url %}
+              <a href="{% add_preserved_filters "/admin/General/person/add" is_popup %}" class="addlink">
+        {% trans "Persona"  %}
+              </a>
+            </li>
+            <li>
+             <a href="{% add_preserved_filters "/admin/General/project/add" is_popup %}" class="addlink">
+            {% trans "Projecte"  %}
+              </a>
+            </li>
+            <li>
+             <a href="{% add_preserved_filters "/admin/General/company/add" is_popup %}" class="addlink">
+             {% trans "Empresa"  %}
+             </a>
+            </li>
+          {% endblock %}
+        </ul>
+      {% endif %}
+    {% endblock %}

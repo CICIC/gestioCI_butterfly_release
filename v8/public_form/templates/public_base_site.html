@@ -1,0 +1,122 @@
+{% extends "public_form_base_0.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+{% block title %} {% trans "CIC | Gesti&oacute; Integral de Cooperatives" %} {% endblock %}
+
+{% block branding %}
+	<h1 id="site-name"><a href="{% url 'admin:index' %}">{% trans "CIC | Gesti&oacute; Integral Cooperatives" %}</a></h1>
+	{% include 'admin/change_language.html' %} <br>	<br>
+{% endblock %}
+
+{% block nav-global %}
+	
+{% endblock %}
+
+{% block assistant_session %}
+	<div id="learn_session">
+		{% load public_form_tag  %}
+		{% block session_list %}
+			{% with request.GET.learn_session_id|default:0 as current_session %}
+				{% sessions_tag request %}
+				{% with request.GET.human_id|default:0 as current_human %}
+
+					{% human_tag current_human %}
+						<div class="form-row" >
+							<form action="/public_form/save_form_self_employed/" method="POST">
+								<table>
+									<tr><td colspan="2">
+										<label>{{current_human|get_class}} {{current_human}} {{current_human.self_link}}</label><br>
+										<ul>
+											{% for person in current_project_referents %}
+											<li><img class="user_grid" src="{% static 'user_images/Person_user.png' %}"> {{person.person}}
+											<a onclick='return showRelatedObjectLookupPopup(this);' 
+											href="/admin/General/person/{{person.person|get_id}}"> - {% trans " Editar" %}</a>
+											</li>
+											{% endfor %}
+										</ul>
+										<ul>
+										{% for project in current_human|get_projects %}
+											<li><img class="user_grid" src="{% static 'user_images/Project_user.png' %}"> {{project.human}}
+											<a onclick='return showRelatedObjectLookupPopup(this);' 
+											href="/admin/General/project/{{project.human|get_id}}"> - {% trans " Editar" %}</a>
+											</li>
+										{% endfor %}
+										</ul>
+									</tr>
+									{% if current_memberships_person and not current_memberships or current_memberships or current_memberships_self %}
+									<tr><td colspan="2">
+										{% if current_memberships_person and not current_memberships%}
+											<ul>{% for m in current_memberships_person %}
+												<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
+												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans " Editar" %}</a></li>
+												{% endfor %}
+											</ul>
+										{% endif %}
+										{% if current_memberships %}
+											<ul>{% for m in current_memberships %}
+												<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
+												href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans " Editar" %}</a></li>
+												{% endfor %}
+											</ul>
+										{% endif %}
+										{% if current_memberships_self %}
+											<ul>{% for m in current_memberships_self %}
+													<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
+													href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans " Editar" %}</a></li>
+												{% endfor %}
+											</ul>
+										{% endif %}
+										{% if current_memberships_stallholder %}
+											<ul>{% for m in current_memberships_stallholder %}
+													<li>{{m}}<a onclick='return showRelatedObjectLookupPopup(this);'
+													href="/admin/Welcome/{{m.record_type.clas|lower}}/{{m|get_id}}"> - {% trans " Editar" %}</a></li>
+												{% endfor %}</ul>
+										{% endif %}
+									</td></tr>
+									{% endif %}
+ 									{% if current_session %}
+										<tr><td colspan="2"><label>
+										{{ current_session_name }} <a href="/admin/Welcome/learn_session/{{current_session|get_id}}/?next=/admin/public_form/human_proxy/?learn_session_id={{current_session|get_id}}"> {% trans "Editar" %}</a>
+										</label></td></tr>
+									{% elif is_project %}
+										<tr><td colspan="2"><label>
+										{% trans "Cap sessió d'acollida seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
+										</label></td></tr>
+									{% endif %}
+
+									{% if dont_memberships %}
+										{{current_sesion_form.as_table}}
+									{% endif %}
+									{% if current_human and current_session and has_session and dont_memberships %}
+										<tr><td colspan="2"><input type="submit" value="{% trans 'Crear alta autoocupat' %}"></td></tr>
+									{% elif current_session and current_human.id and dont_memberships and is_project %}
+										<tr><td colspan="2"><input type="submit" value="{% trans "Establir que " %}{{current_human}}{% trans " ha assistit a aquesta sessió d'Acollida" %}"{{current_session}}></td></tr>
+									{% endif %}
+									{% if not dont_memberships %}
+										{% if current_coin_session != None %}
+											<tr><td colspan="2"><label>
+												{{ current_coin_session_name}} <a href="/admin/Welcome/learn_session/{{current_coin_session|get_id}}/?next=/admin/public_form/human_proxy/?coin_session_id={{current_coin_session|get_id}}"> {% trans "Editar" %}</a>
+												</label></td></tr>
+											{% elif is_project %}
+												<tr><td colspan="2"><label>
+												{% trans "Cap sessió de moneda social seleccionada: agafa una sessió del filtre a la barra lateral de la dreta." %}
+												</label></td></tr>
+											{% endif %}
+											{% if current_coin_session and current_human.id and not has_coin_session and is_project%}
+												<tr><td colspan="2"><input type="submit" value="{% trans 'Establir que ' %}{{current_human}}{% trans ' ha assistit a aquesta sessió de moneda social' %}"{{current_coin_session}}></td></tr>
+											{% endif %}
+									{% endif %}
+
+								</table>
+								<input type="hidden" value="{{public_form_action_value}}" name="public_form_action">
+								<input type="hidden" value="{{current_human|get_id}}" name="current_human">
+								<input type="hidden" value="{{current_session|get_id}}" name="current_session">
+								<input type="hidden" value="{{current_coin_session|get_id}}" name="current_coin_session">
+								{% csrf_token %}
+							</form>
+						</div>
+
+				{% endwith %}
+			{% endwith %}
+		{% endblock %}
+	</div>
+{% endblock %}

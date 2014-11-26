@@ -1,0 +1,958 @@
+# encoding=utf-8
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-04-15 08:05+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: Invoices/admin.py:56
+msgid "Si us plau, torna a validar-te perquè la teva sessió ha expirat."
+msgstr "Por favor, vuelve a validarte porque tu sesión ha caducado."
+
+#: Invoices/admin.py:61
+msgid ""
+"Si us plau, introduïu un nom d'usuari i clau correcta per un compte de "
+"personal. Observeu que ambdós camps són sensibles a majúscules."
+msgstr "Por favor, introducir un nombre de usuario y contraseña correctos."
+
+#: Invoices/admin.py:77
+#, python-format
+msgid "El teu e-mail no és el teu nom d'usuari Prova '%s'."
+msgstr "Tu e-mail no es tu usuario, prueba '%s'."
+
+#: Invoices/admin.py:98
+msgid "Hola usuari"
+msgstr "Hola usuario"
+
+#: Invoices/admin.py:105
+msgid "les meves factures"
+msgstr "Mis facturas."
+
+#: Invoices/admin.py:134
+msgid "primer període"
+msgstr "trimestre de inicio"
+
+#: Invoices/admin.py:155
+msgid "Resultats (Selecciona avanç un Període)"
+msgstr "resultados (selecciona antes un Trimestre)"
+
+#: Invoices/admin.py:160
+msgid "Coopers_periodclose_closed"
+msgstr ""
+
+#: Invoices/admin.py:161
+msgid "Coopers_periodclose"
+msgstr ""
+
+#: Invoices/admin.py:162
+msgid "Coopers_not_periodclose_invoices"
+msgstr ""
+
+#: Invoices/admin.py:163
+msgid "Coopers_not_periodclose"
+msgstr ""
+
+#: Invoices/admin.py:192
+msgid "Data d'alta"
+msgstr "Fecha alta"
+
+#: Invoices/admin.py:196 Invoices/models.py:48 Invoices/models.py:59
+msgid "Nom"
+msgstr "Nombre"
+
+#: Invoices/admin.py:201
+msgid "Cognom"
+msgstr "Apellidos"
+
+#: Invoices/admin.py:205 Invoices/models.py:61 Invoices/models.py:84
+#: Invoices/models.py:102 Invoices/models.py:281 Invoices/models.py:334
+#: Invoices/models.py:378
+msgid "nº COOP"
+msgstr ""
+
+#: Invoices/admin.py:213
+msgid "Primer període"
+msgstr "Primer día del periodo"
+
+#: Invoices/admin.py:265 Invoices/admin.py:452
+msgid "La data ha de ser menor que el dia final del periode"
+msgstr "La fecha tiene que ser menor que el día último del trimestre escogido."
+
+#: Invoices/admin.py:283 Invoices/admin.py:469
+msgid "Ja existeix una factura amb aquest número"
+msgstr "Ya existe un factura con ese número y ese IVA"
+
+#: Invoices/admin.py:331 Invoices/admin.py:514 Invoices/admin.py:987
+msgid "Nº Soci"
+msgstr "Nº Socio"
+
+#: Invoices/admin.py:336 Invoices/admin.py:518 Invoices/admin.py:990
+msgid "Nom Soci"
+msgstr "Nombre de socio"
+
+#: Invoices/admin.py:341 Invoices/admin.py:369 Invoices/models.py:291
+msgid "Client"
+msgstr "Cliente"
+
+#: Invoices/admin.py:348 Invoices/admin.py:376
+msgid "Client (ID) "
+msgstr "Cliente (ID)"
+
+#: Invoices/admin.py:390 Invoices/admin.py:586
+msgid ""
+"Ja existeix una factura amb aquest número. S'ha gravat perquè l'IVA es "
+"diferent"
+msgstr ""
+"Ya existe un factura con ese número y ese IVA. Se ha grabado porque el IVA "
+"es diferente."
+
+#: Invoices/admin.py:522 Invoices/admin.py:547 Invoices/models.py:338
+msgid "Proveïdor"
+msgstr "Proveedor"
+
+#: Invoices/admin.py:529 Invoices/admin.py:554
+msgid "Proveïdor (ID) "
+msgstr "Proveedor (ID)"
+
+#: Invoices/admin.py:618
+msgid "Has d'introduïr o CIF/NIF/NIE o Altres identificadors. Un dels dos."
+msgstr "Introduce o CIF/NIF/NIE o Otros Identificadores. Uno de los dos."
+
+#: Invoices/admin.py:620
+msgid "Has d'introduïr o CIF/NIF/NIE o Altres identificadors. No tots dos."
+msgstr "Introduce o CIF/NIF/NIE o Otros Identificadores. Uno de los dos."
+
+#: Invoices/admin.py:646 Invoices/admin.py:732
+msgid "Ja existeix un Proveïdor amb aquest Nom Fiscal"
+msgstr "Ya existe un proveedor con ese nombre fiscal"
+
+#: Invoices/admin.py:648 Invoices/admin.py:650
+msgid "Ja existeix un Client amb aquest identificador"
+msgstr "Ya exsite un cliente con ese identificador"
+
+#: Invoices/admin.py:734 Invoices/admin.py:736
+msgid "Ja existeix un Proveïdor amb aquest identificador"
+msgstr "Ya existe un proveedor con ese identificador"
+
+#: Invoices/admin.py:760 Invoices/admin.py:790
+msgid "Especifica identitat"
+msgstr "Introduce identidad"
+
+#: Invoices/admin.py:818 Invoices/admin.py:978 Invoices/admin.py:1206
+msgid "IVA Facturat - Despeses (€)"
+msgstr "IVA Facturado - Gastos (€)"
+
+#: Invoices/admin.py:819 Invoices/admin.py:982 Invoices/admin.py:1210
+msgid "IVA Assignat - Despeses (€)"
+msgstr "IVA Asignado - Gastos (€)"
+
+#: Invoices/admin.py:821 Invoices/models.py:402
+msgid "IVA Facturat - Assignat (€)"
+msgstr "IVA Facturado - Asignado (€)"
+
+#: Invoices/admin.py:823 Invoices/models.py:412
+msgid "Total IVA (€)"
+msgstr ""
+
+#: Invoices/admin.py:824 Invoices/models.py:416
+msgid "Total IRPF (€)"
+msgstr ""
+
+#: Invoices/admin.py:826 Invoices/models.py:432
+msgid "Total Quota i Aportació (€)"
+msgstr "Total Cuota y Aportación (€)"
+
+#: Invoices/admin.py:827
+msgid "Total Quota i Aportació (ECOS)"
+msgstr "Total Cuota y Aportación (ECOS)"
+
+#: Invoices/admin.py:828 Invoices/models.py:438
+msgid "TOTAL A ABONAR (€)"
+msgstr ""
+
+#: Invoices/admin.py:828
+msgid "Total a abonar trimestre (IVA, IRPF, Quota i Aportació) €"
+msgstr "Total a abonar trimestre (IVA, IRPF, Cuota y Aportación) €"
+
+#: Invoices/admin.py:829
+msgid "TOTAL A ABONAR (ECOS)"
+msgstr ""
+
+#: Invoices/admin.py:829
+msgid "Total a abonar trimestre (IVA, IRPF, Quota i Aportació) ECOS"
+msgstr "Total a abonar trimestre (IVA, IRPF, Cuota y Aportación) ECOS"
+
+#: Invoices/admin.py:893
+msgid "Tens que especificar el teu compte CES"
+msgstr "Tienes que indicar tu número de cuenta CES"
+
+#: Invoices/admin.py:937
+msgid "Nº COOP"
+msgstr ""
+
+#: Invoices/admin.py:940 Invoices/admin.py:1352
+msgid "Període"
+msgstr "Periodo"
+
+#: Invoices/admin.py:943 Invoices/admin.py:1171
+msgid "Emeses"
+msgstr "Emitidas"
+
+#: Invoices/admin.py:946 Invoices/admin.py:1174
+msgid "Despeses"
+msgstr "Gastos"
+
+#: Invoices/admin.py:949 Invoices/admin.py:1177
+msgid "Seleccio IVA"
+msgstr "Selección IVA"
+
+#: Invoices/admin.py:952 Invoices/admin.py:1180
+msgid "Estalvi"
+msgstr "Ahorro"
+
+#: Invoices/admin.py:955 Invoices/admin.py:1183
+msgid "Total impostos"
+msgstr "Total impuestos"
+
+#: Invoices/admin.py:958 Invoices/admin.py:1186 Invoices/models.py:32
+msgid "Quota Trimestral"
+msgstr "Cuota Trimestral"
+
+#: Invoices/admin.py:961 Invoices/admin.py:1189
+msgid "Aportacio a la CIC"
+msgstr "Aportación a la CIC"
+
+#: Invoices/admin.py:964 Invoices/admin.py:1192
+msgid "Totals"
+msgstr "Totales"
+
+#: Invoices/admin.py:967 Invoices/admin.py:1005 Invoices/admin.py:1195
+#: Invoices/admin.py:1213 Invoices/models.py:444
+msgid "Pagaments"
+msgstr "Pagos"
+
+#: Invoices/admin.py:970 Invoices/admin.py:1198
+msgid "Tancar"
+msgstr "Cerrado"
+
+#: Invoices/admin.py:993
+msgid "Base Imposable segons Factures Emeses"
+msgstr "Base imponible según Facturas Emitidas"
+
+#: Invoices/admin.py:996 Invoices/admin.py:1002
+msgid "Base Imposable segons Càlcul Trimestral"
+msgstr "Base imponible según Cálculo trimestral"
+
+#: Invoices/admin.py:999
+msgid "Base Imposable segons Factures Despeses"
+msgstr "Base imponible según Facturas Emitidas"
+
+#: Invoices/models.py:18
+msgid "IVA"
+msgstr ""
+
+#: Invoices/models.py:27 Invoices/models.py:28
+msgid "G - IVA"
+msgstr "G - IVA"
+
+#: Invoices/models.py:33
+msgid "Base imposable Mínima"
+msgstr "Base imponible Mínima"
+
+#: Invoices/models.py:34
+msgid "Base imposable Màxima"
+msgstr "Base imponible Máxima"
+
+#: Invoices/models.py:43 Invoices/models.py:44
+msgid "A - Taula quotes"
+msgstr "A - Tabla de cuotas"
+
+#: Invoices/models.py:54
+msgid "B - Cooperativa"
+msgstr "H - Cooperativa"
+
+#: Invoices/models.py:55
+msgid "B - Cooperatives"
+msgstr "H - Cooperativas"
+
+#: Invoices/models.py:60
+msgid "Cooperativa"
+msgstr "Cooperativa"
+
+#: Invoices/models.py:62
+msgid "IVA Assignat"
+msgstr "IVA Asignado"
+
+#: Invoices/models.py:62
+#, python-format
+msgid "Aquest és el valor % d'IVA assignat fruit de l'avaluació social."
+msgstr "Este es el valor % de IVA asignado fruto de la evaluación social."
+
+#: Invoices/models.py:63
+msgid "Dies extra"
+msgstr "Días extra"
+
+#: Invoices/models.py:63
+msgid "Dies extra que pot editar el trimestre en curs."
+msgstr "Días extra que puede editar el trimestre en curso"
+
+#: Invoices/models.py:64
+msgid "Quota avançada (€)"
+msgstr "Cuota adelantada (€)"
+
+#: Invoices/models.py:64
+msgid "Quota que s'aplicarà el primer trimestre"
+msgstr ""
+
+#: Invoices/models.py:74
+msgid "Email"
+msgstr ""
+
+#: Invoices/models.py:76
+msgid "E - Soci"
+msgstr "J - Socio"
+
+#: Invoices/models.py:77
+msgid "E - Socis"
+msgstr "J - Socios"
+
+#: Invoices/models.py:81 Invoices/models.py:99
+msgid "Nom Fiscal"
+msgstr "Nombre Fiscal"
+
+#: Invoices/models.py:81
+msgid "El nom fiscal del client a qui es factura. Ex. SOM EL QUE SOM SL"
+msgstr "El nombre fiscal del cliente a quien se factura. Ej. SOM EL QUE SOM SL"
+
+#: Invoices/models.py:82
+msgid "CIF/NIF/NIE"
+msgstr ""
+
+#: Invoices/models.py:82
+msgid ""
+"NIF:12345678A - CIF: A12345678 - NIE: X12345678A del client a qui es factura."
+msgstr ""
+"NIF:12345678A - CIF: A12345678 - NIE: X12345678A del cliente a quien se "
+"factura."
+
+#: Invoices/models.py:83 Invoices/models.py:101
+msgid "Altres identificadors"
+msgstr "Otros identificadores"
+
+#: Invoices/models.py:83
+msgid "Camps no NIF/CIF/NIE del client a qui es factura."
+msgstr "Campos no NIF/CIF/NIE del cliente a quien se factura."
+
+#: Invoices/models.py:94
+msgid "B - Client"
+msgstr "B - Cliente"
+
+#: Invoices/models.py:95
+msgid "B - Clients"
+msgstr "B - Clientes"
+
+#: Invoices/models.py:99
+msgid "El nom fiscal del proveïdor a qui es factura. Ex. SOM EL QUE SOM SL"
+msgstr ""
+"El nombre fiscal del proveedor a quien se factura. Ej. SOM EL QUE SOM SL"
+
+#: Invoices/models.py:100
+msgid "CIF / NIF / NIE"
+msgstr ""
+
+#: Invoices/models.py:100
+msgid ""
+"NIF:12345678A - CIF: A12345678 - NIE: X12345678A del proveïdor a qui es "
+"factura."
+msgstr ""
+"NIF:12345678A - CIF: A12345678 - NIE: X12345678A del proveedor a quien se "
+"factura."
+
+#: Invoices/models.py:101
+msgid "Camps no CIF / NIF / NIE del proveïdor a qui es factura."
+msgstr "Campos no CIF / NIF / NIE del proveedor a quien se factura."
+
+#: Invoices/models.py:112
+msgid "C - Proveïdor"
+msgstr "Proveedor"
+
+#: Invoices/models.py:113
+msgid "C - Proveïdors"
+msgstr "C - Proveedores"
+
+#: Invoices/models.py:117 Invoices/models.py:133
+msgid "Entitat"
+msgstr "Entidad"
+
+#: Invoices/models.py:118 Invoices/models.py:134
+msgid "Concepte"
+msgstr "Concepto"
+
+#: Invoices/models.py:119 Invoices/models.py:135
+msgid "Número Compte"
+msgstr "Número de Cuenta"
+
+#: Invoices/models.py:128 Invoices/models.py:129
+msgid "D - Cobraments"
+msgstr "D - Cobros"
+
+#: Invoices/models.py:144
+msgid "E - Pagament"
+msgstr "E - Pagos"
+
+#: Invoices/models.py:145
+msgid "E - Pagaments"
+msgstr "E - Pagos"
+
+#: Invoices/models.py:149
+msgid "Títol"
+msgstr "Título"
+
+#: Invoices/models.py:150
+msgid "Inici"
+msgstr "Inicio"
+
+#: Invoices/models.py:150
+msgid "Primer dia del període"
+msgstr "Primer día del periodo"
+
+#: Invoices/models.py:151
+msgid "Obert"
+msgstr "Abierto"
+
+#: Invoices/models.py:152
+msgid "Tancat"
+msgstr "Cerrar"
+
+#: Invoices/models.py:164
+msgid "0 - Dates Trimestre"
+msgstr "I - Datos trimestre"
+
+#: Invoices/models.py:165
+msgid "0 - Dates Trimestres"
+msgstr "I - Datos trimestres"
+
+#: Invoices/models.py:169
+msgid "Remitent"
+msgstr "Remitente"
+
+#: Invoices/models.py:170 Invoices/models.py:205
+msgid "Destinatari"
+msgstr "Destinatario"
+
+#: Invoices/models.py:171
+msgid "Assumpte"
+msgstr "Asunto"
+
+#: Invoices/models.py:172
+msgid "Cos"
+msgstr "Cuerpo"
+
+#: Invoices/models.py:173
+msgid "Activat"
+msgstr "Activado"
+
+#: Invoices/models.py:183
+msgid "Tots els socis"
+msgstr "Todos los socios"
+
+#: Invoices/models.py:184
+msgid "Socis que han tancat"
+msgstr "Socios que han cerrado"
+
+#: Invoices/models.py:185
+msgid "Socis que NO han tancat"
+msgstr "Socios que NO han cerrado"
+
+#: Invoices/models.py:186
+msgid "Usuari"
+msgstr "Usuario"
+
+#: Invoices/models.py:188
+msgid "A Soci"
+msgstr "Socio"
+
+#: Invoices/models.py:188
+msgid "Per la opció -Usuari-"
+msgstr "Para la opción -Usuario-"
+
+#: Invoices/models.py:190
+msgid "El primer dia del periode"
+msgstr "El primer día del período"
+
+#: Invoices/models.py:191
+msgid "X dies avanç de tancar"
+msgstr "X días antes de cerrar"
+
+#: Invoices/models.py:192
+msgid "Dia de tancament"
+msgstr "Día de cierre"
+
+#: Invoices/models.py:193
+msgid "El dia senyalat"
+msgstr "El día indicado"
+
+#: Invoices/models.py:195
+msgid "Destinataris"
+msgstr "Destinatarios"
+
+#: Invoices/models.py:195
+msgid "A qui s'envia"
+msgstr "A quien se envía"
+
+#: Invoices/models.py:196
+msgid "Tipus"
+msgstr "Tipo"
+
+#: Invoices/models.py:196
+msgid "Quan s'executa"
+msgstr "Cuando se ejecuta"
+
+#: Invoices/models.py:197
+msgid "Senyalar dia"
+msgstr "Indicar día"
+
+#: Invoices/models.py:197
+msgid "Per l'opció -El dia senyalat-"
+msgstr "Para la opción -El día señalado-"
+
+#: Invoices/models.py:198
+msgid "Dies avanç de tancar"
+msgstr "Días antes de cerrar"
+
+#: Invoices/models.py:212
+msgid "Dia senyalat"
+msgstr "Día indicado"
+
+#: Invoices/models.py:222
+msgid "Data d'execució"
+msgstr "Fecha de ejecución"
+
+#: Invoices/models.py:269
+msgid "Pendent d'execució"
+msgstr "Pendiente de ejecución"
+
+#: Invoices/models.py:275 Invoices/models.py:276
+msgid "F - Notificacions correu"
+msgstr "L - Notificaciones correo"
+
+#: Invoices/models.py:280 Invoices/models.py:333 Invoices/models.py:377
+msgid "Trimestre"
+msgstr ""
+
+#: Invoices/models.py:282 Invoices/models.py:288 Invoices/models.py:335
+#: Invoices/models.py:344
+msgid "Nº Factura"
+msgstr ""
+
+#: Invoices/models.py:282
+msgid "Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."
+msgstr ""
+"Número Factura: COOPXXXX/any/XXXX. Introducir solamente el número final."
+
+#: Invoices/models.py:283 Invoices/models.py:336
+msgid "Data"
+msgstr "Fecha"
+
+#: Invoices/models.py:283 Invoices/models.py:336
+msgid "La data d'emissió de la factura. Exemple dd/mm/aaaa"
+msgstr "La fecha de emisión de la factura. Ejemplo dd/mm/aaaa"
+
+#: Invoices/models.py:284 Invoices/models.py:337
+#: templates/admin/Invoices/PurchaseInvoices/change_list.html:93
+#: templates/admin/Invoices/SalesInvoices/change_list.html:93
+msgid "Base Imposable (€)"
+msgstr "Base Imponible (€)"
+
+#: Invoices/models.py:284 Invoices/models.py:337
+msgid ""
+"La Base Imposable de la factura. Exemple 1000,30 . Indicar una coma pels "
+"decimals."
+msgstr ""
+"La Base Imponible de la factura. Ejemplo 1000,30. Indicar una coma para los "
+"decimales"
+
+#: Invoices/models.py:293
+msgid "IVA Facturat (%)"
+msgstr "IVA Facturado (%)"
+
+#: Invoices/models.py:293
+#, python-format
+msgid ""
+"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"
+msgstr ""
+"El % de IVA que se aplica en la factura. Indicar un valor de IVA por concepto"
+
+#: Invoices/models.py:300
+msgid "IVA Assignat (%)"
+msgstr "IVA Asignado (%)"
+
+#: Invoices/models.py:307 Invoices/models.py:383
+#: templates/admin/Invoices/PurchaseInvoices/change_list.html:94
+#: templates/admin/Invoices/SalesInvoices/change_list.html:94
+msgid "IVA Facturat (€)"
+msgstr "IVA Facturado (€)"
+
+#: Invoices/models.py:313 Invoices/models.py:384
+#: templates/admin/Invoices/SalesInvoices/change_list.html:95
+msgid "IVA Assignat (€)"
+msgstr "IVA Asignado (€)"
+
+#: Invoices/models.py:318
+#: templates/admin/Invoices/PurchaseInvoices/change_list.html:96
+#: templates/admin/Invoices/SalesInvoices/change_list.html:96
+msgid "Total Factura  (€)"
+msgstr ""
+
+#: Invoices/models.py:327
+msgid "1 - Factura Emesa"
+msgstr "Factura Emitida"
+
+#: Invoices/models.py:328
+msgid "1 - Factures Emeses"
+msgstr "Facturas Emitidas"
+
+#: Invoices/models.py:335
+msgid "Número Factura proveïdor."
+msgstr ""
+
+#: Invoices/models.py:339
+msgid "IVA (%)"
+msgstr ""
+
+#: Invoices/models.py:339
+#, python-format
+msgid "El % d'IVA que s'aplica en la factura."
+msgstr "El % de IVA que se aplica en la factura."
+
+#: Invoices/models.py:340
+msgid "IRPF (%)"
+msgstr ""
+
+#: Invoices/models.py:340
+#, python-format
+msgid ""
+"El % de retenció de IRPF (Només en lloguers i factures de persones físiques)."
+msgstr ""
+"El % de retención de IRPF (Sólo en alquileres y facturas de personas "
+"físicas)."
+
+#: Invoices/models.py:351
+msgid "IVA (€)"
+msgstr ""
+
+#: Invoices/models.py:357
+#: templates/admin/Invoices/PurchaseInvoices/change_list.html:95
+msgid "IRPF (€)"
+msgstr ""
+
+#: Invoices/models.py:362
+msgid "Total Factura (€)"
+msgstr ""
+
+#: Invoices/models.py:371
+msgid "2 - Factura Despesa"
+msgstr "Factura Gasto"
+
+#: Invoices/models.py:372
+msgid "2 - Factures Despeses"
+msgstr "Facturas Gastos"
+
+#: Invoices/models.py:379
+msgid "closed"
+msgstr "Cerrado"
+
+#: Invoices/models.py:379
+msgid "closed_help_text"
+msgstr ""
+"Gracias por tu colaboración. Una vez marcada esta casilla ya podrás proceder "
+"a realizar el pago correspondiente y enviarnos a Aurea Social las facturas "
+"en papel. RECUERDA que esta casilla NADA MÁS se puede seleccionar A PARTIR "
+"de que recibas LA NOTIFICACIÓN por mail DE CIERRE DE TRIMESTRE."
+
+#: Invoices/models.py:382
+msgid "Base Imposable Emeses (€)"
+msgstr "Base Imponible Emitidas (€)"
+
+#: Invoices/models.py:385
+msgid "Total Emeses (€)"
+msgstr "Total Emitidas (€)"
+
+#: Invoices/models.py:387
+msgid "Base Imposable Despeses (€)"
+msgstr "Base Imponible Gastos (€)"
+
+#: Invoices/models.py:388
+msgid "IVA Despeses (€)"
+msgstr "IVA Gastos (€)"
+
+#: Invoices/models.py:389
+msgid "Retenció IRPF (€)"
+msgstr "Retención IRPF (€)"
+
+#: Invoices/models.py:390
+msgid "Total Despeses (€)"
+msgstr "Total Gastos (€)"
+
+#: Invoices/models.py:394
+msgid "Pagament IVA oficial"
+msgstr "Pago IVA oficial"
+
+#: Invoices/models.py:395
+msgid "Pagament IVA segons l'IVA assignat"
+msgstr "Pago IVA según el IVA asignado"
+
+#: Invoices/models.py:397
+msgid "Tipus d'IVA"
+msgstr "Tipo de IVA"
+
+#: Invoices/models.py:403 Invoices/models.py:426
+msgid "Aportació (€)"
+msgstr "Aportación (€)"
+
+#: Invoices/models.py:403
+msgid ""
+"D'aquest import d'estalvi, vols aportar alguna quantitat a la CIC? En cas "
+"afirmatiu, indica l'import."
+msgstr ""
+"De este importe de ahorro, quieres aportar alguna cantidad a la CIC? En caso "
+"afirmativo, indica el importe."
+
+#: Invoices/models.py:419
+msgid "Quota"
+msgstr "Cuota (€)"
+
+#: Invoices/models.py:419
+msgid "Càlcul Quota Trimestral (segons taula quotes)."
+msgstr "Cálcul Cuota Trimestral (según tabla de cuotas)."
+
+#: Invoices/models.py:420
+msgid "Quota avançada"
+msgstr "Cuota avanzada (€)"
+
+#: Invoices/models.py:422
+msgid "Quota en €"
+msgstr "Cuota (€)"
+
+#: Invoices/models.py:422
+msgid " Cal indicar el valor de la quota que es pagarà en Euros."
+msgstr "Hay que indicar el valor de la cuota que se pagará en Euros"
+
+#: Invoices/models.py:423
+msgid "Quota en ECOS"
+msgstr "Cuota (Ecos)"
+
+#: Invoices/models.py:423
+msgid " Cal indicar el valor de la quota que es pagarà en Ecos."
+msgstr "Hay que indicar el valor de la cuota que se pagará en Ecos"
+
+#: Invoices/models.py:426
+msgid ""
+" Com que els resultats econòmics reflectits en aquest fitxer no sempre es "
+"corresponen amb l'activitat real del projecte, us volem donar aquesta opció "
+"per aportar el que considereu oportú. Si voleu, podeu indicar un import d"
+"´aportació al finançament d'activitats de la CIC en € i Ecos"
+msgstr ""
+"Como que los resultados económicos reflejados en este archivo no siempre "
+"corresponden con la actividad real del proyecto, os queremos dar esta "
+"opción  para aportar lo que creáis oportuno. Si queréis, podéis indicar un "
+"importe de aportación al financiamiento de la CIC en € y en Ecos"
+
+#: Invoices/models.py:427
+msgid "Aportació (Ecos)"
+msgstr "Aportación (Ecos)"
+
+#: Invoices/models.py:435
+msgid "Total Quota i Aportació ECOS"
+msgstr "Total Cuota y Aportación ECOS"
+
+#: Invoices/models.py:441
+msgid "TOTAL A ABONAR ECOS"
+msgstr ""
+
+#: Invoices/models.py:442
+msgid "Indica el teu número de compte del CES"
+msgstr "Inidca tu número de cuenta del CES"
+
+#: Invoices/models.py:444
+msgid "Ingrès IVA i Quotes (pagaments)"
+msgstr "Ingreso IVA y Quotes (pagos)"
+
+#: Invoices/models.py:445
+msgid "Cobraments"
+msgstr "Cobros"
+
+#: Invoices/models.py:445
+msgid ""
+"Ingrés Fac. Emeses (cobraments). El número de compte que cal lliurar als "
+"vostres clients que us obliguin a cobrar per transferència és el indicat. "
+"Recordeu que sempre cal sol·licitar el cobrament en metàl·lic."
+msgstr ""
+"Ingreso Fac. Emitidas (cobros). El número de cuenta que hay que entregar a "
+"vuestros clientes que os obliguen a cobrar por transferencia es el indicado. "
+"Recordad que siempre hay que solicitar el cobro en metálico."
+
+#: Invoices/models.py:454 Invoices/models.py:455
+msgid "3 - Resultats"
+msgstr "Resultados"
+
+#: Invoices/models.py:496
+msgid "Cada línea es un error."
+msgstr "Cada línea es un error."
+
+#: Invoices/models.py:499
+msgid "Usuari id en text"
+msgstr "Id de usuario en text"
+
+#: Invoices/models.py:509 Invoices/models.py:510
+msgid "Importar CSV (Socis,...)"
+msgstr "K - Importar CSV (Socios,...)"
+
+#: soci/admin.py:36
+#, python-format
+msgid "Your e-mail address is not your username. Try '%s' instead."
+msgstr "Tu e-mail no es tu nombre de usuario.  Prueba '%s'."
+
+#: templates/admin/base.html:30
+msgid "Welcome,"
+msgstr "Bienvenido, "
+
+#: templates/admin/base.html:37
+msgid "Documentation"
+msgstr "Documentación"
+
+#: templates/admin/base.html:41
+msgid "Change password"
+msgstr "Cambiar contraseña"
+
+#: templates/admin/base.html:43
+msgid "Log out"
+msgstr "Desconectar"
+
+#: templates/admin/base.html:52 templates/admin/change_list.html:41
+#: templates/admin/Invoices/Periodclose/change_form.html:19
+#: templates/admin/Invoices/Periodclose/change_list.html:40
+#: templates/admin/Invoices/Periodclose/change_listAdmin.html:40
+#: templates/admin/Invoices/PurchaseInvoices/change_list.html:41
+#: templates/admin/Invoices/SalesInvoices/change_list.html:41
+msgid "Home"
+msgstr "Inicio"
+
+#: templates/admin/change_list.html:57
+#: templates/admin/Invoices/PurchaseInvoices/change_list.html:58
+#: templates/admin/Invoices/SalesInvoices/change_list.html:58
+#, python-format
+msgid "Add %(name)s"
+msgstr "Añadir %(name)s"
+
+#: templates/admin/change_list.html:66
+#: templates/admin/Invoices/Periodclose/change_list.html:68
+#: templates/admin/Invoices/Periodclose/change_listAdmin.html:68
+#: templates/admin/Invoices/PurchaseInvoices/change_list.html:67
+#: templates/admin/Invoices/SalesInvoices/change_list.html:67
+msgid "Si us plau corregeix els errors mostrats a sota."
+msgstr "Por favor, corrige los errores indicados debajo"
+
+#: templates/admin/change_list.html:77
+#: templates/admin/Invoices/Periodclose/change_list.html:79
+#: templates/admin/Invoices/Periodclose/change_listAdmin.html:79
+#: templates/admin/Invoices/PurchaseInvoices/change_list.html:78
+#: templates/admin/Invoices/SalesInvoices/change_list.html:78
+msgid "Filter"
+msgstr "Filtra"
+
+#: templates/admin/index.html:29
+#, python-format
+msgid "Models in the %(name)s application"
+msgstr "Modelos en %(name)s web"
+
+#: templates/admin/index.html:30
+msgid " Menú "
+msgstr ""
+
+#: templates/admin/index.html:44 templates/admin/index.html.py:65
+#: templates/admin/Invoices/Periodclose/change_form.html:22
+msgid "Add"
+msgstr "Añade"
+
+#: templates/admin/index.html:50 templates/admin/index.html.py:71
+msgid "Change"
+msgstr "Cambia"
+
+#: templates/admin/index.html:82
+msgid "You don't have permission to edit anything."
+msgstr "No tienes permiso para editar nada"
+
+#: templates/admin/index.html:90
+msgid "Recent Actions"
+msgstr "Acciones recientes"
+
+#: templates/admin/index.html:91
+msgid "My Actions"
+msgstr "Mis acciones"
+
+#: templates/admin/index.html:95
+msgid "None available"
+msgstr "Ninguno disponible"
+
+#: templates/admin/index.html:109
+msgid "Unknown content"
+msgstr "Contenido desconocido"
+
+#: templates/admin/Invoices/Periodclose/change_form.html:34
+msgid "History"
+msgstr "Historial"
+
+#: templates/admin/Invoices/Periodclose/change_form.html:36
+msgid "View on site"
+msgstr "Ver en el web"
+
+#: templates/admin/Invoices/Periodclose/change_form.html:47
+msgid "Please correct the error below."
+msgstr "Por favor, corrige los errores indicados debajo"
+
+#: templates/admin/Invoices/Periodclose/change_form.html:47
+msgid "Please correct the errors below."
+msgstr "Por favor, corrige los errores indicados debajo"
+
+#: templates/admin/Invoices/Periodclose/change_form.html:68
+msgid "Save and continue editing"
+msgstr ""
+
+#: templates/admin/Invoices/Periodclose/change_form.html:69
+msgid "Save"
+msgstr ""
+
+#: templates/admin/Invoices/Periodclose/change_list.html:58
+#: templates/admin/Invoices/Periodclose/change_listAdmin.html:58
+msgid "Tancar trimestre"
+msgstr "Cerrar trimestre"
+
+#: templates/admin/Invoices/Periodclose/change_listAdmin.html:95
+msgid "Total Coopers in this period"
+msgstr "Socios existentes durante el período"
+
+#: templates/admin/Invoices/Periodclose/change_listAdmin.html:96
+msgid "Coopers that have periodclosed and has closed"
+msgstr "Socios que han cerrado"
+
+#: templates/admin/Invoices/Periodclose/change_listAdmin.html:97
+msgid "Coopers that have periodclosed"
+msgstr "Socios que no han cerrado "
+
+#: templates/admin/Invoices/Periodclose/change_listAdmin.html:99
+msgid "Coopers that have not periodclosed"
+msgstr "Socios que no han creado el registro"

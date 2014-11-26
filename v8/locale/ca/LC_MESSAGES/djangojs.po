@@ -1,0 +1,63 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-03-24 16:49+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: Invoices/templates/PeriodClose.js:45
+msgid "La donació ha de ser menor igual que l'estalvi"
+msgstr ""
+
+#: Invoices/templates/PeriodClose.js:57
+msgid "El valor no és vàlid, s'ajustarà automàticament"
+msgstr ""
+
+#: Invoices/templates/PeriodClose.js:118
+msgid "Vols tancar definitivament el període?"
+msgstr ""
+"Vols tancar definitivament el període? Ja podràs procedir a realitzar "
+"l'abonament corresponent i enviar-nos a Aurea Social les factures en paper."
+"- Avanç de tancar comprova que has introduït totes les línies d'IVA de cada "
+"factura."
+"- Recorda enviar-nos totes les factures que ens has comunicat "
+"a l'entorn virtual en un sobre amb el teu número de soci."
+"- Recorda enviar-nos totes les factures que ens has comunicat "
+"a l'entorn virtual en un sobre amb el teu número de soci."
+"- Les factures extres 'de bote' que no has introduït en aquest entorn virtual"
+" enviales en un sobre apart."
+
+
+msgid "Choose all"
+msgstr "Selecciona tots"
+
+msgid "Choose"
+msgstr "Selecciona"
+
+msgid "Remove"
+msgstr "Elimina"
+
+msgid "Filter"
+msgstr "Filtra"
+
+msgid "Available"
+msgstr "Disponibles"
+
+msgid "Choosen"
+msgstr "Seleccionats"
+
+msgid "Remove all"
+msgstr "Elimina tots"

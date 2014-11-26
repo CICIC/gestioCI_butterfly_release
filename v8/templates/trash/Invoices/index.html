@@ -1,0 +1,39 @@
+{% if user.is_authenticated %}
+    <p>Hola, {{ user.username }}  <a href="/users/logout">[logout]</a></p>
+{% else %}
+    <p>Hola, visitant <a href="/users/login">[login]</a></p>
+{% endif %}
+
+<label>Últimes factures emeses</label>
+<a href="/soci/Invoices/purchaseinvoice/add/">Nova </a></li>
+
+{% if latest_salesinvoices_list %}
+	<ul>
+	{% for invoice in latest_salesinvoices_list %}
+		<li><a href="/invoices/manageSalesInvoices/{{ invoice.id }}">{{ invoice.number }}</a></li>
+		<li>{{ invoice }} -<a href="/invoices/SalesInvoicesViews/{{ invoice.id }}">Veure</a> - 
+		<a href="/invoices/SalesInvoicesUpdate/{{ invoice.id }}">Editar </a> -
+		<a href="/invoices/SalesInvoicesDelete/{{ invoice.id }}">Esborrar </a>
+		</li>
+	{% endfor %}
+	</ul>
+{% else %}
+	<p>No hi ha cap factura emesa.</p>
+{% endif %}
+
+<label>Últimes factures despeses</label>
+<a href="/soci/Invoices/purchaseinvoice/add/">Nova </a>
+
+{% if latest_purchaseinvoices_list %}
+	<ul>
+	{% for invoice in latest_purchaseinvoices_list %}
+		<li><a href="/invoices/managePurchaseInvoices/{{ invoice.id }}">{{ invoice.number }}</a></li>
+		<li>{{ invoice }} -<a href="/invoices/PurchaseInvoicesViews/{{ invoice.id }}">Veure</a> - 
+		<a href="/invoices/PurchaseInvoicesUpdate/{{ invoice.id }}">Editar </a> -
+		<a href="/invoices/PurchaseInvoicesDelete/{{ invoice.id }}">Esborrar </a>
+	{% endfor %}
+	</ul>
+{% else %}
+	<p>No hi ha cap factura despeses.</p>
+{% endif %}
+

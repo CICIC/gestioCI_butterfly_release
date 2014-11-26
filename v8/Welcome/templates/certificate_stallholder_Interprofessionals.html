@@ -1,0 +1,22 @@
+{% load admin_static %}
+<div style="font-size:13px">
+	<p>Barcelona, {{obj.date}}</p>
+
+	<p>Mar Estart&uacute;s Mateo, amb DNI 47732622D com a secretari del Consell Rector d'Interprofessionals, SCCL amb CIF F55162358, certifica que les seg&uuml;ents persones s&oacute;n s&ograve;cies de la cooperativa:</p>
+		{{obj.persons}}
+
+	<p></p>
+
+	<P> Aix&iacute; mateix, certifica que estan autoritzades per participar en fires i mercats amb artesania i alimentaci&oacute; en representaci&oacute; d'aquesta cooperativa, en qualitat de s&ograve;cies volunt&agrave;ries, aix&iacute; com participar en qualsevol activitat d'acord amb els seus estatuts.</p>
+
+	<p>I perqu&egrave; aix&iacute; consti, es lliura la present certificaci&oacute;,</p>
+
+	<p><img width="400" src="{% static 'signature_Interprofessionals.jpg' %}"></p>
+
+	<p>Mar Estart&uacute;s Mateo<br>
+	Secretari Consell Rector<br>
+	Interprofessionals, SCCL</p>
+</div>
+
+
+	
