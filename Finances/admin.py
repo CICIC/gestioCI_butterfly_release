@@ -10,14 +10,14 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import ModelAdmin
 from django.contrib import admin
 
-'''
-Section 0 >> global const and vars
-'''
+
 class tax_admin(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
 	list_display = ('value', 'min_base', 'max_base')
+	def get_model_perms(self, request): 
+		return {'view': True}
 admin.site.register(iCf_Tax, tax_admin)
-
+admin.site.register(iCf_Duty)
 
 
 '''
@@ -120,7 +120,7 @@ from django.contrib import admin
 
 from Finances.bots import *
 
-admin.site.register(iCf_Duty)
+
 
 
 '''
