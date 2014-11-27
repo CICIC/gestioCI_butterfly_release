@@ -28,8 +28,8 @@ from django.db.models.loading import get_model
 from Welcome.models import ico_yes, ico_no
 from Welcome.models import *
 from General.models import *
-from Invoices.models import Soci
-from Invoices.models import v7_auth_user
+#from Invoices.models import Soci
+#from Invoices.models import v7_auth_user
 from django.db.models import Count
 from Finances.models import *
 from public_form.models import *

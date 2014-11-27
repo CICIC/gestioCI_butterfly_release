@@ -15,6 +15,9 @@
 	{% if request.path == "/cooper/" %}
 		{% include "admin/index_cooper.html" %}
 	{% endif %}
+	{% if request.path == "/admin/" %}
+		{% include "tools_upgrader/templates/index_super.html" %}
+	{% endif %}
 	{% if app_list %}
 		{% for app in app_list %}
 
