@@ -1,5 +1,5 @@
 #encoding=utf-8
-
+from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 import datetime
 import hashlib
@@ -12,7 +12,9 @@ from django.db import models
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+
 from Welcome.models import iC_Self_Employed
+from Finances.models import iCf_Self_Employed
 
 class Self_Employed_auth(object):
 	'''
@@ -80,30 +82,42 @@ class Self_Employed_auth(object):
 	 USER > FInances > iCf_Self_Employed(models.Model)
 	
 	'''
-	def has_finances_app(self, ices):
-		import pdb; pdb.set_trace()
+	def has_finances_app(self):
 		try:
-			icf = self.ic_se.iCf_Self_Employed
-			print (icf)
+			self.user = User.objects.get(username=self.ic_CESnum)
 		except:
-			return False, ""
-		else:
-			return icf, icf
+			self.user = None
+
+		try:
+			
+			self.icf_se = iCf_Self_Employed.objects.get( Q(user=self.user) | Q(ic_self_employed=self.ic_se) )
+		except:
+			self.icf_se = None
+
+		return (self.user and self.icf_se), self.icf_se
+	def get_activation_url(self):
+		from Config.settings import SITE_URL
+		return SITE_URL + reverse( 'public_form:activate_membership', args=( {self.activation_key} ) )
 
 	def render_activaction_mail(self, send_email=False, slug="iC_Self_Employed"):
+		salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
+		username = self.user.username
+		if isinstance(username, unicode):
+			username = username.encode('utf-8')
+		self.activation_key = hashlib.sha1(salt+username).hexdigest()
 		from Config.settings import ACCOUNT_ACTIVATION_DAYS, SITE_URL
+
 		ctx_dict = {'activation_key': self.activation_key,
 					'expiration_days': ACCOUNT_ACTIVATION_DAYS,
 					'record_type_name': slug,
 					'url': self.get_activation_url(),
-					'resume_url': self.get_resume_url(),
+					'resume_url': 'pendiente de poner en el objeto.tools_upgrader.objects.py',
 					}
 		subject = render_to_string('activation_email_subject.html',
 								   ctx_dict)
 		# Email subject *must not* contain newlines
 		subject = ''.join(subject.splitlines())
-		message = render_to_string('activation_email.html',
-								   ctx_dict)
+		message = render_to_string('activation_email.html', ctx_dict)
 		if send_email:
 			pass
 		return subject, message
@@ -115,15 +129,16 @@ class Self_Employed_auth(object):
 		new_user.save()
 		return new_user
 	def join_to_users_auth(self):
-		user = transaction.atomic (self.create_user((
-			self.ic_CESnum,
-			self.person.email,
-			"Self_employed",
-			self.person,
-			self.project,
-			self.record_type)))
-		return user, self.render_activaction_mail()
-
+		if not self.user:
+			self.user = transaction.atomic (self.create_user(
+				self.ic_CESnum,
+				self.person.name,
+				self.person.email,
+				"Self_employed",
+				self.person,
+				self.project,
+				self.ic_se.record_type))
+		return self.user, self.render_activaction_mail() 
 	def join_to_groups_auth(self):
 		#
 		# Get info on Manual wiki:
@@ -132,21 +147,28 @@ class Self_Employed_auth(object):
 		# See nice diagram on Manual wiki:
 		# ( https://wiki.enredaos.net/index.php?title=File:Gestioci_user_groups.png )
 		groups_list = []
-		groups_list.append(self.ic_se.ic_membership.record_type)
-		groups_list.append(self.ic_se.clas)
+		groups_list.append(self.ic_se.ic_membership.record_type.clas)
+		groups_list.append(self.ic_se.record_type.clas)
 
 		from django.contrib.auth.models import Group
 		for group in groups_list:
-			g = Group.objects.get_or_create(name=group)
+			g = Group.objects.get_or_create(name=group)[0]
 			g.user_set.add(self.user)
 		return self.user.groups
-
 	def join_to_icf_model(self):
+		import pdb; pdb.set_trace()
+		from Finances.models import iCf_Record_Type, _check_icf_record_type
+		t = _check_icf_record_type("iCf_Finances", "", "", None, True)
+		tt = _check_icf_record_type("iCf_Self_Employed", "Perfil d'un usuari a l'entorn virtual de gestió económica.","Aquests tipus de registre indiquen que el Autoocupat vinculat pot utilitzar l'entorn de facturació i tancament trimestral de l'IVA.", t)
 		#
 		# Get info on Manual wiki:
 		# ( https://wiki.enredaos.net/index.php?title=GestioCI-Codi#ALTA_AUTOOCUPATS )
-		self.icf_se = iCf_Self_Employed( user=self.user, ic_se=self.ic_se)
-		self.icf_se.save()
+		self.icf_se = iCf_Self_Employed(
+			record_type = tt,
+			user = self.user,
+			ic_self_employed = self.ic_se,
+			ic_membership = self.ic_se.ic_membership
+			).save()
 		return self.icf_se
 	def join_to_finances_app(self):
 		if self.join_to_users_auth():
@@ -168,13 +190,14 @@ class Self_Employed_auth(object):
 		# Which [user_member] field renderization correspons to self.ic_se?
 		#
 		has_humans, self.person, self.project = self.has_humans() 
-		has_ices, self.iCES = self.has_iCES_number()
+		has_ices, self.ic_CESnum = self.has_iCES_number()
+
 		if has_ices:
 			# Is it already roled to Finances virtual environtment?
 			has_group, self.icf_se = self.has_finances_app()
 			if has_group:
 				# .. Nothing to do. Render useful user information. End.
-				if self.icf_se.user.is_active():
+				if self.user.is_active:
 					output = self.render_member_info()
 				else:
 					subject, message = self.render_activaction_mail()
