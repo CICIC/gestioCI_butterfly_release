@@ -34,127 +34,127 @@ class AutoRecordName(admin.ModelAdmin):
 			'welcome.js',
 		)
 
-		#*************************************************************
-		# See Manual, reference [GestioCI-Codi] Section: Funcionalitats > Punts d'entrada
-		# on url: 
-		# (https://wiki.enredaos.net/index.php?title=GestioCI-Codi&section=44#Punts_d.27entrada)
-		#
-		# So,
-		# Here, AutoRecordName must filter its queryset by current logged user.
-		# See further comments:
-		def get_queryset(self, request):
-			# ... by being a [superuser], no filtering on query.
-			if request.user.is_superuser:
+	#*************************************************************
+	# See Manual, reference [GestioCI-Codi] Section: Funcionalitats > Punts d'entrada
+	# on url: 
+	# (https://wiki.enredaos.net/index.php?title=GestioCI-Codi&section=44#Punts_d.27entrada)
+	#
+	# So,
+	# Here, AutoRecordName must filter its queryset by current logged user.
+	# See further comments:
+	def get_queryset(self, request):
+		# ... by being a [superuser], no filtering on query.
+		if request.user.is_superuser:
+			return self.model.objects.all()
+		else:
+			# ... by being [staff] should filter around different app's ambits. 
+			#
+			# .. See Forum, discussion on [GestioCI] Sistema "d'autentificación" en el entorno virtual 
+			# (http://projects.cooperativa.cat/boards/4/topics/15)
+			#
+			# Should manage, by v8 release, django.contrib.auth.Groups {iC_Welcome, iCf_Finances}
+			# 
+			if request.user.is_staff:
 				return self.model.objects.all()
 			else:
-				# ... by being [staff] should filter around different app's ambits. 
+				# ... by being [Member] (selfemployed or not) should filter
+				# filter owned [iC_Record] row objects by its [ic_membership] field.
 				#
-				# .. See Forum, discussion on [GestioCI] Sistema "d'autentificación" en el entorno virtual 
-				# (http://projects.cooperativa.cat/boards/4/topics/15)
+				# ... So check for RegistrationProfile matchings this user.
 				#
-				# Should manage, by v8 release, django.contrib.auth.Groups {iC_Welcome, iCf_Finances}
-				# 
-				if request.user.is_staff:
-					return self.model.objects.all()
-				else:
-					# ... by being [Member] (selfemployed or not) should filter
-					# filter owned [iC_Record] row objects by its [ic_membership] field.
-					#
-					# ... So check for RegistrationProfile matchings this user.
-					#
-					# See WIP monthly paper, talk [ciCICdev/November|#GESTIO_DEV: Help here]
-					# in its section: [Plan Butterfly|Página de entrada a gestiocI, alta socio].
-					# on url: 
-					# (https://wiki.enredaos.net/index.php?title=Talk:CICICdev/november#P.C3.A1gina_de_entrada_a_gestiocI.2C_alta_socio)
-					#
-					#
-					# See Manual, reference [GestioCI-Codi] Section: Funcionalitats > Punts d'entrada > django.contrib.auth.models.Group
-					# on url: 
-					# (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#django.contrib.auth.models.Group)
-					#
-					from public_form.models import RegistrationProfile
-					try:
-						current_registration = RegistrationProfile.objects.get(user=request.user)
-						# ... by having [General.Person] attr maybe be {General.Human and Person} friendly so should filter
-						if hasattr(self.model, "person"):
+				# See WIP monthly paper, talk [ciCICdev/November|#GESTIO_DEV: Help here]
+				# in its section: [Plan Butterfly|Página de entrada a gestiocI, alta socio].
+				# on url: 
+				# (https://wiki.enredaos.net/index.php?title=Talk:CICICdev/november#P.C3.A1gina_de_entrada_a_gestiocI.2C_alta_socio)
+				#
+				#
+				# See Manual, reference [GestioCI-Codi] Section: Funcionalitats > Punts d'entrada > django.contrib.auth.models.Group
+				# on url: 
+				# (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#django.contrib.auth.models.Group)
+				#
+				from public_form.models import RegistrationProfile
+				try:
+					current_registration = RegistrationProfile.objects.get(user=request.user)
+					# ... by having [General.Person] attr maybe be {General.Human and Person} friendly so should filter
+					if hasattr(self.model, "person"):
+						# ... casting to General.Person
+						# ... filter owned [iC_Record] row objects by [human] field.
+						try:
+							current_human = Human.objects.get(id=current_registration.person.id)
+							if self.model.objects.filter(human=current_human).count()>0:
+								return self.model.objects.filter(human=current_human)
+						except:
+							# ... this human can be specific person of the entity
 							# ... casting to General.Person
-							# ... filter owned [iC_Record] row objects by [human] field.
+							# ... filter owned [iC_Record] row objects by [person] field.
 							try:
 								current_human = Human.objects.get(id=current_registration.person.id)
-								if self.model.objects.filter(human=current_human).count()>0:
-									return self.model.objects.filter(human=current_human)
+								if self.model.objects.filter(person=current_human).count()>0:
+									return self.model.objects.filter(person=current_human)
 							except:
-								# ... this human can be specific person of the entity
-								# ... casting to General.Person
-								# ... filter owned [iC_Record] row objects by [person] field.
-								try:
-									current_human = Human.objects.get(id=current_registration.person.id)
-									if self.model.objects.filter(person=current_human).count()>0:
-										return self.model.objects.filter(person=current_human)
-								except:
-									# Question: can be a user logged neither a General.Person neither a General.Human?
-									# Please, open issue on project board topics.
-									# on url:
-									# (http://projects.cooperativa.cat/boards/4/topics)
-									# Reporting:
-									# File: [Welcome/admin.py] 
-									# Class: AutoRecordName(admin.ModelAdmin)
-									# Issue: (question above!)
-									#
-									pass
-						#
-						# ... by having [General.ic_project] attr maybe {General.Project friendly} friendly so should filter
-						if hasattr(self.model, "ic_project"):
-							try:
-								# ... casting General.Project
-								# ... filter owned [iC_Record] row objects by [human] field.
-								current_human = Human.objects.get(id=current_registration.project.id)
-								if self.model.objects.filter(human=current_human).count()>0:
-									return self.model.objects.filter(human=current_human)
-							except:
+								# Question: can be a user logged neither a General.Person neither a General.Human?
+								# Please, open issue on project board topics.
+								# on url:
+								# (http://projects.cooperativa.cat/boards/4/topics)
+								# Reporting:
+								# File: [Welcome/admin.py] 
+								# Class: AutoRecordName(admin.ModelAdmin)
+								# Issue: (question above!)
+								#
 								pass
-						#
-						# ... by having [Welcome.ic_membership] attr, human (project) can be located through it, so should filter
-						if hasattr(self.model, "ic_membership"):
-							try:
-								# ... casting to General.Project
-								# ... filter owned [iC_Record] row objects by [ic_membership__human] field.
-								current_human = Human.objects.get(id=current_registration.project.id)
-								if self.model.objects.filter(ic_membership__human=current_human).count()>0:
-									return self.model.objects.filter(ic_membership__human=current_human)
-							except:
-								pass
-						# ... by having [Welcome.ic_self_employed] attr, go one tree branch step futher than previous and filter
-						# ... filter owned [iC_Record] row objects by [ic_self_employed__ic_membership__human] field.
-						if hasattr(self.model, "ic_self_employed"):
-							try:
-								current_human = Human.objects.get(id=current_registration.project.id)
-								if self.model.objects.filter(ic_self_employed__ic_membership__human=current_human).count()>0:
-									return self.model.objects.filter(ic_self_employed__ic_membership__human=current_human)
-							except:
-								pass
-						#
-						# Returning if success in every knows situation,
-						# shouldn't catch any current_human
-						#
-						if current_human:
-							return self.model.objects.filter(human=current_human)
-					except:
-						pass
 					#
-					# None criteria to filter so better don't return anything
-					# Many any Question on comments through the code can resolve situation.
-					# Please, open issue on project board topics.
-					# on url:
-					# (http://projects.cooperativa.cat/boards/4/topics)
-					# Reporting:
-					# File: [Welcome/admin.py] 
-					# Class: AutoRecordName(admin.ModelAdmin)
-					# Issue: (function ending bad!)
+					# ... by having [General.ic_project] attr maybe {General.Project friendly} friendly so should filter
+					if hasattr(self.model, "ic_project"):
+						try:
+							# ... casting General.Project
+							# ... filter owned [iC_Record] row objects by [human] field.
+							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(human=current_human).count()>0:
+								return self.model.objects.filter(human=current_human)
+						except:
+							pass
 					#
+					# ... by having [Welcome.ic_membership] attr, human (project) can be located through it, so should filter
+					if hasattr(self.model, "ic_membership"):
+						try:
+							# ... casting to General.Project
+							# ... filter owned [iC_Record] row objects by [ic_membership__human] field.
+							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(ic_membership__human=current_human).count()>0:
+								return self.model.objects.filter(ic_membership__human=current_human)
+						except:
+							pass
+					# ... by having [Welcome.ic_self_employed] attr, go one tree branch step futher than previous and filter
+					# ... filter owned [iC_Record] row objects by [ic_self_employed__ic_membership__human] field.
+					if hasattr(self.model, "ic_self_employed"):
+						try:
+							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(ic_self_employed__ic_membership__human=current_human).count()>0:
+								return self.model.objects.filter(ic_self_employed__ic_membership__human=current_human)
+						except:
+							pass
+					#
+					# Returning if success in every knows situation,
+					# shouldn't catch any current_human
+					#
+					if current_human:
+						return self.model.objects.filter(human=current_human)
+				except:
 					pass
-					return self.model.objects.filter(id=-1)
-		# ***** end of AUTORECORD: get_queryset() definition block ***********************
+				#
+				# None criteria to filter so better don't return anything
+				# Many any Question on comments through the code can resolve situation.
+				# Please, open issue on project board topics.
+				# on url:
+				# (http://projects.cooperativa.cat/boards/4/topics)
+				# Reporting:
+				# File: [Welcome/admin.py] 
+				# Class: AutoRecordName(admin.ModelAdmin)
+				# Issue: (function ending bad!)
+				#
+				pass
+				return self.model.objects.filter(id=-1)
+	# ***** end of AUTORECORD: get_queryset() definition block ***********************
 
 	def save_model(self, request, obj, form, change):
 		instance = form.save(commit=False)
