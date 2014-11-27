@@ -1,3 +1,5 @@
+#encoding=utf-8
+
 from django.core.exceptions import ObjectDoesNotExist
 import datetime
 import hashlib
@@ -32,7 +34,7 @@ class Self_Employed_auth(object):
 
 	def render_member_info(self):
 		icf_se_url = "admin/Finances/icf_self_employed/%s" % ( str(self.icf_se.id) )
-		text = "Aquest usuari utilitza la aplicació de facturació: %s ").encode("utf-8")
+		text = _(u"Aquest usuari utilitza la aplicació de facturació: %s ").encode("utf-8")
 		output = text % (icf_se_url)
 		return output
 	'''
@@ -78,7 +80,7 @@ class Self_Employed_auth(object):
 	 USER > FInances > iCf_Self_Employed(models.Model)
 	
 	'''
-	def has_finances_app(ices):
+	def has_finances_app(self, ices):
 		import pdb; pdb.set_trace()
 		try:
 			icf = self.ic_se.iCf_Self_Employed
@@ -114,7 +116,7 @@ class Self_Employed_auth(object):
 		return new_user
 	def join_to_users_auth(self):
 		user = transaction.atomic (self.create_user((
-			self.ic_CESnum
+			self.ic_CESnum,
 			self.person.email,
 			"Self_employed",
 			self.person,
