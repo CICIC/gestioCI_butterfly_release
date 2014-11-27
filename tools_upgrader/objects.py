@@ -123,6 +123,12 @@ class Self_Employed_auth(object):
 		return user, self.render_activaction_mail()
 
 	def join_to_groups_auth(self):
+		#
+		# Get info on Manual wiki:
+		# ( https://wiki.enredaos.net/index.php?title=GestioCI-Codi#Grupos_django.auth.groups )
+		#
+		# See nice diagram on Manual wiki:
+		# ( https://wiki.enredaos.net/index.php?title=File:Gestioci_user_groups.png )
 		groups_list = []
 		groups_list.append(self.ic_se.ic_membership.record_type)
 		groups_list.append(self.ic_se.clas)
@@ -134,6 +140,9 @@ class Self_Employed_auth(object):
 		return self.user.groups
 
 	def join_to_icf_model(self):
+		#
+		# Get info on Manual wiki:
+		# ( https://wiki.enredaos.net/index.php?title=GestioCI-Codi#ALTA_AUTOOCUPATS )
 		self.icf_se = iCf_Self_Employed( user=self.user, ic_se=self.ic_se)
 		self.icf_se.save()
 		return self.icf_se
