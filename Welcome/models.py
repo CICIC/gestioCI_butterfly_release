@@ -1152,17 +1152,13 @@ class iC_Self_Employed(iC_Record):
 	print_certificate.short_description= _(u"Carpeta d'usuari")
 
 	def _user_member(self):
-		from django.core.exceptions import ObjectDoesNotExist
-		from public_form.models import RegistrationProfile, RegistrationManager
-		rt_id = self.record_type.id
-		current_person = self.ic_membership.human.persons.first()
-		current_project = self.ic_membership.ic_project
-		try:
-			current_registration = RegistrationProfile.objects.get(person=current_person, project = current_project, record_type = rt_id)
-			return  _(" Usuari: ").encode("utf-8") + current_registration.user.username + " " + _(" Contrasenya:").encode("utf-8") + _(u" L'usuari l'ha de canviar").encode("utf-8")
-		except ObjectDoesNotExist:
-			return _("Encara no s'ha creat.")
+	        #
+                # See manual about user membership on url:
+                # (  https://wiki.enredaos.net/index.php?title=GestioCI-Codi#Auth_User.States )
+                from tools_upgrader.objects import Self_Employed_auth
+                return Self_Employed_auth(self)._get_user_member_field()
 	_user_member.short_description = _(u"Usuari accés entorn virtual")
+
 	class Meta:
 		verbose_name = _(u"Alta Proj.Autoocupat")
 		verbose_name_plural = _(u"- Altes Proj. Autoocupats")
