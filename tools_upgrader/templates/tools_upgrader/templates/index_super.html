@@ -1,0 +1,5 @@
+{% load i18n admin_urls admin_static admin_modify %}
+{% load tool_upgrader_tag  %}
+{% upgrader_tag request  %}
+{{ menu }}
+{{ statics.render }}
