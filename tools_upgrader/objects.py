@@ -12,7 +12,8 @@ from django.db import models
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
-
+from django.utils.safestring import mark_safe
+from datetime import date, timedelta, datetime
 from Welcome.models import iC_Self_Employed
 from Finances.models import iCf_Self_Employed
 
@@ -35,9 +36,9 @@ class Self_Employed_auth(object):
 		return current_person or current_project, current_person, current_project
 
 	def render_member_info(self):
-		icf_se_url = "admin/Finances/icf_self_employed/%s" % ( str(self.icf_se.id) )
+		icf_se_url = "<a href='/admin/Finances/icf_self_employed/%s'>%s</a>" % ( str(self.icf_se.id), _(u"Fitxa de facturació").encode("utf-8") )
 		text = _(u"Aquest usuari utilitza la aplicació de facturació: %s ").encode("utf-8")
-		output = text % (icf_se_url)
+		output = mark_safe( text % (icf_se_url) )
 		return output
 	'''
 	 ICES
@@ -156,7 +157,6 @@ class Self_Employed_auth(object):
 			g.user_set.add(self.user)
 		return self.user.groups
 	def join_to_icf_model(self):
-		import pdb; pdb.set_trace()
 		from Finances.models import iCf_Record_Type, _check_icf_record_type
 		t = _check_icf_record_type("iCf_Finances", "", "", None, True)
 		tt = _check_icf_record_type("iCf_Self_Employed", "Perfil d'un usuari a l'entorn virtual de gestió económica.","Aquests tipus de registre indiquen que el Autoocupat vinculat pot utilitzar l'entorn de facturació i tancament trimestral de l'IVA.", t)
