@@ -423,9 +423,7 @@ class iCf_Invoice(iCf_Record):
 class iCf_Invoice_line(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
 	value=models.DecimalField(verbose_name=_(u'Base Imposable (€)'), help_text=_(u"La Base Imposable de la línia. Exemple 1000,30 . Indicar una coma pels decimals."), decimal_places=2, max_digits=10)
-	def __init__(self, *args, **kwargs):
-		super(iCf_Sale, self).__init__(*args, **kwargs)
-		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Invoice_line")
+
 
 class iCf_Sale(iCf_Invoice):
 	invoice = models.OneToOneField('Finances.iCf_Invoice', primary_key=True, parent_link=True)
@@ -523,9 +521,9 @@ class iCf_Sale_line (iCf_Invoice_line):
 	percent_invoiced_vat=models.ForeignKey(iCf_Duty, verbose_name=_(u"IVA Facturat (%)"), help_text=_(u"El % d'IVA que s'aplica en la factura. Indicar un valor d'IVA per concepte"))
 	def __init__(self, *args, **kwargs):
 		super(iCf_Sale_line, self).__init__(*args, **kwargs)
-		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
+		t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
 		#self.record_type = _check_icf_record_type("iCf_Sale_line", u"Línia de factura emesa", u'', t )
-		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Sale_line")
+		self.record_type = _check_icf_record_type("iCf_Sale_line", u"Línia de factura emesa", u'', t )#iCf_Record_Type.objects.get(clas="iCf_Sale_line")
 	def percent_assigned_vat(self):
 		from Finances.bots import bot_assigned_vat
 		return bot_assigned_vat (self.sales_invoice.icf_self_employed, self.percent_invoiced_vat).assigned_vat

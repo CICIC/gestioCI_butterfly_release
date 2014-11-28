@@ -942,7 +942,7 @@ class icf_self_employed_user_balance(ModelAdmin):
 				perms = {'direct_to_change_form':True, 
 						'change_form_url': str(icf_self_employed.id) }
 			return perms
-user_admin_site.register(icf_self_employed_proxy_balance, icf_self_employed_user_balance)
+#user_admin_site.register(icf_self_employed_proxy_balance, icf_self_employed_user_balance)
 
 #class cooper_admin_transaction( icf_self_employed_user_balance):
 #	model = 'icf_self_employed_proxy_transactions'
