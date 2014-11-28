@@ -68,12 +68,11 @@ class invoice_form(forms.ModelForm):
 		if period is None:
 			if hasattr(self.instance, 'period'):
 				period = self.instance.period 
-		query = self.model.objects.filter(cooper=cooper, 
-										period=period, 
+		query = self.model.objects.filter(period=period, 
 										num=num)
 		if self.model == "provider":
 			provider = self.cleaned_data("provider")
-			query = query.filter(provider, provider)
+			query = query.filter(provider=provider)
 
 		query = query.exclude(pk=pk)
 		exists_another_inovice_with_same_num = query.count() > 0
@@ -107,7 +106,7 @@ class purchases_invoice_form(invoice_form):
 	model = iCf_Purchase
 	def clean_who_manage(self):
 		if self.cleaned_data.get('who_manage') == manage_CHOICE_COOP:
-			if not self.cleaned_data.get('provider').iban:
+			if not self.cleaned_data.get('provider')._my_accounts():
 				raise forms.ValidationError(_(u"El proveedor no té assignat un IBAN vàlid."))
 		return self.cleaned_data.get('who_manage')
 	def clean_expiring_date(self):

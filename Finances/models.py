@@ -48,7 +48,7 @@ manage_CHOICE_COOPER = 0
 manage_CHOICE_COOP = 1
 who_manage_CHOICES=(
 	(manage_CHOICE_COOPER, _(u'Gestionat per la socia')),
-	(manage_CHOICE_COOP, _(u'Gestionat per la icf_self_employedativa')),
+	(manage_CHOICE_COOP, _(u'Gestionat per la cooperativa')),
 	)
 #
 vat_type_OFICIAL = 0
@@ -454,25 +454,25 @@ class iCf_Sale(iCf_Invoice):
 	number.short_description =_(u"Nº Factura")
 	def value(self):
 		value=0
-		for line in self.lines.objects.filter(sales_invoice=self.pk):
+		for line in self.lines.all():
 			value += line.value
 		return value
 	value.short_description=_(u"Base Imposable (€)")
 	def invoiced_vat(self):
 		value=0
-		for line in self.lines.objects.filter(sales_invoice=self.pk):
+		for line in self.lines.all():
 			value += line.invoiced_vat()
 		return value
 	invoiced_vat.short_description=_(u"IVA Facturat (€)")
 	def assigned_vat(self):
 		value=0
-		for line in self.lines.objects.filter(sales_invoice=self.pk):
+		for line in self.lines.all():
 			value += line.assigned_vat()
 		return value
 	assigned_vat.short_description=_(u"IVA Assignat (€)")
 	def total(self):
 		value = Decimal("0.00")
-		for line in self.lines.objects.filter(sales_invoice=self.pk):
+		for line in self.lines.all():
 			value += line.total() 
 		return value
 	total.short_description=_(u'Total Factura (€)')
@@ -555,9 +555,9 @@ class iCf_Purchase_line (iCf_Invoice_line):
 	percent_irpf=models.IntegerField(verbose_name=_(u'IRPF (%)'), help_text=_(u"El % de retenció de IRPF (Només en lloguers i factures de persones físiques)."), default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
 	def __init__(self, *args, **kwargs):
 		super(iCf_Purchase_line, self).__init__(*args, **kwargs)
-		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
-		#self.record_type = _check_icf_record_type("iCf_Purchase_line", u"Línia de factura despesa", u'', t )
-		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Purchase_line")
+		t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
+		self.record_type = _check_icf_record_type("iCf_Purchase_line", u"Línia de factura despesa", u'', t )
+		#self.record_type = iCf_Record_Type.objects.get(clas="iCf_Purchase_line")
 	def vat(self):
 		amount=Decimal ( "%.2f" % ((self.percent_vat.value*self.value) / 100))
 		return amount

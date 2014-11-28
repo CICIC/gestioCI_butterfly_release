@@ -215,10 +215,6 @@ class AutoRecordName(admin.ModelAdmin):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
 
-
-
-
-
 class tax_admin(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
 	list_display = ('value', 'min_base', 'max_base')
@@ -226,7 +222,6 @@ class tax_admin(ModelAdmin):
 		return {'view': True}
 admin.site.register(iCf_Tax, tax_admin)
 admin.site.register(iCf_Duty)
-
 
 '''
  1) COMMON IMPORTS
@@ -328,9 +323,6 @@ from django.contrib import admin
 
 from Finances.bots import *
 
-
-
-
 '''
 3.1) USER
 '''
@@ -367,8 +359,6 @@ class invoice_admin(AutoRecordName):
 	def status(self, obj):
 		return obj.status()
 	status.short_description = _(u"Estat")
-
-
 
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super(invoice_admin, self).get_form(request, obj, **kwargs)
@@ -428,7 +418,7 @@ class sales_invoice_user (invoice_admin):
 	form = sales_invoice_form
 	model = iCf_Sale
 	change_list_template = 'Finances/templates/iCf_Sale/change_list.html'
-	fields = ['client',] + ['period', 'num', 'date'] + ['who_manage',]
+	fields = ['client',] + ['period', 'num', 'date'] + ['unit','who_manage',]
 	list_display =  ('client',) + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
 	list_editable =  ('client',) + ('num', 'date') + ('who_manage',)
 	list_export = ( 'clientName', 'clientCif') + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
@@ -468,7 +458,7 @@ user_admin_site.register(iCf_Sale, sales_invoice_user)
 
 class sales_invoice_admin(sales_invoice_user):
 	fields = ['icf_self_employed', ] + sales_invoice_user.fields + ['status', 'transfer_date']
-	list_display = ('icf_self_employed',) + sales_invoice_user.list_display  + ('status', 'transfer_date')
+	list_display = ('icf_self_employed',) + sales_invoice_user.list_display
 	list_display_links = ( 'number', )
 	list_editable = sales_invoice_user.list_editable + ('transfer_date', )
 	list_export = ('icf_self_employed',) + sales_invoice_user.list_export 
@@ -486,7 +476,7 @@ class purchases_invoice_user (invoice_admin):
 	form = purchases_invoice_form
 	model = iCf_Purchase
 	change_list_template = 'Finances/templates/iCf_Purchase/change_list.html'
-	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage', 'expiring_date']
+	fields = ['provider',] + ['period', 'num', 'date'] + ['unit','who_manage', 'expiring_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date')
 	list_export = ( 'providerName', 'providerCif') + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
@@ -526,7 +516,7 @@ class purchases_invoice_user (invoice_admin):
 		return bot_filters.filterbydefault(request, self, purchases_invoice_user, extra_context)
 user_admin_site.register(iCf_Purchase, purchases_invoice_user)
 class purchases_invoice_admin (purchases_invoice_user):
-	fields = ['rel_icfe_purchases__icf_self_employed_periods_closed', 'icf_self_employed'] + purchases_invoice_user.fields + ['status', 'transfer_date']
+	fields = purchases_invoice_user.fields + ['status', 'transfer_date']
 	list_display = ('icf_self_employed',) + purchases_invoice_user.list_display
 	list_editable = purchases_invoice_user.list_editable + ('transfer_date',)
 	list_export = ('icf_self_employed',) + purchases_invoice_user.list_export
