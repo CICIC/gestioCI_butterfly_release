@@ -5,10 +5,218 @@
 '''
 from Finances.models import *
 from tools_upgrader.action import export_as_csv_action
-from General.models import Unit 
+from General.models import * 
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import ModelAdmin
 from django.contrib import admin
+
+class AutoRecordName(admin.ModelAdmin):
+	#*************************************************************
+	# See Manual, reference [GestioCI-Codi] Section: Funcionalitats > Punts d'entrada
+	# on url: 
+	# (https://wiki.enredaos.net/index.php?title=GestioCI-Codi&section=44#Punts_d.27entrada)
+	#
+	# So,
+	# Here, AutoRecordName must filter its queryset by current logged user.
+	# See further comments:
+	def get_queryset(self, request):
+		# ... by being a [superuser], no filtering on query.
+		if request.user.is_superuser:
+			return self.model.objects.all()
+		else:
+			# ... by being [staff] should filter around different app's ambits. 
+			#
+			# .. See Forum, discussion on [GestioCI] Sistema "d'autentificación" en el entorno virtual 
+			# (http://projects.cooperativa.cat/boards/4/topics/15)
+			#
+			# Should manage, by v8 release, django.contrib.auth.Groups {iC_Welcome, iCf_Finances}
+			# 
+			if request.user.is_staff:
+				return self.model.objects.all()
+			else:
+				# ... by being [Member] (selfemployed or not) should filter
+				# filter owned [iC_Record] row objects by its [ic_membership] field.
+				#
+				# ... So check for RegistrationProfile matchings this user.
+				#
+				# See WIP monthly paper, talk [ciCICdev/November|#GESTIO_DEV: Help here]
+				# in its section: [Plan Butterfly|Página de entrada a gestiocI, alta socio].
+				# on url: 
+				# (https://wiki.enredaos.net/index.php?title=Talk:CICICdev/november#P.C3.A1gina_de_entrada_a_gestiocI.2C_alta_socio)
+				#
+				#
+				# See Manual, reference [GestioCI-Codi] Section: Funcionalitats > Punts d'entrada > django.contrib.auth.models.Group
+				# on url: 
+				# (https://wiki.enredaos.net/index.php?title=GestioCI-Codi#django.contrib.auth.models.Group)
+				#
+				from Finances.models import iCf_Self_Employed
+				try:
+					current_registration = iCf_Self_Employed.objects.get(user=request.user)
+					# ... by having [General.Person] attr maybe be {General.Human and Person} friendly so should filter
+					if hasattr(self.model, "person"):
+						# ... casting to General.Person
+						# ... filter owned [iC_Record] row objects by [human] field.
+						try:
+							current_human = Human.objects.get(id=current_registration.person.id)
+							if self.model.objects.filter(human=current_human).count()>0:
+								return self.model.objects.filter(human=current_human)
+						except:
+							# ... this human can be specific person of the entity
+							# ... casting to General.Person
+							# ... filter owned [iC_Record] row objects by [person] field.
+							try:
+								current_human = Human.objects.get(id=current_registration.person.id)
+								if self.model.objects.filter(person=current_human).count()>0:
+									return self.model.objects.filter(person=current_human)
+							except:
+								# Question: can be a user logged neither a General.Person neither a General.Human?
+								# Please, open issue on project board topics.
+								# on url:
+								# (http://projects.cooperativa.cat/boards/4/topics)
+								# Reporting:
+								# File: [Welcome/admin.py] 
+								# Class: AutoRecordName(admin.ModelAdmin)
+								# Issue: (question above!)
+								#
+								pass
+					#
+					# ... by having [General.ic_project] attr maybe {General.Project friendly} friendly so should filter
+					if hasattr(self.model, "ic_project"):
+						try:
+							# ... casting General.Project
+							# ... filter owned [iC_Record] row objects by [human] field.
+							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(human=current_human).count()>0:
+								return self.model.objects.filter(human=current_human)
+						except:
+							pass
+					#
+					# ... by having [Welcome.ic_membership] attr, human (project) can be located through it, so should filter
+					if hasattr(self.model, "ic_membership"):
+						try:
+							# ... casting to General.Project
+							# ... filter owned [iC_Record] row objects by [ic_membership__human] field.
+							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(ic_membership__human=current_human).count()>0:
+								return self.model.objects.filter(ic_membership__human=current_human)
+						except:
+							pass
+					# ... by having [Welcome.ic_self_employed] attr, go one tree branch step futher than previous and filter
+					# ... filter owned [iC_Record] row objects by [ic_self_employed__ic_membership__human] field.
+					if hasattr(self.model, "ic_self_employed"):
+						try:
+							current_human = Human.objects.get(id=current_registration.project.id)
+							if self.model.objects.filter(ic_self_employed__ic_membership__human=current_human).count()>0:
+								return self.model.objects.filter(ic_self_employed__ic_membership__human=current_human)
+						except:
+							pass
+					#
+					# Returning if success in every knows situation,
+					# shouldn't catch any current_human
+					#
+					if current_human:
+						return self.model.objects.filter(human=current_human)
+				except:
+					pass
+				#
+				# None criteria to filter so better don't return anything
+				# Many any Question on comments through the code can resolve situation.
+				# Please, open issue on project board topics.
+				# on url:
+				# (http://projects.cooperativa.cat/boards/4/topics)
+				# Reporting:
+				# File: [Welcome/admin.py] 
+				# Class: AutoRecordName(admin.ModelAdmin)
+				# Issue: (function ending bad!)
+				#
+				pass
+				return self.model.objects.filter(id=-1)
+	# ***** end of AUTORECORD: get_queryset() definition block ***********************
+
+	def save_model(self, request, obj, form, change):
+		instance = form.save(commit=False)
+		if hasattr(instance, 'ic_project') and instance.ic_project is None:
+			print ('SAVE_MODEL: not ic_project! put CIC to '+instance.name)
+			instance.ic_project = Project.objects.get(nickname='CIC')
+		if not hasattr(instance, 'human') or instance.human is None:
+			if hasattr(instance, 'project'):# and instance.project is not None:
+				print ('SAVE_MODEL: not human! put project...')
+				instance.human = instance.project
+			if hasattr(instance, 'person'):# and instance.person is not None:
+				print ('SAVE_MODEL: not human! put person...')
+				instance.human = instance.person
+
+		if hasattr(self, 'record_type') and self.record_type is not None:
+			#print instance.record_type.clas
+			if instance.record_type.clas == 'iC_Stallholder' or instance.record_type.clas == 'iC_Self_Employed':
+				if hasattr(instance.ic_membership, 'selfemployed_recs'):
+					recs = instance.ic_membership.selfemployed_recs.filter(end_date=None)
+					#print 'RECS: '+str(recs)
+					if recs.count() > 1: # TODO rise a real exeption
+						#print 'ERRORR!!! '
+						print ("Hi ha més d'un registre d'autoocupat sense data de baixa ¿??")
+						return False
+					elif recs.count() > 0: # TODO rise a real exeption
+						print ('ERROR!! ')
+						print ("El soci ja te 1 registre d'autoocupat sense data de baixa!")
+						return False
+
+			if instance.record_type.clas == 'iC_Person_Membership' or instance.record_type.clas == 'iC_Project_Membership':
+				icms = instance.human.ic_membership_set.filter(end_date=None)
+				if icms.count() > 0:
+					if icms.first().id == instance.id:
+						#print 'Update! ...instance.save() '
+						pass
+					else:
+						print ('ERROR!! ')
+						print ('Ja tenim registre alta: '+str(icms))
+						return False
+		else:
+			print ('W.admin.AutoRecordName.save_model: No tenemos Record_Type!!')
+
+		#if not hasattr(instance,'name') or instance.name is None or instance.name == '':
+
+		instance.name = instance.__unicode__() # Here the Auto Name, the unicode MUST NOT use the 'name' to build! otherwise it grows to infinity...
+
+		instance.save()
+		form.save_m2m()
+		return instance
+	def response_add(self, request, obj):
+		from django.http import HttpResponseRedirect, HttpResponse
+		from django.core.urlresolvers import reverse
+		response = super(AutoRecordName, self).response_add(request, obj)
+		if request.GET.has_key('next'):
+			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
+				response['location'] = request.GET.get('next')
+
+			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
+				response['location'] = response['location'] + "?next=" + request.GET.get('next')
+		return response
+	def response_change(self, request, obj):
+		from django.http import HttpResponseRedirect, HttpResponse
+		from django.core.urlresolvers import reverse
+		response = super(AutoRecordName, self).response_change(request, obj)
+		if request.GET.has_key('next'):
+			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
+				response['location'] = request.GET.get('next')
+
+			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
+				response['location'] = response['location'] + "?next=" + request.GET.get('next')
+		return response
+	def response_delete(self, request, obj_display):
+		from django.http import HttpResponseRedirect, HttpResponse
+		from django.core.urlresolvers import reverse
+		response = super(AutoRecordName, self).response_delete(request, obj_display)
+		if request.GET.has_key('next'):
+			if request.GET.get('next') != '' and not request.REQUEST.get('_addanother', False) and not request.REQUEST.get('_continue', False):
+				response['location'] = request.GET.get('next')
+
+			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
+				response['location'] = response['location'] + "?next=" + request.GET.get('next')
+		return response
+
+
+
 
 
 class tax_admin(ModelAdmin):
@@ -153,18 +361,14 @@ class tax_user(ModelAdmin):
 		return {'view': True}
 user_admin_site.register(iCf_Tax, tax_user)
 
-class invoice_admin(ModelAdmin):
+class invoice_admin(AutoRecordName):
 	list_filter = ('period',)
 	model = iCf_Invoice
 	def status(self, obj):
 		return obj.status()
 	status.short_description = _(u"Estat")
 
-	def get_queryset(self, request):
-		if request.user.is_superuser:
-			return self.model.objects.all()
-		else:
-			return self.model.objects.filter(cooper=bot_cooper(request.user).cooper(request))
+
 
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super(invoice_admin, self).get_form(request, obj, **kwargs)
@@ -281,7 +485,7 @@ from Finances.forms import purchases_invoice_form
 class purchases_invoice_user (invoice_admin):
 	form = purchases_invoice_form
 	model = iCf_Purchase
-	change_list_template = 'admin/Finances/purchasesInvoices/change_list.html'
+	change_list_template = 'Finances/templates/iCf_Purchase/change_list.html'
 	fields = ['provider',] + ['period', 'num', 'date'] + ['who_manage', 'expiring_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date')
@@ -577,6 +781,7 @@ class balance_line_inline(admin.TabularInline):
 from Finances.forms import invoice_form_balance 
 class sales_invoice_inline_balance(balance_line_inline):
 	model = iCf_Sale
+	fk_name= "icf_self_employed"
 	form = invoice_form_balance
 	fields = ['client', 'total'] + balance_line_inline.fields
 	def get_readonly_fields(self, request, obj=None):
@@ -707,7 +912,7 @@ class icf_self_employed_user_balance(ModelAdmin):
 	def balance_eco(self, obj):
 		current_period = bot_period(obj.user).period()
 		bot = bot_balance(current_period, obj)
-		eco = Unit.objects.get(name="eco") 
+		eco = Unit.objects.get(code="eco") 
 		return bot.total_previous(eco) + bot.total(eco)
 	balance_eco.short_description = _(u"Balanç ECOS")
 	def balance(self, obj):
@@ -735,7 +940,7 @@ class icf_self_employed_user_balance(ModelAdmin):
 			perms = {}
 			if icf_self_employed:
 				perms = {'direct_to_change_form':True, 
-						'change_form_url': icf_self_employed.id }
+						'change_form_url': str(icf_self_employed.id) }
 			return perms
 user_admin_site.register(icf_self_employed_proxy_balance, icf_self_employed_user_balance)
 
@@ -786,7 +991,7 @@ class icf_self_employed_companies_user(ModelAdmin):
 		perms = {}
 		if icf_self_employed:
 			perms = {'direct_to_change_form':True, 
-			'change_form_url': bot_cooper( request.user ).cooper().id }
+						'change_form_url': str(bot_cooper( request.user ).cooper().id) }
 		return perms
 user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
 

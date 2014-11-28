@@ -372,6 +372,8 @@ class iCf_Invoice(iCf_Record):
 	def value(self):
 		total_query = self.lines.objects.values("value").annotate(value=Sum("value"))
 		return total_query[0]("value") if total_query.count() > 1 else 0
+	def cooper(self):
+		return self._icf_self_employed()
 	def _icf_self_employed(self):
 		if hasattr(self, 'icf_self_employed'):
 			return self.icf_self_employed
@@ -715,11 +717,24 @@ class iCf_Self_Employed(iC_Self_Employed):
 	clients = models.ManyToManyField("General.Company", verbose_name=_(u"Clients"), related_name="fk_icse_client")
 	providers = models.ManyToManyField("General.Company", verbose_name=_(u"Proveïdors"), related_name="fk_icse_provider")
 	icf_periods_closed = models.ManyToManyField(iCf_Invoice, related_name="icf_self_employed_periods_closed", verbose_name=_(u"Factures Despeses"))
+	def person(self):
+		try:
+			current_person = self.ic_se.ic_membership.human.persons.first()
+		except:
+			current_person = None
+		return current_person
+	def project(self):
+		try:
+			current_project = self.ic_se.ic_membership.ic_project
+		except:
+			current_project = None
+		return current_project
+
 	def coop(self):
 		return self.ic_membership.ic_company
 	coop.short_description = _(u"Cooperativa")
 	def coop_number(self):
-		return "COOP%03d" % str(self.ic_membership.ic_CESnum)
+		return self.ic_membership.ic_CESnum
 	coop_number.short_description = _(u"nº COOP")
 	def advanced_tax(self):
 		#https://wiki.enredaos.net/index.php?title=GestioCI-Codi#APP:Welcome

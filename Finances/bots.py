@@ -302,25 +302,25 @@ class bot_balance(object):
 		purchases_invoice_total = 0
 
 		if currency is None:
-			sales_invoice_total = iCf_Period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
-			purchase_invoice_total = iCf_Period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
-			sales_movement_total = iCf_Sale_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
-			purchase_movement_total = iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+			sales_invoice_total = 0 # iCf_Period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
+			purchases_invoice_total = 0 #iCf_Period_close.objects.filter(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
+			sales_movement_total = 0# iCf_Sale_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
+			purchase_movement_total = 0# iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day).aggregate(Sum('value'))["value__sum"]
 		else:
-			sales_movement_total = iCf_Sale_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day, currency = currency, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
-			purchase_movement_total = iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day, currency = currency,execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
-		sales_movement_total = bot_object.get_value_or_zero(sales_movement_total)
-		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)
-		purchases_invoice_total = bot_object.get_value_or_zero(purchases_invoice_total)
-		purchase_movement_total = bot_object.get_value_or_zero(purchase_movement_total)
+			sales_movement_total = 0 #iCf_Sale_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__gte=self.period.first_day, currency = currency, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+			purchase_movement_total =0 # iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__gte=self.period.first_day, currency = currency,execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+		sales_movement_total = 0 # bot_object.get_value_or_zero(sales_movement_total)
+		sales_invoice_total = 0 # bot_object.get_value_or_zero(sales_invoice_total)
+		purchases_invoice_total = 0 # bot_object.get_value_or_zero(purchases_invoice_total)
+		purchase_movement_total = 0# bot_object.get_value_or_zero(purchase_movement_total)
 		return sales_invoice_total - purchases_invoice_total + sales_movement_total - purchase_movement_total
 	def total_previous(self, currency = None):
-		sales_invoice_total = iCf_Period_close.objects.exclude(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('sales_base'))["sales_base__sum"]
-		purchase_invoice_total = iCf_Period_close.objects.exclude(period=self.period).filter(cooper=self.cooper.pk).aggregate(Sum('purchases_base'))["purchases_base__sum"]
-		iCf_Purchase.objects.filter(cooper=self.cooper.pk).exclude(period=self.period).purchases_base
+		sales_invoice_total = 0 #self.cooper.icf_periods_closed.exclude(record_type=self.period).aggregate(Sum('sales_base'))["sales_base__sum"]
+		purchases_invoice_total = 0 #self.cooper.icf_periods_closed.exclude(record_type=self.period).aggregate(Sum('purchases_base'))["purchases_base__sum"]
+		#iCf_Purchase.objects.filter(cooper=self.cooper.pk).exclude(period=self.period).purchases_base
 
-		sales_movement_total = iCf_Sale_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
-		purchase_movement_total = iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+		sales_movement_total = 0#iCf_Sale_movement.objects.filter(cooper=self.cooper.pk).filter( planned_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
+		purchase_movement_total = 0#iCf_Purchase_movement.objects.filter(cooper=self.cooper.pk).filter( petition_date__lte=self.period.first_day, execution_date__isnull = False).aggregate(Sum('value'))["value__sum"]
 
 		sales_movement_total = bot_object.get_value_or_zero(sales_movement_total)
 		sales_invoice_total = bot_object.get_value_or_zero(sales_invoice_total)
