@@ -161,7 +161,7 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 	list_display_links = ('edit_link', )
 	change_list_template = 'public_form_self.html'
 	change_form_template = 'public_form_change_self.html'
-	search_fields = ('name', 'email', 'telephone_cell')
+	search_fields = ('name', 'email', 'telephone_cell','human_ic_membership__ic_CESnum')
 	list_filter = (type_session_filter, type_human_filter, type_session_filter_socialcoin, type_human_filter_coin)
 	def get_actions(self, request):
 		actions = super(human_proxy_modeladmin, self).get_actions(request)
@@ -247,6 +247,7 @@ class human_proxy_modeladmin(admin.ModelAdmin):
 		'all': ('public_form_self.css',)
 		}
 		js = (	'public_form_self.js', )
+
 
 from General.models import Human
 user_admin_site.register(human_proxy, human_proxy_modeladmin)

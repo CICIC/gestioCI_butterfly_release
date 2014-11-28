@@ -351,7 +351,7 @@ class iC_Akin_Membership(iC_Record):
 
 class iC_Membership(iC_Record):
 	ic_record = models.OneToOneField('iC_Record', primary_key=True, parent_link=True)
-	human = models.ForeignKey('General.Human', verbose_name=_(u"Ens Soci"))
+	human = models.ForeignKey('General.Human', verbose_name=_(u"Ens Soci"), related_name="human_ic_membership")
 	ic_project = TreeForeignKey('General.Project', related_name='memberships', verbose_name=_(u"Cooperativa Integral"))
 	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='memberships', verbose_name=_(u"Cooperativa (Interprofessionals / XIPU)"))
 
