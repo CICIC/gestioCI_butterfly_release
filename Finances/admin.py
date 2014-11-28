@@ -786,7 +786,7 @@ class icf_self_employed_companies_user(ModelAdmin):
 		perms = {}
 		if icf_self_employed:
 			perms = {'direct_to_change_form':True, 
-			'change_form_url': bot_cooper( request.user ).icf_self_employed().id }
+			'change_form_url': bot_cooper( request.user ).cooper().id }
 		return perms
 user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
 
