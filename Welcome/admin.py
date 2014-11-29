@@ -474,7 +474,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		(_(u"Fase 1: Acollida i Avaluació"), {
 			#'classes': ('collapse',),
 			'fields': (
-				('_user_member', 'ic_membership', '_member_link', ),
+				('ic_membership', '_member_link', ),
 				('_has_assisted_welcome',),
 				('_rel_id_cards',),
 			)
