@@ -771,7 +771,7 @@ class Public_CompanyAdmin(HumanAdmin):
 	fieldsets = (
 		(None, {
 			'fields':(('name', 'nickname', 'company_type'),
-								('legal_name', 'vat_number'),
+								('legal_name', 'id_card_es', 'id_card_non_es',),
 								('email', 'telephone_cell', 'telephone_land', 'website'))
 		}),
 		(_(u"Dates inici/fi"), {

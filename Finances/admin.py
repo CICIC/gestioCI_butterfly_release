@@ -409,9 +409,7 @@ class sales_line_inline(admin.TabularInline):
 	model = iCf_Sale_line
 	fields = ['value', 'percent_invoiced_vat']
 	list_display = ('value', 'percent_invoiced_vat', 'assigned_vat')
-	def assigned_vat(self,obj):
-		return obj.assigned_vat
-	extra = 1
+	extra = 7
 
 from Finances.forms import sales_invoice_form
 class sales_invoice_user (invoice_admin):
@@ -426,14 +424,20 @@ class sales_invoice_user (invoice_admin):
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
 	list_display_links = ( 'number', )
 	def clientName(self, obj):
-		return obj.client.name
+		cli = obj.sale_invoices_clients
+		if cli.name:
+			return cli.name
+		else:
+			return cli
 	clientName.short_description = _(u"Client")
 
 	def clientCif(self, obj):
-		if obj.client.CIF:
-			return obj.client.CIF
+		import pdb;pdb.set_trace()
+		cli = obj.sale_invoices_clients
+		if cli.id_card_non_es:
+			return cli.id_card_es
 		else:
-			return obj.client.otherCIF
+			return obj.client.id_card_non_es
 	clientCif.short_description = _(u"Client (ID) ")
 
 	def changelist_view(self, request, extra_context=None):
@@ -453,15 +457,16 @@ class sales_invoice_user (invoice_admin):
 			extra_context['sales_total'] = Decimal ( "%.2f" % bot.sales_total )
 		#Filter by period
 		from Finances.bots import bot_filters
+		return response
 		return bot_filters.filterbydefault(request, self, sales_invoice_user, extra_context)
 user_admin_site.register(iCf_Sale, sales_invoice_user)
 
 class sales_invoice_admin(sales_invoice_user):
-	fields = ['icf_self_employed', ] + sales_invoice_user.fields + ['status', 'transfer_date']
-	list_display = ('icf_self_employed',) + sales_invoice_user.list_display
+	fields = sales_invoice_user.fields + ['status', 'transfer_date']
+	list_display = ('rel_icfe_sales',) + sales_invoice_user.list_display
 	list_display_links = ( 'number', )
 	list_editable = sales_invoice_user.list_editable + ('transfer_date', )
-	list_export = ('icf_self_employed',) + sales_invoice_user.list_export 
+	list_export = ('rel_icfe_sales',) + sales_invoice_user.list_export 
 	#list_filter = ('icf_self_employed','period', 'transfer_date')
 	actions = sales_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 admin.site.register(iCf_Sale, sales_invoice_admin)
@@ -469,7 +474,7 @@ admin.site.register(iCf_Sale, sales_invoice_admin)
 class purchases_line_inline(admin.TabularInline):
 	model = iCf_Purchase_line
 	fields = ['value', 'percent_vat', 'percent_irpf']
-	extra = 1
+	extra = 7
 
 from Finances.forms import purchases_invoice_form
 class purchases_invoice_user (invoice_admin):
@@ -513,6 +518,7 @@ class purchases_invoice_user (invoice_admin):
 
 		#Filter by period
 		from Finances.bots import bot_filters
+		return response
 		return bot_filters.filterbydefault(request, self, purchases_invoice_user, extra_context)
 user_admin_site.register(iCf_Purchase, purchases_invoice_user)
 class purchases_invoice_admin (purchases_invoice_user):
@@ -635,7 +641,7 @@ class period_close_user(admin.ModelAdmin):
 		current_period = bot_period(user).period(False)
 		current_cooper = bot_cooper(user).cooper(False)
 		if current_period is not None:
-			return iCf_Period_close.objects.filter(period=current_period, cooper=current_cooper).count()>0
+			return self.model.objects.filter(record_type=current_period).count()>0
 		return False
 
 	def exists_closed_period_done(self, pc):
