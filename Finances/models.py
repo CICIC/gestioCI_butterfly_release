@@ -370,8 +370,8 @@ class iCf_Invoice(iCf_Record):
 		else:
 			return ""
 	def value(self):
-		total_query = self.lines.objects.values("value").annotate(value=Sum("value"))
-		return total_query[0]("value") if total_query.count() > 1 else 0
+		total_query = self.lines.values("value").annotate(value_=Sum("value"))
+		return total_query[0]("value_") if total_query.count() > 1 else 0
 	def cooper(self):
 		return self._icf_self_employed()
 	def _icf_self_employed(self):
@@ -447,7 +447,7 @@ class iCf_Sale(iCf_Invoice):
 	def number(self):
 		se = self.rel_icfe_sales
 		if se.first():
-			cesnum = se.first().coop_number()
+			cesnum = "0000"#se.first().coop_number()
 		else:
 			cesnum = "0000"
 		return '%s/%s/%s'%( cesnum, self.date.year, "%03d" % (self.num) )
@@ -494,21 +494,25 @@ class iCf_Purchase(iCf_Invoice):
 		#self.record_type = _check_icf_record_type("iCf_Purchase", u"Factura despesa", u'', t )
 		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Purchase")
 	def number(self):
-		return '%s/%s/%s'%( self.icf_self_employed, self.date.year, "%03d" % (self.num) )
+		return '%s/%s/%s' %  ( self.icf_self_employed, self.date.year, "%03d" % int(self.num) )
 	number.short_description =_(u"Nº Factura")
 	number.admin_order_field = 'num'
 	def vat(self):
-		amount = Decimal ( "%.2f" % ((self.percentvat.value*self.value) / 100))
-		return amount
+		value=0
+		for line in self.lines.all():
+			value += line.percent_vat()
+		return value
 	vat.decimal = True
 	vat.short_description = _(u'IVA (€)')
 	def irpf(self):
-		amount = Decimal ( "%.2f" % ((self.percentirpf*self.value) / 100))
-		return amount
+		value=0
+		for line in self.lines.all():
+			value += line.percent_irpf()
+		return value
 	irpf.decimal = True
 	irpf.short_description = _(u'IRPF (€)')
 	def total(self):
-		return self.value + self.vat() - self.irpf()
+		return self.value() + self.vat() - self.irpf()
 	total.decimal = True
 	total.short_description = _(u'Total Factura (€)')
 	class Meta:
@@ -546,6 +550,8 @@ class iCf_Sale_line (iCf_Invoice_line):
 	def __unicode__(self):
 		if self:
 			self.value
+		else:
+			return 0
 	class Meta:
 		verbose_name=_(u'Línia de factura emesa')
 		verbose_name_plural=_(u'Línies de factura emesa')
