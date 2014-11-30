@@ -50,7 +50,7 @@ def _finances_folder(object):
 	caption = _(u"Facturacio").encode("utf-8")
 	try:
 		label = _(u"Entorn virtual de facturacio").encode("utf-8")
-		value = "<a href='/cooper/Finances/%s'>%s</a>" % (object.icf_self_employed.id, label)
+		value = "<a href='/cooper/Finances/icf_self_employed_proxy_balance/%s'>%s</a>" % (object.icf_self_employed.id, label)
 	except:
 		from tools_upgrader.object import Self_Employed_auth
 		value = Self_Employed_auth(object)._get_user_member_field()
@@ -187,8 +187,6 @@ class member_object(object):
 		except:
 			pass
 
-		links.append( _finances_folder( object ) )
-
 		try:
 			#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
 			if not object.ic_membership.ic_company:
@@ -204,13 +202,14 @@ class member_object(object):
 		except:
 			pass
 
-		if not self.user.groups.all().filter(name="iC_Stallholder"):
-			links.append( _member_folder( object ) )
-			links.append( _fees_folder( object ) )
 		value = object._rel_id_cards(False, "/cooper/")
 		caption =  object._rel_id_cards.short_description.encode("utf-8").decode("utf-8")
 		links.append( _folder( caption, value ))
 		links.append( _folder( object._akin_members.short_description.encode("utf-8"), object._akin_members(False, "/cooper/").decode("utf-8")  ) )
+		if not self.user.groups.all().filter(name="iC_Stallholder"):
+			links.append( _member_folder( object ) )
+			links.append( _fees_folder( object ) )
+		links.append( _finances_folder( object ) )
 		return sections, links
 
 	def render_member(self, object, sections, links):

@@ -16,8 +16,8 @@ from Finances.bots import *
 from Finances.filters import *
 
 from mptt.admin import MPTTModelAdmin
-	
-from General.models import Company
+
+from General.models import Company, Unit
 from Cooper.admin import user_admin_site
 from tools_upgrader.action import export_as_csv_action, export_all_as_csv_action
 #
@@ -796,7 +796,7 @@ class purchases_movement_inline(admin.TabularInline):
 			return ( 'acceptation_date', 'execution_date', )
 #
 class icf_self_employed_user_balance(ModelAdmin):
-	model = icf_self_employed_proxy_balance
+	model = iCf_Period_close
 	list_per_page = 600
 	fields = ['coop_number']
 	readonly_fields = ['coop_number']
@@ -861,12 +861,11 @@ class icf_self_employed_user_balance(ModelAdmin):
 				perms = {'direct_to_change_form':True, 
 						'change_form_url': str(icf_self_employed.id) }
 			return perms
-#user_admin_site.register(icf_self_employed_proxy_balance, icf_self_employed_user_balance)
+
 #
-#class cooper_admin_transaction( icf_self_employed_user_balance):
-#	model = 'icf_self_employed_proxy_transactions'
-#admin.site.register(icf_self_employed_proxy_transactions, cooper_admin_transaction)
-#
+class cooper_admin_transaction( icf_self_employed_user_balance):
+	model = 'icf_self_employed_proxy_transactions'
+
 # Moviments *****************************************************************************
 #
 class movements_admin(ModelAdmin):
@@ -898,13 +897,16 @@ admin.site.register(iCf_Tax, tax_admin)
 admin.site.register(iCf_Duty)
 admin.site.register(iCf_Period, iCf_Period_admin)
 user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
+user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
+user_admin_site.register(icf_self_employed_proxy_balance)
 user_admin_site.register(iCf_Tax, iCf_Tax_user)
 user_admin_site.register(iCf_Sale, iCf_Sale_user)
 user_admin_site.register(iCf_Purchase, iCf_Purchase_user)
 #
 # Invoicing system
 # user_admin_site.register(iCf_Tax, iCf_Tax_user)
-# user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
+#admin.site.register(icf_self_employed_proxy_transactions, cooper_admin_transaction)
+#
 # admin.site.register(iCf_Period_close, period_close_admin)
 # admin.site.register(iCf_Self_Employed, cooper_admin)
 # admin.site.register(iCf_Purchase_movement, purchases_movements_admin)
