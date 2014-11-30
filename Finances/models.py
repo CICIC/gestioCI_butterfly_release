@@ -535,8 +535,8 @@ class iCf_Purchase(iCf_Invoice):
 	total.short_description = _(u'Total Factura (€)')
 	class Meta:
 		#unique_together = ('icf_self_employed', 'period', 'num')
-		verbose_name = _(u'2 - Factura Despesa')
-		verbose_name_plural = _(u'2 - Factures Despeses')
+		verbose_name = _(u'02 - Factura Despesa')
+		verbose_name_plural = _(u'02 - Factures Despeses')
 #
 class iCf_Sale_line (iCf_Invoice_line):
 	line = models.OneToOneField('Finances.iCf_Invoice_line', primary_key=True, parent_link=True)

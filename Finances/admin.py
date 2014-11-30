@@ -230,12 +230,12 @@ class tax_admin(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
 	list_display = ('value', 'min_base', 'max_base')
 #
-class tax_user(ModelAdmin):
+class iCf_Tax_user(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
 	list_display = ('value', 'min_base', 'max_base')
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
 	def get_actions(self, request):
-		actions = super(tax_user, self).get_actions(request)
+		actions = super(iCf_Tax_user, self).get_actions(request)
 		del actions['delete_selected']
 		return actions
 	def has_delete_permission(self, request):
@@ -243,7 +243,7 @@ class tax_user(ModelAdmin):
 	def has_add_permission(self, request):
 		return False
 	def __init__(self, *args, **kwargs):
-		super(tax_user, self).__init__(*args, **kwargs)
+		super(iCf_Tax_user, self).__init__(*args, **kwargs)
 		self.list_display_links = (None,)
 	# to hide change and add buttons on main page:
 	def get_model_perms(self, request): 
@@ -394,10 +394,10 @@ class sales_line_inline(admin.TabularInline):
 	list_display = ('value', 'percent_invoiced_vat', 'assigned_vat')
 	extra = 7
 #
-class sales_invoice_user (invoice_admin):
+class iCf_Sale_user (invoice_admin):
 	form = sales_invoice_form
 	model = iCf_Sale
-	change_list_template = 'Finances/templates/iCf_Sale/change_list.html'
+	change_list_template = 'iCf_Sale/change_list.html'
 	fields = ['client',] + ['period', 'num', 'date'] + ['unit','who_manage',]
 	list_display =  ('client',) + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
 	list_editable =  ('client',) + ('num', 'date') + ('who_manage',)
@@ -423,7 +423,7 @@ class sales_invoice_user (invoice_admin):
 	clientCif.short_description = _(u"Client (ID) ")
 
 	def changelist_view(self, request, extra_context=None):
-		response = super(sales_invoice_user, self).changelist_view(request, extra_context)
+		response = super(iCf_Sale_user, self).changelist_view(request, extra_context)
 
 		try:
 			qs_queryset = response.context_data["cl"].query_set
@@ -440,26 +440,26 @@ class sales_invoice_user (invoice_admin):
 		#Filter by period
 		from Finances.bots import bot_filters
 		return response
-		return bot_filters.filterbydefault(request, self, sales_invoice_user, extra_context)
+		return bot_filters.filterbydefault(request, self, iCf_Sale_user, extra_context)
 #
-class sales_invoice_admin(sales_invoice_user):
-	fields = sales_invoice_user.fields + ['status', 'transfer_date']
-	list_display = ('rel_icfe_sales',) + sales_invoice_user.list_display
+class sales_invoice_admin(iCf_Sale_user):
+	fields = iCf_Sale_user.fields + ['status', 'transfer_date']
+	list_display = ('rel_icfe_sales',) + iCf_Sale_user.list_display
 	list_display_links = ( 'number', )
-	list_editable = sales_invoice_user.list_editable + ('transfer_date', )
-	list_export = ('rel_icfe_sales',) + sales_invoice_user.list_export 
+	list_editable = iCf_Sale_user.list_editable + ('transfer_date', )
+	list_export = ('rel_icfe_sales',) + iCf_Sale_user.list_export 
 	#list_filter = ('icf_self_employed','period', 'transfer_date')
-	actions = sales_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
+	actions = iCf_Sale_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 #
 class purchases_line_inline(admin.TabularInline):
 	model = iCf_Purchase_line
 	fields = ['value', 'percent_vat', 'percent_irpf']
 	extra = 7
 #
-class purchases_invoice_user (invoice_admin):
+class iCf_Purchase_user (invoice_admin):
 	form = purchases_invoice_form
 	model = iCf_Purchase
-	change_list_template = 'Finances/templates/iCf_Purchase/change_list.html'
+	change_list_template = 'iCf_Purchase/change_list.html'
 	fields = ['provider',] + ['period', 'num', 'date'] + ['unit','who_manage', 'expiring_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date')
@@ -481,7 +481,7 @@ class purchases_invoice_user (invoice_admin):
 
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
-		response = super(purchases_invoice_user, self).changelist_view(request, extra_context)
+		response = super(iCf_Purchase_user, self).changelist_view(request, extra_context)
 		try:
 			qs_queryset = response.context_data["cl"].query_set
 		except:
@@ -498,16 +498,16 @@ class purchases_invoice_user (invoice_admin):
 		#Filter by period
 		from Finances.bots import bot_filters
 		return response
-		return bot_filters.filterbydefault(request, self, purchases_invoice_user, extra_context)
+		return bot_filters.filterbydefault(request, self, iCf_Purchase_user, extra_context)
 #
-class purchases_invoice_admin (purchases_invoice_user):
-	fields = purchases_invoice_user.fields + ['status', 'transfer_date']
-	list_display = ('icf_self_employed',) + purchases_invoice_user.list_display
-	list_editable = purchases_invoice_user.list_editable + ('transfer_date',)
-	list_export = ('icf_self_employed',) + purchases_invoice_user.list_export
+class purchases_invoice_admin (iCf_Purchase_user):
+	fields = iCf_Purchase_user.fields + ['status', 'transfer_date']
+	list_display = ('icf_self_employed',) + iCf_Purchase_user.list_display
+	list_editable = iCf_Purchase_user.list_editable + ('transfer_date',)
+	list_export = ('icf_self_employed',) + iCf_Purchase_user.list_export
 	#TODO list_filter = ('rel_icfe_purchases__icf_self_employed_periods_closed','period',)
 	list_filter = ('period',)
-	actions = purchases_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
+	actions = iCf_Purchase_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 #
 class period_payment_inline(admin.TabularInline):
 	model = period_payment
@@ -560,8 +560,6 @@ class iCf_Period_close_user(AutoRecordName):
 	def __init__(self, *args, **kwargs):
 		super(iCf_Period_close_user, self).__init__(*args, **kwargs)
 		self.list_display_links = (None, )
-
-
 
 	def save_model(self, request, obj, form, change):
 
@@ -657,9 +655,6 @@ class iCf_Period_close_user(AutoRecordName):
 			ModelForm.icf_self_employed = obj.icf_self_employed
 			bot_period_close( obj.period, obj.icf_self_employed, obj).set_period_close_form_readonly(ModelForm)
 		return ModelForm
-
-
-
 	class Media:
 			js = (
 				'iCf_Period_close.js',   # app static folder
@@ -903,17 +898,17 @@ admin.site.register(iCf_Tax, tax_admin)
 admin.site.register(iCf_Duty)
 admin.site.register(iCf_Period, iCf_Period_admin)
 user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
-user_admin_site.register(iCf_Tax)
-user_admin_site.register(iCf_Duty)
+user_admin_site.register(iCf_Tax, iCf_Tax_user)
+user_admin_site.register(iCf_Sale, iCf_Sale_user)
+user_admin_site.register(iCf_Purchase, iCf_Purchase_user)
 #
 # Invoicing system
-# user_admin_site.register(iCf_Tax, tax_user)
+# user_admin_site.register(iCf_Tax, iCf_Tax_user)
 # user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
 # admin.site.register(iCf_Period_close, period_close_admin)
 # admin.site.register(iCf_Self_Employed, cooper_admin)
 # admin.site.register(iCf_Purchase_movement, purchases_movements_admin)
 # admin.site.register(iCf_Sale_movement, sales_movements_admin)
 # admin.site.register(iCf_Purchase, purchases_invoice_admin)
-# user_admin_site.register(iCf_Purchase, purchases_invoice_user)
+
 # admin.site.register(iCf_Sale, sales_invoice_admin)
-# user_admin_site.register(iCf_Sale, sales_invoice_user)
