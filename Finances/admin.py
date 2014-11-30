@@ -1,15 +1,26 @@
 #encoding=utf-8
+#
 '''
-  See model map on [GestioCI][Manual][Base de Datos][Facturaci�n]
+  See model map on [GestioCI][Manual][Base de Datos][Facturación]
   https://wiki.enredaos.net/index.php?title=GestioCI-Base_de_datos#Facturaci.C3.B3n
 '''
-from Finances.models import *
-from tools_upgrader.action import export_as_csv_action
-from General.models import * 
+#
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.admin import ModelAdmin
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
+from django_mptt_admin.admin import DjangoMpttAdmin
 
+from Finances.forms import *
+from Finances.models import *
+from Finances.bots import *
+from Finances.filters import *
+
+from mptt.admin import MPTTModelAdmin
+	
+from General.models import Company
+from Cooper.admin import user_admin_site
+from tools_upgrader.action import export_as_csv_action, export_all_as_csv_action
+#
 class AutoRecordName(admin.ModelAdmin):
 	#*************************************************************
 	# See Manual, reference [GestioCI-Codi] Section: Funcionalitats > Punts d'entrada
@@ -214,121 +225,11 @@ class AutoRecordName(admin.ModelAdmin):
 			if request.REQUEST.get('_addanother', False) or request.REQUEST.get('_continue', False):
 				response['location'] = response['location'] + "?next=" + request.GET.get('next')
 		return response
-
+#
 class tax_admin(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
 	list_display = ('value', 'min_base', 'max_base')
-	def get_model_perms(self, request): 
-		return {'view': True}
-admin.site.register(iCf_Tax, tax_admin)
-admin.site.register(iCf_Duty)
-
-'''
- 1) COMMON IMPORTS
- 2) 
- 3) 
-'''
- #Localization
-
-'''
- 1) 
- 2) TOOLS
- 3) 
-'''
-
-from django.contrib.admin import SimpleListFilter
-#Use this in like => list_filter = (onlyownedFilter,)
-class onlyownedFilter(SimpleListFilter):
-	# Human-readable title which will be displayed in the
-	# right admin sidebar just above the filter options.
-	title = _(u'Hola usuari')
-
-	# Parameter for the filter that will be used in the URL query.
-	parameter_name = 'onlyowned'
-
-	def lookups(self, request, model_admin):
-		return (
-			('Mine', _(u'les meves factures')),
-		)
-
-	def queryset(self, request, queryset):
-	# Compare the requested value (either '80s' or '90s')
-	# to decide how to filter the queryset.
-		if self.value() == 'Mine':
-			return queryset.filter(user=request.user)
-
-#Use this in a ModelAdmin.list_filter property
-class First_Period_Filter (SimpleListFilter):
-	title = _(u'primer període')
-	parameter_name = 'first_period'
-
-	def lookups(self, request, model_admin):
-		qs_periods = iCf_Period.objects.all()
-		yFilters = ()
-		for ob_period in qs_periods:
-			yFilters = yFilters + ((ob_period.id, ob_period),)
-		return yFilters
-
-	def queryset(self, request, queryset):
-		if self.value():
-			qs_period = iCf_Period.objects.get( id = self.value() )
-			qs = queryset.filter ( icf_self_employed__user__date_joined__gt = qs_period.first_day, icf_self_employed__user__date_joined__lt = qs_period.date_close )
-			return qs
-
-		return queryset
-
-#Use this in a ModelAdmin.list_filter property
-class Closing_Filter (SimpleListFilter):
-	title = _(u'Resultats (Selecciona avanç un Període)')
-	parameter_name = 'closing'
-
-	def lookups(self, request, model_admin):
-		return (
-			('1', _('Socis que han tancat')),
-			('2', _('Socis que han creat el registre pero no han tancat')),
-			('3', _('Socis que no han creat el registre')),
-		)
-
-	def queryset(self, request, queryset):
-		if request.GET.has_key('first_period'):
-			id_period = request.GET['first_period']
-			if self.value() == '1':
-				qs = queryset.filter( icf_self_employed__period_close__period_id = id_period, icf_self_employed__period_close__closed = True )
-				return qs
-			if self.value() == '2':
-				qs = queryset.filter( icf_self_employed__period_close__period_id = id_period, icf_self_employed__period_close__closed = False )
-				return qs
-			if self.value() == '3':
-				qs = queryset.exclude( icf_self_employed__period_close__period_id = id_period )
-				return qs
-
-'''
- 1) 
- 2) SITE REGISTER
- 3) 
-'''
-#Base entity
-from django.contrib.admin import ModelAdmin
-
-# Import models
-from Finances.models import *
-
-# Export csv plugin
-from tools_upgrader.action import export_as_csv_action, export_all_as_csv_action
-
-'''
-3.1) ADMIN
-'''
-from django.contrib import admin
-
-from Finances.bots import *
-
-'''
-3.1) USER
-'''
-#Add any Invoice new Entity for COOPER below:
-from Cooper.admin import user_admin_site
-
+#
 class tax_user(ModelAdmin):
 	fields = ['value', 'min_base', 'max_base']
 	list_display = ('value', 'min_base', 'max_base')
@@ -337,22 +238,105 @@ class tax_user(ModelAdmin):
 		actions = super(tax_user, self).get_actions(request)
 		del actions['delete_selected']
 		return actions
-
 	def has_delete_permission(self, request):
 		return False
-
 	def has_add_permission(self, request):
 		return False
-
 	def __init__(self, *args, **kwargs):
 		super(tax_user, self).__init__(*args, **kwargs)
 		self.list_display_links = (None,)
-
 	# to hide change and add buttons on main page:
 	def get_model_perms(self, request): 
 		return {'view': True}
-user_admin_site.register(iCf_Tax, tax_user)
+#
+class iCf_Period_admin(DjangoMpttAdmin):
+	change_list_template = "django-mptt-admin/change_list.html"
+	model = iCf_Period
+	exclude = ['label']
+	list_display = ('icf_type','name', 'first_day', 'date_open', 'date_close')
+	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
+	def save_model(self, request, obj, form, change):
+		# To be deprecated:
+		if form.is_valid():
+			obj.label = obj.name
+			obj.save()
+#
+class cooper_admin(ModelAdmin):
+	form = cooper_admin_form
+	model = 'iCf_Self_Employed'
+	list_per_page = 600
+	fields = ['user', 'coop_number', 'assigned_vat', 'Company', 'extra_days', 'advanced_tax']
+	list_display = ('user','coopnumber', 'email', 'assigned_vat', 'Company', 'extra_days', 'advanced_tax', 'date_joined')
+	list_display_links = ('user','coopnumber')
+	search_fields = ['coop_number', 'user__username', 'user__first_name']
+	list_filter = (First_Period_Filter, Closing_Filter )
+	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),] 
+	def date_joined(self,obj):
+		return obj.user.date_joined
+	date_joined.short_description = _(u"Data d'alta")
+	date_joined.admin_order_field = 'user__date_joined'
+	def firstname(self,obj):
+		return obj.user.first_name
+	firstname.admin_order_field = 'user__first_name'
+	firstname.short_description = _(u"Nom")
+	def lastname(self,obj):
+		return obj.user.last_name
+	lastname.admin_order_field = 'user__last_name'
+	lastname.short_description = _(u"Cognom")
+	def coopnumber(self,obj):
+		return "%04d" % obj.coop_number
+	coopnumber.short_description = _(u"nº COOP")
+	coopnumber.admin_order_field = 'coop_number'
+	def first_period(self, obj):
+		qs = iCf_Period.objects.filter(date_close__gt = (obj.user.date_joined  ) , first_day__lte = obj.user.date_joined  + timedelta(days=9) )
+		if qs.count() > 0:
+			return qs[0]
+		return None
+	first_period.short_description = _(u"Període inicial")
+class icf_self_employed_companies_user(ModelAdmin):
+	model = 'icf_self_employed_proxy_companies'
+	fields = ['clients', 'providers']
+	filter_horizontal = ('clients', 'providers')
+	list_display = ('coop_number', 'cooper_clients', 'cooper_providers')
+	list_display_links = ('coop_number',)
 
+	def get_queryset(self, request):
+		return iCf_Self_Employed.objects.filter(user=request.user)
+	def cooper_clients(self, obj):
+		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
+	cooper_clients.allow_tags = True
+	cooper_clients.short_description = _(u"Els meus clients")
+	def cooper_providers(self, obj):
+		return "\n".join([ p.__unicode__() + "<br>" for p in obj.providers.all()])
+	cooper_providers.allow_tags = True
+	cooper_providers.short_description = _(u"Els meus proveïdors")
+	def get_model_perms(self, request): 
+		icf_self_employed = bot_cooper( request.user ).cooper( request )
+		perms = {}
+		if icf_self_employed:
+			perms = {'direct_to_change_form':True, 
+						'change_form_url': str(bot_cooper( request.user ).cooper().id) }
+		return perms
+class iCf_Self_Employed_companies_admin(icf_self_employed_companies_user):
+	model = 'icf_self_employed_proxy_companies'
+	fields = ['clients', 'providers']
+	filter_horizontal = ('clients', 'providers')
+	list_display = ('coop_number', 'cooper_clients', 'cooper_providers')
+	list_display_links = ('coop_number',)
+
+	def get_queryset(self, request):
+		return iCf_Self_Employed.objects.filter(user=request.user)
+	def cooper_clients(self, obj):
+		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
+	cooper_clients.allow_tags = True
+	cooper_clients.short_description = _(u"Els meus clients")
+	def cooper_providers(self, obj):
+		return "\n".join([ p.__unicode__() + "<br>" for p in obj.providers.all()])
+	cooper_providers.allow_tags = True
+	cooper_providers.short_description = _(u"Els meus proveïdors")
+	def get_model_perms(self, request): 
+		return {'direct_to_change_form':False }
+#
 class invoice_admin(AutoRecordName):
 	list_filter = ('period',)
 	model = iCf_Invoice
@@ -403,15 +387,13 @@ class invoice_admin(AutoRecordName):
 			js = (
 				'invoice.js',   # app static folder
 			)
-
-from django.contrib import admin
+#
 class sales_line_inline(admin.TabularInline):
 	model = iCf_Sale_line
 	fields = ['value', 'percent_invoiced_vat']
 	list_display = ('value', 'percent_invoiced_vat', 'assigned_vat')
 	extra = 7
-
-from Finances.forms import sales_invoice_form
+#
 class sales_invoice_user (invoice_admin):
 	form = sales_invoice_form
 	model = iCf_Sale
@@ -459,8 +441,7 @@ class sales_invoice_user (invoice_admin):
 		from Finances.bots import bot_filters
 		return response
 		return bot_filters.filterbydefault(request, self, sales_invoice_user, extra_context)
-user_admin_site.register(iCf_Sale, sales_invoice_user)
-
+#
 class sales_invoice_admin(sales_invoice_user):
 	fields = sales_invoice_user.fields + ['status', 'transfer_date']
 	list_display = ('rel_icfe_sales',) + sales_invoice_user.list_display
@@ -469,14 +450,12 @@ class sales_invoice_admin(sales_invoice_user):
 	list_export = ('rel_icfe_sales',) + sales_invoice_user.list_export 
 	#list_filter = ('icf_self_employed','period', 'transfer_date')
 	actions = sales_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
-admin.site.register(iCf_Sale, sales_invoice_admin)
-
+#
 class purchases_line_inline(admin.TabularInline):
 	model = iCf_Purchase_line
 	fields = ['value', 'percent_vat', 'percent_irpf']
 	extra = 7
-
-from Finances.forms import purchases_invoice_form
+#
 class purchases_invoice_user (invoice_admin):
 	form = purchases_invoice_form
 	model = iCf_Purchase
@@ -520,7 +499,7 @@ class purchases_invoice_user (invoice_admin):
 		from Finances.bots import bot_filters
 		return response
 		return bot_filters.filterbydefault(request, self, purchases_invoice_user, extra_context)
-user_admin_site.register(iCf_Purchase, purchases_invoice_user)
+#
 class purchases_invoice_admin (purchases_invoice_user):
 	fields = purchases_invoice_user.fields + ['status', 'transfer_date']
 	list_display = ('icf_self_employed',) + purchases_invoice_user.list_display
@@ -529,26 +508,22 @@ class purchases_invoice_admin (purchases_invoice_user):
 	#TODO list_filter = ('rel_icfe_purchases__icf_self_employed_periods_closed','period',)
 	list_filter = ('period',)
 	actions = purchases_invoice_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
-admin.site.register(iCf_Purchase, purchases_invoice_admin)
-
-
-from Finances.forms import period_payment_inline_form
+#
 class period_payment_inline(admin.TabularInline):
 	model = period_payment
 	form = period_payment_inline_form
-
+#
 # PERIOD CLOSE ********************************************************
-from Finances.forms import period_close_form
-from Finances.models import period_close_base_fields
-class period_close_user(admin.ModelAdmin):
+#
+class iCf_Period_close_user(AutoRecordName):
 	form = period_close_form
-	change_form_template = 'admin/Finances/iCf_Period_close/change_form.html'
+	change_form_template = 'iCf_Period_close/change_form.html'
 	model = iCf_Period_close
 	inlines = [period_payment_inline]
 	list_display = ('edit_link', 'print_link') + period_close_base_fields
 	list_export = period_close_base_fields
 	fieldsets = (
-		(_(u'Període'), {'fields': ('period', 'icf_self_employed') }),
+		(_(u'Període'), {'fields': ('record_type',) }),
 		(_('Emeses'), {'fields': (('sales_base', 'sales_invoiced_vat'), ('sales_total', 'sales_assigned_vat'))}),
 		(_('Despeses'), {'fields': (('purchases_base', 'purchases_vat'), ('purchases_total', 'purchases_irpf'))}),
 		(_('Seleccio IVA'), { 'fields': (('oficial_vat_total', 'assigned_vat_total'), 'vat_type') }),
@@ -583,11 +558,10 @@ class period_close_user(admin.ModelAdmin):
 		return obj.total_irpf()
 
 	def __init__(self, *args, **kwargs):
-		super(period_close_user, self).__init__(*args, **kwargs)
+		super(iCf_Period_close_user, self).__init__(*args, **kwargs)
 		self.list_display_links = (None, )
 
-	def get_queryset(self, request):
-		return iCf_Period_close.objects.filter(icf_self_employed=bot_cooper(request.user).cooper(request))
+
 
 	def save_model(self, request, obj, form, change):
 
@@ -661,7 +635,7 @@ class period_close_user(admin.ModelAdmin):
 			return self.exists_opened_period( obj.icf_self_employed.user ) and self.exists_closed_period( obj.icf_self_employed.user ) and not self.exists_closed_period_done ( obj )
 
 	def get_actions(self, request):
-		actions = super(period_close_user, self).get_actions(request)
+		actions = super(iCf_Period_close_user, self).get_actions(request)
 		del actions['delete_selected']
 		return actions
 
@@ -672,7 +646,7 @@ class period_close_user(admin.ModelAdmin):
 			'canEdit': self.exists_opened_period( request.user ) }
 
 	def get_form(self, request, obj=None, **kwargs):
-		ModelForm = super(period_close_user, self).get_form(request, obj, **kwargs)
+		ModelForm = super(iCf_Period_close_user, self).get_form(request, obj, **kwargs)
 		ModelForm.is_new = obj is None
 		ModelForm.request = request
 		if obj:
@@ -690,13 +664,13 @@ class period_close_user(admin.ModelAdmin):
 			js = (
 				'iCf_Period_close.js',   # app static folder
 			)
-#user_admin_site.register(iCf_Period_close, period_close_user)
-class period_close_admin (period_close_user):
+#user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
+class period_close_admin (iCf_Period_close_user):
 	change_list_template = 'admin/Finances/iCf_Period_close/change_list_admin.html'
-	list_display = ('cooper', ) + period_close_user.list_display
-	list_export = ('cooper',) + period_close_user.list_export
+	list_display = ('cooper', ) + iCf_Period_close_user.list_display
+	list_export = ('cooper',) + iCf_Period_close_user.list_export
 	list_per_page = 1000
-	actions = period_close_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
+	actions = iCf_Period_close_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 	def edit_link(self, obj):
 		if obj is None:
 			can_edit = False
@@ -715,7 +689,7 @@ class period_close_admin (period_close_user):
 		return iCf_Period_close.objects.all()
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
-		response = super(period_close_user, self).changelist_view(request, extra_context)
+		response = super(iCf_Period_close_user, self).changelist_view(request, extra_context)
 		try:
 			qs_queryset = response.context_data["cl"].query_set
 		except:
@@ -748,10 +722,10 @@ class period_close_admin (period_close_user):
 
 		#Filter by period
 		from Finances.bots import bot_filters
-		return bot_filters.filterbydefault(request, self, period_close_user, extra_context)
-admin.site.register(iCf_Period_close, period_close_admin)
+		return bot_filters.filterbydefault(request, self, iCf_Period_close_user, extra_context)
+#
 # *********************************************************************
-
+#
 class balance_line_inline(admin.TabularInline):
 	model = iCf_Invoice
 	fields = ['status', 'date', 'transfer_date']
@@ -773,8 +747,7 @@ class balance_line_inline(admin.TabularInline):
 		return request.user.is_superuser
 	def has_add_permission(self, request, obj=None):
 		return False
-
-from Finances.forms import invoice_form_balance 
+#
 class sales_invoice_inline_balance(balance_line_inline):
 	model = iCf_Sale
 	fk_name= "icf_self_employed"
@@ -796,8 +769,7 @@ class purchases_invoice_inline_balance(balance_line_inline):
 			#if self.instance.transfer_date is not None:
 			#	rfields = balance_line_inline.readonly_fields + ( 'expiring_date', )
 			return ( 'provider', ) + ( 'date',  'total', 'transfer_date', )
-
-from Finances.forms import movement_form_balance
+#
 class sales_movement_inline(admin.TabularInline):
 	form = movement_form_balance
 	model = iCf_Sale_movement
@@ -827,51 +799,7 @@ class purchases_movement_inline(admin.TabularInline):
 			#if self.instance.transfer_date is not None:
 			#	rfields = balance_line_inline.readonly_fields + ( 'expiring_date', )
 			return ( 'acceptation_date', 'execution_date', )
-
-class period_admin(ModelAdmin):
-	fields = ['label', 'first_day', 'date_open', 'date_close']
-	list_display = ('label', 'first_day', 'date_open', 'date_close')
-	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
-admin.site.register(iCf_Period, period_admin)
-
-from Finances.forms import cooper_admin_form
-class cooper_admin(ModelAdmin):
-	form = cooper_admin_form
-	model = 'iCf_Self_Employed'
-	list_per_page = 600
-	fields = ['user', 'coop_number', 'assigned_vat', 'Company', 'extra_days', 'advanced_tax']
-	list_display = ('user','coopnumber', 'email', 'assigned_vat', 'Company', 'extra_days', 'advanced_tax', 'date_joined')
-	list_display_links = ('user','coopnumber')
-	search_fields = ['coop_number', 'user__username', 'user__first_name']
-	list_filter = (First_Period_Filter, Closing_Filter )
-	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),] 
-
-	def date_joined(self,obj):
-		return obj.user.date_joined
-	date_joined.short_description = _(u"Data d'alta")
-	date_joined.admin_order_field = 'user__date_joined'
-	def firstname(self,obj):
-		return obj.user.first_name
-	firstname.admin_order_field = 'user__first_name'
-	firstname.short_description = _(u"Nom")
-	def lastname(self,obj):
-		return obj.user.last_name
-	lastname.admin_order_field = 'user__last_name'
-	lastname.short_description = _(u"Cognom")
-	def coopnumber(self,obj):
-		return "%04d" % obj.coop_number
-	coopnumber.short_description = _(u"nº COOP")
-	coopnumber.admin_order_field = 'coop_number'
-	def first_period(self, obj):
-		qs = iCf_Period.objects.filter(date_close__gt = (obj.user.date_joined  ) , first_day__lte = obj.user.date_joined  + timedelta(days=9) )
-		if qs.count() > 0:
-			return qs[0]
-		return None
-	first_period.short_description = _(u"Període inicial")
-admin.site.register(iCf_Self_Employed, cooper_admin)
-
-from Finances.forms import cooper_admin_form
-
+#
 class icf_self_employed_user_balance(ModelAdmin):
 	model = icf_self_employed_proxy_balance
 	list_per_page = 600
@@ -939,13 +867,13 @@ class icf_self_employed_user_balance(ModelAdmin):
 						'change_form_url': str(icf_self_employed.id) }
 			return perms
 #user_admin_site.register(icf_self_employed_proxy_balance, icf_self_employed_user_balance)
-
+#
 #class cooper_admin_transaction( icf_self_employed_user_balance):
 #	model = 'icf_self_employed_proxy_transactions'
 #admin.site.register(icf_self_employed_proxy_transactions, cooper_admin_transaction)
-
+#
 # Moviments *****************************************************************************
-from Finances.models import movement_STATUSES
+#
 class movements_admin(ModelAdmin):
 	form = movement_form_balance
 	#list_filter = ('icf_self_employed', 'currency',)
@@ -957,56 +885,35 @@ class sales_movements_admin(movements_admin):
 	model = iCf_Sale_movement
 	fields = ['icf_self_employed', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency']
 	list_display = ('icf_self_employed', 'value', 'concept', 'planned_date', 'execution_date', 'status', 'currency')
-admin.site.register(iCf_Sale_movement, sales_movements_admin)
+#
 class purchases_movements_admin(movements_admin):
 	model = iCf_Purchase_movement
 	fields = ['icf_self_employed', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency']
 	list_display = ('icf_self_employed', 'value', 'concept', 'petition_date', 'execution_date', 'status', 'currency')
-admin.site.register(iCf_Purchase_movement, purchases_movements_admin)
+#
 # *******************************************************************************************
 
-class icf_self_employed_companies_user(ModelAdmin):
-	model = 'icf_self_employed_proxy_companies'
-	fields = ['clients', 'providers']
-	filter_horizontal = ('clients', 'providers')
-	list_display = ('coop_number', 'cooper_clients', 'cooper_providers')
-	list_display_links = ('coop_number',)
-
-	def get_queryset(self, request):
-		return iCf_Self_Employed.objects.filter(user=request.user)
-	def cooper_clients(self, obj):
-		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
-	cooper_clients.allow_tags = True
-	cooper_clients.short_description = _(u"Els meus clients")
-	def cooper_providers(self, obj):
-		return "\n".join([ p.__unicode__() + "<br>" for p in obj.providers.all()])
-	cooper_providers.allow_tags = True
-	cooper_providers.short_description = _(u"Els meus proveïdors")
-	def get_model_perms(self, request): 
-		icf_self_employed = bot_cooper( request.user ).cooper( request )
-		perms = {}
-		if icf_self_employed:
-			perms = {'direct_to_change_form':True, 
-						'change_form_url': str(bot_cooper( request.user ).cooper().id) }
-		return perms
-user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
-
-class iCf_Self_Employed_companies_admin(icf_self_employed_companies_user):
-	model = 'icf_self_employed_proxy_companies'
-	fields = ['clients', 'providers']
-	filter_horizontal = ('clients', 'providers')
-	list_display = ('coop_number', 'cooper_clients', 'cooper_providers')
-	list_display_links = ('coop_number',)
-
-	def get_queryset(self, request):
-		return iCf_Self_Employed.objects.filter(user=request.user)
-	def cooper_clients(self, obj):
-		return "\n".join([ p.__unicode__() + "<br>" for p in obj.clients.all()])
-	cooper_clients.allow_tags = True
-	cooper_clients.short_description = _(u"Els meus clients")
-	def cooper_providers(self, obj):
-		return "\n".join([ p.__unicode__() + "<br>" for p in obj.providers.all()])
-	cooper_providers.allow_tags = True
-	cooper_providers.short_description = _(u"Els meus proveïdors")
-	def get_model_perms(self, request): 
-		return {'direct_to_change_form':False }
+# Development & superuser 
+admin.site.register(iCf_Type, DjangoMpttAdmin)
+admin.site.register(iCf_Record_Type, MPTTModelAdmin)
+admin.site.register(iCf_Record, ModelAdmin)
+#
+# Master
+admin.site.register(iCf_Tax, tax_admin)
+admin.site.register(iCf_Duty)
+admin.site.register(iCf_Period, iCf_Period_admin)
+user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
+user_admin_site.register(iCf_Tax)
+user_admin_site.register(iCf_Duty)
+#
+# Invoicing system
+# user_admin_site.register(iCf_Tax, tax_user)
+# user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
+# admin.site.register(iCf_Period_close, period_close_admin)
+# admin.site.register(iCf_Self_Employed, cooper_admin)
+# admin.site.register(iCf_Purchase_movement, purchases_movements_admin)
+# admin.site.register(iCf_Sale_movement, sales_movements_admin)
+# admin.site.register(iCf_Purchase, purchases_invoice_admin)
+# user_admin_site.register(iCf_Purchase, purchases_invoice_user)
+# admin.site.register(iCf_Sale, sales_invoice_admin)
+# user_admin_site.register(iCf_Sale, sales_invoice_user)

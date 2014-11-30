@@ -144,9 +144,9 @@ class bot_assigned_vat(object):
 
 class bot_period_tax(object):
 	def __init__(self, base):
-		from Finances.models import tax
+		from Finances.models import iCf_Tax
 		try:
-			tax = tax.objects.filter(min_base__lte=base, max_base__gte=base)[0].value
+			tax = iCf_Tax.objects.filter(min_base__lte=base, max_base__gte=base)[0].value
 		except:
 			tax = -1
 		self.tax = tax
@@ -192,11 +192,9 @@ class bot_period_close( object ):
 
 		if recalculate:
 			from bots import bot_sales_invoice
-			from Finances.models import iCf_Sale, iCf_Purchase, tax
+			from Finances.models import iCf_Sale, iCf_Purchase, iCf_Tax
 			bot = bot_sales_invoice( 
-				iCf_Sale.objects.filter(
-					period=self.period, 
-					cooper=self.cooper )
+				iCf_Sale.objects.filter(period=self.period)
 				)
 			pc.sales_base = bot.sales_base
 			pc.sales_invoiced_vat = bot.sales_invoiced_vat
@@ -205,9 +203,7 @@ class bot_period_close( object ):
 
 			from bots import bot_purchases_invoice
 			bot = bot_purchases_invoice( 
-				iCf_Purchase.objects.filter(
-					period=self.period, 
-					cooper=self.cooper) 
+				iCf_Purchase.objects.filter(period=self.period) 
 				)
 			pc.purchases_base = bot.purchases_base 
 			pc.purchases_vat = bot.purchases_vat

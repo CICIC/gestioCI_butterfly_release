@@ -7,6 +7,7 @@
 '''
 Section 0 >> global const and vars
 '''
+from django.utils.safestring import mark_safe
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.contrib import messages
@@ -24,6 +25,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from General.models import Concept, Company, Type
 from public_form.models import RegistrationProfile
 from django.db.models import Q, Sum
+from tools_upgrader.objects import ico_yes, ico_no
 # end IMPORTS ********************************************
 
 # begin TOOLS and VARS and CONSTs ************************
@@ -144,8 +146,8 @@ from General.models import Artwork, Concept
 class iCf_Record(Artwork):	# create own ID's
 	record_type = TreeForeignKey('iCf_Record_Type', blank=True, null=True, verbose_name=_(u"Tipus de Registre financer de CI"))
 	class Meta:
-		verbose_name= _(u'Registre financer CI')
-		verbose_name_plural= _(u'o- Registres financers CI')
+		verbose_name= _(u'sys_artwork_record')
+		verbose_name_plural= _(u'sys_artworks_record')
 	def __unicode__(self):
 		if self.record_type is None or self.record_type == '':
 			return self.name
@@ -162,7 +164,7 @@ class iCf_Record(Artwork):	# create own ID's
 class iCf_Type(Concept):	# create own ID's
 	clas = models.CharField(blank=True, verbose_name=_(u"Clase"), max_length=200, help_text=_(u"Model de django o classe python associada al Tipus financer de CI"))
 	class Meta:
-		verbose_name = _(u"c- Tipus financer CI")
+		verbose_name = _(u"sys_concept_type")
 	def __unicode__(self):
 		if self.clas is None or self.clas == '':
 			if self:
@@ -174,8 +176,7 @@ class iCf_Type(Concept):	# create own ID's
 class iCf_Record_Type(iCf_Type):
 	icf_type = models.OneToOneField('iCf_Type', primary_key=True, parent_link=True)
 	class Meta:
-		verbose_name= _(u'Tipus de Registre financer CI')
-		verbose_name_plural= _(u'c-> Tipus de Registres financers CI')
+		verbose_name= _(u'sys_record_type')
 
 '''
 Section 2 >> Semantic models
@@ -196,10 +197,9 @@ class iCf_Duty(iCf_Record):
 			pass
 	def __unicode__(self):
 		return str(self.value)
-
 	class Meta:
-		verbose_name= _(u'IVA')
-		verbose_name_plural= _(u'IVAs')
+		verbose_name= _(u'B - IVA')
+		verbose_name_plural= _(u'B - IVAs')
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
 	value=models.IntegerField(verbose_name=_(u'IVA'), unique=True, db_index=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
 class iCf_Tax(iCf_Record):
@@ -214,7 +214,6 @@ class iCf_Tax(iCf_Record):
 		except ObjectDoesNotExist:
 			print ("iCf_Tax.__init__():" + " missing type")
 			pass
-
 	def __unicode__(self):
 		if self.id:
 			return _("Cuota de %s por base entre %s y %s (Eur)") %( str(self.value), str(self.min_base), str(self.max_base))
@@ -228,19 +227,38 @@ class iCf_Period(iCf_Record_Type):
 	date_open = models.DateField(verbose_name=_(u"Obert"))
 	date_close = models.DateField(verbose_name=_(u"Tancat"))
 	exported = models.BooleanField (verbose_name=_("Archivat"), help_text=_(u"Administració ha exportat els registres CSV del període."), default=False)
+	def _exported(self):
+		if not self:
+			return ico_no
+		if hasattr(self, "exported"):
+			return "Sí" if self.exported else ico_no
+		else:
+			return ico_no
 	def __init__(self, *args, **kwargs):
 		super(iCf_Period, self).__init__(*args, **kwargs)
-		self.icf_type = _check_icf_record_type("iCf_Periods", u'Facturation period', u'Period management totals, and balances.', None,True )
+		#self.icf_type = iCf_Type.objects.get(clas="iCf_Periods")
 	def __unicode__(self):
 		if not self:
 			return ""
 		if hasattr(self, "id"):
-			return ('%s %s') % (self.first_day.year, self.label)
+			if self.exported:
+				status = _(u"Periode tancat i archivat.")
+			elif self.first_day > date.today():
+				status = _(u"Aquest periode no esta en vigor.")
+			elif self.date_close > date.today():
+				close = " %s del %s" % ( self.date_close.day, self.date_close.month )
+				status = _(u"Periode obert fins: %s") % (self.date_close)
+			elif self.date_open > date.today():
+				open = " %s - %s" % ( self.date_open.day, self.date_open.month )
+				status = _(u"Periode en facturació fins: %s") % (open)
+			else:
+				status = _(u"Aquest periode es pot exportar.")
+			return "%s > %s" % (self.name, status.encode("utf-8"))
 		else:
 			return _("periode buit").encode("utf-8")
 	class Meta:
-		verbose_name= _(u"G - Trimestres")
-		verbose_name_plural= _(u"G - Trimestres")
+		verbose_name= _(u"C - Trimestres")
+		verbose_name_plural= _(u"C - Trimestres")
 '''
 Section 3 >> Invoicing and currency movements and period closing
 '''
@@ -615,7 +633,7 @@ class iCf_Period_close(iCf_Record):
 		super(iCf_Period_close, self).__init__(*args, **kwargs)
 		#t = _check_icf_record_type("iCf_Period", "","", None, True)
 		#self.record_type = _check_icf_record_type("iCf_Period_close", u'Sumatori i totals del periode de facturació.', u'Durant el trismestre els autoocupats asignen factures a un registre de Sumatori i totals. Un cop arribada la data de tancament, un procés automátic ha de tancar els registres no tancats pels usuaris.', t)
-		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Period_close")
+		#self.record_type = iCf_Record_Type.objects.get(clas="iCf_Period_close")
 	def _icf_self_employed(self):
 		if hasattr(self, 'icf_self_employed') and self.membership:
 			return self.icf_self_employed
@@ -666,7 +684,13 @@ class iCf_Period_close(iCf_Record):
 	#rel_fees = models.ManyToManyField('Welcome.Fee', related_name='periodclose_selfemployed', blank=True, null=True,verbose_name=_(u"Quotes trimestrals") )
 	advanced_tax = models.DecimalField(verbose_name=_(u"Quota avançada"), decimal_places=2, max_digits=10, default=0, blank=True)
 	def total_tax(self):
-		return self.period_tax - self.advanced_tax
+		try:
+			return self.period_tax - self.advanced_tax().first().amount
+		except:
+			try:
+				return self.period_tax
+			except:
+				return 0
 	total_tax.decimal = True
 	#donation
 	donation = models.DecimalField(verbose_name=_(u'Aportació (€)'), help_text=_(u" Com que els resultats econòmics reflectits en aquest fitxer no sempre es corresponen amb l'activitat real del projecte, us volem donar aquesta opció per aportar el que considereu oportú. Si voleu, podeu indicar un import d´aportació al finançament d'activitats de la CIC en € i Ecos"),  decimal_places=2, max_digits=7, default=0)
@@ -720,7 +744,7 @@ class iCf_Self_Employed(iC_Self_Employed):
 	user = models.ForeignKey(User, verbose_name=_(u"nº COOP"), related_name="fk_icf_self_employed")
 	clients = models.ManyToManyField("General.Company", verbose_name=_(u"Clients"), related_name="fk_icse_client")
 	providers = models.ManyToManyField("General.Company", verbose_name=_(u"Proveïdors"), related_name="fk_icse_provider")
-	icf_periods_closed = models.ManyToManyField(iCf_Invoice, related_name="icf_self_employed_periods_closed", verbose_name=_(u"Factures Despeses"))
+	icf_periods_closed = models.ManyToManyField(iCf_Invoice, related_name="rel_icfse_icf_period_close", verbose_name=_(u"Periodes de facturacio"))
 	def person(self):
 		try:
 			current_person = self.ic_se.ic_membership.human.persons.first()
@@ -743,7 +767,10 @@ class iCf_Self_Employed(iC_Self_Employed):
 	def advanced_tax(self):
 		#https://wiki.enredaos.net/index.php?title=GestioCI-Codi#APP:Welcome
 		#/admin/Welcome/ic_type/
-		return self.rel_fees.objects.filter(clas__CONTAINS="advanced_fee") #Quota Avançada ((45_eco) advanced_fee)
+		try:
+			return self.rel_fees.filter(record_type__clas__contains="advanced_fee").first().amount #Quota Avançada ((45_eco) advanced_fee)
+		except:
+			return 0
 	advanced_tax.short_description = _(u'Quota avançada (€)')
 	advanced_tax.help_text=_(u"Quota que s'aplicarà el primer trimestre")
 	def assigned_vat(self):

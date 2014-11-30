@@ -46,6 +46,16 @@ def _member_folder(object):
 	value = object.print_certificate()
 	return "<h5>%s</h5> %s" % ( caption, value ) 
 
+def _finances_folder(object):
+	caption = _(u"Facturacio").encode("utf-8")
+	try:
+		label = _(u"Entorn virtual de facturacio").encode("utf-8")
+		value = "<a href='/cooper/Finances/%s'>%s</a>" % (object.icf_self_employed.id, label)
+	except:
+		from tools_upgrader.object import Self_Employed_auth
+		value = Self_Employed_auth(object)._get_user_member_field()
+	return _folder( caption, value ) 
+
 def _fees_folder(object):
 	caption = _(u"Quotes").encode("utf-8")
 	value = object._rel_fees("/cooper/")
@@ -177,7 +187,7 @@ class member_object(object):
 		except:
 			pass
 
-		links.append( _fees_folder( object ) )
+		links.append( _finances_folder( object ) )
 
 		try:
 			#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
