@@ -22,7 +22,7 @@ def _fix_pdf_links(uri, rel):
 
 def render_pdf(html, request):
 	result = StringIO.StringIO()
-	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result, link_callback=_fix_pdf_links)
+	#pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result, link_callback=_fix_pdf_links)
 	try:
 		pdf = pisa.pisaDocument(StringIO.StringIO(html), result, link_callback=_fix_pdf_links)
 	except:
