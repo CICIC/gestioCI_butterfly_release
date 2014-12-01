@@ -338,7 +338,7 @@ class iCf_Self_Employed_companies_admin(icf_self_employed_companies_user):
 		return {'direct_to_change_form':False }
 #
 class invoice_admin(ModelAdmin):
-	list_filter = ('who_manage', 'period')
+	list_filter = ('who_manage', 'period'	)
 	model = iCf_Invoice
 	def status(self, obj):
 		return obj.status()

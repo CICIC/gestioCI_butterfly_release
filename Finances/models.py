@@ -452,6 +452,7 @@ class iCf_Invoice(iCf_Record):
 	def amount(self):
 		return self.lines.objects.values("value").annotate(value=Sum("value"))["value"]
 	amount.short_description = _(u"Import")
+
 	class Meta:
 		abstract=False
 		verbose_name = _(u"Factura")
@@ -544,7 +545,14 @@ class iCf_Sale(iCf_Invoice):
 	def save(self, *args, **kwargs):
 		self.name = self.number()
 		super(iCf_Sale, self).save(*args, **kwargs)
+		try:
+			exists = self.rel_icfe_sales.all().first()
+		except:
+			pass
 
+		if not exists:
+			self.period.icf_sales.add(self)
+			self.period.save()
 	def number(self):
 		se = self.period.rel_icfse_icf_period_close
 		if se.first():
@@ -608,8 +616,14 @@ class iCf_Purchase(iCf_Invoice):
 		else:
 			cesnum = "0000"
 		return '%s/%s/%s'%( cesnum, self.date.year, self.num )
-
 	number.short_description =_(u"Nº Factura")
+	def value(self):
+		value=0
+		for line in self.lines.all():
+			value += line.fk_purchase_li.all().first().value
+		return value
+	value.decimal = True
+	value.short_description = _(u'Base imposable (€)')
 	def vat(self):
 		value=0
 		for line in self.lines.all():
@@ -628,6 +642,17 @@ class iCf_Purchase(iCf_Invoice):
 		return self.value() + self.vat() - self.irpf()
 	total.decimal = True
 	total.short_description = _(u'Total Factura (€)')
+	def save(self, *args, **kwargs):
+		self.name = self.number()
+		super(iCf_Purchase, self).save(*args, **kwargs)
+		try:
+			exists = self.rel_icfe_purchases.all().first()
+		except:
+			pass
+
+		if not exists:
+			self.period.icf_purchases.add(self)
+			self.period.save()
 	class Meta:
 		#unique_together = ('icf_self_employed', 'period', 'num')
 		verbose_name = _(u'02 - Factura Despesa')
@@ -807,6 +832,30 @@ class iCf_Period_close(iCf_Record):
 		except:
 			return 0
 	total_irpf.decimal = True
+	def render_total_sales(self):
+		try:
+			from Finances.bots import bot_sales_invoice
+			bot = bot_sales_invoice( self.icf_sales.all() )
+			sb = Decimal ( "%.2f" % bot.sales_base )
+			siv = Decimal ( "%.2f" % bot.sales_invoiced_vat )
+			sav = Decimal ( "%.2f" % bot.sales_assigned_vat )
+			st = Decimal ( "%.2f" % bot.sales_total )
+			return "Base: %s <br> IVA: %s | IVA assignat: %s <br> Total: %s " % (sb, siv, sav, st)
+		except Exception as e:
+			print e
+			return "nada"
+	def render_total_purchases(self):
+		try:
+			from Finances.bots import bot_purchases_invoice
+			bot = bot_purchases_invoice( self.icf_purchases.all() )
+			pb = Decimal ( "%.2f" % bot.purchases_base )
+			pv = Decimal ( "%.2f" % bot.purchases_vat )
+			pi = Decimal ( "%.2f" % bot.purchases_irpf )
+			pt = Decimal ( "%.2f" % bot.purchases_total )
+			return "Base: %s <br> IVA: %s | IRPF: %s <br> Total: %s " % (pb, pv, pi, pt)
+		except Exception as e:
+			print e
+			return "nada"
 	def total(self):
 		try:
 			return self.total_tax() + self.donation + self.savings_with_assigned_vat_donation

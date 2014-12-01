@@ -253,15 +253,6 @@ class bot_filters(object):
 	def filterbydefault(request, instance, entity, extra_context):
 		referer = request.META.get('HTTP_REFERER', '')
 		showall = request.META['PATH_INFO'] in referer and not request.GET.has_key('timeframe')
-		if not showall and not request.GET.has_key('period__id__exact'):
-			current_period= bot_period(request.user).period(False)
-			if current_period:
-				q = request.GET.copy()
-				#q['period__id__exact'] = current_period.id
-				request.GET = q
-				request.META['QUERY_STRING'] = request.GET.urlencode()
-				from django.http import HttpResponseRedirect
-				return HttpResponseRedirect( request.path + "?" + request.GET.urlencode() )
 		return super(entity,instance).changelist_view(request, extra_context=extra_context)
 
 class bot_currency(object):
