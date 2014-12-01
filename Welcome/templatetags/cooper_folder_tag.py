@@ -59,12 +59,13 @@ def _finances_folder(object, user):
 		from Finances.bots import bot_period
 		periods_lists = []
 		for period in bot_period.get_opened_periods_list(user):
-			# Registre tipus del periode obert
-			label = period.__unicode__()
-			value = "<a href='/cooper/Finances/icf_period/%s'>%s</a>" % (period.id, label)
-			periods_lists.append(_folder(_(u"Periodes").encode("utf-8"), value))
 			# Registre corresponent al periode pel membre actual
 			pc = period.get_period_closed(object.icf_self_employed)
+			# Registre tipus del periode obert
+			label = period.render_icf_se_period(pc.closed)
+			value = "<a href='/cooper/Finances/icf_period_close/%s'>%s</a>" % (pc.id, label)
+			periods_lists.append(_folder(_(u"Periodes").encode("utf-8"), value))
+			#
 			label = pc.__unicode__()
 			#pc.total(), pc.total_to_pay(), pc.total_balance(), pc.total_acumulated()
 			value = "<a href='/cooper/Finances/icf_sale'> %s </a>" % ( pc.render_total_sales() )

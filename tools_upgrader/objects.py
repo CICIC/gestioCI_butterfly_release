@@ -17,6 +17,8 @@ from datetime import date, timedelta, datetime
 from Welcome.models import iC_Self_Employed
 from Finances.models import iCf_Self_Employed
 
+
+
 class Self_Employed_auth(object):
 	'''
 	Self_Employed

@@ -31,6 +31,7 @@ class AutoRecordName(admin.ModelAdmin):
 	# Here, AutoRecordName must filter its queryset by current logged user.
 	# See further comments:
 	def get_queryset(self, request):
+		import pdb; pdb.set_trace()
 		# ... by being a [superuser], no filtering on query.
 		if request.user.is_superuser:
 			return self.model.objects.all()
@@ -62,7 +63,10 @@ class AutoRecordName(admin.ModelAdmin):
 				#
 				from Finances.models import iCf_Self_Employed
 				try:
+					current_human = None
 					current_registration = iCf_Self_Employed.objects.get(user=request.user)
+					if hasattr(self,"model") and hasattr(self.model,"rel_icfse_icf_period_close"):
+						return self.model.objects.all()
 					# ... by having [General.Person] attr maybe be {General.Human and Person} friendly so should filter
 					if hasattr(self.model, "person"):
 						# ... casting to General.Person
@@ -338,7 +342,7 @@ class iCf_Self_Employed_companies_admin(icf_self_employed_companies_user):
 		return {'direct_to_change_form':False }
 #
 class invoice_admin(ModelAdmin):
-	list_filter = ('who_manage', 'period'	)
+	list_filter = ('who_manage', 'period')
 	model = iCf_Invoice
 	def status(self, obj):
 		return obj.status()
@@ -523,7 +527,7 @@ class iCf_Period_close_user(AutoRecordName):
 	form = period_close_form
 	change_form_template = 'iCf_Period_close/change_form.html'
 	model = iCf_Period_close
-	inlines = [period_payment_inline]
+	#inlines = [period_payment_inline]
 	list_display = ('edit_link', 'print_link') + period_close_base_fields
 	list_export = period_close_base_fields
 	fieldsets = (
@@ -621,11 +625,13 @@ class iCf_Period_close_user(AutoRecordName):
 		return iCf_Period_close.objects.get(pk=pc.id).closed
 
 	def has_add_permission(self, request):
+		return True
 		if request.user.is_superuser:
 			 return True
 		return self.exists_opened_period( request.user ) and not self.exists_closed_period( request.user )
 
 	def has_change_permission(self, request, obj=None):
+		return True
 		if request.user.is_superuser:
 			return True
 		if obj is None:
@@ -633,29 +639,7 @@ class iCf_Period_close_user(AutoRecordName):
 		else:
 			return self.exists_opened_period( obj.icf_self_employed.user ) and self.exists_closed_period( obj.icf_self_employed.user ) and not self.exists_closed_period_done ( obj )
 
-	def get_actions(self, request):
-		actions = super(iCf_Period_close_user, self).get_actions(request)
-		del actions['delete_selected']
-		return actions
 
-	# to hide change and add buttons on main page:
-	def get_model_perms(self, request): 
-		return {'historial':True, 
-			'canAdd': self.exists_opened_period( request.user ) and not self.exists_closed_period( request.user ),
-			'canEdit': self.exists_opened_period( request.user ) }
-
-	def get_form(self, request, obj=None, **kwargs):
-		ModelForm = super(iCf_Period_close_user, self).get_form(request, obj, **kwargs)
-		ModelForm.is_new = obj is None
-		ModelForm.request = request
-		if obj:
-			ModelForm.obj = obj
-		ModelForm.current_fields = self.list_export
-		if obj is not None:
-			ModelForm.period = obj.period
-			ModelForm.icf_self_employed = obj.icf_self_employed
-			bot_period_close( obj.period, obj.icf_self_employed, obj).set_period_close_form_readonly(ModelForm)
-		return ModelForm
 	class Media:
 			js = (
 				'iCf_Period_close.js',   # app static folder
@@ -900,8 +884,8 @@ admin.site.register(iCf_Record, ModelAdmin)
 admin.site.register(iCf_Tax, tax_admin)
 admin.site.register(iCf_Duty)
 admin.site.register(iCf_Period, iCf_Period_admin)
-user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
-admin.site.register(iCf_Period_close, iCf_Period_close_user)
+
+#admin.site.register(iCf_Period_close, iCf_Period_close_user)
 user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
 user_admin_site.register(icf_self_employed_proxy_balance)
 user_admin_site.register(iCf_Tax, iCf_Tax_user)
@@ -909,6 +893,7 @@ user_admin_site.register(iCf_Sale, iCf_Sale_user)
 user_admin_site.register(iCf_Sale_line)
 user_admin_site.register(iCf_Purchase, iCf_Purchase_user)
 user_admin_site.register(iCf_Purchase_line)
+user_admin_site.register(iCf_Period_close)
 #
 # Invoicing system
 # user_admin_site.register(iCf_Tax, iCf_Tax_user)

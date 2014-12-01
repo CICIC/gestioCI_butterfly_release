@@ -31,6 +31,8 @@ from django.db.models import Q, Sum
 # begin TOOLS and VARS and CONSTs ************************
 #
 #  MPTT linking
+ico_no = "<img src='/static/admin/img/icon-no.gif' alt='False'>"
+ico_yes = "<img src='/static/admin/img/icon-yes.gif' alt='True'>"
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Finances/"
 a_strWC = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/icf_self_employed/Finances/"
@@ -238,16 +240,24 @@ class iCf_Period(iCf_Record_Type):
 		super(iCf_Period, self).__init__(*args, **kwargs)
 		#self.icf_type = iCf_Type.objects.get(clas="iCf_Periods")
 	def __unicode__(self):
+		return self.render_icf_se_period()
+
+	def render_icf_se_period(self, closed=False, exported=False):
 		if not self:
 			return ""
 		if hasattr(self, "id"):
 			if self.exported:
 				status = _(u" tancat i archivat.")
+			elif closed:
+				status = _(u" %s tancat") % (ico_yes) 
 			elif self.first_day > date.today():
 				status = _(u" no és en vigor.")
+			elif self.date_close > date.today() and self.date_open < date.today():
+				close = " %s del %s" % ( self.date_close.day, self.date_close.month )
+				status = _(u" %s tens que tancar abanç de: %s") % (ico_no, self.date_close)
 			elif self.date_close > date.today():
 				close = " %s del %s" % ( self.date_close.day, self.date_close.month )
-				status = _(u" obert fins: %s") % (self.date_close)
+				status = _(u" %s obert fins: %s") % (ico_yes, self.date_close)
 			elif self.date_open > date.today():
 				open = " %s - %s" % ( self.date_open.day, self.date_open.month )
 				status = _(u" facturable fins: %s") % (open)
@@ -736,8 +746,8 @@ class iCf_Period_close(iCf_Record):
 	system_closed = models.BooleanField (verbose_name=_("admin closed"), help_text=_("closed by bot after expiring time"), default=False)
 	icf_sales  = models.ManyToManyField(iCf_Sale, related_name="rel_icfe_sales", verbose_name=_(u"Factures Emeses"))
 	icf_purchases = models.ManyToManyField(iCf_Purchase, related_name="rel_icfe_purchases", verbose_name=_(u"Factures Despeses"))
-	icf_sale_movements  = models.ManyToManyField(iCf_Sale_movement, related_name="icf_self_employed_sale_movements", verbose_name=_(u"Factures Emeses"))
-	icf_purchase_movements = models.ManyToManyField(iCf_Purchase_movement, related_name="icf_self_employed_purchase_movements", verbose_name=_(u"Factures Despeses"))
+	icf_sale_movements  = models.ManyToManyField(iCf_Sale_movement, related_name="icf_self_employed_sale_movements", verbose_name=_(u"Factures Emeses"),blank=True,null=True)
+	icf_purchase_movements = models.ManyToManyField(iCf_Purchase_movement, related_name="icf_self_employed_purchase_movements", verbose_name=_(u"Factures Despeses"),blank=True,null=True)
 	def cooper(self):
 		return self._icf_self_employed()
 	def period(self):
