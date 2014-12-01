@@ -412,7 +412,7 @@ class iCf_Sale_user (invoice_admin):
 	form = sales_invoice_form
 	model = iCf_Sale
 	#change_list_template = 'iCf_Sale/change_list.html'
-	fields = ['client',] + ['period', 'num', 'date'] + ['unit','who_manage']
+	fields = ['client',] + ['period', 'num', 'date'] + ['unit', 'who_manage']
 	list_display =  ('client',) + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
 	list_editable =  ('client',) + ('num', 'date') + ('who_manage',)
 	list_export = ( 'clientName', 'clientCif') + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')

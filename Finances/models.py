@@ -541,10 +541,14 @@ class iCf_Sale(iCf_Invoice):
 		#t = _check_icf_record_type("iCf_Invoices", u"Elements de factures", u'Tipus de factures y subelements.', None, True)
 		#self.record_type = _check_icf_record_type("iCf_Sale", u"Factura emesa", u'', t )
 		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Sale")
+	def save(self, *args, **kwargs):
+		self.name = self.number()
+		super(iCf_Sale, self).save(*args, **kwargs)
+
 	def number(self):
 		se = self.period.rel_icfse_icf_period_close
 		if se.first():
-			cesnum = "0000"#se.first().coop_number()
+			cesnum = se.first().coop_number()
 		else:
 			cesnum = "0000"
 		return '%s/%s/%s'%( cesnum, self.date.year, "%03d" % (self.num) )
@@ -603,7 +607,7 @@ class iCf_Purchase(iCf_Invoice):
 			cesnum = se.first().coop_number()
 		else:
 			cesnum = "0000"
-		return '%s/%s/%s'%( cesnum, self.date.year, cesnum )
+		return '%s/%s/%s'%( cesnum, self.date.year, self.num )
 
 	number.short_description =_(u"Nº Factura")
 	def vat(self):
