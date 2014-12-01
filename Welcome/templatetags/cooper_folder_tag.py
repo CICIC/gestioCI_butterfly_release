@@ -9,11 +9,17 @@ from django.core import urlresolvers
 from django.db.models.loading import get_model
 from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership, iC_Akin_Membership
 from General.models import Human
-
+from Finances.models import iCf_Period_close
 def _links_list_to_ul(links):
 	output = "<ul>"
 	for link in links:
-		output += "<li>%s</li>" % (link)
+		try:
+			output += "<li>%s</li>" % (link)
+		except:
+			try:
+				output += "<li>%s</li>" % (link.encode("utf-8"))
+			except:
+				output += "<li>%s</li>" % (link.decode("utf-8"))
 	return "%s</ul>" % (output)
 
 def _safe_render(output, section, image, links):
@@ -46,13 +52,26 @@ def _member_folder(object):
 	value = object.print_certificate()
 	return "<h5>%s</h5> %s" % ( caption, value ) 
 
-def _finances_folder(object):
+def _finances_folder(object, user):
 	caption = _(u"Facturacio").encode("utf-8")
 	try:
-		label = _(u"Entorn virtual de facturacio").encode("utf-8")
-		value = "<a href='/cooper/Finances/icf_self_employed_proxy_balance/%s'>%s</a>" % (object.icf_self_employed.id, label)
-	except:
-		from tools_upgrader.object import Self_Employed_auth
+		# Periode vigent en facturació
+		from Finances.bots import bot_period
+		periods_lists = []
+		for period in bot_period.get_opened_periods_list(user):
+			# Registre tipus del periode obert
+			label = period.__unicode__()
+			value = "<a href='/cooper/Finances/icf_period/%s'>%s</a>" % (period.id, label)
+			periods_lists.append(_folder(_(u"Periodes").encode("utf-8"), value))
+			# Registre corresponent al periode pel membre actual
+			pc = period.get_period_closed(object.icf_self_employed)
+			label = pc.__unicode__()
+			value = "<a href='/cooper/Finances/icf_period_close/%s'>%s %s %s %s</a>" % (pc.id, pc.total, pc.total_to_pay, pc.total_balance, pc.total_acumulated)
+			periods_lists.append(_folder(_(u"Resultats").encode("utf-8"), value))
+		value = _links_list_to_ul(periods_lists)
+	except Exception as e:
+		print e
+		from tools_upgrader.objects import Self_Employed_auth
 		value = Self_Employed_auth(object)._get_user_member_field()
 	return _folder( caption, value ) 
 
@@ -209,7 +228,7 @@ class member_object(object):
 		if not self.user.groups.all().filter(name="iC_Stallholder"):
 			links.append( _member_folder( object ) )
 			links.append( _fees_folder( object ) )
-		links.append( _finances_folder( object ) )
+		links.append( _finances_folder( object, self.user ) )
 		return sections, links
 
 	def render_member(self, object, sections, links):

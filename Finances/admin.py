@@ -249,7 +249,7 @@ class iCf_Tax_user(ModelAdmin):
 	def get_model_perms(self, request): 
 		return {'view': True}
 #
-class iCf_Period_admin(DjangoMpttAdmin):
+class iCf_Period_admin(MPTTModelAdmin):
 	change_list_template = "django-mptt-admin/change_list.html"
 	model = iCf_Period
 	exclude = ['label']
@@ -584,7 +584,7 @@ class iCf_Period_close_user(AutoRecordName):
 		if obj is None:
 			can_edit = False
 		else:
-			can_edit =self.exists_opened_period( obj.cooper.user ) and self.exists_closed_period( obj.cooper.user ) and not self.exists_closed_period_done ( obj )
+			can_edit =self.exists_opened_period( obj.rel_icfse_icf_period_close.all().first().user ) and self.exists_closed_period( obj.rel_icfse_icf_period_close.all().first().user ) and not self.exists_closed_period_done ( obj )
 		if can_edit:
 			return u'<a href="/cooper/%s/%s/%s">%s</a>' % (
 				 obj._meta.app_label, obj._meta.module_name, obj.id, obj.period)
@@ -660,8 +660,8 @@ class iCf_Period_close_user(AutoRecordName):
 				'iCf_Period_close.js',   # app static folder
 			)
 #user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
-class period_close_admin (iCf_Period_close_user):
-	change_list_template = 'admin/Finances/iCf_Period_close/change_list_admin.html'
+class iCf_Period_close_admin (MPTTModelAdmin):
+	change_list_template = 'iCf_Period_close/change_list_admin.html'
 	list_display = ('cooper', ) + iCf_Period_close_user.list_display
 	list_export = ('cooper',) + iCf_Period_close_user.list_export
 	list_per_page = 1000
@@ -684,7 +684,7 @@ class period_close_admin (iCf_Period_close_user):
 		return iCf_Period_close.objects.all()
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
-		response = super(iCf_Period_close_user, self).changelist_view(request, extra_context)
+		response = super(iCf_Period_close_admin, self).changelist_view(request, extra_context)
 		try:
 			qs_queryset = response.context_data["cl"].query_set
 		except:
@@ -708,7 +708,10 @@ class period_close_admin (iCf_Period_close_user):
 						print (Decimal ( "%.2f" % bot_object( field, period_closed ).value() ))
 						totals[field] = Decimal ( "%.2f" % bot_object( field, period_closed ).value() )
 					except:
-						totals[field] = bot_object( field, period_closed ).value()()
+						try:
+							totals[field] = bot_object( field, period_closed ).value()()
+						except:
+							totals[field] = 0
 
 			#send to template
 			extra_context = {}
@@ -717,7 +720,7 @@ class period_close_admin (iCf_Period_close_user):
 
 		#Filter by period
 		from Finances.bots import bot_filters
-		return bot_filters.filterbydefault(request, self, iCf_Period_close_user, extra_context)
+		return response #bot_filters.filterbydefault(request, self, iCf_Period_close_user, extra_context)
 #
 # *********************************************************************
 #
@@ -897,6 +900,7 @@ admin.site.register(iCf_Tax, tax_admin)
 admin.site.register(iCf_Duty)
 admin.site.register(iCf_Period, iCf_Period_admin)
 user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
+admin.site.register(iCf_Period_close, iCf_Period_close_user)
 user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
 user_admin_site.register(icf_self_employed_proxy_balance)
 user_admin_site.register(iCf_Tax, iCf_Tax_user)
@@ -907,7 +911,7 @@ user_admin_site.register(iCf_Purchase, iCf_Purchase_user)
 # user_admin_site.register(iCf_Tax, iCf_Tax_user)
 #admin.site.register(icf_self_employed_proxy_transactions, cooper_admin_transaction)
 #
-# admin.site.register(iCf_Period_close, period_close_admin)
+# admin.site.register(iCf_Period_close, iCf_Period_close_admin)
 # admin.site.register(iCf_Self_Employed, cooper_admin)
 # admin.site.register(iCf_Purchase_movement, purchases_movements_admin)
 # admin.site.register(iCf_Sale_movement, sales_movements_admin)

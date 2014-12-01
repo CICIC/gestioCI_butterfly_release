@@ -1,6 +1,7 @@
 #encoding=utf-8
 from django.contrib.admin import SimpleListFilter
 from django.utils.translation import ugettext_lazy as _
+from Finances.models import *
 #
 #Use this in like => list_filter = (onlyownedFilter,)
 class onlyownedFilter(SimpleListFilter):

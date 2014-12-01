@@ -25,7 +25,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from General.models import Concept, Company, Type
 from public_form.models import RegistrationProfile
 from django.db.models import Q, Sum
-from tools_upgrader.objects import ico_yes, ico_no
+
 # end IMPORTS ********************************************
 
 # begin TOOLS and VARS and CONSTs ************************
@@ -242,23 +242,44 @@ class iCf_Period(iCf_Record_Type):
 			return ""
 		if hasattr(self, "id"):
 			if self.exported:
-				status = _(u"Periode tancat i archivat.")
+				status = _(u" tancat i archivat.")
 			elif self.first_day > date.today():
-				status = _(u"Aquest periode no esta en vigor.")
+				status = _(u" no és en vigor.")
 			elif self.date_close > date.today():
 				close = " %s del %s" % ( self.date_close.day, self.date_close.month )
-				status = _(u"Periode obert fins: %s") % (self.date_close)
+				status = _(u" obert fins: %s") % (self.date_close)
 			elif self.date_open > date.today():
 				open = " %s - %s" % ( self.date_open.day, self.date_open.month )
-				status = _(u"Periode en facturació fins: %s") % (open)
+				status = _(u" facturable fins: %s") % (open)
 			else:
 				status = _(u"Aquest periode es pot exportar.")
-			return "%s > %s" % (self.name, status.encode("utf-8"))
+			return "%s > %s" % (self.name, status)
 		else:
 			return _("periode buit").encode("utf-8")
 	class Meta:
 		verbose_name= _(u"C - Trimestres")
 		verbose_name_plural= _(u"C - Trimestres")
+
+	def get_period_closed(self, icf_se):
+		try:
+			pc = icf_se.icf_periods_closed.get(record_type=self)
+		except:
+			pc = iCf_Period_close()
+			pc.record_type = self
+			pc.period_tax = iCf_Tax.objects.get(min_base = 0).value
+			try:
+				pc.save()
+			except Exception as e:
+				print e
+				pass
+			else:
+				icf_se.icf_periods_closed.add(pc)
+				try:
+					icf_se.save()
+				except Exception as e:
+					print e
+					pass
+		return pc
 '''
 Section 3 >> Invoicing and currency movements and period closing
 '''
@@ -355,7 +376,7 @@ class iCf_Purchase_movement( iCf_Movement ):
 # Invoicing
 class iCf_Invoice(iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
-	period = models.ForeignKey(iCf_Period, null=True, blank=True, verbose_name=_(u'Trimestre'))
+	period = models.ForeignKey('Finances.iCf_Period_close', null=True, blank=True, verbose_name=_(u'Trimestre'))
 	date= models.DateField(verbose_name=_(u"Data"), help_text=_(u"La data d'emissió de la factura. Exemple dd/mm/aaaa"))
 	expiring_date=models.DateField(verbose_name=_(u"Data venciment"), help_text=_(u"La data de venciment. Exemple dd/mm/aaaa"), null=True, blank=True)
 	who_manage= models.IntegerField(
@@ -620,8 +641,6 @@ class iCf_Period_close(iCf_Record):
 	icf_purchases = models.ManyToManyField(iCf_Purchase, related_name="rel_icfe_purchases", verbose_name=_(u"Factures Despeses"))
 	icf_sale_movements  = models.ManyToManyField(iCf_Sale_movement, related_name="icf_self_employed_sale_movements", verbose_name=_(u"Factures Emeses"))
 	icf_purchase_movements = models.ManyToManyField(iCf_Purchase_movement, related_name="icf_self_employed_purchase_movements", verbose_name=_(u"Factures Despeses"))
-	def period(self):
-		return self.record_type
 	def cooper(self):
 		return self._icf_self_employed()
 	def period(self):
@@ -630,12 +649,14 @@ class iCf_Period_close(iCf_Record):
 		else:
 			return ""
 	def __init__(self, *args, **kwargs):
+
 		super(iCf_Period_close, self).__init__(*args, **kwargs)
 		#t = _check_icf_record_type("iCf_Period", "","", None, True)
 		#self.record_type = _check_icf_record_type("iCf_Period_close", u'Sumatori i totals del periode de facturació.', u'Durant el trismestre els autoocupats asignen factures a un registre de Sumatori i totals. Un cop arribada la data de tancament, un procés automátic ha de tancar els registres no tancats pels usuaris.', t)
 		#self.record_type = iCf_Record_Type.objects.get(clas="iCf_Period_close")
+
 	def _icf_self_employed(self):
-		if hasattr(self, 'icf_self_employed') and self.membership:
+		if hasattr(self, 'icf_self_employed'):
 			return self.icf_self_employed
 		else:
 			return 'none'
@@ -651,31 +672,40 @@ class iCf_Period_close(iCf_Record):
 	_ic_self_employed.short_description = _(u"Registre d'Autoocupat")
 
 	#sales
-	sales_base = models.DecimalField(verbose_name=_(u"Base Imposable Emeses (€)"), decimal_places=2, max_digits=10, blank=True)
-	sales_invoiced_vat = models.DecimalField(verbose_name=_(u"IVA Facturat (€)"), decimal_places=2, max_digits=10, blank=True)
-	sales_assigned_vat = models.DecimalField(verbose_name=_(u"IVA Assignat (€)"), decimal_places=2, max_digits=10, blank=True)
-	sales_total = models.DecimalField(verbose_name=_(u"Total Emeses (€)"), decimal_places=2, max_digits=10, blank=True)
+	sales_base = models.DecimalField(verbose_name=_(u"Base Imposable Emeses (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
+	sales_invoiced_vat = models.DecimalField(verbose_name=_(u"IVA Facturat (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
+	sales_assigned_vat = models.DecimalField(verbose_name=_(u"IVA Assignat (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
+	sales_total = models.DecimalField(verbose_name=_(u"Total Emeses (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
 	#purchases
-	purchases_base = models.DecimalField(verbose_name=_(u"Base Imposable Despeses (€)"), decimal_places=2, max_digits=10, blank=True)
-	purchases_vat = models.DecimalField(verbose_name=_(u"IVA Despeses (€)"), decimal_places=2, max_digits=10, blank=True)
-	purchases_irpf = models.DecimalField(verbose_name=_(u"Retenció IRPF (€)"), decimal_places=2, max_digits=10, blank=True)
-	purchases_total = models.DecimalField(verbose_name=_(u"Total Despeses (€)"), decimal_places=2, max_digits=10, blank=True)
+	purchases_base = models.DecimalField(verbose_name=_(u"Base Imposable Despeses (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
+	purchases_vat = models.DecimalField(verbose_name=_(u"IVA Despeses (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
+	purchases_irpf = models.DecimalField(verbose_name=_(u"Retenció IRPF (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
+	purchases_total = models.DecimalField(verbose_name=_(u"Total Despeses (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
 	#vat
 	vat_type = models.IntegerField(verbose_name=_(u"Tipus d'IVA"), choices=vat_TYPES, default=1)
 	#savings_with_assigned_vat
 	def savings_with_assigned_vat(self):
-		saving = self.sales_invoiced_vat - self.sales_assigned_vat
-		saving = saving if saving > 0 else 0
+		try:
+			saving = self.sales_invoiced_vat - self.sales_assigned_vat
+			saving = saving if saving > 0 else 0
+		except:
+			saving = 0
 		return saving if self.vat_type== vat_type_ASSIGNED else 0
 	savings_with_assigned_vat.short_description = _(u'IVA Facturat - Assignat (€)')
 	savings_with_assigned_vat_donation = models.DecimalField(verbose_name=_(u'Aportació (€)'), help_text=_(u"D'aquest import d'estalvi, vols aportar alguna quantitat a la CIC? En cas afirmatiu, indica l'import."), decimal_places=2, max_digits=10, default=0)
 	def oficial_vat_total(self):
-		vat = self.sales_invoiced_vat - self.purchases_vat
+		try:
+			vat = self.sales_invoiced_vat - self.purchases_vat
+		except:
+			vat = 0
 		return 0 if vat < 0 else vat
 	oficial_vat_total.decimal = True
 	oficial_vat_total.short_description = _(u'IVA Facturat - Despeses (€)')
 	def assigned_vat_total(self):
-		vat = self.sales_assigned_vat - self.purchases_vat
+		try:
+			vat = self.sales_assigned_vat - self.purchases_vat
+		except:
+			vat = 0
 		return 0 if vat < 0 else vat
 	assigned_vat_total.decimal = True
 	assigned_vat_total.short_description = _(u'IVA Assignat - Despeses (€)')
@@ -696,7 +726,10 @@ class iCf_Period_close(iCf_Record):
 	donation = models.DecimalField(verbose_name=_(u'Aportació (€)'), help_text=_(u" Com que els resultats econòmics reflectits en aquest fitxer no sempre es corresponen amb l'activitat real del projecte, us volem donar aquesta opció per aportar el que considereu oportú. Si voleu, podeu indicar un import d´aportació al finançament d'activitats de la CIC en € i Ecos"),  decimal_places=2, max_digits=7, default=0)
 	#total
 	def total_vat(self):
-		VATamount = self.sales_invoiced_vat- self.purchases_vat if self.vat_type == vat_type_OFICIAL else self.sales_assigned_vat - self.purchases_vat
+		try:
+			VATamount = self.sales_invoiced_vat- self.purchases_vat if self.vat_type == vat_type_OFICIAL else self.sales_assigned_vat - self.purchases_vat
+		except:
+			VATamount = 0
 		return 0 if VATamount < 0 else VATamount
 	total_vat.decimal = True
 	def total_irpf(self):
@@ -706,7 +739,10 @@ class iCf_Period_close(iCf_Record):
 		return self.total_tax() + self.donation + self.savings_with_assigned_vat_donation
 	total.decimal = True
 	def total_to_pay(self):
-		return self.total_vat() + self.total_irpf() + self.total()
+		try:
+			return self.total_vat() + self.total_irpf() + self.total()
+		except:
+			return 0
 	total_to_pay.decimal = True
 	total_to_pay.short_description = (u"TOTAL A ABONAR (€)")
 	def total_balance(self):
@@ -721,7 +757,8 @@ class iCf_Period_close(iCf_Record):
 		return self.total_to_pay() - self.total_balance()
 	total_acumulated.decimal = True
 	total_acumulated.short_description = (u"TOTAL A ABONAR - SALDO (€)")
-
+	def __unicode__(self):
+		return "hacked"
 	class Meta:
 		#unique_together = ('icf_self_employed', 'period')
 		verbose_name= _(u'03 - Resultats')
@@ -744,7 +781,7 @@ class iCf_Self_Employed(iC_Self_Employed):
 	user = models.ForeignKey(User, verbose_name=_(u"nº COOP"), related_name="fk_icf_self_employed")
 	clients = models.ManyToManyField("General.Company", verbose_name=_(u"Clients"), related_name="fk_icse_client")
 	providers = models.ManyToManyField("General.Company", verbose_name=_(u"Proveïdors"), related_name="fk_icse_provider")
-	icf_periods_closed = models.ManyToManyField(iCf_Invoice, related_name="rel_icfse_icf_period_close", verbose_name=_(u"Periodes de facturacio"))
+	icf_periods_closed = models.ManyToManyField(iCf_Period_close, related_name="rel_icfse_icf_period_close", verbose_name=_(u"Periodes de facturacio"))
 	def person(self):
 		try:
 			current_person = self.ic_se.ic_membership.human.persons.first()
@@ -757,7 +794,6 @@ class iCf_Self_Employed(iC_Self_Employed):
 		except:
 			current_project = None
 		return current_project
-
 	def coop(self):
 		return self.ic_membership.ic_company
 	coop.short_description = _(u"Cooperativa")
@@ -781,7 +817,7 @@ class iCf_Self_Employed(iC_Self_Employed):
 	extra_days.short_description = _(u"Dies extra que pot editar el trimestre en curs.")
 	def Company(self):
 		return self.ic_membership.ic_company
-	extra_days.short_description = _(u"Dies extra que pot editar el trimestre en curs.")
+	Company.short_description = _(u"Cooperativa a la que pertany.")
 	def email( self ):
 		return self.user.email
 	email.short_description=_(u"Email")

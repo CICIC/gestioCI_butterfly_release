@@ -101,7 +101,6 @@ class bot_period( object ):
 				)
 	@staticmethod
 	def get_opened_periods_list(user):
-		bot_
 		#Get extradays that this user has to close
 		from Finances.models import iCf_Self_Employed, iCf_Period
 		try:
