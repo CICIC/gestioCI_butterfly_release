@@ -88,7 +88,11 @@ class invoice_form(forms.ModelForm):
 			if hasattr(self, "period"):
 				period = self.period
 		if period is not None:
-			if date > period.date_close:
+			try:
+				pdate = period.period().date_close
+			except:
+				pdate = period.date_close
+			if date > pdate:
 				raise forms.ValidationError(_(u"La data ha de ser menor que el dia final del periode"))
 		return date
 

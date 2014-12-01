@@ -337,18 +337,16 @@ class iCf_Self_Employed_companies_admin(icf_self_employed_companies_user):
 	def get_model_perms(self, request): 
 		return {'direct_to_change_form':False }
 #
-class invoice_admin(AutoRecordName):
-	list_filter = ('period',)
+class invoice_admin(ModelAdmin):
+	list_filter = ('record_type',)
 	model = iCf_Invoice
 	def status(self, obj):
 		return obj.status()
 	status.short_description = _(u"Estat")
-
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super(invoice_admin, self).get_form(request, obj, **kwargs)
 		ModelForm.request = request 
 		return ModelForm
-
 	def get_changelist_form(self, request, **kwargs):
 		current_form = self.form
 		current_form.request = request
@@ -356,7 +354,7 @@ class invoice_admin(AutoRecordName):
 		current_period = bot_period(request.user).period( True, request )
 		if current_period and not hasattr(self, 'period'):
 			current_form.period = current_period
-		
+
 		if hasattr(self.model, 'status'):
 			current_form.status = self.model.status
 		else:
@@ -368,7 +366,6 @@ class invoice_admin(AutoRecordName):
 
 		kwargs['form'] = current_form
 		return super(invoice_admin, self).get_changelist_form(request, **kwargs)
-
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "client":
 			if request.user.is_superuser:
@@ -376,6 +373,14 @@ class invoice_admin(AutoRecordName):
 			else:
 				clients = bot_cooper(request.user).clients()
 			kwargs["queryset"] = clients
+
+		if db_field.name == "period":
+			if request.user.is_superuser:
+				periods = iCf_Period_close.objects.all()
+			else:
+				periods = iCf_Period_close.objects.filter(rel_icfse_icf_period_close__user = request.user)
+			kwargs["queryset"] = periods
+		
 		if db_field.name == "Company":
 			if request.user.is_superuser:
 				providers = Company.objects.all()
@@ -388,21 +393,30 @@ class invoice_admin(AutoRecordName):
 				'invoice.js',   # app static folder
 			)
 #
-class sales_line_inline(admin.TabularInline):
-	model = iCf_Sale_line
-	fields = ['value', 'percent_invoiced_vat']
-	list_display = ('value', 'percent_invoiced_vat', 'assigned_vat')
-	extra = 7
-#
+class iCf_Sale_inline(admin.TabularInline):
+	iCf_Sale.lines.through.__unicode__ = lambda x: "" #delete ugly header ->> TODO, remove from template
+	model = iCf_Sale.lines.through
+	fields = ("value", "percent_invoiced_vat")
+	extra = 1
+	verbose_name=_(u'Línia de factura emesa')
+	verbose_name_plural=_(u'Línies de factura emesa')
+class iCf_Purchase_inline(admin.TabularInline):
+	iCf_Purchase.lines.through.__unicode__ = lambda x: "" #delete ugly header ->> TODO, remove from template
+	model = iCf_Purchase.lines.through
+	fields = ('value', 'percent_vat', 'percent_irpf')
+	extra = 1
+	verbose_name=_(u'Línia de factura despesa')
+	verbose_name_plural=_(u'Línies de factura despesa')
+
 class iCf_Sale_user (invoice_admin):
 	form = sales_invoice_form
 	model = iCf_Sale
-	change_list_template = 'iCf_Sale/change_list.html'
-	fields = ['client',] + ['period', 'num', 'date'] + ['unit','who_manage',]
+	#change_list_template = 'iCf_Sale/change_list.html'
+	fields = ['client',] + ['period', 'num', 'date'] + ['unit','who_manage']
 	list_display =  ('client',) + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
 	list_editable =  ('client',) + ('num', 'date') + ('who_manage',)
 	list_export = ( 'clientName', 'clientCif') + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
-	inlines = [sales_line_inline]
+	inlines = [iCf_Sale_inline]
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
 	list_display_links = ( 'number', )
 	def clientName(self, obj):
@@ -412,7 +426,6 @@ class iCf_Sale_user (invoice_admin):
 		else:
 			return cli
 	clientName.short_description = _(u"Client")
-
 	def clientCif(self, obj):
 		import pdb;pdb.set_trace()
 		cli = obj.sale_invoices_clients
@@ -421,7 +434,6 @@ class iCf_Sale_user (invoice_admin):
 		else:
 			return obj.client.id_card_non_es
 	clientCif.short_description = _(u"Client (ID) ")
-
 	def changelist_view(self, request, extra_context=None):
 		response = super(iCf_Sale_user, self).changelist_view(request, extra_context)
 
@@ -451,34 +463,27 @@ class sales_invoice_admin(iCf_Sale_user):
 	#list_filter = ('icf_self_employed','period', 'transfer_date')
 	actions = iCf_Sale_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 #
-class purchases_line_inline(admin.TabularInline):
-	model = iCf_Purchase_line
-	fields = ['value', 'percent_vat', 'percent_irpf']
-	extra = 7
-#
 class iCf_Purchase_user (invoice_admin):
 	form = purchases_invoice_form
 	model = iCf_Purchase
-	change_list_template = 'iCf_Purchase/change_list.html'
+	#change_list_template = 'iCf_Purchase/change_list.html'
 	fields = ['provider',] + ['period', 'num', 'date'] + ['unit','who_manage', 'expiring_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date')
 	list_export = ( 'providerName', 'providerCif') + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
-	inlines = [purchases_line_inline]
+	inlines = [iCf_Purchase_inline]
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
 	list_display_links = ( 'number', )
 	list_per_page = 1000
 	def providerName(self, obj):
 		return obj.provider.name
 	providerName.short_description = _(u"provider")
-
 	def providerCif(self, obj):
 		if obj.provider.CIF:
 			return obj.provider.CIF
 		else:
 			return obj.provider.otherCIF
 	providerCif.short_description = _(u"provider (ID) ")
-
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
 		response = super(iCf_Purchase_user, self).changelist_view(request, extra_context)
@@ -499,6 +504,7 @@ class iCf_Purchase_user (invoice_admin):
 		from Finances.bots import bot_filters
 		return response
 		return bot_filters.filterbydefault(request, self, iCf_Purchase_user, extra_context)
+
 #
 class purchases_invoice_admin (iCf_Purchase_user):
 	fields = iCf_Purchase_user.fields + ['status', 'transfer_date']
@@ -540,12 +546,10 @@ class iCf_Period_close_user(AutoRecordName):
 		return obj.savings_with_assigned_vat()
 	savings_with_assigned_vat.decimal = True
 	savings_with_assigned_vat.short_description = _(u'IVA Facturat - Assignat (€)')
-
 	def oficial_vat_total(self, obj):
 		return obj.oficial_vat_total()
 	oficial_vat_total.decimal = True
 	oficial_vat_total.short_description = _(u'IVA Facturat - Despeses (€)')
-
 	def assigned_vat_total(self, obj):
 		return obj.assigned_vat_total()
 	assigned_vat_total.decimal = True
@@ -553,7 +557,6 @@ class iCf_Period_close_user(AutoRecordName):
 
 	def total_vat(self, obj):
 		return obj.total_vat()
-
 	def total_irpf(self, obj):
 		return obj.total_irpf()
 
@@ -905,7 +908,9 @@ user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_co
 user_admin_site.register(icf_self_employed_proxy_balance)
 user_admin_site.register(iCf_Tax, iCf_Tax_user)
 user_admin_site.register(iCf_Sale, iCf_Sale_user)
+user_admin_site.register(iCf_Sale_line)
 user_admin_site.register(iCf_Purchase, iCf_Purchase_user)
+user_admin_site.register(iCf_Purchase_line)
 #
 # Invoicing system
 # user_admin_site.register(iCf_Tax, iCf_Tax_user)

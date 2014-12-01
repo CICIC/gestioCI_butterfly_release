@@ -116,7 +116,10 @@ class bot_period( object ):
 class bot_assigned_vat(object):
 	def __init__(self, current_cooper, percent_invoiced_vat):
 		if current_cooper:
-			self.assigned_vat = current_cooper.assigned_vat
+			try:
+				self.assigned_vat = current_cooper().assigned_vat
+			except:
+				self.assigned_vat = 0
 		else:
 			self.assigned_vat = 0
 
