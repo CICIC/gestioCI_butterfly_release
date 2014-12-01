@@ -257,7 +257,7 @@ class bot_filters(object):
 			current_period= bot_period(request.user).period(False)
 			if current_period:
 				q = request.GET.copy()
-				q['period__id__exact'] = current_period.id
+				#q['period__id__exact'] = current_period.id
 				request.GET = q
 				request.META['QUERY_STRING'] = request.GET.urlencode()
 				from django.http import HttpResponseRedirect

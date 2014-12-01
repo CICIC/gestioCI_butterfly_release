@@ -658,6 +658,9 @@ class iCf_Sale_line (iCf_Record):
 		return self.fk_sale_li.all().first().value + self.invoiced_vat()
 	total.integer=True
 	total.short_description=_(u'Total Factura (€)')
+	class Meta:
+		verbose_name=_(u'Línia de factura emesa')
+		verbose_name_plural=_(u'Línies de factura emesa')
 #
 class iCf_Purchase_line (iCf_Record):
 	icf_record = models.OneToOneField('Finances.iCf_Record', primary_key=True, parent_link=True)
@@ -710,7 +713,6 @@ class iCf_Period_close(iCf_Record):
 	icf_purchases = models.ManyToManyField(iCf_Purchase, related_name="rel_icfe_purchases", verbose_name=_(u"Factures Despeses"))
 	icf_sale_movements  = models.ManyToManyField(iCf_Sale_movement, related_name="icf_self_employed_sale_movements", verbose_name=_(u"Factures Emeses"))
 	icf_purchase_movements = models.ManyToManyField(iCf_Purchase_movement, related_name="icf_self_employed_purchase_movements", verbose_name=_(u"Factures Despeses"))
-
 	def cooper(self):
 		return self._icf_self_employed()
 	def period(self):
@@ -719,12 +721,10 @@ class iCf_Period_close(iCf_Record):
 		else:
 			return ""
 	def __init__(self, *args, **kwargs):
-
 		super(iCf_Period_close, self).__init__(*args, **kwargs)
 		#t = _check_icf_record_type("iCf_Period", "","", None, True)
 		#self.record_type = _check_icf_record_type("iCf_Period_close", u'Sumatori i totals del periode de facturació.', u'Durant el trismestre els autoocupats asignen factures a un registre de Sumatori i totals. Un cop arribada la data de tancament, un procés automátic ha de tancar els registres no tancats pels usuaris.', t)
 		#self.record_type = iCf_Record_Type.objects.get(clas="iCf_Period_close")
-
 	def _icf_self_employed(self):
 		if hasattr(self, 'icf_self_employed'):
 			return self.icf_self_employed
@@ -740,7 +740,6 @@ class iCf_Period_close(iCf_Record):
 			return 'none'
 	_ic_self_employed.allow_tags = True
 	_ic_self_employed.short_description = _(u"Registre d'Autoocupat")
-
 	#sales
 	sales_base = models.DecimalField(verbose_name=_(u"Base Imposable Emeses (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
 	sales_invoiced_vat = models.DecimalField(verbose_name=_(u"IVA Facturat (€)"), decimal_places=2, max_digits=10, blank=True, null=True)
@@ -803,10 +802,16 @@ class iCf_Period_close(iCf_Record):
 		return 0 if VATamount < 0 else VATamount
 	total_vat.decimal = True
 	def total_irpf(self):
-		return self.purchases_irpf
+		try:
+			return self.purchases_irpf if self.purchases_irpf else 0
+		except:
+			return 0
 	total_irpf.decimal = True
 	def total(self):
-		return self.total_tax() + self.donation + self.savings_with_assigned_vat_donation
+		try:
+			return self.total_tax() + self.donation + self.savings_with_assigned_vat_donation
+		except:
+			return 0
 	total.decimal = True
 	def total_to_pay(self):
 		try:

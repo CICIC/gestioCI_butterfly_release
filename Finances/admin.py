@@ -338,7 +338,7 @@ class iCf_Self_Employed_companies_admin(icf_self_employed_companies_user):
 		return {'direct_to_change_form':False }
 #
 class invoice_admin(ModelAdmin):
-	list_filter = ('record_type',)
+	list_filter = ('who_manage', 'period')
 	model = iCf_Invoice
 	def status(self, obj):
 		return obj.status()
@@ -411,7 +411,7 @@ class iCf_Purchase_inline(admin.TabularInline):
 class iCf_Sale_user (invoice_admin):
 	form = sales_invoice_form
 	model = iCf_Sale
-	#change_list_template = 'iCf_Sale/change_list.html'
+	change_list_template = 'iCf_Sale/change_list.html'
 	fields = ['client',] + ['period', 'num', 'date'] + ['unit', 'who_manage']
 	list_display =  ('client',) + ('period', 'number', 'num', 'date', 'value') + ('invoiced_vat', 'assigned_vat', 'total', ) + ('who_manage', 'status', 'transfer_date')
 	list_editable =  ('client',) + ('num', 'date') + ('who_manage',)
@@ -450,9 +450,7 @@ class iCf_Sale_user (invoice_admin):
 			extra_context['sales_assigned_vat'] = Decimal ( "%.2f" % bot.sales_assigned_vat )
 			extra_context['sales_total'] = Decimal ( "%.2f" % bot.sales_total )
 		#Filter by period
-		from Finances.bots import bot_filters
-		return response
-		return bot_filters.filterbydefault(request, self, iCf_Sale_user, extra_context)
+		return super(iCf_Sale_user, self).changelist_view(request, extra_context)
 #
 class sales_invoice_admin(iCf_Sale_user):
 	fields = iCf_Sale_user.fields + ['status', 'transfer_date']
@@ -466,7 +464,7 @@ class sales_invoice_admin(iCf_Sale_user):
 class iCf_Purchase_user (invoice_admin):
 	form = purchases_invoice_form
 	model = iCf_Purchase
-	#change_list_template = 'iCf_Purchase/change_list.html'
+	change_list_template = 'iCf_Purchase/change_list.html'
 	fields = ['provider',] + ['period', 'num', 'date'] + ['unit','who_manage', 'expiring_date']
 	list_display =  ('provider',) + ('period', 'number', 'num', 'date', 'value') + ('vat', 'irpf', 'total') + ('who_manage', 'status', 'expiring_date', 'transfer_date')
 	list_editable =  ('provider',) + ('num', 'date') + ('who_manage', 'expiring_date')
@@ -501,10 +499,10 @@ class iCf_Purchase_user (invoice_admin):
 			extra_context['purchases_total'] = Decimal ( "%.2f" % bot.purchases_total )
 
 		#Filter by period
-		from Finances.bots import bot_filters
-		return response
-		return bot_filters.filterbydefault(request, self, iCf_Purchase_user, extra_context)
-
+		#from Finances.bots import bot_filters
+		#return bot_filters.filterbydefault(request, self, iCf_Purchase_user, extra_context)
+		#
+		return super(iCf_Purchase_user, self).changelist_view(request, extra_context)
 #
 class purchases_invoice_admin (iCf_Purchase_user):
 	fields = iCf_Purchase_user.fields + ['status', 'transfer_date']

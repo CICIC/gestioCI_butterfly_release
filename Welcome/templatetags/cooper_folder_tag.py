@@ -66,7 +66,8 @@ def _finances_folder(object, user):
 			# Registre corresponent al periode pel membre actual
 			pc = period.get_period_closed(object.icf_self_employed)
 			label = pc.__unicode__()
-			value = "<a href='/cooper/Finances/icf_period_close/%s'>%s %s %s %s</a>" % (pc.id, pc.total, pc.total_to_pay, pc.total_balance, pc.total_acumulated)
+			#pc.total(), pc.total_to_pay(), pc.total_balance(), pc.total_acumulated()
+			value = "<a href='/cooper/Finances/icf_period_close/%s'>Total: %s | IVA: %s | IRPF: %s </a>" % (pc.id, pc.total(), pc.total_vat() , pc.total_irpf())
 			periods_lists.append(_folder(_(u"Resultats").encode("utf-8"), value))
 		value = _links_list_to_ul(periods_lists)
 	except Exception as e:
