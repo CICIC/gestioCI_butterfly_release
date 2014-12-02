@@ -62,7 +62,7 @@ def _finances_folder(object, user):
 			# Registre corresponent al periode pel membre actual
 			pc = period.get_period_closed(object.icf_self_employed)
 			# Registre tipus del periode obert
-			label = period.render_icf_se_period(pc.closed)
+			label = period.render_icf_se_period(pc)
 			value = "<a href='/cooper/Finances/icf_period_close/%s'>%s</a>" % (pc.id, label)
 			periods_lists.append(_folder(_(u"Periodes").encode("utf-8"), value))
 			#
@@ -73,8 +73,9 @@ def _finances_folder(object, user):
 			value = "<a href='/cooper/Finances/icf_purchase'> %s </a>" % ( pc.render_total_purchases() )
 			periods_lists.append(_folder(_(u"Despeses (€)").encode("utf-8"), value))
 		value = _links_list_to_ul(periods_lists)
-	except Exception as e:
-		print e
+	except Exception, err:
+		import traceback
+		print traceback.format_exc()
 		from tools_upgrader.objects import Self_Employed_auth
 		value = Self_Employed_auth(object)._get_user_member_field()
 	return _folder( caption, value ) 

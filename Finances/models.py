@@ -25,7 +25,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from General.models import Concept, Company, Type
 from public_form.models import RegistrationProfile
 from django.db.models import Q, Sum
+from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
 
+from django.utils.safestring import mark_safe
 # end IMPORTS ********************************************
 
 # begin TOOLS and VARS and CONSTs ************************
@@ -33,6 +36,8 @@ from django.db.models import Q, Sum
 #  MPTT linking
 ico_no = "<img src='/static/admin/img/icon-no.gif' alt='False'>"
 ico_yes = "<img src='/static/admin/img/icon-yes.gif' alt='True'>"
+ico_archived = "<img src='/static/admin/img/icon-archived.gif' alt='True'>"
+
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Finances/"
 a_strWC = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/icf_self_employed/Finances/"
@@ -145,7 +150,16 @@ Section 1 >> Abstract model entities to link GENERAL MPTT Tree
 https://wiki.enredaos.net/index.php?title=GestioCI-Codi#MPTT
 '''
 from General.models import Artwork, Concept
-class iCf_Record(Artwork):	# create own ID's
+class AdminURLMixin(object):
+	def get_admin_url(self):
+		content_type = ContentType \
+			.objects \
+			.get_for_model(self.__class__)
+		return reverse("cooper:%s_%s_change" % (
+			content_type.app_label,
+			content_type.model),
+			args=(self.id,))
+class iCf_Record(Artwork, AdminURLMixin):	# create own ID's
 	record_type = TreeForeignKey('iCf_Record_Type', blank=True, null=True, verbose_name=_(u"Tipus de Registre financer de CI"))
 	class Meta:
 		verbose_name= _(u'sys_artwork_record')
@@ -241,15 +255,32 @@ class iCf_Period(iCf_Record_Type):
 		#self.icf_type = iCf_Type.objects.get(clas="iCf_Periods")
 	def __unicode__(self):
 		return self.render_icf_se_period()
-
-	def render_icf_se_period(self, closed=False, exported=False):
+	def render_exported_period(self, pc):
+		status = _(u" %s tancat i archivat. %s %s %s")
+		link_s = "<a href='%s'> %s </a>" % (pc.get_link_to_pdf("sales"), _(u"Pdf emeses"))
+		link_p = "<a href='%s'> %s </a>" % (pc.get_link_to_pdf("purchases"), _(u"Pdf emeses"))
+		link_pc = "<a href='%s'> %s </a>" % (pc.get_link_to_pdf("period_close"), _(u"Pdf resultats"))
+		return status % (ico_archived, link_s, link_p, link_pc)
+	def render_closed_period(self, pc):
+		status = _(u" %s tancat %s %s %s") % (ico_yes,
+			pc.total_to_pay().short_description + ": %s ",
+			pc.total_balance().short_description + ": %s ",
+			pc.total_acumulated().short_description + ": %s "
+		)
+		status = status % (
+			pc.total_to_pay(),
+			pc.total_balance(),
+			pc.total_acumulated()
+		)
+		return status
+	def render_icf_se_period(self, pc, exported=False):
 		if not self:
 			return ""
 		if hasattr(self, "id"):
 			if self.exported:
-				status = _(u" tancat i archivat.")
-			elif closed:
-				status = _(u" %s tancat") % (ico_yes) 
+				status = self.render_exported_period(pc)
+			elif pc.closed:
+				status = self.render_closed_period(pc)
 			elif self.first_day > date.today():
 				status = _(u" no és en vigor.")
 			elif self.date_close > date.today() and self.date_open < date.today():
@@ -263,13 +294,9 @@ class iCf_Period(iCf_Record_Type):
 				status = _(u" facturable fins: %s") % (open)
 			else:
 				status = _(u"Aquest periode es pot exportar.")
-			return "%s > %s" % (self.name, status)
+			return "%s  %s" % (self.name, status)
 		else:
 			return _("periode buit").encode("utf-8")
-	class Meta:
-		verbose_name= _(u"C - Trimestres")
-		verbose_name_plural= _(u"C - Trimestres")
-
 	def get_period_closed(self, icf_se):
 		# Pending by this iCf_Period,
 		# every icf_se must have a iCf_Period_close.
@@ -297,6 +324,9 @@ class iCf_Period(iCf_Record_Type):
 					print e
 					pass
 		return pc
+	class Meta:
+		verbose_name= _(u"C - Trimestres")
+		verbose_name_plural= _(u"C - Trimestres")
 '''
 Section 3 >> Invoicing and currency movements and period closing
 '''
@@ -363,7 +393,7 @@ class iCf_Sale_movement( iCf_Movement ):
 	planned_date=models.DateField(verbose_name=_(u"Data previsió"), help_text=_(u"La data prevista. Exemple dd/mm/aaaa"))
 	who_manage= models.IntegerField(
 		verbose_name=_(u"Forma de pagament"), 
-		help_text=_(u"Si selecciona la opció 'desde la icf_self_employedativa' haurà d'ampliar informació."), 
+		help_text=_(u"Si selecciona la opció 'desde la cooperativa' haurà d'ampliar informació."), 
 		choices=who_manage_CHOICES, 
 		default=manage_CHOICE_COOPER
 	)
@@ -398,7 +428,7 @@ class iCf_Invoice(iCf_Record):
 	expiring_date=models.DateField(verbose_name=_(u"Data venciment"), help_text=_(u"La data de venciment. Exemple dd/mm/aaaa"), null=True, blank=True)
 	who_manage= models.IntegerField(
 		verbose_name=_(u"Forma de pagament"), 
-		help_text=_(u"Si selecciona la opció 'desde la icf_self_employedativa' haurà d'ampliar informació."), 
+		help_text=_(u"Si selecciona la opció 'desde la cooperativa' haurà d'ampliar informació."), 
 		choices=who_manage_CHOICES, 
 		default=0
 	)
@@ -900,8 +930,14 @@ class iCf_Period_close(iCf_Record):
 		return self.total_to_pay() - self.total_balance()
 	total_acumulated.decimal = True
 	total_acumulated.short_description = (u"TOTAL A ABONAR - SALDO (€)")
+	def get_link_to_pdf(self, item):
+		return "/Finances/print_item/%s" % (item)
+
 	def __unicode__(self):
-		return "hacked"
+		try:
+			return mark_safe("<a href='%s'>%s</a>" % (self.get_admin_url(), self.closed))
+		except:
+			return "hacked"
 	class Meta:
 		#unique_together = ('icf_self_employed', 'period')
 		verbose_name= _(u'03 - Resultats')
