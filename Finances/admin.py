@@ -31,7 +31,6 @@ class AutoRecordName(admin.ModelAdmin):
 	# Here, AutoRecordName must filter its queryset by current logged user.
 	# See further comments:
 	def get_queryset(self, request):
-		import pdb; pdb.set_trace()
 		# ... by being a [superuser], no filtering on query.
 		if request.user.is_superuser:
 			return self.model.objects.all()
@@ -63,10 +62,43 @@ class AutoRecordName(admin.ModelAdmin):
 				#
 				from Finances.models import iCf_Self_Employed
 				try:
+
+					# Extract: User, icf_Self_Employed, icf_Period_close
+					try:
+						user = request.user
+					except:
+						print "user logged is required"
+					else:
+						try:
+							icf_se = user.fk_icf_self_employed.all().first()
+						except:
+							print "Finances/admin.py/class AutoRecordName.get_queryset()"
+							print user.username + " necesito el seu id de iC_Self_Employed"
+							print "Aquest user no es habilitat per usar l'entorn de facturació. Pots utilitzar el codi següent per incloure'l:"
+							print " from tools_upgrader.objects import Self_Employed_auth "
+							print " Self_Employed_auth(icf_se, user)._get_user_member_field() "
+						else:
+							# ... recupera i/o crear el registre de tancament de periode actual
+							from Finances.bots import bot_period
+							icf_pc = bot_period(user).period(True, request).get_period_closed(icf_se)
+					#
+					# Filter conditional
+					queryset = None
+					# ... Filtering Invoices
+					#
+					if hasattr(self.model, "rel_icfe_sales"):
+						return icf_pc.icf_sales.all()
+					if hasattr(self.model, "rel_icfe_purchases"):
+						return icf_pc.icf_purchases.all() 
+					#
+					# ... Filtering Period_Close.
+					#
+					if hasattr(self.model, "rel_icfse_icf_period_close"):
+						return icf_se.icf_periods_closed.all()
+
+					# Filtering generic entities:
 					current_human = None
 					current_registration = iCf_Self_Employed.objects.get(user=request.user)
-					if hasattr(self,"model") and hasattr(self.model,"rel_icfse_icf_period_close"):
-						return self.model.objects.all()
 					# ... by having [General.Person] attr maybe be {General.Human and Person} friendly so should filter
 					if hasattr(self.model, "person"):
 						# ... casting to General.Person
@@ -341,7 +373,7 @@ class iCf_Self_Employed_companies_admin(icf_self_employed_companies_user):
 	def get_model_perms(self, request): 
 		return {'direct_to_change_form':False }
 #
-class invoice_admin(ModelAdmin):
+class invoice_admin(AutoRecordName):
 	list_filter = ('who_manage', 'period')
 	model = iCf_Invoice
 	def status(self, obj):
@@ -397,21 +429,33 @@ class invoice_admin(ModelAdmin):
 				'invoice.js',   # app static folder
 			)
 #
-class iCf_Sale_inline(admin.TabularInline):
+class AutoRecordNameTabular(admin.TabularInline):
+	def save_model(self, request, obj, form, change):
+		instance = form.save(commit=False)
+		if not hasattr(instance, 'name'):
+			print ('AUTO NAME SAVE hasnot name!! '+str(obj))
+		#if instance.name is None or instance.name == '':
+		instance.name = instance.__unicode__()
+		instance.save()
+		form.save_m2m()
+		return instance
+#
+class iCf_Sale_inline(AutoRecordNameTabular):
 	iCf_Sale.lines.through.__unicode__ = lambda x: "" #delete ugly header ->> TODO, remove from template
 	model = iCf_Sale.lines.through
 	fields = ("value", "percent_invoiced_vat")
 	extra = 1
 	verbose_name=_(u'Línia de factura emesa')
 	verbose_name_plural=_(u'Línies de factura emesa')
-class iCf_Purchase_inline(admin.TabularInline):
+#
+class iCf_Purchase_inline(AutoRecordNameTabular):
 	iCf_Purchase.lines.through.__unicode__ = lambda x: "" #delete ugly header ->> TODO, remove from template
 	model = iCf_Purchase.lines.through
 	fields = ('value', 'percent_vat', 'percent_irpf')
 	extra = 1
 	verbose_name=_(u'Línia de factura despesa')
 	verbose_name_plural=_(u'Línies de factura despesa')
-
+#
 class iCf_Sale_user (invoice_admin):
 	form = sales_invoice_form
 	model = iCf_Sale
@@ -431,7 +475,6 @@ class iCf_Sale_user (invoice_admin):
 			return cli
 	clientName.short_description = _(u"Client")
 	def clientCif(self, obj):
-		import pdb;pdb.set_trace()
 		cli = obj.sale_invoices_clients
 		if cli.id_card_non_es:
 			return cli.id_card_es
@@ -440,9 +483,8 @@ class iCf_Sale_user (invoice_admin):
 	clientCif.short_description = _(u"Client (ID) ")
 	def changelist_view(self, request, extra_context=None):
 		response = super(iCf_Sale_user, self).changelist_view(request, extra_context)
-
 		try:
-			qs_queryset = response.context_data["cl"].query_set
+			qs_queryset = response.context_data["cl"].get_queryset()
 		except:
 			qs_queryset = None
 		if qs_queryset and extra_context is None:
@@ -490,7 +532,7 @@ class iCf_Purchase_user (invoice_admin):
 		#Get totals
 		response = super(iCf_Purchase_user, self).changelist_view(request, extra_context)
 		try:
-			qs_queryset = response.context_data["cl"].query_set
+			qs_queryset = response.context_data["cl"].get_queryset()
 		except:
 			qs_queryset = None
 		if qs_queryset and extra_context is None:
@@ -523,10 +565,10 @@ class period_payment_inline(admin.TabularInline):
 #
 # PERIOD CLOSE ********************************************************
 #
-class iCf_Period_close_user(AutoRecordName):
-	form = period_close_form
-	change_form_template = 'iCf_Period_close/change_form.html'
+class iCf_Period_close_user(ModelAdmin):
 	model = iCf_Period_close
+	change_form_template = 'iCf_Period_close/change_form.html'
+	form = period_close_form
 	#inlines = [period_payment_inline]
 	list_display = ('edit_link', 'print_link') + period_close_base_fields
 	list_export = period_close_base_fields
@@ -549,23 +591,20 @@ class iCf_Period_close_user(AutoRecordName):
 	savings_with_assigned_vat.decimal = True
 	savings_with_assigned_vat.short_description = _(u'IVA Facturat - Assignat (€)')
 	def oficial_vat_total(self, obj):
+
 		return obj.oficial_vat_total()
 	oficial_vat_total.decimal = True
 	oficial_vat_total.short_description = _(u'IVA Facturat - Despeses (€)')
 	def assigned_vat_total(self, obj):
+
 		return obj.assigned_vat_total()
 	assigned_vat_total.decimal = True
 	assigned_vat_total.short_description = _(u'IVA Assignat - Despeses (€)')
-
 	def total_vat(self, obj):
 		return obj.total_vat()
 	def total_irpf(self, obj):
+
 		return obj.total_irpf()
-
-	def __init__(self, *args, **kwargs):
-		super(iCf_Period_close_user, self).__init__(*args, **kwargs)
-		self.list_display_links = (None, )
-
 	def save_model(self, request, obj, form, change):
 
 		#As we disable cooper and periods controls, we loaded their values in get_form so reload
@@ -584,8 +623,8 @@ class iCf_Period_close_user(AutoRecordName):
 		if obj.closed:
 			from Finances.bots import bot_period_payment
 			bot_period_payment(obj).create_sales_movements_for_period()
-
 	def edit_link(self, obj):
+
 		if obj is None:
 			can_edit = False
 		else:
@@ -597,9 +636,8 @@ class iCf_Period_close_user(AutoRecordName):
 			return obj.period
 	edit_link.allow_tags = True
 	edit_link.short_description = _(u"Període")
-
 	def print_link(self, obj):
-		
+
 		if obj is None:
 			can_print = False
 		else:
@@ -610,26 +648,24 @@ class iCf_Period_close_user(AutoRecordName):
 			return (u"-")
 	print_link.allow_tags = True
 	print_link.short_description = _(u"PDF")
-
 	def exists_opened_period(self, user):
-		return bot_period(user).period(False) is not None
 
+		return bot_period(user).period(False) is not None
 	def exists_closed_period(self, user):
+
 		current_period = bot_period(user).period(False)
 		current_cooper = bot_cooper(user).cooper(False)
 		if current_period is not None:
 			return self.model.objects.filter(record_type=current_period).count()>0
 		return False
-
 	def exists_closed_period_done(self, pc):
-		return iCf_Period_close.objects.get(pk=pc.id).closed
 
+		return iCf_Period_close.objects.get(pk=pc.id).closed
 	def has_add_permission(self, request):
 		return True
 		if request.user.is_superuser:
 			 return True
 		return self.exists_opened_period( request.user ) and not self.exists_closed_period( request.user )
-
 	def has_change_permission(self, request, obj=None):
 		return True
 		if request.user.is_superuser:
@@ -639,12 +675,11 @@ class iCf_Period_close_user(AutoRecordName):
 		else:
 			return self.exists_opened_period( obj.icf_self_employed.user ) and self.exists_closed_period( obj.icf_self_employed.user ) and not self.exists_closed_period_done ( obj )
 
-
 	class Media:
 			js = (
 				'iCf_Period_close.js',   # app static folder
 			)
-#user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
+
 class iCf_Period_close_admin (MPTTModelAdmin):
 	change_list_template = 'iCf_Period_close/change_list_admin.html'
 	list_display = ('cooper', ) + iCf_Period_close_user.list_display
@@ -707,6 +742,7 @@ class iCf_Period_close_admin (MPTTModelAdmin):
 		from Finances.bots import bot_filters
 		return response #bot_filters.filterbydefault(request, self, iCf_Period_close_user, extra_context)
 #
+
 # *********************************************************************
 #
 class balance_line_inline(admin.TabularInline):
@@ -885,15 +921,18 @@ admin.site.register(iCf_Tax, tax_admin)
 admin.site.register(iCf_Duty)
 admin.site.register(iCf_Period, iCf_Period_admin)
 
-#admin.site.register(iCf_Period_close, iCf_Period_close_user)
+#
 user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
-user_admin_site.register(icf_self_employed_proxy_balance)
+#
 user_admin_site.register(iCf_Tax, iCf_Tax_user)
+#
 user_admin_site.register(iCf_Sale, iCf_Sale_user)
 user_admin_site.register(iCf_Sale_line)
 user_admin_site.register(iCf_Purchase, iCf_Purchase_user)
 user_admin_site.register(iCf_Purchase_line)
-user_admin_site.register(iCf_Period_close)
+#
+user_admin_site.register(iCf_Period_close, iCf_Period_close_user)
+user_admin_site.register(icf_self_employed_proxy_balance)
 #
 # Invoicing system
 # user_admin_site.register(iCf_Tax, iCf_Tax_user)

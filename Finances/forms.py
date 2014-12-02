@@ -47,7 +47,7 @@ class invoice_form(forms.ModelForm):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
-		self.base_fields["status"].widget.attrs["disabled"] = True
+		self.base_fields["status"].widget.attrs["disabled"] = "True"
 		current_cooper = bot_cooper(self.request.user).cooper(self.request)
 		if current_cooper and not hasattr(self.instance, 'cooper'):
 			self.instance.cooper  = current_cooper 
@@ -135,7 +135,7 @@ class invoice_form_balance(purchases_invoice_form):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
-		self.base_fields['status'].widget.attrs['disabled'] = True
+		self.base_fields['status'].widget.attrs['disabled'] = "True"
 
 from Finances.models import movement_STATUSES
 class movement_form_balance(forms.ModelForm):
@@ -147,7 +147,7 @@ class movement_form_balance(forms.ModelForm):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
-		self.base_fields['status'].widget.attrs['disabled'] = True
+		self.base_fields['status'].widget.attrs['disabled'] = "True"
 	class Meta:
 		exclude = ['status',]
 		localized_fields = ["value",]

@@ -182,9 +182,10 @@ class Self_Employed_auth(object):
 	 init object
 	
 	'''
-	def __init__(self, ic_self_employed):
+	def __init__(self, ic_self_employed, user=None ):
 		#
 		# Save current ic_self_employed (call it: ic_se)
+		self.user = user
 		self.ic_se = ic_self_employed
 
 	def _get_user_member_field(self):

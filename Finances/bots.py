@@ -12,7 +12,7 @@ class bot_sales_invoice ( object ):
 		self.sales_invoiced_vat = Decimal ("0.00")
 		self.sales_assigned_vat = Decimal ("0.00")
 		self.sales_total = Decimal ("0.00")
-		for item in queryset.all():
+		for item in queryset:
 			self.sales_base += item.value()
 			self.sales_invoiced_vat += item.invoiced_vat()
 			self.sales_assigned_vat += item.assigned_vat()
@@ -24,7 +24,7 @@ class bot_purchases_invoice ( object ):
 		self.purchases_vat = Decimal ("0.00")
 		self.purchases_irpf = Decimal ("0.00")
 		self.purchases_total = Decimal ("0.00")
-		for item in queryset.all():
+		for item in queryset:
 			self.purchases_base += item.value()
 			self.purchases_vat += item.vat()
 			self.purchases_irpf += item.irpf()
@@ -231,8 +231,8 @@ class bot_period_close( object ):
 				form.base_fields[field].initial = value
 
 	def set_period_close_form_readonly(self, form_array):
-		form_array.base_fields['period'].widget.attrs['disabled'] = True
-		form_array.base_fields['cooper'].widget.attrs['disabled'] = True
+		form_array.base_fields['period'].widget.attrs['disabled'] = "True"
+		form_array.base_fields['cooper'].widget.attrs['disabled'] = "True"
 		form_array.base_fields['sales_base'].widget.attrs['readonly'] = True
 		form_array.base_fields['sales_invoiced_vat'].widget.attrs['readonly'] = True
 		form_array.base_fields['sales_assigned_vat'].widget.attrs['readonly'] = True
@@ -251,8 +251,18 @@ class bot_period_close( object ):
 class bot_filters(object):
 	@staticmethod
 	def filterbydefault(request, instance, entity, extra_context):
+		import pdb;pdb.set_trace()
 		referer = request.META.get('HTTP_REFERER', '')
 		showall = request.META['PATH_INFO'] in referer and not request.GET.has_key('timeframe')
+		if not showall and not request.GET.has_key('period__id__exact'):
+			current_period= bot_period(request.user).period(False)
+			if current_period:
+				q = request.GET.copy()
+				q['period__icf_record__exact'] = current_period.id
+				request.GET = q
+				request.META['QUERY_STRING'] = request.GET.urlencode()
+				from django.http import HttpResponseRedirect
+				return HttpResponseRedirect( request.path + "?" + request.GET.urlencode() )
 		return super(entity,instance).changelist_view(request, extra_context=extra_context)
 
 class bot_currency(object):

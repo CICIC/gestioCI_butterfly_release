@@ -271,9 +271,15 @@ class iCf_Period(iCf_Record_Type):
 		verbose_name_plural= _(u"C - Trimestres")
 
 	def get_period_closed(self, icf_se):
+		# Pending by this iCf_Period,
+		# every icf_se must have a iCf_Period_close.
+		#
+		# So...
 		try:
+			# ... return existing one
 			pc = icf_se.icf_periods_closed.get(record_type=self)
 		except:
+			# ... init by creating blank
 			pc = iCf_Period_close()
 			pc.record_type = self
 			pc.period_tax = iCf_Tax.objects.get(min_base = 0).value
@@ -281,8 +287,9 @@ class iCf_Period(iCf_Record_Type):
 				pc.save()
 			except Exception as e:
 				print e
-				pass
+				return None
 			else:
+				# ... if could create, add to icf_se periods list
 				icf_se.icf_periods_closed.add(pc)
 				try:
 					icf_se.save()
@@ -880,6 +887,7 @@ class iCf_Period_close(iCf_Record):
 	total_to_pay.decimal = True
 	total_to_pay.short_description = (u"TOTAL A ABONAR (€)")
 	def total_balance(self):
+		return 0
 		total_previous = 0
 		if self.period is not None:
 			from Finances.bots import bot_balance
@@ -888,6 +896,7 @@ class iCf_Period_close(iCf_Record):
 	total_balance.decimal = True
 	total_balance.short_description = (u"TOTAL SALDO (€)")
 	def total_acumulated(self):
+		return 0
 		return self.total_to_pay() - self.total_balance()
 	total_acumulated.decimal = True
 	total_acumulated.short_description = (u"TOTAL A ABONAR - SALDO (€)")
