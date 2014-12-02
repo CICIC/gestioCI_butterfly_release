@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 
 class bot_sales_invoice ( object ):
 	def __init__( self, queryset ):
+		
 		self.sales_base = Decimal ("0.00")
 		self.sales_invoiced_vat = Decimal ("0.00")
 		self.sales_assigned_vat = Decimal ("0.00")
@@ -20,6 +21,7 @@ class bot_sales_invoice ( object ):
 
 class bot_purchases_invoice ( object ):
 	def __init__( self, queryset ):
+		
 		self.purchases_base = Decimal ("0.00")
 		self.purchases_vat = Decimal ("0.00")
 		self.purchases_irpf = Decimal ("0.00")
@@ -58,6 +60,7 @@ class bot_cooper( object ):
 			return Company.objects.filter(id=-1)
 class bot_icf_self_employed( bot_cooper ):
 	def __init__(self, num_ces):
+		
 		self.num_ces = num_ces
 		from Finances.models import iCf_Self_Employed
 		try:
@@ -115,6 +118,7 @@ class bot_period( object ):
 				)
 class bot_assigned_vat(object):
 	def __init__(self, current_cooper, percent_invoiced_vat):
+		
 		if current_cooper:
 			try:
 				self.assigned_vat = current_cooper().assigned_vat
@@ -152,6 +156,7 @@ class bot_period_tax(object):
 		except:
 			tax = -1
 		self.tax = tax
+		import pdb;pdb.set_trace()
 
 class bot_object(object):
 	def __init__(self, field, obj):
@@ -182,8 +187,11 @@ class bot_period_close( object ):
 		self.period = period
 		if cooper and period:
 			self.period_close = self.load_period_close( obj, recalculate )
+		print "pass"
+		import pdb; pdb.set_trace()
 	def load_period_close(self, obj=None, recalculate = False):
 		from Finances.models import iCf_Period_close
+
 		if obj is None:
 			pc = iCf_Period_close(self.period, self.cooper)
 			pc.period = self.period
@@ -213,22 +221,23 @@ class bot_period_close( object ):
 			pc.purchases_total = bot.purchases_total
 			#QUOTA
 			pc.period_tax = bot_period_tax (pc.sales_base).tax
-			pc.advanced_tax = self.cooper.advanced_tax
+			pc.advanced_tax = pc.rel_icfse_icf_period_close.all().first().advanced_tax
+			import pdb;pdb.set_trace()
 		return pc
 
 	def load_period_close_form(self, form, fields, initial = True ):
 		for field in fields:
-			if str(field) =="period":
+			if str(field) =="period" or str(field) =="record_type":
 				value = self.period 
-			elif str(field) == "cooper":
-				value = self.cooper.id
+				field = "record_type"
 			else:
 				value = bot_object( field, self.period_close ).value()
 
 			if initial:
 				form.initial[field] = value
 			else:
-				form.base_fields[field].initial = value
+				if not field == "cooper":
+					form.base_fields[field].initial = value
 
 	def set_period_close_form_readonly(self, form_array):
 		form_array.base_fields['period'].widget.attrs['disabled'] = "True"
@@ -251,7 +260,6 @@ class bot_period_close( object ):
 class bot_filters(object):
 	@staticmethod
 	def filterbydefault(request, instance, entity, extra_context):
-		import pdb;pdb.set_trace()
 		referer = request.META.get('HTTP_REFERER', '')
 		showall = request.META['PATH_INFO'] in referer and not request.GET.has_key('timeframe')
 		if not showall and not request.GET.has_key('period__id__exact'):

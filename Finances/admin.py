@@ -631,7 +631,7 @@ class iCf_Period_close_user(ModelAdmin):
 			can_edit =self.exists_opened_period( obj.rel_icfse_icf_period_close.all().first().user ) and self.exists_closed_period( obj.rel_icfse_icf_period_close.all().first().user ) and not self.exists_closed_period_done ( obj )
 		if can_edit:
 			return u'<a href="/cooper/%s/%s/%s">%s</a>' % (
-				 obj._meta.app_label, obj._meta.module_name, obj.id, obj.period)
+				 obj._meta.app_label, obj._meta.model_name, obj.id, obj.period)
 		else:
 			return obj.period
 	edit_link.allow_tags = True
@@ -643,7 +643,10 @@ class iCf_Period_close_user(ModelAdmin):
 		else:
 			can_print = self.exists_closed_period_done ( obj )
 		if can_print:
-			return u'<a href="/invoices/print/%s">%s</a>' % ( obj.id, obj.period)
+			try:
+				return u'<a href="/invoices/print/%s">%s</a>' % ( obj.id, obj.period())
+			except:
+				return u'<a href="/invoices/print/%s">%s</a>' % ( obj.id, obj.period().encode("utf-8"))
 		else:
 			return (u"-")
 	print_link.allow_tags = True
@@ -674,6 +677,18 @@ class iCf_Period_close_user(ModelAdmin):
 			return True
 		else:
 			return self.exists_opened_period( obj.icf_self_employed.user ) and self.exists_closed_period( obj.icf_self_employed.user ) and not self.exists_closed_period_done ( obj )
+	def get_form(self, request, obj=None, **kwargs):
+		ModelForm = super(iCf_Period_close_user, self).get_form(request, obj, **kwargs)
+		ModelForm.is_new = obj is None
+		ModelForm.request = request
+		if obj:
+			ModelForm.obj = obj
+		ModelForm.current_fields = self.list_export
+		if obj is not None:
+			ModelForm.period = obj.period
+			ModelForm.cooper = obj.cooper
+			#bot_period_close( obj.period, obj.cooper, obj).set_period_close_form_readonly(ModelForm)
+		return ModelForm
 
 	class Media:
 			js = (

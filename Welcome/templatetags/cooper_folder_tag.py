@@ -53,21 +53,21 @@ def _member_folder(object):
 	return "<h5>%s</h5> %s" % ( caption, value ) 
 
 def _finances_folder(object, user):
-	caption = _(u"Facturacio").encode("utf-8")
 	try:
 		# Periode vigent en facturació
 		from Finances.bots import bot_period
 		periods_lists = []
-		for period in bot_period.get_opened_periods_list(user):
-			# Registre corresponent al periode pel membre actual
+		#opened_one = bot_period.get_opened_periods_list(user)
+		from Finances.models import iCf_Period
+		list = bot_period.get_opened_periods_list(user)
+		if not list:
+			list = iCf_Period.objects.all()
+		for period in list:
+			# Registre corresponent al periode pel membre actual:
 			pc = period.get_period_closed(object.icf_self_employed)
-			# Registre tipus del periode obert
+			# Registre tipus del periode obert:
 			label = period.render_icf_se_period(pc)
-			value = "<a href='/cooper/Finances/icf_period_close/%s'>%s</a>" % (pc.id, label)
-			periods_lists.append(_folder(_(u"Periodes").encode("utf-8"), value))
-			#
-			label = pc.__unicode__()
-			#pc.total(), pc.total_to_pay(), pc.total_balance(), pc.total_acumulated()
+			periods_lists.append(_folder(label, pc.__unicode__() ))
 			value = "<a href='/cooper/Finances/icf_sale'> %s </a>" % ( pc.render_total_sales() )
 			periods_lists.append(_folder(_(u"Emeses (€)").encode("utf-8"), value))
 			value = "<a href='/cooper/Finances/icf_purchase'> %s </a>" % ( pc.render_total_purchases() )
@@ -78,7 +78,7 @@ def _finances_folder(object, user):
 		print traceback.format_exc()
 		from tools_upgrader.objects import Self_Employed_auth
 		value = Self_Employed_auth(object)._get_user_member_field()
-	return _folder( caption, value ) 
+	return value
 
 def _fees_folder(object):
 	caption = _(u"Quotes").encode("utf-8")
@@ -233,7 +233,8 @@ class member_object(object):
 		if not self.user.groups.all().filter(name="iC_Stallholder"):
 			links.append( _member_folder( object ) )
 			links.append( _fees_folder( object ) )
-		links.append( _finances_folder( object, self.user ) )
+
+		links.append(_folder("finances",_finances_folder( object, self.user )) )
 		return sections, links
 
 	def render_member(self, object, sections, links):

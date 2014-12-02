@@ -37,6 +37,12 @@ from django.utils.safestring import mark_safe
 ico_no = "<img src='/static/admin/img/icon-no.gif' alt='False'>"
 ico_yes = "<img src='/static/admin/img/icon-yes.gif' alt='True'>"
 ico_archived = "<img src='/static/admin/img/icon-archived.gif' alt='True'>"
+ico_closed_key = "<img src='/static/admin/img/icon-closed_key.png' alt='True'>"
+ico_closed_key_opened = "<img src='/static/admin/img/icon-closed_key_opened.gif' alt='True'>"
+
+icon_pdf_invoice = "<img src='/static/admin/img/icon_pdf_invoice.png' alt='True'>"
+icon_iCf_Invoice = "<img src='/static/admin/img/icon_iCf_Invoice.jpg' alt='True'>"
+icon_iCf_Period_close = "<img src='/static/admin/img/icon_iCf_Period_close.png' alt='True'>"
 
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Finances/"
@@ -85,7 +91,6 @@ def _check_icf_record_type( clas, name, description, tt, check_type=False, check
 	#Main entity type
 	#... loop to process each entity
 	if not name:
-		import pdb;pdb.set_trace()
 		pass
 		
 	try:
@@ -254,33 +259,27 @@ class iCf_Period(iCf_Record_Type):
 		super(iCf_Period, self).__init__(*args, **kwargs)
 		#self.icf_type = iCf_Type.objects.get(clas="iCf_Periods")
 	def __unicode__(self):
-		return self.render_icf_se_period()
+		try:
+			return self.label
+		except:
+			return "empty period"
 	def render_exported_period(self, pc):
 		status = _(u" %s tancat i archivat. %s %s %s")
-		link_s = "<a href='%s'> %s </a>" % (pc.get_link_to_pdf("sales"), _(u"Pdf emeses"))
-		link_p = "<a href='%s'> %s </a>" % (pc.get_link_to_pdf("purchases"), _(u"Pdf emeses"))
-		link_pc = "<a href='%s'> %s </a>" % (pc.get_link_to_pdf("period_close"), _(u"Pdf resultats"))
+		link_s = pc.get_link_to_pdf("sales")
+		link_p = pc.get_link_to_pdf("purchases")
+		link_pc = pc.get_link_to_pdf("period_close")
 		return status % (ico_archived, link_s, link_p, link_pc)
 	def render_closed_period(self, pc):
-		status = _(u" %s tancat %s %s %s") % (ico_yes,
-			pc.total_to_pay().short_description + ": %s ",
-			pc.total_balance().short_description + ": %s ",
-			pc.total_acumulated().short_description + ": %s "
-		)
-		status = status % (
-			pc.total_to_pay(),
-			pc.total_balance(),
-			pc.total_acumulated()
-		)
-		return status
+		return pc.render_closed_period()
 	def render_icf_se_period(self, pc, exported=False):
 		if not self:
 			return ""
+
 		if hasattr(self, "id"):
 			if self.exported:
 				status = self.render_exported_period(pc)
-			elif pc.closed:
-				status = self.render_closed_period(pc)
+			if self.date_close < date.today():
+				status = " %s Tancat" % ico_yes if pc.closed else "%s S'ha de fer un tancament automatic" % (ico_no)
 			elif self.first_day > date.today():
 				status = _(u" no és en vigor.")
 			elif self.date_close > date.today() and self.date_open < date.today():
@@ -931,9 +930,22 @@ class iCf_Period_close(iCf_Record):
 	total_acumulated.decimal = True
 	total_acumulated.short_description = (u"TOTAL A ABONAR - SALDO (€)")
 	def get_link_to_pdf(self, item):
-		return "/Finances/print_item/%s" % (item)
-
+		return ("%s: <a href='%s'>%s descarrega</a>") % (item,"", icon_pdf_invoice)
+	def render_closed_period(self):
+		status = _(u" %s tancat <div><p>%s</p><p>%s<p><p>%s<p></div>") % (ico_closed_key,
+			self.total_to_pay.short_description + ": %s ",
+			self.total_balance.short_description + ": %s ",
+			self.total_acumulated.short_description + ": %s "
+		)
+		status = status % (
+			self.total_to_pay(),
+			self.total_balance(),
+			self.total_acumulated()
+		)
+		return status
 	def __unicode__(self):
+		if getattr(self, "closed", False):
+			return self.render_closed_period()
 		try:
 			return mark_safe("<a href='%s'>%s</a>" % (self.get_admin_url(), self.closed))
 		except:
