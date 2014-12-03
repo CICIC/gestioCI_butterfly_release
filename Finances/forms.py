@@ -171,7 +171,6 @@ class period_close_form(forms.ModelForm):
 	def __init__(self, *args, **kwargs):
 		super(period_close_form, self).__init__(*args, **kwargs)
 		self.current_fields = self.current_fields + ('cooper', 'total_to_pay' )
-		import pdb;pdb.set_trace()
 		if self.is_new:
 			current_cooper = bot_cooper(self.request.user).cooper(self.request)
 			current_period = bot_period(self.request.user).period( True, self.request )
