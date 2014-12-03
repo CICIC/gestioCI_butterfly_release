@@ -156,7 +156,6 @@ class bot_period_tax(object):
 		except:
 			tax = -1
 		self.tax = tax
-		import pdb;pdb.set_trace()
 
 class bot_object(object):
 	def __init__(self, field, obj):
@@ -188,7 +187,6 @@ class bot_period_close( object ):
 		if cooper and period:
 			self.period_close = self.load_period_close( obj, recalculate )
 		print "pass"
-		import pdb; pdb.set_trace()
 	def load_period_close(self, obj=None, recalculate = False):
 		from Finances.models import iCf_Period_close
 
@@ -222,12 +220,12 @@ class bot_period_close( object ):
 			#QUOTA
 			pc.period_tax = bot_period_tax (pc.sales_base).tax
 			pc.advanced_tax = pc.rel_icfse_icf_period_close.all().first().advanced_tax
-			import pdb;pdb.set_trace()
+
 		return pc
 
 	def load_period_close_form(self, form, fields, initial = True ):
 		for field in fields:
-			if str(field) =="period" or str(field) =="record_type":
+			if str(field) =="period" or str(field) == "record_type":
 				value = self.period 
 				field = "record_type"
 			else:

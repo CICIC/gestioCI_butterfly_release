@@ -289,7 +289,7 @@ class iCf_Period_admin(MPTTModelAdmin):
 	change_list_template = "django-mptt-admin/change_list.html"
 	model = iCf_Period
 	exclude = ['label']
-	list_display = ('icf_type','name', 'first_day', 'date_open', 'date_close')
+	list_display = ('__unicode__', 'first_day', 'date_open', 'date_close')
 	actions = [export_as_csv_action("Exportar CSV", fields=list_display, header=True, force_fields=True),]
 	def save_model(self, request, obj, form, change):
 		# To be deprecated:
@@ -585,7 +585,7 @@ class iCf_Period_close_user(ModelAdmin):
 		(_('Tancar'), {'fields': ('closed',)}),
 	)
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
-
+	ordering = ['record_type__icf_period__first_day']
 	def savings_with_assigned_vat(self, obj):
 		return obj.savings_with_assigned_vat()
 	savings_with_assigned_vat.decimal = True
@@ -624,14 +624,15 @@ class iCf_Period_close_user(ModelAdmin):
 			from Finances.bots import bot_period_payment
 			bot_period_payment(obj).create_sales_movements_for_period()
 	def edit_link(self, obj):
-
 		if obj is None:
 			can_edit = False
 		else:
-			can_edit =self.exists_opened_period( obj.rel_icfse_icf_period_close.all().first().user ) and self.exists_closed_period( obj.rel_icfse_icf_period_close.all().first().user ) and not self.exists_closed_period_done ( obj )
+			can_edit = self.exists_opened_period( obj.rel_icfse_icf_period_close.all().first().user ) and self.exists_closed_period( obj.rel_icfse_icf_period_close.all().first().user ) and not self.exists_closed_period_done ( obj )
 		if can_edit:
-			return u'<a href="/cooper/%s/%s/%s">%s</a>' % (
-				 obj._meta.app_label, obj._meta.model_name, obj.id, obj.period)
+			try:
+				return u'<a href="/cooper/%s/%s/%s">%s</a>' % (obj._meta.app_label, obj._meta.model_name, obj.id, obj.period)
+			except:
+				return u'<a href="/cooper/%s/%s/%s">%s</a>' % (obj._meta.app_label, obj._meta.model_name, obj.id, obj.__unicode__(short_description = True))
 		else:
 			return obj.period
 	edit_link.allow_tags = True
@@ -692,10 +693,10 @@ class iCf_Period_close_user(ModelAdmin):
 
 	class Media:
 			js = (
-				'iCf_Period_close.js',   # app static folder
+				'iCf_Period_close/iCf_Period_close.js',   # app static folder
 			)
 
-class iCf_Period_close_admin (MPTTModelAdmin):
+class iCf_Period_close_admin (iCf_Period_close_user):
 	change_list_template = 'iCf_Period_close/change_list_admin.html'
 	list_display = ('cooper', ) + iCf_Period_close_user.list_display
 	list_export = ('cooper',) + iCf_Period_close_user.list_export
@@ -707,8 +708,10 @@ class iCf_Period_close_admin (MPTTModelAdmin):
 		else:
 			can_edit = True
 		if can_edit:
-			return u'<a href="/admin/%s/%s/%s">%s</a>' % (
-				 obj._meta.app_label, obj._meta.module_name, obj.id, obj.period)
+			try:
+				return u'<a href="/admin/%s/%s/%s">%s</a>' % (obj._meta.app_label, obj._meta.model_name, obj.id, obj.period)
+			except:
+				return u'<a href="/admin/%s/%s/%s">%s</a>' % (obj._meta.app_label, obj._meta.model_name, obj.id, obj.__unicode__(short_description = True))
 		else:
 			return obj.period
 	edit_link.allow_tags = True
@@ -935,7 +938,7 @@ admin.site.register(iCf_Record, ModelAdmin)
 admin.site.register(iCf_Tax, tax_admin)
 admin.site.register(iCf_Duty)
 admin.site.register(iCf_Period, iCf_Period_admin)
-
+admin.site.register(iCf_Period_close, iCf_Period_close_admin)
 #
 user_admin_site.register(icf_self_employed_proxy_companies, icf_self_employed_companies_user)
 #

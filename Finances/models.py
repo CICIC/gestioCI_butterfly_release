@@ -8,6 +8,7 @@
 Section 0 >> global const and vars
 '''
 from django.utils.safestring import mark_safe
+from django.utils import formats 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.contrib import messages
@@ -38,7 +39,9 @@ ico_no = "<img src='/static/admin/img/icon-no.gif' alt='False'>"
 ico_yes = "<img src='/static/admin/img/icon-yes.gif' alt='True'>"
 ico_archived = "<img src='/static/admin/img/icon-archived.gif' alt='True'>"
 ico_closed_key = "<img src='/static/admin/img/icon-closed_key.png' alt='True'>"
-ico_closed_key_opened = "<img src='/static/admin/img/icon-closed_key_opened.gif' alt='True'>"
+ico_closed_key_opened = "<img src='/static/admin/img/icon-closed_key_opened.png' alt='True'>"
+ico_closed_key_opened_system = "<img src='/static/admin/img/icon-closed_key_opened_system.png' alt='True'>"
+ico_period_future = "<img src='/static/admin/img/icon-period_future.png' alt='True'>"
 
 icon_pdf_invoice = "<img src='/static/admin/img/icon_pdf_invoice.png' alt='True'>"
 icon_iCf_Invoice = "<img src='/static/admin/img/icon_iCf_Invoice.jpg' alt='True'>"
@@ -274,26 +277,32 @@ class iCf_Period(iCf_Record_Type):
 	def render_icf_se_period(self, pc, exported=False):
 		if not self:
 			return ""
-
 		if hasattr(self, "id"):
 			if self.exported:
 				status = self.render_exported_period(pc)
+				code = "_EXPORTAT"
 			if self.date_close < date.today():
 				status = " %s Tancat" % ico_yes if pc.closed else "%s S'ha de fer un tancament automatic" % (ico_no)
+				code = "_HA DE TANCAR SISTEMA"
 			elif self.first_day > date.today():
-				status = _(u" no és en vigor.")
+				status = _(u" No és en vigor.")
+				code = "_FUTUR"
 			elif self.date_close > date.today() and self.date_open < date.today():
 				close = " %s del %s" % ( self.date_close.day, self.date_close.month )
-				status = _(u" %s tens que tancar abanç de: %s") % (ico_no, self.date_close)
+				status = _(u" %s tens que tancar abanç de: %s") % (ico_no, formats.date_format(self.date_close, "SHORT_DATE_FORMAT"))
+				code = "_HA DE TANCAR MEMBRE"
 			elif self.date_close > date.today():
-				close = " %s del %s" % ( self.date_close.day, self.date_close.month )
-				status = _(u" %s obert fins: %s") % (ico_yes, self.date_close)
+				close = formats.date_format(self.date_close, "SHORT_DATE_FORMAT")
+				status = _(u" %s obert fins: %s") % (ico_yes, close)
+				code = "_OBERT"
 			elif self.date_open > date.today():
 				open = " %s - %s" % ( self.date_open.day, self.date_open.month )
 				status = _(u" facturable fins: %s") % (open)
+				code = "_FACTURABLE"
 			else:
 				status = _(u"Aquest periode es pot exportar.")
-			return "%s  %s" % (self.name, status)
+				code = "_DESCONEGUT"
+			return "%s  %s" % (self.name, status), code
 		else:
 			return _("periode buit").encode("utf-8")
 	def get_period_closed(self, icf_se):
@@ -797,10 +806,10 @@ class iCf_Period_close(iCf_Record):
 		#self.record_type = _check_icf_record_type("iCf_Period_close", u'Sumatori i totals del periode de facturació.', u'Durant el trismestre els autoocupats asignen factures a un registre de Sumatori i totals. Un cop arribada la data de tancament, un procés automátic ha de tancar els registres no tancats pels usuaris.', t)
 		#self.record_type = iCf_Record_Type.objects.get(clas="iCf_Period_close")
 	def _icf_self_employed(self):
-		if hasattr(self, 'icf_self_employed'):
-			return self.icf_self_employed
-		else:
-			return 'none'
+		try:
+			return self.rel_icfse_icf_period_close.all().first()
+		except:
+			return iCf_Self_Employed.objects.filter(id=-1)
 	_icf_self_employed.allow_tags = True
 	_icf_self_employed.short_description = _(u"Autoocupat que factura")
 	icf_self_employed = property(_icf_self_employed)
@@ -931,21 +940,80 @@ class iCf_Period_close(iCf_Record):
 	total_acumulated.short_description = (u"TOTAL A ABONAR - SALDO (€)")
 	def get_link_to_pdf(self, item):
 		return ("%s: <a href='%s'>%s descarrega</a>") % (item,"", icon_pdf_invoice)
-	def render_closed_period(self):
-		status = _(u" %s tancat <div><p>%s</p><p>%s<p><p>%s<p></div>") % (ico_closed_key,
-			self.total_to_pay.short_description + ": %s ",
-			self.total_balance.short_description + ": %s ",
-			self.total_acumulated.short_description + ": %s "
-		)
-		status = status % (
-			self.total_to_pay(),
-			self.total_balance(),
-			self.total_acumulated()
-		)
+	def render_opened_period(self, short_description):
+		formated_date = formats.date_format(self.period().date_open, "SHORT_DATE_FORMAT")
+		if short_description:
+			status = _(u" %s en facturació fins: %s") % (icon_iCf_Period_close, formated_date)
+		else:
+			status = _(u" %s en facturació fins: %s") % (icon_iCf_Period_close, formated_date)
 		return status
-	def __unicode__(self):
+	def render_closed_period(self, short_description):
+		if short_description:
+			status = _(u" %s tancat ") % (ico_closed_key)
+		else:
+			status = _(u" %s tancat <div><p>%s</p><p>%s<p><p>%s<p></div>") % (ico_closed_key,
+				self.total_to_pay.short_description + ": %s ",
+				self.total_balance.short_description + ": %s ",
+				self.total_acumulated.short_description + ": %s "
+			)
+			status = status % (
+				self.total_to_pay(),
+				self.total_balance(),
+				self.total_acumulated()
+			)
+		return status
+	def render_future_period(self, short_description):
+		formated_date = formats.date_format(self.period().first_day, "SHORT_DATE_FORMAT")
+		if short_description:
+			status = _(u" %s Comença %s") % (ico_period_future, formated_date)
+		else:
+			status = _(u" %s Comença %s") % (ico_period_future, formated_date)
+		return status
+	def render_to_close_period(self, short_description, code):
+		formated_date = formats.date_format(self.period().date_close, "SHORT_DATE_FORMAT")
+		if code == "_HA DE TANCAR MEMBRE":
+			img = ico_closed_key_opened
+			extra_days = "Dies extra: %s" % (self._icf_self_employed().extra_days)
+			status = _(u" %s Has de tancar abanç de %s. %s") % (img, formated_date, extra_days)
+		elif code == "_HA DE TANCAR SISTEMA":
+			img = ico_closed_key_opened_system
+			status = _(u" %s Tancat automàtic: %s ") % (img, formated_date)
+		else:
+			img =  ico_closed_key_opened
+			status = _(u" %s Obert ") % (img)
+		if short_description:
+			#status = _(u" %s Tancat automàtic ") % (img)
+			pass
+		else:
+			status = _(u" %s obert <div><p>%s</p><p>%s<p><p>%s<p></div>") % (img,
+				self.total_to_pay.short_description + ": %s ",
+				self.total_balance.short_description + ": %s ",
+				self.total_acumulated.short_description + ": %s "
+			)
+			status = status % (
+				self.total_to_pay(),
+				self.total_balance(),
+				self.total_acumulated()
+			)
+		return status
+	def __unicode__(self, short_description=False):
 		if getattr(self, "closed", False):
-			return self.render_closed_period()
+			return self.render_closed_period(short_description)
+		else:
+			try:
+				parent_message, code = self.period().render_icf_se_period(self)
+				if code == "_HA DE TANCAR MEMBRE" or code == "_HA DE TANCAR SISTEMA":
+					return self.render_to_close_period(short_description, code)
+				elif code =="_FUTUR":
+					return self.render_future_period(short_description)
+				elif code =="_OBERT":
+					return self.render_opened_period(short_description)
+				else:
+					return parent_message
+			except Exception, err:
+				import traceback
+				print traceback.format_exc()
+				return "See log"
 		try:
 			return mark_safe("<a href='%s'>%s</a>" % (self.get_admin_url(), self.closed))
 		except:
@@ -1004,7 +1072,7 @@ class iCf_Self_Employed(iC_Self_Employed):
 		return self.ic_self_employed.assigned_vat
 	assigned_vat.short_description = _(u"Aquest és el valor % d'IVA assignat fruit de l'avaluació social.")
 	def extra_days(self):
-		return self.ic_self_employed.assigned_vat
+		return self.ic_self_employed.extra_days
 	extra_days.short_description = _(u"Dies extra que pot editar el trimestre en curs.")
 	def Company(self):
 		return self.ic_membership.ic_company

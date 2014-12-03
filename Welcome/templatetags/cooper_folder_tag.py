@@ -66,7 +66,7 @@ def _finances_folder(object, user):
 			# Registre corresponent al periode pel membre actual:
 			pc = period.get_period_closed(object.icf_self_employed)
 			# Registre tipus del periode obert:
-			label = period.render_icf_se_period(pc)
+			label, code = period.render_icf_se_period(pc)
 			periods_lists.append(_folder(label, pc.__unicode__() ))
 			value = "<a href='/cooper/Finances/icf_sale'> %s </a>" % ( pc.render_total_sales() )
 			periods_lists.append(_folder(_(u"Emeses (€)").encode("utf-8"), value))
