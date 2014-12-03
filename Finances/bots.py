@@ -238,8 +238,8 @@ class bot_period_close( object ):
 					form.base_fields[field].initial = value
 
 	def set_period_close_form_readonly(self, form_array):
-		form_array.base_fields['period'].widget.attrs['disabled'] = "True"
-		form_array.base_fields['cooper'].widget.attrs['disabled'] = "True"
+		form_array.base_fields['record_type'].widget.attrs['disabled'] = "True"
+		#form_array.base_fields['icf_self_employed'].widget.attrs['disabled'] = "True"
 		form_array.base_fields['sales_base'].widget.attrs['readonly'] = True
 		form_array.base_fields['sales_invoiced_vat'].widget.attrs['readonly'] = True
 		form_array.base_fields['sales_assigned_vat'].widget.attrs['readonly'] = True

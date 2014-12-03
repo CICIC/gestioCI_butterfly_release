@@ -688,7 +688,7 @@ class iCf_Period_close_user(ModelAdmin):
 		if obj is not None:
 			ModelForm.period = obj.period
 			ModelForm.cooper = obj.cooper
-			#bot_period_close( obj.period, obj.cooper, obj).set_period_close_form_readonly(ModelForm)
+			bot_period_close( obj.period, obj.cooper, obj).set_period_close_form_readonly(ModelForm)
 		return ModelForm
 
 	class Media:

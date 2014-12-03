@@ -171,18 +171,19 @@ class period_close_form(forms.ModelForm):
 	def __init__(self, *args, **kwargs):
 		super(period_close_form, self).__init__(*args, **kwargs)
 		self.current_fields = self.current_fields + ('cooper', 'total_to_pay' )
-
+		import pdb;pdb.set_trace()
 		if self.is_new:
 			current_cooper = bot_cooper(self.request.user).cooper(self.request)
 			current_period = bot_period(self.request.user).period( True, self.request )
-
+			# ... create new form
 			if current_cooper and current_period:
 				bot = bot_period_close( current_period, current_cooper, self.instance, True)
 				bot.load_period_close_form( self, self.current_fields )
 			else:
 				pass
 		else:
-			if self.base_fields["record_type"].initial is None: #protect against multiple call, if we are loaded don't load again
+			# ... render existing
+			if self.base_fields["record_type"].initial is None:
 				bot = bot_period_close( self.obj.period, self.obj.cooper, self.obj)
 				bot.load_period_close_form(self, self.current_fields, False)
 
