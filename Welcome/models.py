@@ -941,7 +941,7 @@ class iC_Self_Employed(iC_Record):
 		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió d'ús: "), 0, True)
 
 		foreign = self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas= "contract_hire")
-		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió de lloguer: "), 1, True)
+		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Lloguer a nom CIC: "), 1, True)
 
 		foreign =  self.rel_licences.filter(rel_address=adr)
 		output += self._render_address_foreign( adr, 'ic_licence', foreign, _(u"Llicència d'activitat: "), 2, False, True)
