@@ -22,7 +22,18 @@ def _fix_pdf_links(uri, rel):
 
 def render_pdf(html, request):
 	result = StringIO.StringIO()
-	pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result, link_callback=_fix_pdf_links)
+	#pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result, link_callback=_fix_pdf_links)
+	try:
+		pdf = pisa.pisaDocument(StringIO.StringIO(html), result, link_callback=_fix_pdf_links)
+	except:
+		try:
+			pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result, link_callback=_fix_pdf_links)
+		except:
+			try:
+				pdf = pisa.pisaDocument(StringIO.StringIO(html.decode("utf-8")), result, link_callback=_fix_pdf_links)
+			except Exception as e:
+				pdf = pisa.pisaDocument(StringIO.StringIO("Cannot render pdf %s" % (e.message())), result, link_callback=_fix_pdf_links)
+
 	if not pdf.err:
 		return HttpResponse(result.getvalue(), content_type='application/pdf')
 	return HttpResponse(_(u'Error al generar el PDF: %s') % cgi.escape(html))

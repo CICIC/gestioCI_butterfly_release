@@ -67,7 +67,7 @@ class Self_Employed_auth(object):
 		link = "<a href='%s' alt='%s'> %s </a> " % (url, alt, caption)
 		return link
 
-	def render_iCES_number_petition():
+	def render_iCES_number_petition(self):
 		none_ices_message = _(u"Introdueix Número de iCES/CES o fes una petició automàtica mitjançant aquest enllaç: %s").encode("utf-8")
 		return none_ices_message % (self.ices_API_account_create_call())
 
