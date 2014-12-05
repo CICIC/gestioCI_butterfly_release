@@ -127,6 +127,9 @@ class Self_Employed_auth(object):
 		new_user = User.objects.create_user(username, email, password)
 		new_user.is_active = False
 		new_user.is_staff = False
+		if person:
+			new_user.first_name = person.name
+			new_user.last_name = person.surnames
 		new_user.save()
 		return new_user
 	def join_to_users_auth(self):
