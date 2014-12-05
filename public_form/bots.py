@@ -21,7 +21,10 @@ class user_registration_bot(object):
 		new_user = RegistrationProfile.objects.create_inactive_user(
 						username, email, password, site, person, project, record_type
 					)
-
+		if person:
+			new_user.first_name = person.name
+			new_user.last_name = person.surnames
+			new_user.save()
 		from public_form import signals
 		signals.user_registered.send(sender=self.__class__,
 									 user=new_user,

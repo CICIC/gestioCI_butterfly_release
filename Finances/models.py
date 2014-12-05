@@ -94,8 +94,9 @@ def _check_icf_record_type( clas, name, description, tt, check_type=False, check
 	#Main entity type
 	#... loop to process each entity
 	if not name:
+		name = clas
 		pass
-		
+
 	try:
 		if check_type2:
 			t = Type.objects.get( clas=clas )

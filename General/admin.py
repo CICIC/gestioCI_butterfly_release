@@ -493,7 +493,11 @@ class H_membership_Inline(admin.StackedInline):
 		return False
 	verbose_name = _("Registre de soci")
 	verbose_name_plural = _(u"Dades dels registres d'alta")
-
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == 'ic_company':
+			typ = Company.objects.filter(name__in="XIPU, Interprofessionals")
+			kwargs['queryset'] = typ
+		return super(H_membership_Inline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 	def _render_person(self, rel):
 		out = ""
 		if hasattr(rel, 'person'):
@@ -545,8 +549,6 @@ class HumanAdmin(Css_Mixin):
 			#	rel_tit = Relation.objects.get(clas='holder')
 			#new_rel, created = rel_Human_Records.objects.get_or_create(human=instance.human, record=instance, relation=rel_tit)
 			#print 'NEW_REL: '+str(new_rel)+' CREATED: '+str(created)
-
-
 			#if not instance.
 			instance.save()
 		def set_accountBank_recordtype(instance):
@@ -562,6 +564,7 @@ class HumanAdmin(Css_Mixin):
 			if not instance.relation:
 				instance.relation = Relation.objects.get(clas='reference')
 			instance.save()
+
 		def set_nothing(instance):
 			instance.save()
 
@@ -569,7 +572,7 @@ class HumanAdmin(Css_Mixin):
 			instances = formset.save(commit=False)
 			if not formset.model == rel_Human_Persons:
 				map(set_human_name, instances)
-
+			
 			if formset.model == AccountCes:
 				map(set_accountCes_recordtype, instances)
 			if formset.model == AccountBank:
@@ -582,7 +585,9 @@ class HumanAdmin(Css_Mixin):
 					map(set_proj_refPerson_relation, instances)
 				else:
 					map(set_nothing, instances)
-
+			# Force delete rows
+			for deleted in formset.deleted_objects:
+				deleted.delete()
 			formset.save_m2m()
 			return instances
 		else:
@@ -632,8 +637,6 @@ class HumanAdmin(Css_Mixin):
 					pass
 				return self.model.objects.filter(id=-1)
 
-
-
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
 	model = Project
 	readonly_fields = ('_ref_persons', '_fees_to_pay',)
@@ -671,6 +674,7 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
 		H_accountBankInline,
 		H_accountCryptoInline,
 	]
+
 
 class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 

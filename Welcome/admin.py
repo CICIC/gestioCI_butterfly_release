@@ -474,7 +474,7 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 		(_(u"Fase 1: Acollida i Avaluació"), {
 			#'classes': ('collapse',),
 			'fields': (
-				('_user_member', 'ic_membership', '_member_link', ),
+				('ic_membership', '_member_link', ),
 				('_has_assisted_welcome',),
 				('_rel_id_cards',),
 			)
@@ -503,11 +503,8 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			)}),
 	)
 	def save_model(self, request, obj, form, change):
-
 		if form.is_valid():
-
 			if obj.ic_membership and form.cleaned_data.get("ic_CESnum"):
-				obj.ic_membership.ic_CESnum = form.cleaned_data.get("ic_CESnum")
 				obj.ic_membership.save()
 
 			if obj.ic_membership:
@@ -516,23 +513,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					inter = Company.objects.get(name="Interprofessionals")
 					obj.ic_membership.ic_company = inter
 
-			if change and form.cleaned_data.get("join_date"):
-				from django.core.exceptions import ObjectDoesNotExist
-				from public_form.models import RegistrationProfile
-
-				current_person = obj.ic_membership.human.persons.first()
-				current_project = obj.ic_membership.ic_project
-				try:
-					current_registration = RegistrationProfile.objects.get(person=current_person, project = current_project, record_type = obj.record_type)
-				except ObjectDoesNotExist:
-					from public_form.models import RegistrationProfile
-					user = RegistrationProfile.objects.create_active_user(
-								obj.ic_membership.ic_CESnum,
-								current_person.email,
-								admin,
-								current_person,
-								current_project,
-								obj.record_type)
 			obj.save()
 
 
@@ -913,7 +893,7 @@ class LearnSessionAdmin(AutoRecordName):
 
 		if db_field.name == 'nonmaterial':
 			from General.models import Type
-			typ = General.models.Type.objects.filter(clas='ic_learn')
+			typ = Type.objects.filter(clas='ic_learn')
 			kwargs['queryset'] = Nonmaterial.objects.filter(nonmaterial_type=typ)
 			try:
 				nonmat = Nonmaterial.objects.get(id=nonmaterial_id)

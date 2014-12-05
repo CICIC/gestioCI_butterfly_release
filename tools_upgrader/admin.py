@@ -28,6 +28,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from tools_upgrader.action import *
+from tools_upgrader.models import *
 
 #For cardid validation
 from localflavor.es.forms import *
@@ -57,3 +58,19 @@ class EmailNotificationAdmin(ModelAdmin):
 # class my_RelatedWidgetWrapperAdmin (ForeignKeyRawIdWidgetWrapperAdmin):
 # 	pass
 #****************************************************************
+
+'''
+Administrators
+'''
+from django.contrib import admin
+class Administrators_admin(admin.ModelAdmin):
+	model = Administrators
+	def get_queryset(self, request):
+		return self.model.objects.filter(is_staff=True)
+
+	def formfield_for_manytomany(self, db_field, request, **kwargs):
+		from django.contrib.auth.models import Group
+		if db_field.name == 'groups':
+			kwargs['queryset'] =  Group.objects.filter(name__in=("iC_Welcome","iCf_Finances"))
+		return super(Administrators_admin, self).formfield_for_manytomany(db_field, request, **kwargs)
+admin.site.register(Administrators, Administrators_admin) 

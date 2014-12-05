@@ -30,7 +30,7 @@ from django.utils.safestring import mark_safe
 from django.contrib.admin import SimpleListFilter
 class type_session_filter (SimpleListFilter):
 
-	title = _(u'Sessions Acollida i Avaluació')
+	title = _(u'Sessions Acollida')
 	parameter_name = 'learn_session_id'
 
 	def lookups(self, request, model_admin):
@@ -38,7 +38,7 @@ class type_session_filter (SimpleListFilter):
 		welcome_sessions = Learn_Session.objects.filter(record_type__clas="welcome_session")
 		yFilters = ()
 		for session in welcome_sessions:
-			message =  _(u"%s asistents %s. ")
+			message =  _(u"Assistents Acollida: %s %s")
 			from django.utils import formats
 			if session.datetime:
 				date = formats.date_format(session.datetime, "SHORT_DATETIME_FORMAT")
@@ -62,7 +62,7 @@ class type_session_filter_socialcoin (SimpleListFilter):
 		welcome_sessions = Learn_Session.objects.filter(record_type__clas="socialcoin_session")
 		yFilters = ()
 		for session in welcome_sessions:
-			message =  _(u"%s asistents %s. ")
+			message =  _(u"Assistents Moneda social: %s %s")
 			from django.utils import formats
 			date = formats.date_format(session.datetime, "SHORT_DATETIME_FORMAT")
 			message = message % (date, session.assistants.count())

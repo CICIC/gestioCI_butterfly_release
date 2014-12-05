@@ -9,11 +9,6 @@ class iC_Akin_Membership_form(forms.ModelForm):
 	model = iC_Akin_Membership
 	from General.models import Project
 	ic_membership_project = forms.ModelMultipleChoiceField(queryset=Project.objects.filter(), label=_(u"Projecte vinculat "))
-	def __init__(self, *args, **kwargs):
-		super(iC_Akin_Membership_form, self).__init__(*args, **kwargs)
-		if self.instance.id:
-			self.fields['join_date'].widget.attrs['readonly'] = True
-
 	class Meta:
 		fields = ( "ic_record", "ic_membership_project", "join_date")
 		from Welcome.models import iC_Akin_Membership
@@ -109,6 +104,21 @@ class SelfEmployedForm(forms.ModelForm):
 		if self.instance.id:
 			self.fields['ic_CESnum'].initial = self.instance.ic_membership.ic_CESnum
 			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances.all() | self.instance.rel_insurances.all()
+
+	def clean_ic_CESnum(self):
+		cesnum = self.cleaned_data["ic_CESnum"]
+		try:
+			exists = iC_Membership.objects.filter(ic_CESnum = cesnum).count() > 1
+		except:
+			exists = False
+		if exists:
+			from django import forms
+			from django.forms.util import ErrorList
+			errors = self._errors.setdefault("ic_CESnum", ErrorList())
+			errors.append(_(u"Aquest número de CES ja existeix."))
+			return ""
+		else:
+			return cesnum
 
 	def clean(self):
 		saved = False

@@ -19,7 +19,7 @@ from django.core.urlresolvers import reverse
 TentType_list = (
 	('none',_(u"Sense Carpa")),
 	('wood',_(u"Carpa de fusta")),
-	('metal',_(u"Carpa metàlica"))
+	('metal',_(u"Carpa metàl·lica"))
 )
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Welcome/"
@@ -295,7 +295,7 @@ class iC_Akin_Membership(iC_Record):
 	person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
 	ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
 	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='Entitats_legals', verbose_name=_(u"Cooperativa (Interprofessionals / XIPU)"))
-	join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
+	join_date = models.DateField(blank=False, null=False, verbose_name=_(u"Data d'Alta"))
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
 	ic_membership = models.ManyToManyField('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada als Projectes Socis"))
 	def _has_id_card(self):
@@ -462,12 +462,14 @@ class iC_Membership(iC_Record):
 				stallholder_data = ""
 
 				self_employed_data = ""
+				slug = "ic_self_employed"
 				if extended and stallholder is not None:
+					slug = "ic_stallholder"
 					organic = _(u"Sí").encode("utf-8") if rec.organic else _("No").encode("utf-8")
 					self_employed_data = _(u"Productes ecològics: ").encode("utf-8") +  organic
 					stallholder_data = _(u"Tipus parada firaire: ").encode("utf-8") + stallholder.get_tent_type_display()
 
-				out += '<li>%sic_self_employed/%s%s<b>%s</b> </a> <br>%s<br> %s</li>' % (a_strW, str(rec.id), a_str3, caption, self_employed_data, stallholder_data.encode("utf-8"))
+				out += '<li>%s%s/%s%s<b>%s</b> </a> <br>%s<br> %s</li>' % (a_strW, slug, str(rec.id), a_str3, caption, self_employed_data, stallholder_data.encode("utf-8"))
 			if out == ul_tag:
 				return str_none
 			return out+'</ul>'
@@ -832,9 +834,9 @@ class iC_Self_Employed(iC_Record):
 					delete_button = "<a %s href='%s%s'> %s </a> " % (delete_class, delete_button,self._get_next(), delete_caption )
 					out += delete_button.encode("utf-8")
 				try:
-					out =+ self._render_person(rel, admin_path) 
-				except:
-					out = self._render_person(rel, admin_path) 
+					out += self._render_person(rel, admin_path) 
+				except Exception as e:
+					out = e.message()
 	
 				#Add control for print_task_list that will be controlled in selfemployed.js
 				if out.find("person_missing_data") > 0:
@@ -939,7 +941,7 @@ class iC_Self_Employed(iC_Record):
 		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió d'ús: "), 0, True)
 
 		foreign = self.rel_address_contracts.filter(address=adr, ic_document__doc_type__clas= "contract_hire")
-		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Cessió de lloguer: "), 1, True)
+		output += self._render_address_foreign( adr, 'ic_address_contract', foreign,  _(u"Lloguer a nom CIC: "), 1, True)
 
 		foreign =  self.rel_licences.filter(rel_address=adr)
 		output += self._render_address_foreign( adr, 'ic_licence', foreign, _(u"Llicència d'activitat: "), 2, False, True)
@@ -1114,6 +1116,11 @@ class iC_Self_Employed(iC_Record):
 	_min_human_data.short_description = 'Dades mínimes?'
 
 	def print_task_list(self):
+		try:
+			adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
+		except:
+			return _(u"Manca l'adreça principal.").encode("utf-8")
+
 		if self.id:
 			url = reverse("Welcome:print_task_list", args=(self.id,))
 			text = _("Imprimir llista de tasques").encode("utf-8")

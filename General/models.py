@@ -311,7 +311,11 @@ class Company(Human):
 		verbose_name_plural = _(u"e- Empreses")
 	def vat_number(self):
 		return self.id_card_es if self.id_card_es else (self.card_non_es if self.card_non_es else "<missing vat number>")
-
+	def __unicode__(self):
+		try:
+			return self.legal_name
+		except:
+			return "Empresa"
 class Company_Type(Being_Type):
 	being_type = models.OneToOneField('Being_Type', primary_key=True, parent_link=True)
 	class Meta:
