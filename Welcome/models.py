@@ -295,7 +295,7 @@ class iC_Akin_Membership(iC_Record):
 	person = models.OneToOneField('General.Person', verbose_name=_(u"Persona, membre afí"))
 	ic_project = TreeForeignKey('General.Project', related_name='akin_memberships', verbose_name=_(u"Cooperativa Integral"))
 	ic_company = models.ForeignKey('General.Company', blank=True, null=True, related_name='Entitats_legals', verbose_name=_(u"Cooperativa (Interprofessionals / XIPU)"))
-	join_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data d'Alta"))
+	join_date = models.DateField(blank=False, null=False, verbose_name=_(u"Data d'Alta"))
 	end_date = models.DateField(blank=True, null=True, verbose_name=_(u"Data de Baixa"))
 	ic_membership = models.ManyToManyField('iC_Membership', blank=True, null=True, related_name='akin_memberships', verbose_name=_(u"vinculada als Projectes Socis"))
 	def _has_id_card(self):
@@ -1535,6 +1535,7 @@ class iC_Licence(iC_Document):
 		return out+'<li>'+ico_no+'</li></ul>'
 	_min_licence_data.allow_tags = True
 	_min_licence_data.short_description = ''
+
 
 
 from django.db.models.signals import post_save
