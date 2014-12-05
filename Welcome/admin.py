@@ -503,11 +503,8 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 			)}),
 	)
 	def save_model(self, request, obj, form, change):
-
 		if form.is_valid():
-
 			if obj.ic_membership and form.cleaned_data.get("ic_CESnum"):
-				obj.ic_membership.ic_CESnum = form.cleaned_data.get("ic_CESnum")
 				obj.ic_membership.save()
 
 			if obj.ic_membership:
@@ -516,23 +513,6 @@ class Public_SelfEmployedAdmin(AutoRecordName):
 					inter = Company.objects.get(name="Interprofessionals")
 					obj.ic_membership.ic_company = inter
 
-			if change and form.cleaned_data.get("join_date"):
-				from django.core.exceptions import ObjectDoesNotExist
-				from public_form.models import RegistrationProfile
-
-				current_person = obj.ic_membership.human.persons.first()
-				current_project = obj.ic_membership.ic_project
-				try:
-					current_registration = RegistrationProfile.objects.get(person=current_person, project = current_project, record_type = obj.record_type)
-				except ObjectDoesNotExist:
-					from public_form.models import RegistrationProfile
-					user = RegistrationProfile.objects.create_active_user(
-								obj.ic_membership.ic_CESnum,
-								current_person.email,
-								admin,
-								current_person,
-								current_project,
-								obj.record_type)
 			obj.save()
 
 

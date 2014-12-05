@@ -105,6 +105,21 @@ class SelfEmployedForm(forms.ModelForm):
 			self.fields['ic_CESnum'].initial = self.instance.ic_membership.ic_CESnum
 			#self.fields['rel_insurances'].queryset = self.instance.rel_insurances.all() | self.instance.rel_insurances.all()
 
+	def clean_ic_CESnum(self):
+		cesnum = self.cleaned_data["ic_CESnum"]
+		try:
+			exists = iC_Membership.objects.filter(ic_CESnum = cesnum).count() > 1
+		except:
+			exists = False
+		if exists:
+			from django import forms
+			from django.forms.util import ErrorList
+			errors = self._errors.setdefault("ic_CESnum", ErrorList())
+			errors.append(_(u"Aquest número de CES ja existeix."))
+			return ""
+		else:
+			return cesnum
+
 	def clean(self):
 		saved = False
 		new_image_list = self.data.getlist("rel_images")
