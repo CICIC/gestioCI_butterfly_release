@@ -1116,6 +1116,11 @@ class iC_Self_Employed(iC_Record):
 	_min_human_data.short_description = 'Dades mínimes?'
 
 	def print_task_list(self):
+		try:
+			adr = self.ic_membership.human.rel_human_addresses_set.filter(main_address=True).first().address
+		except:
+			return _(u"Manca l'adreça principal.").encode("utf-8")
+
 		if self.id:
 			url = reverse("Welcome:print_task_list", args=(self.id,))
 			text = _("Imprimir llista de tasques").encode("utf-8")
