@@ -549,8 +549,6 @@ class HumanAdmin(Css_Mixin):
 			#	rel_tit = Relation.objects.get(clas='holder')
 			#new_rel, created = rel_Human_Records.objects.get_or_create(human=instance.human, record=instance, relation=rel_tit)
 			#print 'NEW_REL: '+str(new_rel)+' CREATED: '+str(created)
-
-
 			#if not instance.
 			instance.save()
 		def set_accountBank_recordtype(instance):
@@ -566,6 +564,7 @@ class HumanAdmin(Css_Mixin):
 			if not instance.relation:
 				instance.relation = Relation.objects.get(clas='reference')
 			instance.save()
+
 		def set_nothing(instance):
 			instance.save()
 
@@ -573,7 +572,7 @@ class HumanAdmin(Css_Mixin):
 			instances = formset.save(commit=False)
 			if not formset.model == rel_Human_Persons:
 				map(set_human_name, instances)
-
+			
 			if formset.model == AccountCes:
 				map(set_accountCes_recordtype, instances)
 			if formset.model == AccountBank:
@@ -586,7 +585,9 @@ class HumanAdmin(Css_Mixin):
 					map(set_proj_refPerson_relation, instances)
 				else:
 					map(set_nothing, instances)
-
+			# Force delete rows
+			for deleted in formset.deleted_objects:
+				deleted.delete()
 			formset.save_m2m()
 			return instances
 		else:
@@ -635,8 +636,6 @@ class HumanAdmin(Css_Mixin):
 				except:
 					pass
 				return self.model.objects.filter(id=-1)
-
-
 
 class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
 	model = Project
