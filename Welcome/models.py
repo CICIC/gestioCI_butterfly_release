@@ -1537,7 +1537,6 @@ class iC_Licence(iC_Document):
 	_min_licence_data.short_description = ''
 
 
-
 from django.db.models.signals import post_save
 #from django.core.signals import post_save
 from django.dispatch import receiver

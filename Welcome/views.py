@@ -288,7 +288,10 @@ def print_task_list(request, icse):
 		return "No encontrado"
 	obj = render_obj()
 	obj.current_project= current_icse.ic_membership.human
-	obj.current_admin = request.user
+
+	#TODO: if user.is_superuser
+	user_data = "%s %s" % ( request.user.first_name, request.user.last_name)
+	obj.current_admin = user_data
 
 	obj.insurances = current_icse.rel_insurances
 	obj.address_contracts =  current_icse.rel_address_contracts
