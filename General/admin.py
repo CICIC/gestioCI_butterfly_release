@@ -493,7 +493,11 @@ class H_membership_Inline(admin.StackedInline):
 		return False
 	verbose_name = _("Registre de soci")
 	verbose_name_plural = _(u"Dades dels registres d'alta")
-
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == 'ic_company':
+			typ = Company.objects.filter(name__in="XIPU, Interprofessionals")
+			kwargs['queryset'] = typ
+		return super(H_membership_Inline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 	def _render_person(self, rel):
 		out = ""
 		if hasattr(rel, 'person'):
@@ -671,6 +675,7 @@ class Public_ProjectAdmin(MPTTModelAdmin, HumanAdmin):
 		H_accountBankInline,
 		H_accountCryptoInline,
 	]
+
 
 class ProjectAdmin(Public_ProjectAdmin): # admin.ModelAdmin):
 
