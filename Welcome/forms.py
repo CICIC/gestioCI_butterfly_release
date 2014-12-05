@@ -9,11 +9,6 @@ class iC_Akin_Membership_form(forms.ModelForm):
 	model = iC_Akin_Membership
 	from General.models import Project
 	ic_membership_project = forms.ModelMultipleChoiceField(queryset=Project.objects.filter(), label=_(u"Projecte vinculat "))
-	def __init__(self, *args, **kwargs):
-		super(iC_Akin_Membership_form, self).__init__(*args, **kwargs)
-		if self.instance.id:
-			self.fields['join_date'].widget.attrs['readonly'] = True
-
 	class Meta:
 		fields = ( "ic_record", "ic_membership_project", "join_date")
 		from Welcome.models import iC_Akin_Membership
