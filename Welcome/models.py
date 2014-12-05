@@ -834,9 +834,9 @@ class iC_Self_Employed(iC_Record):
 					delete_button = "<a %s href='%s%s'> %s </a> " % (delete_class, delete_button,self._get_next(), delete_caption )
 					out += delete_button.encode("utf-8")
 				try:
-					out =+ self._render_person(rel, admin_path) 
-				except:
-					out = self._render_person(rel, admin_path) 
+					out += self._render_person(rel, admin_path) 
+				except Exception as e:
+					out = e.message()
 	
 				#Add control for print_task_list that will be controlled in selfemployed.js
 				if out.find("person_missing_data") > 0:
