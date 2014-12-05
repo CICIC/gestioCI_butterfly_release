@@ -19,7 +19,7 @@ from django.core.urlresolvers import reverse
 TentType_list = (
 	('none',_(u"Sense Carpa")),
 	('wood',_(u"Carpa de fusta")),
-	('metal',_(u"Carpa metàlica"))
+	('metal',_(u"Carpa metàl·lica"))
 )
 a_strG = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/General/"
 a_strW = "<a onclick='return showRelatedObjectLookupPopup(this);' href='/admin/Welcome/"
