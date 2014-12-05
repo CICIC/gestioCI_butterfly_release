@@ -8,7 +8,6 @@ from django.utils.translation import ugettext_lazy as _
 
 class bot_sales_invoice ( object ):
 	def __init__( self, queryset ):
-		
 		self.sales_base = Decimal ("0.00")
 		self.sales_invoiced_vat = Decimal ("0.00")
 		self.sales_assigned_vat = Decimal ("0.00")
@@ -189,7 +188,7 @@ class bot_period_close( object ):
 		print "pass"
 	def load_period_close(self, obj=None, recalculate = False):
 		from Finances.models import iCf_Period_close
-
+		import pdb;pdb.set_trace()
 		if obj is None:
 			pc = iCf_Period_close(self.period, self.cooper)
 			pc.period = self.period
@@ -201,18 +200,16 @@ class bot_period_close( object ):
 		if recalculate:
 			from bots import bot_sales_invoice
 			from Finances.models import iCf_Sale, iCf_Purchase, iCf_Tax
-			bot = bot_sales_invoice( 
-				iCf_Sale.objects.filter(period=self.period)
-				)
+			from Finances.bots import bot_sales_invoice
+
+			bot = bot_sales_invoice( pc.icf_sales.all() )
 			pc.sales_base = bot.sales_base
 			pc.sales_invoiced_vat = bot.sales_invoiced_vat
 			pc.sales_assigned_vat = bot.sales_assigned_vat
 			pc.sales_total = bot.sales_total
 
 			from bots import bot_purchases_invoice
-			bot = bot_purchases_invoice( 
-				iCf_Purchase.objects.filter(period=self.period) 
-				)
+			bot = bot_purchases_invoice( pc.icf_purchases.all() )
 			pc.purchases_base = bot.purchases_base 
 			pc.purchases_vat = bot.purchases_vat
 			pc.purchases_irpf = bot.purchases_irpf
