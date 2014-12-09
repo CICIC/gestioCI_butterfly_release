@@ -241,16 +241,39 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 
+def get_e_or_d(object):
+	try:
+		return "%s" % (object.encode("utf-8"))
+	except:
+		try:
+			return "%s" % (object.decode("utf-8"))
+		except:
+			try:
+				return str(object)
+			except:
+				return object
+
 class render_obj(object):
 	def render_address(self,adr, job):
 		output = "<li>" + job.name.encode('ascii', 'xmlcharrefreplace')
 		caption = _(u" al local situat a l'adreça: ").encode("utf-8")
 		region = adr.region.name.encode('ascii', 'xmlcharrefreplace')
+
 		try:
-				address_text = adr.p_address.encode("utf-8")
+			address_text = adr.p_address.encode("utf-8")
+			try:
 				output += " %s %s %s %s (%s) %s" % (caption, address_text.decode("utf-8"), adr.postalcode, adr.town.encode("utf-8"), region, "</li>" )
-		except:
-				output += caption + "/" + address_text + "</li>"
+			except:
+				try:
+					output += " %s %s %s %s (%s) %s" % (get_e_or_d(caption), get_e_or_d(address_text), get_e_or_d(adr.postalcode), get_e_or_d(adr.town), get_e_or_d(region), "</li>" )
+				except Exception, err:
+					import traceback
+					print traceback.format_exc()
+					return ""
+		except Exception, err:
+			import traceback
+			print traceback.format_exc()
+			return ""
 		return output
 	def jobs_and_address_render(self, icse):
 		obj = self
@@ -288,7 +311,10 @@ def print_task_list(request, icse):
 		return "No encontrado"
 	obj = render_obj()
 	obj.current_project= current_icse.ic_membership.human
-	obj.current_admin = request.user
+
+	#TODO: if user.is_superuser
+	user_data = "%s %s" % ( request.user.first_name, request.user.last_name)
+	obj.current_admin = user_data
 
 	obj.insurances = current_icse.rel_insurances
 	obj.address_contracts =  current_icse.rel_address_contracts

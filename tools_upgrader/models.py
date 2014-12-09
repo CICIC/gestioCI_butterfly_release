@@ -146,8 +146,6 @@ else:
 
 MODELS = tuple([(m, m) for m in MODELS])
 
-
-
 class CSVImport(models.Model):
 	""" Logging model for importing files """
 	model_name = models.CharField(max_length=255, blank=False,
@@ -178,3 +176,13 @@ class CSVImport(models.Model):
 	class Meta:
 		verbose_name= _(u'Importar CSV (Socis,...)')
 		verbose_name_plural= _(u'Importar CSV (Socis,...)')
+
+'''
+Administradors
+'''
+from django.contrib.auth.models import User
+class Administrators(User):
+	class Meta:
+		verbose_name= _(u"Administrador")
+		verbose_name_plural= _(u'Administradores')
+		proxy = True

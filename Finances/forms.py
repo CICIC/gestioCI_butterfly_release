@@ -47,7 +47,7 @@ class invoice_form(forms.ModelForm):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
-		self.base_fields["status"].widget.attrs["disabled"] = True
+		self.base_fields["status"].widget.attrs["disabled"] = "True"
 		current_cooper = bot_cooper(self.request.user).cooper(self.request)
 		if current_cooper and not hasattr(self.instance, 'cooper'):
 			self.instance.cooper  = current_cooper 
@@ -88,7 +88,11 @@ class invoice_form(forms.ModelForm):
 			if hasattr(self, "period"):
 				period = self.period
 		if period is not None:
-			if date > period.date_close:
+			try:
+				pdate = period.period().date_close
+			except:
+				pdate = period.date_close
+			if date > pdate:
 				raise forms.ValidationError(_(u"La data ha de ser menor que el dia final del periode"))
 		return date
 
@@ -131,7 +135,7 @@ class invoice_form_balance(purchases_invoice_form):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
-		self.base_fields['status'].widget.attrs['disabled'] = True
+		self.base_fields['status'].widget.attrs['disabled'] = "True"
 
 from Finances.models import movement_STATUSES
 class movement_form_balance(forms.ModelForm):
@@ -143,7 +147,7 @@ class movement_form_balance(forms.ModelForm):
 			self.initial['status'] = self.instance.status
 		else:
 			self.initial['status'] = None
-		self.base_fields['status'].widget.attrs['disabled'] = True
+		self.base_fields['status'].widget.attrs['disabled'] = "True"
 	class Meta:
 		exclude = ['status',]
 		localized_fields = ["value",]
@@ -167,17 +171,19 @@ class period_close_form(forms.ModelForm):
 	def __init__(self, *args, **kwargs):
 		super(period_close_form, self).__init__(*args, **kwargs)
 		self.current_fields = self.current_fields + ('cooper', 'total_to_pay' )
+
 		if self.is_new:
 			current_cooper = bot_cooper(self.request.user).cooper(self.request)
 			current_period = bot_period(self.request.user).period( True, self.request )
-
+			# ... create new form
 			if current_cooper and current_period:
 				bot = bot_period_close( current_period, current_cooper, self.instance, True)
 				bot.load_period_close_form( self, self.current_fields )
 			else:
 				pass
 		else:
-			if self.base_fields["period"].initial is None: #protect against multiple call, if we are loaded don't load again
+			# ... render existing
+			if self.base_fields["record_type"].initial is None:
 				bot = bot_period_close( self.obj.period, self.obj.cooper, self.obj)
 				bot.load_period_close_form(self, self.current_fields, False)
 

@@ -9,11 +9,17 @@ from django.core import urlresolvers
 from django.db.models.loading import get_model
 from Welcome.models import iC_Record_Type, iC_Self_Employed, iC_Stallholder, iC_Project_Membership, iC_Person_Membership, iC_Akin_Membership
 from General.models import Human
-
+from Finances.models import iCf_Period_close
 def _links_list_to_ul(links):
 	output = "<ul>"
 	for link in links:
-		output += "<li>%s</li>" % (link)
+		try:
+			output += "<li>%s</li>" % (link)
+		except:
+			try:
+				output += "<li>%s</li>" % (link.encode("utf-8"))
+			except:
+				output += "<li>%s</li>" % (link.decode("utf-8"))
 	return "%s</ul>" % (output)
 
 def _safe_render(output, section, image, links):
@@ -45,6 +51,34 @@ def _member_folder(object):
 	caption = object.print_certificate.short_description.encode("utf-8") 
 	value = object.print_certificate()
 	return "<h5>%s</h5> %s" % ( caption, value ) 
+
+def _finances_folder(object, user):
+	try:
+		# Periode vigent en facturació
+		from Finances.bots import bot_period
+		periods_lists = []
+		#opened_one = bot_period.get_opened_periods_list(user)
+		from Finances.models import iCf_Period
+		list = bot_period.get_opened_periods_list(user)
+		if not list:
+			list = iCf_Period.objects.all()
+		for period in list:
+			# Registre corresponent al periode pel membre actual:
+			pc = period.get_period_closed(object.icf_self_employed)
+			# Registre tipus del periode obert:
+			label, code = period.render_icf_se_period(pc)
+			periods_lists.append(_folder(label, pc.get_unicode() ))
+			value = "<a href='/cooper/Finances/icf_sale'> %s </a>" % ( pc.render_total_sales() )
+			periods_lists.append(_folder(_(u"Emeses (€)").encode("utf-8"), value))
+			value = "<a href='/cooper/Finances/icf_purchase'> %s </a>" % ( pc.render_total_purchases() )
+			periods_lists.append(_folder(_(u"Despeses (€)").encode("utf-8"), value))
+		value = _links_list_to_ul(periods_lists)
+	except Exception, err:
+		import traceback
+		print traceback.format_exc()
+		from tools_upgrader.objects import Self_Employed_auth
+		value = Self_Employed_auth(object)._get_user_member_field()
+	return value
 
 def _fees_folder(object):
 	caption = _(u"Quotes").encode("utf-8")
@@ -177,8 +211,6 @@ class member_object(object):
 		except:
 			pass
 
-		links.append( _fees_folder( object ) )
-
 		try:
 			#PATCH: bydefault Stallholder are xipu, selfemployed interprofessionals
 			if not object.ic_membership.ic_company:
@@ -194,13 +226,15 @@ class member_object(object):
 		except:
 			pass
 
-		if not self.user.groups.all().filter(name="iC_Stallholder"):
-			links.append( _member_folder( object ) )
-			links.append( _fees_folder( object ) )
 		value = object._rel_id_cards(False, "/cooper/")
 		caption =  object._rel_id_cards.short_description.encode("utf-8").decode("utf-8")
 		links.append( _folder( caption, value ))
 		links.append( _folder( object._akin_members.short_description.encode("utf-8"), object._akin_members(False, "/cooper/").decode("utf-8")  ) )
+		if not self.user.groups.all().filter(name="iC_Stallholder"):
+			links.append( _member_folder( object ) )
+			links.append( _fees_folder( object ) )
+
+		links.append(_folder("finances",_finances_folder( object, self.user )) )
 		return sections, links
 
 	def render_member(self, object, sections, links):

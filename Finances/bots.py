@@ -12,7 +12,7 @@ class bot_sales_invoice ( object ):
 		self.sales_invoiced_vat = Decimal ("0.00")
 		self.sales_assigned_vat = Decimal ("0.00")
 		self.sales_total = Decimal ("0.00")
-		for item in queryset.all():
+		for item in queryset:
 			self.sales_base += item.value()
 			self.sales_invoiced_vat += item.invoiced_vat()
 			self.sales_assigned_vat += item.assigned_vat()
@@ -20,11 +20,12 @@ class bot_sales_invoice ( object ):
 
 class bot_purchases_invoice ( object ):
 	def __init__( self, queryset ):
+		
 		self.purchases_base = Decimal ("0.00")
 		self.purchases_vat = Decimal ("0.00")
 		self.purchases_irpf = Decimal ("0.00")
 		self.purchases_total = Decimal ("0.00")
-		for item in queryset.all():
+		for item in queryset:
 			self.purchases_base += item.value()
 			self.purchases_vat += item.vat()
 			self.purchases_irpf += item.irpf()
@@ -58,6 +59,7 @@ class bot_cooper( object ):
 			return Company.objects.filter(id=-1)
 class bot_icf_self_employed( bot_cooper ):
 	def __init__(self, num_ces):
+		
 		self.num_ces = num_ces
 		from Finances.models import iCf_Self_Employed
 		try:
@@ -101,7 +103,6 @@ class bot_period( object ):
 				)
 	@staticmethod
 	def get_opened_periods_list(user):
-		bot_
 		#Get extradays that this user has to close
 		from Finances.models import iCf_Self_Employed, iCf_Period
 		try:
@@ -116,8 +117,12 @@ class bot_period( object ):
 				)
 class bot_assigned_vat(object):
 	def __init__(self, current_cooper, percent_invoiced_vat):
+		
 		if current_cooper:
-			self.assigned_vat = current_cooper.assigned_vat
+			try:
+				self.assigned_vat = current_cooper().assigned_vat
+			except:
+				self.assigned_vat = 0
 		else:
 			self.assigned_vat = 0
 
@@ -144,9 +149,9 @@ class bot_assigned_vat(object):
 
 class bot_period_tax(object):
 	def __init__(self, base):
-		from Finances.models import tax
+		from Finances.models import iCf_Tax
 		try:
-			tax = tax.objects.filter(min_base__lte=base, max_base__gte=base)[0].value
+			tax = iCf_Tax.objects.filter(min_base__lte=base, max_base__gte=base)[0].value
 		except:
 			tax = -1
 		self.tax = tax
@@ -180,11 +185,13 @@ class bot_period_close( object ):
 		self.period = period
 		if cooper and period:
 			self.period_close = self.load_period_close( obj, recalculate )
+		print "pass"
 	def load_period_close(self, obj=None, recalculate = False):
 		from Finances.models import iCf_Period_close
+
 		if obj is None:
 			pc = iCf_Period_close(self.period, self.cooper)
-			pc.period = self.period
+			pc.record_type = self.period
 			pc.cooper = self.cooper
 			pc.advanced_tax = self.cooper.advanced_tax
 		else:
@@ -192,49 +199,43 @@ class bot_period_close( object ):
 
 		if recalculate:
 			from bots import bot_sales_invoice
-			from Finances.models import iCf_Sale, iCf_Purchase, tax
-			bot = bot_sales_invoice( 
-				iCf_Sale.objects.filter(
-					period=self.period, 
-					cooper=self.cooper )
-				)
+			from Finances.models import iCf_Sale, iCf_Purchase, iCf_Tax
+			#
+			from Finances.bots import bot_sales_invoice
+			bot = bot_sales_invoice( pc.icf_sales.all() )
 			pc.sales_base = bot.sales_base
 			pc.sales_invoiced_vat = bot.sales_invoiced_vat
 			pc.sales_assigned_vat = bot.sales_assigned_vat
 			pc.sales_total = bot.sales_total
-
+			#
 			from bots import bot_purchases_invoice
-			bot = bot_purchases_invoice( 
-				iCf_Purchase.objects.filter(
-					period=self.period, 
-					cooper=self.cooper) 
-				)
+			bot = bot_purchases_invoice( pc.icf_purchases.all() )
 			pc.purchases_base = bot.purchases_base 
 			pc.purchases_vat = bot.purchases_vat
 			pc.purchases_irpf = bot.purchases_irpf
 			pc.purchases_total = bot.purchases_total
 			#QUOTA
 			pc.period_tax = bot_period_tax (pc.sales_base).tax
-			pc.advanced_tax = self.cooper.advanced_tax
+			pc.advanced_tax = pc.rel_icfse_icf_period_close.all().first().advanced_tax
 		return pc
 
 	def load_period_close_form(self, form, fields, initial = True ):
 		for field in fields:
-			if str(field) =="period":
+			if str(field) =="period" or str(field) == "record_type":
 				value = self.period 
-			elif str(field) == "cooper":
-				value = self.cooper.id
+				field = "record_type"
 			else:
 				value = bot_object( field, self.period_close ).value()
 
 			if initial:
 				form.initial[field] = value
 			else:
-				form.base_fields[field].initial = value
+				if not field == "cooper":
+					form.base_fields[field].initial = value
 
 	def set_period_close_form_readonly(self, form_array):
-		form_array.base_fields['period'].widget.attrs['disabled'] = True
-		form_array.base_fields['cooper'].widget.attrs['disabled'] = True
+		form_array.base_fields['record_type'].widget.attrs['disabled'] = "True"
+		#form_array.base_fields['icf_self_employed'].widget.attrs['disabled'] = "True"
 		form_array.base_fields['sales_base'].widget.attrs['readonly'] = True
 		form_array.base_fields['sales_invoiced_vat'].widget.attrs['readonly'] = True
 		form_array.base_fields['sales_assigned_vat'].widget.attrs['readonly'] = True
@@ -259,7 +260,7 @@ class bot_filters(object):
 			current_period= bot_period(request.user).period(False)
 			if current_period:
 				q = request.GET.copy()
-				q['period__id__exact'] = current_period.id
+				q['period__icf_record__exact'] = current_period.id
 				request.GET = q
 				request.META['QUERY_STRING'] = request.GET.urlencode()
 				from django.http import HttpResponseRedirect

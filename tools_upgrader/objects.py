@@ -17,6 +17,8 @@ from datetime import date, timedelta, datetime
 from Welcome.models import iC_Self_Employed
 from Finances.models import iCf_Self_Employed
 
+
+
 class Self_Employed_auth(object):
 	'''
 	Self_Employed
@@ -67,7 +69,7 @@ class Self_Employed_auth(object):
 		link = "<a href='%s' alt='%s'> %s </a> " % (url, alt, caption)
 		return link
 
-	def render_iCES_number_petition():
+	def render_iCES_number_petition(self):
 		none_ices_message = _(u"Introdueix Número de iCES/CES o fes una petició automàtica mitjançant aquest enllaç: %s").encode("utf-8")
 		return none_ices_message % (self.ices_API_account_create_call())
 
@@ -127,6 +129,9 @@ class Self_Employed_auth(object):
 		new_user = User.objects.create_user(username, email, password)
 		new_user.is_active = False
 		new_user.is_staff = False
+		if person:
+			new_user.first_name = person.name
+			new_user.last_name = person.surnames
 		new_user.save()
 		return new_user
 	def join_to_users_auth(self):
@@ -180,9 +185,10 @@ class Self_Employed_auth(object):
 	 init object
 	
 	'''
-	def __init__(self, ic_self_employed):
+	def __init__(self, ic_self_employed, user=None ):
 		#
 		# Save current ic_self_employed (call it: ic_se)
+		self.user = user
 		self.ic_se = ic_self_employed
 
 	def _get_user_member_field(self):

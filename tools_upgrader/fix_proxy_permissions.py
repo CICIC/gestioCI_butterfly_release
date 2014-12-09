@@ -10,9 +10,9 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.management import update_contenttypes
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-	
+
 def create_proxy_permissions(app, created_models, verbosity, **kwargs):
-	import pdb; pdb.set_trace()
+
 	kwargs.pop("interactive",None)
 	update_contenttypes(app, created_models, verbosity, **kwargs)
 	app_models = django.db.models.get_models(app)

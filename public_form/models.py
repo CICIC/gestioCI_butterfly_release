@@ -49,7 +49,9 @@ class RegistrationManager(models.Manager):
 
 		new_user = User.objects.create_user(username, email, "blank")
 		new_user.is_active = False
-		new_user.save()
+		if person:
+			new_user.first_name = person.name
+			new_user.last_name = person.surnames
 		password = User.objects.make_random_password()
 		new_user.set_password(password)
 		new_user.save()
@@ -62,6 +64,10 @@ class RegistrationManager(models.Manager):
 
 		new_user = User.objects.create_user(username, email, password)
 		new_user.is_active = False
+		if person:
+			new_user.first_name = person.name
+			new_user.last_name = person.surnames
+
 		new_user.save()
 		registration_profile = self.create_profile(new_user, person, project, record_type )
 

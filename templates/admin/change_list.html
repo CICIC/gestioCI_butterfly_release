@@ -38,7 +38,7 @@
 {% block breadcrumbs %}
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ app_label|capfirst|escape }}</a>
+<a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ app_label|capfirst|escape }}</a>
 &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
 </div>
 {% endblock %}
@@ -86,8 +86,7 @@
 
       {% block result_list %}
           {% if action_form and actions_on_top and cl.full_result_count %}{% admin_actions %}{% endif %}
-		  {% load related_widget_wrapper_result_list %}
-          {% related_widget_wrapper_result_list cl %}
+          {% result_list cl %}
           {% if action_form and actions_on_bottom and cl.full_result_count %}{% admin_actions %}{% endif %}
       {% endblock %}
       {% block pagination %}{% pagination cl %}{% endblock %}
