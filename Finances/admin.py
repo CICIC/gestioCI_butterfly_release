@@ -638,11 +638,11 @@ class iCf_Period_close_user(ModelAdmin):
 			can_edit = self.exists_opened_period( obj.rel_icfse_icf_period_close.all().first().user ) and self.exists_closed_period( obj.rel_icfse_icf_period_close.all().first().user ) and not self.exists_closed_period_done ( obj )
 		if can_edit:
 			try:
-				return u'<a href="/cooper/%s/%s/%s">%s</a>' % (obj._meta.app_label, obj._meta.model_name, obj.id, obj.period)
+				return u'<a href="/cooper/%s/%s/%s">%s</a>' % (obj._meta.app_label, obj._meta.model_name, obj.id, obj.get_unicode(short_description = True))
 			except:
-				return u'<a href="/cooper/%s/%s/%s">%s</a>' % (obj._meta.app_label, obj._meta.model_name, obj.id, obj.__unicode__(short_description = True))
+				return u'<a href="/cooper/%s/%s/%s">%s</a>' % (obj._meta.app_label, obj._meta.model_name, obj.id, obj.get_unicode(short_description = True))
 		else:
-			return obj.period
+			return u'%s' % (obj.get_unicode(short_description = True))
 	edit_link.allow_tags = True
 	edit_link.short_description = _(u"Període")
 	def print_link(self, obj):

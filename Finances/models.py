@@ -1001,7 +1001,7 @@ class iCf_Period_close(iCf_Record):
 				self.total_acumulated()
 			)
 		return status
-	def __unicode__(self, short_description=False):
+	def get_unicode(self, short_description=False):
 		if getattr(self, "closed", False):
 			return self.render_closed_period(short_description)
 		else:
@@ -1023,6 +1023,8 @@ class iCf_Period_close(iCf_Record):
 			return mark_safe("<a href='%s'>%s</a>" % (self.get_admin_url(), self.closed))
 		except:
 			return "hacked"
+	def __unicode__(self, short_description=False):
+		return self.record_type.name
 	class Meta:
 		#unique_together = ('icf_self_employed', 'period')
 		verbose_name= _(u'03 - Resultats')
