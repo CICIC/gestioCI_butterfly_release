@@ -53,7 +53,7 @@
 	function calculateTOTALS() {
 		total_tax =  c ($('#id_period_tax').val())  - c( $('#id_advanced_tax').val() ) 
 		total_donation = parseFloat(c($('#id_donation').val())) + parseFloat(c( $('#id_savings_with_assigned_vat_donation').val()) );
-		
+
 		value = total_tax + parseFloat(total_donation);
 		$('#id_total').val( parseFloat(value).toFixed(2).replace(".",",") );
 		total_sub = parseFloat(value) +  parseFloat(c( $('#id_total_irpf').val()))  +  parseFloat(c($('#id_total_vat').val())) ;

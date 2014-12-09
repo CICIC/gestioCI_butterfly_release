@@ -188,10 +188,10 @@ class bot_period_close( object ):
 		print "pass"
 	def load_period_close(self, obj=None, recalculate = False):
 		from Finances.models import iCf_Period_close
-		import pdb;pdb.set_trace()
+
 		if obj is None:
 			pc = iCf_Period_close(self.period, self.cooper)
-			pc.period = self.period
+			pc.record_type = self.period
 			pc.cooper = self.cooper
 			pc.advanced_tax = self.cooper.advanced_tax
 		else:
@@ -200,14 +200,14 @@ class bot_period_close( object ):
 		if recalculate:
 			from bots import bot_sales_invoice
 			from Finances.models import iCf_Sale, iCf_Purchase, iCf_Tax
+			#
 			from Finances.bots import bot_sales_invoice
-
 			bot = bot_sales_invoice( pc.icf_sales.all() )
 			pc.sales_base = bot.sales_base
 			pc.sales_invoiced_vat = bot.sales_invoiced_vat
 			pc.sales_assigned_vat = bot.sales_assigned_vat
 			pc.sales_total = bot.sales_total
-
+			#
 			from bots import bot_purchases_invoice
 			bot = bot_purchases_invoice( pc.icf_purchases.all() )
 			pc.purchases_base = bot.purchases_base 
@@ -217,7 +217,6 @@ class bot_period_close( object ):
 			#QUOTA
 			pc.period_tax = bot_period_tax (pc.sales_base).tax
 			pc.advanced_tax = pc.rel_icfse_icf_period_close.all().first().advanced_tax
-
 		return pc
 
 	def load_period_close_form(self, form, fields, initial = True ):

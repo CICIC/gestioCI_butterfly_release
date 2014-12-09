@@ -607,22 +607,30 @@ class iCf_Period_close_user(ModelAdmin):
 		return obj.total_irpf()
 	def save_model(self, request, obj, form, change):
 
-		#As we disable cooper and periods controls, we loaded their values in get_form so reload
-		if obj.period is None:
-			obj.period = form.period
-			obj.icf_self_employed = form.icf_self_employed
-		obj.save()
+		if form.is_valid():
+			form.save_m2m()
+			#As we disable cooper and periods controls, we loaded their values in get_form so reload
+			if not hasattr(obj,"rel_icfse_icf_period_close"):
+				try:
+					icf_se = iCf_Self_Employed.objects.get(user=request.user)
+				except:
+					print "Falta icf_se"
+				else:
+					icf_se.icf_periods_closed.add(obj)
+					obj.save()
+			if obj.closed and obj.advanced_tax > 0:
+				c = iCf_Self_Employed.objects.get(pk=obj.icf_self_employed.id)
+				c.advanced_tax = 0
+				c.save()
 
-		if obj.closed and obj.advanced_tax > 0:
-			c = iCf_Self_Employed.objects.get(pk=obj.icf_self_employed.id)
-			c.advanced_tax = 0
-			c.save()
+			if obj.closed:
+				if not obj.record_type:
+					import pdb;pdb.set_trace()
+					pass
+				obj.save()
+				from Finances.bots import bot_period_payment
+				bot_period_payment(obj).create_sales_movements_for_period()
 
-		form.save_m2m()
-
-		if obj.closed:
-			from Finances.bots import bot_period_payment
-			bot_period_payment(obj).create_sales_movements_for_period()
 	def edit_link(self, obj):
 		if obj is None:
 			can_edit = False
@@ -722,10 +730,12 @@ class iCf_Period_close_admin (iCf_Period_close_user):
 		return iCf_Period_close.objects.all()
 	def changelist_view(self, request, extra_context=None):
 		#Get totals
-		response = super(iCf_Period_close_admin, self).changelist_view(request, extra_context)
+		extra_context = ""
 		try:
+			response = super(iCf_Period_close_admin, self).changelist_view(request, extra_context)
 			qs_queryset = response.context_data["cl"].query_set
 		except:
+		
 			qs_queryset = None
 
 		if qs_queryset and extra_context is None:

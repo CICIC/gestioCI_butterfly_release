@@ -276,6 +276,7 @@ class iCf_Period(iCf_Record_Type):
 	def render_closed_period(self, pc):
 		return pc.render_closed_period()
 	def render_icf_se_period(self, pc, exported=False):
+
 		if not self:
 			return ""
 		if hasattr(self, "id"):
@@ -798,7 +799,10 @@ class iCf_Period_close(iCf_Record):
 		return self._icf_self_employed()
 	def period(self):
 		if self:
-			return iCf_Period.objects.get(id=self.record_type.id)
+			try:
+				return iCf_Period.objects.get(name = self.record_type.name)
+			except:
+				pass
 		else:
 			return ""
 	def __init__(self, *args, **kwargs):
