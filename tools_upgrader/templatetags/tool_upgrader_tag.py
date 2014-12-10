@@ -100,12 +100,12 @@ def _folder(caption, value):
 		output = "<h5>%s</h5> %s" % ( caption, str(value) ) 
 	except:
 		try:
-			output = "<h5>%s</h5> %s" % ( caption, value.decode("utf-8") ) 
+			output = "<h5>%s</h5> %s" % ( caption.encode("utf-8"), value.encode("utf-8") ) 
 		except:
 			try:
-				output = "<h5>%s</h5> %s" % ( caption, value ) 
+				output = "<h5>%s</h5> %s" % ( caption.decode("utf-8"), value.decode("utf-8") ) 
 			except:
-				output = "<h5>%s</h5> %s" % ( caption, value ) 
+				output = "<h5>%s</h5> %s" % ( "error", "error" ) 
 	return output  
 def _avatar(width="15", clas="Anon"):
 	return mark_safe("<img src='/static/%s_user.png' width='%spx'>" % (clas,width))
@@ -125,7 +125,6 @@ def _counter_plus(counters, key):
 		counters[key] = 1
 # - Invoice to Finances parser
 def _get_company(v7, icf_se, type="doesnotmatter", icf_person = None, icf_project = None, commit=False):
-
 	# ***********************************
 	# so, get v7 as [Invoices.{sales/purchase}Invoice] model then
 	# search it on v8 Finances. If not found
@@ -138,19 +137,25 @@ def _get_company(v7, icf_se, type="doesnotmatter", icf_person = None, icf_projec
 		# ... on url:
 		# ... (https://github.com/CICIC/gestioCI_butterfly_release/issues/3)
 		#
-		icf_company = Company.objects.get(id_card_es=v7.CIF)
+		icf_company = Company.objects.filter(id_card_es=v7.CIF)
+		if icf_company.count() > 1:
+			icf_company = icf_company.all().first()
+		elif icf_company.count() < 1:
+			icf_company = Company.objects.get(id_card_es="sss")
 		return icf_company
 	except ObjectDoesNotExist as e:
 		# ... Read previous note.
 		try:
-			icf_company = Company.objects.get(id_card_non_es=v7.otherCIF)
+			icf_company = Company.objects.filter(id_card_non_es=v7.otherCIF)
+			if icf_company.count() > 1:
+				icf_company = icf_company.all().first()
 			return icf_company
 		except ObjectDoesNotExist as e:
 			# ... start Company object saving process...
 			#
 
 			c = Company()
-			
+
 			from Finances.models import _check_icf_record_type
 			
 			c.telephone_cell = 66666666
@@ -167,6 +172,7 @@ def _get_company(v7, icf_se, type="doesnotmatter", icf_person = None, icf_projec
 			c.legal_name =  v7.name
 			c.id_card_es =  v7.name
 			c.id_card_non_es = v7.otherCIF
+
 			if icf_se and type == "Client":
 				c.company_type = _check_icf_record_type("Client","Clients","Perfil de companyies que són clients a l'entorn de facturació",None,True)
 			else:
@@ -224,7 +230,6 @@ class tool_invoice_upgrader(object):
 			_counter_plus(self.counters, "invoices_missing_cooper_v8")
 			self.v8_se = None
 	def set_or_create_v8(self):
-
 		# ... load self.v8_user field
 		if self.v8_se:
 			try:
@@ -247,8 +252,7 @@ class tool_invoice_upgrader(object):
 				v8 = iCf_Self_Employed()
 				v8.user=self.v8_user
 				v8.ic_self_employed=self.v8_se
-				from Welcome.models import iC_Type
-				v8.record_type = iC_Type.objects.get(clas="iCf_Self_Employed")
+				v8.record_type = iC_Record_Type.objects.get(clas="iC_Self_Employed")
 				v8.ic_membership = self.v8_se.ic_membership
 				self.v8_cooper = v8.save()
 				pass
@@ -266,11 +270,13 @@ class tool_invoice_upgrader(object):
 		self.set_v8_se()
 		self.set_or_create_v8()
 		try:
-			self.icf_period = iCf_Period.objects.get(label=invoice.period.label, first_day=invoice.period.first_day)
+			p = iCf_Period.objects.get(first_day=invoice.period.first_day)
+			self.v8_period = p
+			self.v8_period_close = p.get_period_closed(self.v8_cooper)
 		except:
 			t_type = iCf_Type.objects.get(clas="iCf_Periods")
 			period = invoice.period
-			p = iCf_Period()
+			self.v8_period = iCf_Period()
 			#... map fields
 			for field in ['date_close', 'date_open', 'first_day','label'] :
 				try:
@@ -297,28 +303,28 @@ class tool_invoice_upgrader(object):
 								user=self.invoice.user, 
 								num=self.invoice.num) 
 			rows = rows.values("num").annotate(count=Count("num"))
-			return rows.count() > 1
+
+			return rows.count() > 0
 		except Exception as e:
 			print ("tool_invoice_upgrader - error - on has_lines")
 			print (e)
 			return False
-	def save_lines(self):
-		return False
+
 	def migrate(self, ui):
 		#
 		try:
-			ui.period = self.icf_period
+			
 			ui.num = self.invoice.num
 			#Warning: Duplicate fields
 			ui.date= self.invoice.date
 			ui.issue_date = self.invoice.date
-			ui.expiring_date=self.icf_period.date_close
-			ui.deadline_date = self.icf_period.date_close
+			ui.expiring_date=self.v8_period.date_close
+			ui.deadline_date = self.v8_period.date_close
 			#who_manage= ???
-			ui.payment_date = self.icf_period.date_close
+			ui.payment_date = self.v8_period.date_close
 			# See Manual title=GestioCI-Base_de_datos#Formas_de_pago:_Class_payment_type.28iC_Type.29
 			ui.payment_type = Payment_Type.objects.get(id=24)
-			ui.transfer_date = self.icf_period.date_close
+			ui.transfer_date = self.v8_period.date_close
 			#rel_account = None
 			#
 			# See Manual itle=GestioCI-Base_de_datos#Unidades_de_medida:_Class_General.Unit.28Artwork.29
@@ -352,8 +358,8 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 			print ("caso extranísssssssssssssssssssssssssimo")
 			return True
 		try:
-			a =  self.v8_cooper.icf_periods_closed.filter(icf_sale__period__name = self.invoice.period.label, icf_sale__num = self.invoice.num)
-			return a.count() < 1
+			a =  self.v8_cooper.icf_periods_closed.filter(icf_sales__period__name = self.invoice.period.label, icf_sales__num = self.invoice.num)
+			return a.count() < 1 or self.has_lines()
 		except Exception as e:
 			print ("tool_invoice_upgrader - error - need_to_migrate")
 			print (e)
@@ -361,7 +367,6 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 	def has_lines(self):
 		return super(tool_sales_upgrader, self).has_lines()
 	def save_lines(self):
-		super(tool_sales_upgrader, self).save_lines()
 		rows = self.invoice_set.objects.filter(
 				period=self.invoice.period, 
 				user=self.invoice.user, 
@@ -369,11 +374,15 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 		) 
 		from Finances.models import iCf_Sale_line
 		for line in rows:
-			li = iCf_Sale_line()
+			i = iCf_Sale_line()
+			i.save()
+			li = iCf_Sale_li()
+			li.icf_sale = self.v8_invoice
+			li.icf_sale_line = i
 			li.value = line.value
-			li.percent_invoiced_vat = line.percent_invoiced_vat
-			return li.save()
-			self.v8_invoice.lines.add(li)
+			vat, created = iCf_Duty.objects.get_or_create(value=line.percentInvoicedVAT.value)
+			li.percent_invoiced_vat  = vat
+			li.save()
 		return True
 
 	def migrate(self):
@@ -385,7 +394,9 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 			print ("tool_sales_upgrader - tries to save - on: migrate()") 
 			_counter_plus(self.counters,"tries_to_save_sales_invoice")
 			self.v8_invoice = sale
-			sale.name = sale.number()
+			self.v8_period_close.icf_sales.add(sale)
+			self.v8_period_close.save()
+			self.v8_invoice.name = self.v8_invoice.number()
 			self.v8_invoice.save()
 		except Exception as e:
 			print ("tool_sales_upgrader - error - on: migrate()")
@@ -393,6 +404,7 @@ class tool_sales_upgrader(tool_invoice_upgrader):
 			pass
 		else:
 			_counter_plus(self.counters,"sucessfully_saved_sales_invoice")
+		return self.v8_invoice.number()
 
 class tool_purchases_upgrader(tool_invoice_upgrader):
 	def __init__(self, invoice, commit, counters):
@@ -401,16 +413,21 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		# Call super to load common invoice fields
 		super(tool_purchases_upgrader, self).__init__(PurchaseInvoice, iCf_Purchase, invoice, commit, counters)
 		#
-		# ... load specific sales data fields
-		# ... ... Companies
-		self.icf_company = _get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
+		if hasattr(self, "v8_coop"):
+			# ... load specific Purchases data fields
+			# ... ... Companies
+			try:
+				self.icf_company =_get_company(self.invoice.provider, self.v8_coop, "Provider", self.pers, self.proj, self.commit)
+			except Exception as e:
+				print(e)
+				pass
 	def need_to_migrate(self ):
 		if not self.v8_cooper and self.v8_se and self.v8_user:
 			print ("caso extranísssssssssssssssssssssssssimo")
 			return True
 		try:
-			a = self.v8_cooper.icf_periods_closed.filter(icf_purchase_period__name=self.invoice.period.label, icf_sale_num = self.invoice.num)
-			return a.count() < 1
+			a = self.v8_cooper.icf_periods_closed.filter(icf_purchases__period__name=self.invoice.period.label, icf_purchases__num = self.invoice.num)
+			return a.count() < 1 or self.has_lines()
 		except Exception as e:
 			print ("tool_invoice_upgrader - error - need_to_migrate")
 			print (e)
@@ -419,34 +436,50 @@ class tool_purchases_upgrader(tool_invoice_upgrader):
 		return super(tool_purchases_upgrader, self).has_lines()
 
 	def save_lines(self):
-		super(tool_purchases_upgrader, self).save_lines()
 		rows = self.invoice_set.objects.filter(
 				period=self.invoice.period, 
 				user=self.invoice.user, 
 				num=self.invoice.num
 		) 
 		for row in rows:
-			li = iCf_Purchase_line()
+			i = iCf_Purchase_line()
+			i.save()
+			li = iCf_Purchase_li()
+			li.icf_purchase = self.v8_invoice
+			li.icf_purchase_line = i
 			li.value = row.value
-			li.percent_vat = row.percent_vat
-			li.percent_irpf = row.percent_irpf
-			return li.save()
-			self.v8_invoice.lines.add(li)
+
+			vat, created = iCf_Duty.objects.get_or_create(value=row.percentExpencedVAT.value)
+			li.percent_vat = vat
+
+			li.percent_irpf = row.percentIRPFRetention
+
+			li.save()
+
 		return True
 	def migrate(self):
 		purchase = super(tool_purchases_upgrader, self).migrate(iCf_Purchase())
-		purchase.provider = self.icf_company
+		if hasattr(self, "icf_company"):
+			purchase.provider = self.icf_company
+		if not purchase.provider:
+			import pdb; pdb.set_trace()
+			pass
 		purchase.save()
 		try:
-			print ("tool_purchase_upgrader - tries to save - on: migrate()") 
-			self.counters.counter_plus("tries_to_save_sales_invoice")
-			purchase.save()
+			print ("tool_purchases_upgrader - tries to save - on: migrate()") 
+			_counter_plus(self.counters,"tries_to_save_purchase_invoice")
+			self.v8_invoice = purchase
+			self.v8_period_close.icf_purchases.add(purchase)
+			self.v8_period_close.save()
+			self.v8_invoice.name = self.v8_invoice.number()
+			self.v8_invoice.save()
 		except Exception as e:
-			print ("tool_purchase_upgrader - error - on: migrate()")
+			print ("tool_Purchases_upgrader - error - on: migrate()")
 			print (e)
 			pass
 		else:
-			_counter_plus(self.counters, "sucessfully_saved_purchases_invoice")
+			_counter_plus(self.counters,"sucessfully_saved_Purchases_invoice")
+		return  self.v8_invoice.number()
 # - Main Tool
 class upgrader_tool(object):
 	def _print(self, text):
@@ -633,7 +666,13 @@ class upgrader_tool(object):
 	def check_invoice_loop(self, label, invoices):
 		all_invoices_are_ok = False
 		_v8_missing_list = []
+
 		for invoice in invoices:
+			try:
+				if invoice.user.soci.coop_number == 0:
+					continue
+			except:
+				continue
 			self._print("[%s: loop invoices for: %s]" % (label, str(invoice.number())) )
 			try:
 				if label == "check_sales":
@@ -670,7 +709,7 @@ class upgrader_tool(object):
 						if self.commit():
 							self._print("[%s: migrating process >> attempt to save lines" % (label))
 							all_lines_are_ok = tsu.save_lines()
-							self._print("[%s: migrating process >> saved with result %s" % (all_lines_are_ok) )
+							self._print("[%s: migrating process >> saved with result %s" % (label, all_lines_are_ok) )
 						else:
 							self._print("[%s: save lines >> Commit not activated" % (label) )
 					else:
@@ -834,101 +873,19 @@ class statics_object(object):
 			#links_vats.append(_folder(VATS.objects.get(id=int(vat.get("percentExpencedVAT"))).value, list))
 		return links
 	def group_invoices(self):
+		from Invoices.models import Soci
 		links = []
+		links.append( "Coopers: %s" % ( str(Soci.objects.all().count()) ) )
 
-		#Section 3
-		#3.-1
-		links_periods =[]
-		from Invoices.models import period
-		caption = _prompt_ico(upgrader_tool(self.request).check_periods())
-		caption += " periods: " + str(period.objects.all().count())
-		content = _links_list_to_ul(period.objects.all())
-		links_periods.append(_folder(caption, content))
-		#3.0
-		links_taxes =[]
-		from Invoices.models import periodTaxes
-		caption = _prompt_ico(upgrader_tool(self.request).check_taxes())
-		caption += " taxes: " + str(periodTaxes.objects.all().count())
-		l = {}
-		L = []
-		for tax in periodTaxes.objects.all():
-			l["Valor_" +str(tax.taxId)]= tax
-		content = _links_list_to_ul(l)
-		links_taxes.append(_folder(caption, content))
-		#3.1
-		links_duties =[]
-		from Invoices.models import VATS
-		caption = _prompt_ico(upgrader_tool(self.request).check_duties())
-		caption += " Duties: " + str(VATS.objects.all().count())
-		content = _links_list_to_ul(VATS.objects.all())
-		links_duties.append(_folder(caption, content))
-		#3.2
 		from Invoices.models import SalesInvoice, PurchaseInvoice
-		links_invoices =[]
 		ut = upgrader_tool(self.request)
 		sales_ok, purchase_ok, sales_folder, purchase_folder = ut.check_invoices()
-
 		caption = _prompt_ico(ico_yes if sales_ok and purchase_ok else ico_no)
 		caption += " Invoices"
 		content = _links_list_to_ul((sales_folder,purchase_folder))
-		links_invoices.append(_folder(caption, content + ut.counters_render()))
-
-		#Section 1
-		from Invoices.models import Soci
-		links_members = []
-		links_members.append(_folder(_prompt +
-			"Total membres",
-			"Invoices_Soci.count(): " + str(Soci.objects.all().count() )
-			) )
-		#1.1
-		coops_per_member = Soci.objects.values("coop__name").annotate(count=Count("coop"))
-		links_coops = []
-		for coop in coops_per_member:
-			links_coops.append( str(coop.get("count")) + ": " + coop.get("coop__name") )
-		links_members.append(_folder(_prompt +"Socios por cooperativa madre", _links_list_to_ul(links_coops)))
-
-		#Section 2
-		links_companies = []
-		from Invoices.models import Client, Provider
-		caption = _prompt_ico(upgrader_tool(self.request).check_companies())
-		caption += " Companies: " + str(Client.objects.all().count()+Provider.objects.all().count())
-		content =  _folder("Clients: (total %s)" % (Client.objects.all().count()), _links_list_to_ul(Client.objects.all()[:10]))
-		content += _folder("Providers: (total %s)" % (Provider.objects.all().count()), _links_list_to_ul(Provider.objects.all()[:10]))
-		links_companies.append(_folder(caption, content))
-
-		#section 3.3
-		links_balances =[]
-		from Invoices.models import PeriodClose
-		caption = _prompt_ico(upgrader_tool(self.request).check_balance())
-		caption += " Periods Trimestres: " 
-		content = " { Tancats > exportats: " + str(PeriodClose.objects.all().filter(closed=False).count())
-		content += " }, {Tancats > sense exportar: " + "???" + "}"
-		content += " }, {Oberts: " + str(PeriodClose.objects.all().filter(closed=False).count()) + "}"
-		content = _folder(  "-", content)
-		content += _folder("Periods",_links_list_to_ul(PeriodClose.objects.all()[:5]))
-		links_invoices.append(_folder(caption, content))
-
-		#Section 4
-		links_coop = []
-		links_coop.append(_section("Cooperativas madre") )
-		from Invoices.models import Coop
-		for coop in Coop.objects.all():
-			links_coop.append(_folder(_prompt +coop.name + " id: " + str(coop.id), "Invoices.models,coop") )
-
-		#Section 5
-		links_balances = []
-
-		links_balances.append(_folder(_prompt +"Invoices_PeriodClose.count()", str(PeriodClose.objects.all().count())))
-		periods = PeriodClose.objects.values("period__label", "period__first_day","period__date_close").annotate(count=Count("period__label"))
-		links_balances.append(_folder(_prompt + "-", _links_list_to_ul(periods) ))
-
-		#Render
-		links.append( _folder(_section("Invoices"), _links_list_to_ul(links_invoices + links_periods + links_taxes + links_duties +  links_balances )) )
-		links.append( _folder(_section("Coopers"), _links_list_to_ul(links_members)))
-		links.append( _folder(_section("Companies"), _links_list_to_ul(links_companies)))
-		links.append( _folder(_section("Mother Coops"), _links_list_to_ul(links_coop)))
-
+		links.append(_folder(caption, content + ut.counters_render()))
 		return links
+
 	def group_finances(self):
 		links = []
 		#Section 1
@@ -956,7 +913,7 @@ class statics_object(object):
 		links_section3 = []
 		#3.-1
 		from Welcome.templatetags import cooper_folder_tag
-		links_section3.append(cooper_folder_tag._invoicing_periods_folder(self))
+		#links_section3.append(cooper_folder_tag._invoicing_periods_folder(self))
 		#3.0
 		from Finances.models import iCf_Tax
 		links_taxes = []
@@ -1044,9 +1001,13 @@ class statics_object(object):
 		if group == "Invoices":
 			links = self.group_invoices()
 		elif  group == "Finances":
-			links= self.group_finances()
+			#links= self.group_finances()
+			links = []
+			pass
 		elif  group == "Welcome":
-			links = self.group_welcome()
+			links = []
+			pass
+			#links = self.group_welcome()
 
 		for link in links:
 			class render_object(object):
@@ -1054,7 +1015,7 @@ class statics_object(object):
 			obj = render_object()
 			obj.image = mark_safe(image)
 			obj.links = mark_safe(_links_list_to_ul(links))
-			return obj
+			return obj.links
 		return None
 
 	def avatar(self ):
@@ -1066,8 +1027,14 @@ class statics_object(object):
 		groups_list = ["Invoices", "Finances", "Welcome"]
 
 		for group in groups_list:
-			output_list.append( self.render_group(group) )
-		return output_list
+			output_list.append(group)
+			try:
+				output_list.append( self.render_group(group) )
+			except Exception, err:
+				import traceback
+				print traceback.format_exc()
+		return mark_safe(_links_list_to_ul(output_list))
+
 # - TemplateTag
 class tool_upgrader_tag_node(template.Node):
 	def __init__(self, obj):
@@ -1077,20 +1044,20 @@ class tool_upgrader_tag_node(template.Node):
 			self.object = template.Variable(obj)
 
 	def render(self, context):
-			# resolve allows the obj to be a variable name, otherwise everything
-			# is a string
-			obj = self.object.resolve(context)
-			# obj now is the object you passed the tag
+		# resolve allows the obj to be a variable name, otherwise everything
+		# is a string
+		obj = self.object.resolve(context)
+		# obj now is the object you passed the tag
 
-			menu_list = []
-			context['importer'] = upgrader_tool(obj)
-			menu_list.append(_folder("/admin/?", _links_list_to_ul(upgrader_tool(obj).menus)))
+		menu_list = []
+		context['importer'] = upgrader_tool(obj)
+		menu_list.append(_folder("/admin/?", _links_list_to_ul(upgrader_tool(obj).menus)))
 
-			statics = statics_object(obj, obj.user)
+		statics = statics_object(obj, obj.user)
 
-			context['menu'] = mark_safe( _folder( "[tool_upgrader] Menu", _links_list_to_ul(menu_list))) 
-			context['statics'] = statics
-			return ''
+		context['menu'] = mark_safe( _folder( "[tool_upgrader] Menu", _links_list_to_ul(menu_list))) 
+		context['statics'] = statics
+		return ''
 @register.tag
 def upgrader_tag(parser, token):
 	# token is the string extracted from the template, e.g. "box_user_loader my_object"
