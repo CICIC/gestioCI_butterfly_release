@@ -584,9 +584,15 @@ class iCf_Sale(iCf_Invoice):
 	num = models.IntegerField(verbose_name=_(u"Nº Factura"), help_text=_(u"Número Factura: COOPXXXX/any/XXXX. Introduïu només el número final."))
 	client = models.ForeignKey("General.Company", related_name="sale_invoices_clients", verbose_name=_(u"Client"))
 	lines=models.ManyToManyField('Finances.iCf_Sale_line', through="iCf_Sale_li", related_name="rn_Sale_line", verbose_name=_(u"Línies"),blank=True, null=True)
+	def period(self):
+		try:
+			return self.rel_icfe_sales().all().first()
+		except:
+			return None
+
 	def icf_self_employed(self):
 		try:
-			se = self.period.rel_icfse_icf_period_close
+			se = self.period().rel_icfse_icf_period_close
 		except:
 			return None
 	def __getitem__(self, value):
@@ -608,15 +614,21 @@ class iCf_Sale(iCf_Invoice):
 			pass
 
 		if not exists:
-			self.period.icf_sales.add(self)
-			self.period.save()
+			try:
+				self.period().icf_sales.add(self)
+				self.period().save()
+			except:
+				pass
 	def number(self):
-		se = self.period.rel_icfse_icf_period_close
-		if se.first():
-			cesnum = se.first().coop_number()
-		else:
-			cesnum = "0000"
-		return '%s/%s/%s'%( cesnum, self.date.year, "%03d" % (self.num) )
+		try:
+			se = self.period().rel_icfse_icf_period_close
+			if se.first():
+				cesnum = se.first().coop_number()
+			else:
+				cesnum = "0000"
+			return '%s/%s/%s'%( cesnum, self.date.year, "%03d" % (self.num) )
+		except:
+			return "0000"
 	number.short_description =_(u"Nº Factura")
 	def value(self):
 		value=0
@@ -651,6 +663,11 @@ class iCf_Purchase(iCf_Invoice):
 	num = models.CharField(verbose_name=_(u"Nº Factura"), max_length=20, help_text=_(u"Número Factura proveïdor."), validators=[alphanumeric])
 	provider=models.ForeignKey("General.Company", related_name="purchase_invoices_providers", verbose_name=_(u"Proveïdor"))
 	lines=models.ManyToManyField('Finances.iCf_Purchase_line', through="iCf_Purchase_li", related_name="rn_Purchase_line", verbose_name=_(u"Línies"),blank=True, null=True)
+	def period(self):
+		try:
+			return self.rel_icfe_purchases().all().first()
+		except:
+			return None
 	def __getitem__(self, value):
 		if hasattr(self,"id"):
 			return self.id
@@ -658,7 +675,7 @@ class iCf_Purchase(iCf_Invoice):
 			return ""
 	def icf_self_employed(self):
 		try:
-			se = self.period.rel_icfse_icf_period_close
+			se = self.period().rel_icfse_icf_period_close
 		except:
 			return None
 	def __init__(self, *args, **kwargs):
@@ -667,12 +684,15 @@ class iCf_Purchase(iCf_Invoice):
 		#self.record_type = _check_icf_record_type("iCf_Purchase", u"Factura despesa", u'', t )
 		self.record_type = iCf_Record_Type.objects.get(clas="iCf_Purchase")
 	def number(self):
-		se = self.period.rel_icfse_icf_period_close
-		if se.first():
-			cesnum = se.first().coop_number()
-		else:
-			cesnum = "0000"
-		return '%s/%s/%s'%( cesnum, self.date.year, self.num )
+		try:
+			se = self.period().rel_icfse_icf_period_close
+			if se.first():
+				cesnum = se.first().coop_number()
+			else:
+				cesnum = "0000"
+			return '%s/%s/%s'%( cesnum, self.date.year, self.num )
+		except:
+			return "0000"
 	number.short_description =_(u"Nº Factura")
 	def value(self):
 		value=0
@@ -708,8 +728,11 @@ class iCf_Purchase(iCf_Invoice):
 			pass
 
 		if not exists:
-			self.period.icf_purchases.add(self)
-			self.period.save()
+			try:
+				self.period.icf_purchases.add(self)
+				self.period.save()
+			except:
+				pass
 	class Meta:
 		#unique_together = ('icf_self_employed', 'period', 'num')
 		verbose_name = _(u'02 - Factura Despesa')
@@ -765,14 +788,6 @@ class iCf_Purchase_line (iCf_Record):
 		return self.fk_purchase_li.all().first().value + self.vat() + self.irpf()
 	total.decimal=True
 	total.short_description=_(u'Total Factura (€)')
-	def __unicode__(self):
-		try:
-			return self.total()
-		except:
-			try:
-				return str(self.icf_record)
-			except:
-				return "icf_purchase_line_unicode"
 	class Meta:
 		verbose_name=_(u'Línia de factura despesa')
 		verbose_name_plural=_(u'Línies de factura despesa')

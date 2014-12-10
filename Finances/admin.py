@@ -498,12 +498,12 @@ class iCf_Sale_user (invoice_admin):
 		#Filter by period
 		return super(iCf_Sale_user, self).changelist_view(request, extra_context)
 #
-class sales_invoice_admin(iCf_Sale_user):
+class iCf_Sale_admin(iCf_Sale_user):
 	fields = iCf_Sale_user.fields + ['status', 'transfer_date']
-	list_display = ('rel_icfe_sales',) + iCf_Sale_user.list_display
+	list_display = ('icf_self_employed', ) + iCf_Sale_user.list_display
 	list_display_links = ( 'number', )
 	list_editable = iCf_Sale_user.list_editable + ('transfer_date', )
-	list_export = ('rel_icfe_sales',) + iCf_Sale_user.list_export 
+	list_export = iCf_Sale_user.list_export 
 	#list_filter = ('icf_self_employed','period', 'transfer_date')
 	actions = iCf_Sale_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 #
@@ -518,7 +518,7 @@ class iCf_Purchase_user (invoice_admin):
 	inlines = [iCf_Purchase_inline]
 	actions = [export_as_csv_action("Exportar CSV", fields=list_export, header=True, force_fields=True),]
 	list_display_links = ( 'number', )
-	list_per_page = 1000
+	list_per_page = 10
 	def providerName(self, obj):
 		return obj.provider.name
 	providerName.short_description = _(u"provider")
@@ -550,13 +550,13 @@ class iCf_Purchase_user (invoice_admin):
 		#
 		return super(iCf_Purchase_user, self).changelist_view(request, extra_context)
 #
-class purchases_invoice_admin (iCf_Purchase_user):
+class iCf_Purchase_admin (iCf_Purchase_user):
 	fields = iCf_Purchase_user.fields + ['status', 'transfer_date']
-	list_display = ('icf_self_employed',) + iCf_Purchase_user.list_display
+	list_display = ('icf_self_employed', ) + iCf_Purchase_user.list_display
 	list_editable = iCf_Purchase_user.list_editable + ('transfer_date',)
 	list_export = ('icf_self_employed',) + iCf_Purchase_user.list_export
 	#TODO list_filter = ('rel_icfe_purchases__icf_self_employed_periods_closed','period',)
-	list_filter = ('period',)
+	#list_filter = ('period',)
 	actions = iCf_Purchase_user.actions + [export_all_as_csv_action(_(u"Exportar tots CSV"), fields=list_export, header=True, force_fields=True),]
 #
 class period_payment_inline(admin.TabularInline):
@@ -947,6 +947,8 @@ admin.site.register(iCf_Record, ModelAdmin)
 # Master
 admin.site.register(iCf_Tax, tax_admin)
 admin.site.register(iCf_Duty)
+admin.site.register(iCf_Sale, iCf_Sale_admin)
+admin.site.register(iCf_Purchase, iCf_Purchase_admin)
 admin.site.register(iCf_Period, iCf_Period_admin)
 admin.site.register(iCf_Period_close, iCf_Period_close_admin)
 #
@@ -956,6 +958,7 @@ user_admin_site.register(iCf_Tax, iCf_Tax_user)
 #
 user_admin_site.register(iCf_Sale, iCf_Sale_user)
 user_admin_site.register(iCf_Sale_line)
+
 user_admin_site.register(iCf_Purchase, iCf_Purchase_user)
 user_admin_site.register(iCf_Purchase_line)
 #
@@ -972,4 +975,4 @@ user_admin_site.register(icf_self_employed_proxy_balance)
 # admin.site.register(iCf_Sale_movement, sales_movements_admin)
 # admin.site.register(iCf_Purchase, purchases_invoice_admin)
 
-# admin.site.register(iCf_Sale, sales_invoice_admin)
+
