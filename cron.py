@@ -81,7 +81,7 @@ class EmailsNotifierCron(CronJobBase):
 		return
 	
 		output =  "Send mail start"
-		#Get all active notificators
+		#Get all active notificatjors
 		EmailsToSend = EmailNotification.objects.filter(is_active=True)
 
 		#For each notificator...
@@ -98,15 +98,15 @@ class EmailsNotifierCron(CronJobBase):
 				try:
 					print "a"
 		
-					#oneemail = mail.EmailMessage("XXXXXXprueba sin u", yNotifications.body, yNotifications.efrom, ["gestioci@cooperativa.cat",], ["gestioci@cooperativa.cat", "jaimesanchezm@gmail.com","gallardonegro@correo.nu"], connection=connection)
+					#oneemail = mail.EmailMessage("XXXXXXprueba sin u", yNotifications.body, yNotifications.efrom, ["gestioci@cooperativa.cat",], ["gestioci@cooperativa.cat", ], connection=connection)
 					
-					oneemail = mail.EmailMessage("En pruebas: Consulta administracion " + yNotifications.subject, yNotifications.body, yNotifications.efrom, ["gestioci@cooperativa.cat",], ["ox@enredaos.net", "gestioci@cooperativa.cat", "aleph@riseup.net", "jaimesanchezm@gmail.com","gallardonegro@correo.nu"], connection=connection)
+					oneemail = mail.EmailMessage("En pruebas: Consulta administracion " + yNotifications.subject, yNotifications.body, yNotifications.efrom, ["gestioci@cooperativa.cat",], ["ox@enredaos.net", "gestioci@cooperativa.cat"], connection=connection)
 					print "b"
 					oneemail.send()
 				except:
 		
 					print "caso"
-					#oneemail = mail.EmailMessage("XXXXXXprueba con  u", yNotifications.body, yNotifications.efrom, [u"jaimesanchezm@gmail.com",], [u"aleph@riseup.net",u"jaimesanchezm@gmail.com",u"gallardonegro@correo.nu"], connection=connection)
+					#oneemail = mail.EmailMessage("XXXXXXprueba con  u", yNotifications.body, yNotifications.efrom, [], [], connection=connection)
 				
 				#Send
 				#oneemail.send()
